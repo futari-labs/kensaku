@@ -12,7 +12,8 @@ Updated 2026-11-21.
 - Working copy: worktree `.claude/worktrees/bootstrap-resume`, branch `bootstrap-resume` (rooted on an empty commit because `init` had no commits). The main checkout still holds older untracked copies of the planning files plus the owner's `.env.local`.
 - Approved by the owner for after plan approval (D-024 narrowed by D-025): create `dev` from `bootstrap-resume`; push it and make it the default branch; move the main checkout's replaced untracked files to `~/kensaku-untracked-backup-2026-11-21/` and check out `dev` there. The owner creates `main` personally; no agent pushes, merges, or auto-merges into `main`.
 - First approval card (commit `6a1c031`): owner chose "Request changes" and asked for a third review, a visibility check, and a protection check. Visibility verified as private on GitHub Free (`research/github-2026-11-21.md`); GitHub enforces no branch protection; gaps recorded as R-13 and R-14.
-- Next step: third independent review of the final contract, then a fresh approval card. Nothing executes before an `Approve plan` selection.
+- Third independent review: CHANGES REQUIRED (narrow) at `89f7901`, fixed in `2b9140b`, final verdict READY at `2b9140b` (see `REVIEW.md`).
+- Next step: fresh approval card. Nothing executes before an `Approve plan` selection.
 
 ## Execution ledger
 

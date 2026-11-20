@@ -41,4 +41,18 @@ The same reviewer re-reviewed commit `cc3ccc361bd74a227443078c9a40584978606cac` 
 | C | NIT | 409 had no user-visible state; lock release unspecified. | The lock is released in `finally` on completion, failure, or abort; the client shows "A research run is already in progress"; EV-006 asserts the lock is released and the next request succeeds after every scenario. |
 | D | NIT | Leftovers: "non-loopback bind" wording, `budget_exhausted` mapping, `uncitedParagraphs` type versus count, nominal `validate` stage. | Wording fixed; `budget_exhausted` ends the offers stage early with a "Not searched" note (not an error); EV-004 compares `.length`; the stage responsibilities are stated. |
 
-These A-D fixes were verified locally (`plan-gate check` PASS, harness OK, the reference rule check 54/54) but were not sent through a third review pass.
+These A-D fixes were verified locally (`plan-gate check` PASS, harness OK, the reference rule check 54/54).
+
+## Third review (fresh reviewer)
+
+Requested by the owner after the first approval card ("Request changes"). A new, independent reviewer (model `fable`, read-only, no implementation authority, read-only `gh` GETs allowed) reviewed commit `89f79016b697d3b54257e62e2588cb6a3b866ac9`. The verdict was **CHANGES REQUIRED, narrowly**, with no blocking findings.
+
+It verified that finding 1 and A-D were resolved and that findings 2-15 were still resolved. It re-applied the rules to all 54 cases (0 mismatches) and confirmed R01-R04 and C01-C06. It reproduced every GitHub fact (private, Free plan, rulesets and protection return 403, admin token, auto-merge enabled). It found no threshold, case, or Exa cap lowered since `551288c`; the only one-facet relaxations were recorded review resolutions.
+
+| # | Severity | Finding | Resolution in `2b9140b` |
+| --- | --- | --- | --- |
+| S1 | SHOULD-FIX | Forbidden-actions text did not carve out the approved default-branch change (D-024 step 2, D-025). | EXECUTION_PLAN and PSTACK_HANDOFF allow only that one-time change, made by bootstrap and never by a task worker. |
+| S2 | SHOULD-FIX | JM-003 needed `src/core/types.ts`, which only the parallel JM-002 created. | JM-001 creates `src/core/types.ts` from the ARCHITECTURE declarations; JM-002 and JM-003 do not change it. |
+| N1-N5 | NIT | EV-007 spec path unnamed; stale references; JM-001 missing `pnpm test:e2e`; `workflow`-scope consequence and `allow_rebase_merge` unstated; case-file wording. | All fixed. |
+
+The same reviewer then checked `2b9140b8ffb82ef5faac3103920733c196af4075`: **READY** (advisory). Gate and harness pass, no new inconsistency, nothing weakened. Residual non-blocking nits, accepted as interpretations: "verbatim" for `src/core/types.ts` allows adding `export` keywords; the EXECUTION_PLAN summary row for JM-001 omits `src/core/types.ts` (plan.json is authoritative); `REVIEW.md` is a record, not a frozen input.
