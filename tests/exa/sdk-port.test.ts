@@ -109,10 +109,11 @@ describe("ExaSdkPort", () => {
     const { port, store } = livePort(["<html>", { costDollars: { total: "free" } }]);
     await expect(port.searchOffers(candidate, "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "upstream" });
     await expect(port.searchOffers(candidate, "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "upstream" });
-    expect(store.usage()).toEqual({ requests: 2, costDollars: 0 });
+    // Unreported cost keeps the per-call ceiling (0.02) in the ledger, so the month never under-counts.
+    expect(store.usage()).toEqual({ requests: 2, costDollars: 0.04 });
   });
 
-  it("rejects a response without a requestId, and notes a missing cost while recording 0", async () => {
+  it("rejects a response without a requestId, and notes a missing cost and records the ceiling for it", async () => {
     const notes: string[] = [];
     const row = { url: "https://a.example/x", title: "t", summary: null };
     const { port, store } = livePort([{ results: [row], costDollars: { total: 0.01 } }, { requestId: "r", results: [row] }], {
@@ -123,7 +124,7 @@ describe("ExaSdkPort", () => {
     const ok = await port.searchOffers(candidate, "SG", new RequestBudget(5), signal);
     expect(ok.costDollars).toBe(0);
     expect(notes).toEqual([expect.stringContaining("no costDollars")]);
-    expect(store.usage().costDollars).toBe(0.01);
+    expect(store.usage().costDollars).toBeCloseTo(0.03, 10);
   });
 
   it("skips and counts malformed search rows instead of rejecting the response, and treats null citations as none", async () => {

@@ -5,6 +5,7 @@ import type { DiskCache } from "./cache";
 import type { Clock } from "./clock";
 import { systemClock } from "./clock";
 import { ExaFailure, mapExaError } from "./errors";
+import { MAX_CALL_COST_DOLLARS } from "./ledger";
 import type { UsageLedger } from "./ledger";
 import { parseAnswerResponse, parseSearchResponse, readBilling } from "./parse";
 import type { AnswerResult, ExaPort, SearchResult } from "./port";
@@ -56,6 +57,8 @@ export class GuardedExaPort implements ExaPort {
   readonly #clock: Clock;
   readonly #answerMode: AnswerMarketMode;
   readonly #warn: (note: string) => void;
+  /** Calls past the guard whose cost is not settled yet; each holds MAX_CALL_COST_DOLLARS of the monthly cost limit. */
+  #inFlight = 0;
 
   constructor(transport: ExaTransport, options: PortOptions = {}) {
     this.#transport = transport;
@@ -100,8 +103,17 @@ export class GuardedExaPort implements ExaPort {
     if (hit) return { ...hit, costDollars: 0, cached: true };
 
     if (call.signal.aborted) throw new ExaFailure("timeout", "The Exa request was aborted before it started.");
-    this.#ledger?.assertCanCall(this.#clock());
+    this.#ledger?.assertCanCall(this.#clock(), this.#inFlight);
     call.budget.take();
+    this.#inFlight += 1;
+    try {
+      return await this.#send(call);
+    } finally {
+      this.#inFlight -= 1;
+    }
+  }
+
+  async #send<T extends { costDollars: number; retrievedAt: string }>(call: Call<T>): Promise<T & { cached: boolean }> {
     this.#ledger?.recordRequest(this.#clock());
 
     let raw: unknown;
@@ -110,12 +122,14 @@ export class GuardedExaPort implements ExaPort {
     } catch (error) {
       const failure = mapExaError(error);
       if (failure.kind === "credits_exhausted") this.#ledger?.markExhausted(this.#clock());
+      // An aborted or timed-out call may still be billed, and its cost is unknown: keep the ceiling.
+      if (failure.kind === "timeout") this.#ledger?.recordCost(MAX_CALL_COST_DOLLARS, this.#clock());
       throw failure;
     }
 
     const billing = readBilling(raw);
-    if (!billing.costReported) this.#warn("Exa response carried no costDollars.total; recorded as 0.");
-    this.#ledger?.recordCost(billing.costDollars, this.#clock());
+    if (!billing.costReported) this.#warn("Exa response carried no costDollars.total; recorded at the per-call ceiling.");
+    this.#ledger?.recordCost(billing.costReported ? billing.costDollars : MAX_CALL_COST_DOLLARS, this.#clock());
 
     const body = call.parse(raw);
     const result = { ...body, costDollars: billing.costDollars, retrievedAt: this.#clock().toISOString() } as T;

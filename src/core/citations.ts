@@ -9,38 +9,49 @@ export function splitParagraphs(text: string): string[] {
   return text.split(BLANK_LINE).filter((part, i) => i % 2 === 0 && part.trim() !== "");
 }
 
+interface MarkerResolution {
+  /** The marker's numbers that point at a citation, as written. */
+  kept: string[];
+  urls: string[];
+  dropped: number;
+}
+
+function resolveMarker(numbers: string, citationUrls: string[]): MarkerResolution {
+  const out: MarkerResolution = { kept: [], urls: [], dropped: 0 };
+  for (const raw of numbers.split(",")) {
+    const n = Number(raw);
+    const url = Number.isSafeInteger(n) && n >= 1 ? citationUrls[n - 1] : undefined;
+    if (url === undefined) {
+      out.dropped++;
+      continue;
+    }
+    out.kept.push(raw);
+    out.urls.push(url);
+  }
+  return out;
+}
+
 /** Resolves 1-based `[n]` and `[n,m]` markers against citation URLs; unresolvable numbers are removed and counted. */
 export function resolveCitations(text: string, citationUrls: string[]): ResolvedCitations {
   const sources = new Set<string>();
   const uncitedParagraphs: number[] = [];
   let unresolvedMarkers = 0;
-  let paragraph = 0;
 
-  const renderedText = text
-    .split(BLANK_LINE)
-    .map((part, i) => {
-      if (i % 2 === 1 || part.trim() === "") return part;
-      let resolved = 0;
-      const rendered = part.replace(MARKER, (_marker, lead: string, numbers: string) => {
-        const kept: string[] = [];
-        for (const raw of numbers.split(",")) {
-          const n = Number(raw);
-          const url = Number.isSafeInteger(n) && n >= 1 ? citationUrls[n - 1] : undefined;
-          if (url === undefined) {
-            unresolvedMarkers++;
-            continue;
-          }
-          kept.push(raw);
-          resolved++;
-          sources.add(url);
-        }
-        return kept.length > 0 ? `${lead}[${kept.join(",")}]` : "";
-      });
-      if (resolved === 0) uncitedParagraphs.push(paragraph);
-      paragraph++;
-      return rendered;
-    })
-    .join("");
+  splitParagraphs(text).forEach((paragraph, index) => {
+    let resolved = 0;
+    for (const marker of paragraph.matchAll(MARKER)) {
+      const r = resolveMarker(marker[2]!, citationUrls);
+      resolved += r.kept.length;
+      unresolvedMarkers += r.dropped;
+      for (const url of r.urls) sources.add(url);
+    }
+    if (resolved === 0) uncitedParagraphs.push(index);
+  });
+
+  const renderedText = text.replace(MARKER, (_marker, lead: string, numbers: string) => {
+    const { kept } = resolveMarker(numbers, citationUrls);
+    return kept.length > 0 ? `${lead}[${kept.join(",")}]` : "";
+  });
 
   return { renderedText, sources: [...sources], unresolvedMarkers, uncitedParagraphs };
 }

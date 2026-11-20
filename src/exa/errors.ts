@@ -13,12 +13,15 @@ export type ExaFailureKind = (typeof EXA_FAILURE_KINDS)[number];
 export class ExaFailure extends Error {
   readonly kind: ExaFailureKind;
   readonly retryAfterMs?: number;
+  /** HTTP status of the upstream reply, when there was one. */
+  readonly status?: number;
 
-  constructor(kind: ExaFailureKind, message: string, options: { retryAfterMs?: number } = {}) {
+  constructor(kind: ExaFailureKind, message: string, options: { retryAfterMs?: number; status?: number } = {}) {
     super(message);
     this.name = "ExaFailure";
     this.kind = kind;
     if (options.retryAfterMs !== undefined) this.retryAfterMs = options.retryAfterMs;
+    if (options.status !== undefined) this.status = options.status;
   }
 }
 
@@ -58,7 +61,11 @@ export function mapExaError(error: unknown): ExaFailure {
   }
   if (status === 429) {
     const ms = retryAfterMs(error);
-    return new ExaFailure("rate_limited", "Exa rate limit reached (HTTP 429).", ms === undefined ? {} : { retryAfterMs: ms });
+    return new ExaFailure("rate_limited", "Exa rate limit reached (HTTP 429).", { status, ...(ms !== undefined && { retryAfterMs: ms }) });
   }
-  return new ExaFailure("upstream", status === undefined ? "The Exa request failed." : `Exa request failed (HTTP ${status}).`);
+  return new ExaFailure(
+    "upstream",
+    status === undefined ? "The Exa request failed." : `Exa request failed (HTTP ${status}).`,
+    status === undefined ? {} : { status },
+  );
 }

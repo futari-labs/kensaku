@@ -91,9 +91,10 @@ export class UsageLedger {
 
   /**
    * Throws before any Exa call when credits are exhausted, the request limit is reached, or the next
-   * call could take the month's cost past the limit (cost so far plus MAX_CALL_COST_DOLLARS).
+   * call could take the month's cost past the limit: cost so far, plus MAX_CALL_COST_DOLLARS for each call
+   * already in flight (`reservedCalls`, held by the port until that call's cost is settled), plus this one.
    */
-  assertCanCall(now: Date): void {
+  assertCanCall(now: Date, reservedCalls = 0): void {
     const m = this.read(now);
     if (m.exhaustedAt !== undefined) {
       throw new ExaFailure(
@@ -105,7 +106,7 @@ export class UsageLedger {
       throw new ExaFailure("monthly_limit", `Monthly limit of ${this.limits.requestLimit} Exa requests reached.`);
     }
     // Rounded to 1e-9 so float noise cannot flip an exact fit (7.98 + 0.02 against 8).
-    if (Math.round((m.costDollars + MAX_CALL_COST_DOLLARS) * 1e9) / 1e9 > this.limits.costLimit) {
+    if (Math.round((m.costDollars + (reservedCalls + 1) * MAX_CALL_COST_DOLLARS) * 1e9) / 1e9 > this.limits.costLimit) {
       throw new ExaFailure("monthly_limit", `Monthly cost limit of $${this.limits.costLimit.toFixed(2)} reached.`);
     }
   }

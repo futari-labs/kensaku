@@ -1,0 +1,36 @@
+{
+  "name": "error-offers",
+  "description": "The answer succeeds, then the search fails with a 500 and its one retry fails too: a run that fails after the candidates stage.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC one-candidate answer (Sony WH-1000XM5) composed with the real A1 comparison and citations; not a live Exa response",
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": [
+          {
+            "name": "WH-1000XM5 Wireless Noise Cancelling Headphones",
+            "brand": "Sony",
+            "modelIdentifiers": [
+              "WH-1000XM5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "op": "search",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "upstream"
+      }
+    },
+    {
+      "op": "search",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "upstream"
+      }
+    }
+  ]
+}

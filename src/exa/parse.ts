@@ -53,7 +53,8 @@ export interface ParsedSearch {
 }
 
 function malformed(what: string): ExaFailure {
-  return new ExaFailure("upstream", `Exa returned a malformed ${what} response.`);
+  // Status 200: the request was answered and billed, so retrying it only spends another request.
+  return new ExaFailure("upstream", `Exa returned a malformed ${what} response.`, { status: 200 });
 }
 
 function parseSummary(raw: unknown): OfferSummary | null {
