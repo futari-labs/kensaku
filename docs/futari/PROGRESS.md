@@ -1,6 +1,14 @@
 # FutariLabs progress
 
-Phase: interactive bootstrap. No implementation is approved.
+Phase: execution of approved plan `kensaku-mvp-v1` (approval commit `3fe529f`, snapshot `77dafb5d205516cc5843651290b6881c79449a97c82e7a82470bc2afb39fbecc` at `eed64a9`).
+
+## Execution session 2026-11-21
+
+- Started with `/futari:execute` (futari 1.0.2). `node .futari/plan-gate.mjs verify`: PASS. Remote `futari-labs/kensaku`, private, default branch `dev` containing the approval commit.
+- pstack `pstack@pstack-claude` 0.9.145 (git `ce7df681`), matching the plan. `check-playbooks.mjs`: "Every project playbook matches this pstack's playbooks." Invoked `pstack:poteto-mode` via the Skill tool; loaded `.agents/playbooks/futari-approved-plan.md` (standalone).
+- Models per `.claude/pstack-models.md`: implementation workers `sonnet` (`pstack:poteto-agent`); independent reviews `opus` (`thermos` pair, then delta re-review).
+- Issues #1-#6 created for JM-001..JM-006 with exact `Futari-Plan`/`Futari-Task` markers.
+- Observation (no change requested): `.futari/ci-check.mjs` parses `Verdict:` with `[A-Z_]+`, so `Verdict: NOT VERIFIED` fails with "Invalid Verdict marker" rather than "must be VERIFIED". Same outcome (check fails until VERIFIED); harmless.
 
 ## Current design position
 
@@ -21,6 +29,12 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 
 | Task | Issue | Branch/worktree | PR | Tested revision | Status | Evidence / next action |
 | --- | --- | --- | --- | --- | --- | --- |
+| JM-001 | [#1](https://github.com/futari-labs/kensaku/issues/1) | `jm-001-scaffold` / `.claude/worktrees/jm-001-scaffold` | [#7](https://github.com/futari-labs/kensaku/pull/7) | `d8fe2fb` | verified, merge pending checks | `.futari/evidence/JM-001.md`; thermos APPROVE at 18ea870, delta APPROVE at d8fe2fb; CI run 44794263604 green |
+| JM-002 | [#2](https://github.com/futari-labs/kensaku/issues/2) | - | - | - | pending (needs JM-001 merged) | carry forward: none |
+| JM-003 | [#3](https://github.com/futari-labs/kensaku/issues/3) | - | - | - | pending (needs JM-001 merged) | - |
+| JM-004 | [#4](https://github.com/futari-labs/kensaku/issues/4) | - | - | - | pending | brief must include: app factory split of `src/server/index.ts`, typed env config enforcing fixture-only-under-NODE_ENV=test, Host/Origin guard |
+| JM-005 | [#5](https://github.com/futari-labs/kensaku/issues/5) | - | - | - | pending | brief must include: AI Elements CLI writes to `src/components/ai-elements/` (move unchanged), `"use client"` drift on reinstall, run `check-components --update` in the same commit |
+| JM-006 | [#6](https://github.com/futari-labs/kensaku/issues/6) | - | - | - | pending | - |
 
 ## Milestone verification
 
