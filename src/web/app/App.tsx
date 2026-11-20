@@ -6,7 +6,7 @@ import { Button } from "@/web/components/ui/button";
 import { Conversation, ConversationContent, ConversationEmptyState } from "@/web/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/web/components/ai-elements/message";
 import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/web/components/ai-elements/prompt-input";
-import { Suggestion, Suggestions } from "@/web/components/ai-elements/suggestion";
+import { Suggestion } from "@/web/components/ai-elements/suggestion";
 import { ClearHistory, MarketSelect } from "./Controls";
 import { Comparison } from "./Comparison";
 import { Products } from "./Products";
@@ -166,11 +166,11 @@ export function App() {
               <div className="space-y-3 text-center">
                 <h3 className="text-sm font-medium">Ask a shopping question</h3>
                 <p className="text-sm text-muted-foreground">Pick a market below, then type a question or try an example.</p>
-                <Suggestions>
+                <div className="flex flex-wrap justify-center gap-2">
                   {SUGGESTIONS.map((s) => (
-                    <Suggestion key={s} suggestion={s} onClick={ask} />
+                    <Suggestion key={s} suggestion={s} onClick={ask} className="h-auto max-w-full whitespace-normal rounded-xl py-1.5 text-left" />
                   ))}
-                </Suggestions>
+                </div>
               </div>
             </ConversationEmptyState>
           ) : (
