@@ -29,10 +29,10 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 
 | Task | Issue | Branch/worktree | PR | Tested revision | Status | Evidence / next action |
 | --- | --- | --- | --- | --- | --- | --- |
-| JM-001 | [#1](https://github.com/futari-labs/kensaku/issues/1) | `jm-001-scaffold` / `.claude/worktrees/jm-001-scaffold` | [#7](https://github.com/futari-labs/kensaku/pull/7) | `d8fe2fb` | verified, merge pending checks | `.futari/evidence/JM-001.md`; thermos APPROVE at 18ea870, delta APPROVE at d8fe2fb; CI run 44794263604 green |
-| JM-002 | [#2](https://github.com/futari-labs/kensaku/issues/2) | - | - | - | pending (needs JM-001 merged) | carry forward: none |
+| JM-001 | [#1](https://github.com/futari-labs/kensaku/issues/1) | `jm-001-scaffold` | [#7](https://github.com/futari-labs/kensaku/pull/7) | `d8fe2fb` | merged (`4b3aeae`), dev push CI green (run 44794744362) | `.futari/evidence/JM-001.md` |
+| JM-002 | [#2](https://github.com/futari-labs/kensaku/issues/2) | `jm-002-core-rules` | [#8](https://github.com/futari-labs/kensaku/pull/8) | `73c0c8f` | verified, merging | `.futari/evidence/JM-002.md`; thermos APPROVE at 9f5a0f8; repair round 1; delta APPROVE at 73c0c8f |
 | JM-003 | [#3](https://github.com/futari-labs/kensaku/issues/3) | - | - | - | pending (needs JM-001 merged) | - |
-| JM-004 | [#4](https://github.com/futari-labs/kensaku/issues/4) | - | - | - | pending | brief must include: app factory split of `src/server/index.ts`, typed env config enforcing fixture-only-under-NODE_ENV=test, Host/Origin guard |
+| JM-004 | [#4](https://github.com/futari-labs/kensaku/issues/4) | - | - | - | pending | brief must include: app factory split of `src/server/index.ts`, typed env config enforcing fixture-only-under-NODE_ENV=test, Host/Origin guard; Exa summaries parsed with zod at the boundary (core trusts types); `resolveCitations` should call `splitParagraphs` |
 | JM-005 | [#5](https://github.com/futari-labs/kensaku/issues/5) | - | - | - | pending | brief must include: AI Elements CLI writes to `src/components/ai-elements/` (move unchanged), `"use client"` drift on reinstall, run `check-components --update` in the same commit |
 | JM-006 | [#6](https://github.com/futari-labs/kensaku/issues/6) | - | - | - | pending | - |
 
