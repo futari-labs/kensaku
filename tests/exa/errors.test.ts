@@ -22,6 +22,13 @@ describe("mapExaError", () => {
     expect(mapExaError(error).kind).toBe(kind);
   });
 
+  it("marks only transient failures retryable: 429, timeout, and 5xx or status-less upstream", () => {
+    const retryable = (error: unknown) => mapExaError(error).retryable;
+    expect([new HttpError(429), new HttpError(408), new HttpError(500), new HttpError(503), new TypeError("fetch failed")].map(retryable)).toEqual([true, true, true, true, true]);
+    expect([new HttpError(400), new HttpError(404), new HttpError(401), new HttpError(402), new HttpError(403)].map(retryable)).toEqual([false, false, false, false, false]);
+    expect(new ExaFailure("upstream", "malformed").retryable).toBe(false);
+  });
+
   it("reads retry-after seconds from the error envelope as retryAfterMs", () => {
     expect(mapExaError(new HttpError(429, "slow down", { retryAfter: 2 })).retryAfterMs).toBe(2000);
     expect(mapExaError(new HttpError(429)).retryAfterMs).toBeUndefined();

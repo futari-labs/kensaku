@@ -1,0 +1,14 @@
+{
+  "name": "no-candidates",
+  "description": "Run completes with a comparison but Exa names no candidate products; no search follows.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC candidates answer with zero candidates composed with the real A1 comparison and citations; not a live Exa response",
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": []
+      }
+    }
+  ]
+}

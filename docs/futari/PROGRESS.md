@@ -31,10 +31,19 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 | --- | --- | --- | --- | --- | --- | --- |
 | JM-001 | [#1](https://github.com/futari-labs/kensaku/issues/1) | `jm-001-scaffold` | [#7](https://github.com/futari-labs/kensaku/pull/7) | `d8fe2fb` | merged (`4b3aeae`), dev push CI green (run 44794744362) | `.futari/evidence/JM-001.md` |
 | JM-002 | [#2](https://github.com/futari-labs/kensaku/issues/2) | `jm-002-core-rules` | [#8](https://github.com/futari-labs/kensaku/pull/8) | `73c0c8f` | merged (`521399c`), dev push CI green | `.futari/evidence/JM-002.md` |
-| JM-003 | [#3](https://github.com/futari-labs/kensaku/issues/3) | `jm-003-exa-adapter` | [#9](https://github.com/futari-labs/kensaku/pull/9) | `c8491d3` | verified, merging | `.futari/evidence/JM-003.md`; thermos 09ef1da CHANGES REQUIRED (B1, B2); repair round 1; delta APPROVE at c8491d3 |
-| JM-004 | [#4](https://github.com/futari-labs/kensaku/issues/4) | - | - | - | pending | brief must include: app factory split of `src/server/index.ts`, typed env config enforcing fixture-only-under-NODE_ENV=test, Host/Origin guard; Exa summaries parsed with zod at the boundary (core trusts types); `resolveCitations` should call `splitParagraphs`; REQUIRED: reserve MAX_CALL_COST_DOLLARS for in-flight calls in GuardedExaPort (JM-003 P2); ledger methods take `now`; optional pnpm override for minimatch >=11.0.1 (Dependabot #1, dev-only via shadcn CLI) |
-| JM-005 | [#5](https://github.com/futari-labs/kensaku/issues/5) | - | - | - | pending | brief must include: AI Elements CLI writes to `src/components/ai-elements/` (move unchanged), `"use client"` drift on reinstall, run `check-components --update` in the same commit |
-| JM-006 | [#6](https://github.com/futari-labs/kensaku/issues/6) | - | - | - | pending | - |
+| JM-003 | [#3](https://github.com/futari-labs/kensaku/issues/3) | `jm-003-exa-adapter` | [#9](https://github.com/futari-labs/kensaku/pull/9) | `c8491d3` | merged (`be91f1d`), dev push CI green (run 44800483182) | `.futari/evidence/JM-003.md` |
+| JM-004 | [#4](https://github.com/futari-labs/kensaku/issues/4) | `jm-004-vertical-slice` | [#10](https://github.com/futari-labs/kensaku/pull/10) | `7b8bdec` | verified, merging | `.futari/evidence/JM-004.md`; thermos APPROVE at 46e95e1; repair round 1; delta APPROVE at 7b8bdec; live smoke 5 requests, $0.055 |
+| JM-005 | [#5](https://github.com/futari-labs/kensaku/issues/5) | - | - | - | pending (needs JM-004 merged) | carry: AI Elements CLI writes to `src/components/ai-elements/` (move unchanged) and `"use client"` drift on reinstall; run `check-components --update` in the same commit; keep a cancelled notice on earlier unanswered questions; owner visual review in `.futari/evidence/JM-005.md` |
+| JM-006 | [#6](https://github.com/futari-labs/kensaku/issues/6) | - | - | - | pending | carry: move `classifyAll` out of the Exa try in `src/research/pipeline.ts`; reuse `tests/research/live-run.ts`; live budget remaining 115 requests / $1.945 of the approved 120 / $2.00; owner audit flags from JM-004 (Instacart marketplace offer, refurbished MX Vertical); CR-001 decision |
+
+## Change requests
+
+### CR-001: accept spaces inside citation markers (proposed, needs owner decision through a reviewed plan revision)
+
+- Observation: in the JM-004 live smoke, Exa's `/answer` wrote markers such as `[2, 5, 6]` in Q2. The frozen rule in `evals/cases/citations.json` (`'[' n (',' n)* ']'`, protected) does not match them, so the Q2 comparison resolved 0 of 8 citations and every paragraph was flagged uncited. Q1 used `[4,5]` and resolved normally. Evidence: `.futari/evidence/live/jm-004-smoke-Q2.json`.
+- Impact: REQ-002 ("cited comparison") is met by the code as approved but fails for real answers that use spaces; owner product acceptance at JM-006 would likely reject it. EV-008 thresholds do not measure citations, so EV-008 can pass while this gap remains.
+- Recommendation: amend the rule to `'[' n (\s* ',' \s* n)* ']'` (optional whitespace around commas, and optionally inside the brackets), add one live-derived citation case for the Q2 text, and let JM-006 (which may change `src/core/`) implement it. This changes a protected evaluation input, so it requires a reviewed plan revision and a fresh owner approval through `/futari:bootstrap`; no agent edits the frozen case file.
+- Status: waiting on the owner. Unrelated approved work (JM-005) continues.
 
 ## Milestone verification
 

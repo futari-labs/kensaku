@@ -1,0 +1,41 @@
+{
+  "name": "two-candidates",
+  "description": "Normal question: two candidates, so exactly three Exa calls (answer plus two searches).",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC two-candidate answer (Sony WH-1000XM5, Bose QuietComfort Ultra) composed with the real A1 comparison and citations; not a live Exa response",
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": [
+          {
+            "name": "WH-1000XM5 Wireless Noise Cancelling Headphones",
+            "brand": "Sony",
+            "modelIdentifiers": [
+              "WH-1000XM5"
+            ]
+          },
+          {
+            "name": "QuietComfort Ultra Headphones",
+            "brand": "Bose",
+            "modelIdentifiers": [
+              "QuietComfort Ultra"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/S1-headphones.json"
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/S1-headphones.json"
+      }
+    }
+  ]
+}

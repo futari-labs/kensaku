@@ -1,0 +1,1400 @@
+{
+  "task": "JM-004",
+  "timestamp": "2026-11-20T19:32:02.379Z",
+  "gitSha": "d9f77f64fbdb629537e6837583626c66c76499d2",
+  "gitDirty": false,
+  "question": "Best ergonomic wireless mouse for programming under $120",
+  "market": "US",
+  "queryId": "Q2",
+  "answerMarketMode": "userLocation",
+  "httpStatus": 200,
+  "finalState": "completed",
+  "error": null,
+  "exaExchanges": [
+    {
+      "ts": "2026-11-20T19:32:04.370Z",
+      "endpoint": "/answer",
+      "request": {
+        "query": "Best ergonomic wireless mouse for programming under $120",
+        "text": false,
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "comparison": {
+              "type": "string",
+              "description": "Short comparison with numbered citation markers like [1]."
+            },
+            "candidates": {
+              "type": "array",
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "brand": {
+                    "type": "string"
+                  },
+                  "modelIdentifiers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Model numbers or distinctive tokens."
+                  }
+                },
+                "required": [
+                  "name",
+                  "brand",
+                  "modelIdentifiers"
+                ]
+              }
+            }
+          },
+          "required": [
+            "comparison",
+            "candidates"
+          ]
+        },
+        "userLocation": "US"
+      },
+      "response": {
+        "requestId": "d5772522f1ae44af0e499318010713fd",
+        "answer": {
+          "comparison": "The Logitech MX Master 3S is widely considered the top productivity choice for its comfort, programmable buttons, and dual scroll wheels [2, 5, 6]. For those seeking relief from wrist strain, the Logitech MX Vertical offers a neutral handshake position [2, 3]. Alternatively, the Razer Pro Click V2 provides an ergonomic shape with gaming-grade sensor performance [1, 5]. All these options are generally available for $120 or less [1, 3, 5, 6].",
+          "candidates": [
+            {
+              "brand": "Logitech",
+              "modelIdentifiers": [
+                "MX Master 3S"
+              ],
+              "name": "MX Master 3S"
+            },
+            {
+              "name": "MX Vertical",
+              "modelIdentifiers": [
+                "MX Vertical"
+              ],
+              "brand": "Logitech"
+            },
+            {
+              "modelIdentifiers": [
+                "Pro Click V2"
+              ],
+              "brand": "Razer",
+              "name": "Pro Click V2"
+            }
+          ]
+        },
+        "citations": [
+          {
+            "id": "https://www.wired.com/gallery/best-ergonomic-mouse/",
+            "title": "5 Best Ergonomic Mice (2025), Tested and Reviewed | WIRED",
+            "url": "https://www.wired.com/gallery/best-ergonomic-mouse/",
+            "publishedDate": "2025-05-16T11:30:00.000Z",
+            "author": "Henri Robbins",
+            "image": "https://media.wired.com/photos/68a3725c4c06b0189ee3f1f3/191:100/w_1280,c_limit/The%20Best%20Ergonomic%20Mouse%20to%20Keep%20Wrist%20Strain%20at%20Bay.png"
+          },
+          {
+            "id": "https://www.techgearlab.com/topics/small-and-home-office/best-mouse",
+            "title": "The Best Mouse | Lab Tested & Ranked",
+            "url": "https://www.techgearlab.com/topics/small-and-home-office/best-mouse",
+            "publishedDate": "2025-08-18T15:00:00.000Z",
+            "author": "Austin Palmer",
+            "image": "https://techgearlab.b-cdn.net/photos/38/43/505824_29780_XXL.jpg"
+          },
+          {
+            "id": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/",
+            "title": "Best ergonomic vertical and trackball mice for developers who type all day | Botmonster Tech",
+            "url": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/",
+            "publishedDate": "2026-05-14T09:54:44.000Z",
+            "author": "Botmonster",
+            "image": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/best-ergonomic-vertical-trackball-mice-developers_hu_c61a02086eb4b5c8.webp"
+          },
+          {
+            "id": "https://techpulsesite.com/best-ergonomic-mice-for-developers-2026-logitech-mx-vs-razer-vs-vertic/",
+            "title": "Best Ergonomic Mice for Developers 2026: Logitech MX vs Razer vs Vertical Mice – TechPulse",
+            "url": "https://techpulsesite.com/best-ergonomic-mice-for-developers-2026-logitech-mx-vs-razer-vs-vertic/",
+            "publishedDate": "2026-07-10T08:05:00.000Z",
+            "author": "MD Rafikul Islam",
+            "image": "https://techpulsesite.com/wp-content/uploads/2026/07/best-ergonomic-mice-for-developers-2026-logitech-mx-vs-razer-1200x500.jpg"
+          },
+          {
+            "id": "https://www.techgearlab.com/reviews/small-and-home-office/wireless-mouse/logitech-mx-master-3s",
+            "title": "Logitech MX Master 3S Review | Tested & Rated",
+            "url": "https://www.techgearlab.com/reviews/small-and-home-office/wireless-mouse/logitech-mx-master-3s",
+            "publishedDate": "2025-08-18T00:00:00.000Z",
+            "image": "https://techgearlab.b-cdn.net/photos/39/69/518474_16912_XXL.jpg"
+          },
+          {
+            "id": "https://argusic.com/hardware/mouse",
+            "title": "Best mice for programming: ergonomic and wireless | Argusic",
+            "url": "https://argusic.com/hardware/mouse",
+            "image": "https://argusic.com/hardware/mouse/opengraph-image/card?8a0c26f621b01bac"
+          },
+          {
+            "id": "https://www.microcenter.com/site/mc-news/article/best-productivity-mice-buying-guide.aspx",
+            "title": "The Best Productivity Mice You Can Buy",
+            "url": "https://www.microcenter.com/site/mc-news/article/best-productivity-mice-buying-guide.aspx"
+          },
+          {
+            "id": "https://www.tomshardware.com/best-picks/best-wireless-mouse",
+            "title": "Best Wireless Mouse 2026: Productivity, Portability, and Comfort | Tom's Hardware",
+            "url": "https://www.tomshardware.com/best-picks/best-wireless-mouse",
+            "publishedDate": "2023-11-07T19:47:06.000Z",
+            "author": "Sarah Jacobsson Purewal",
+            "image": "https://cdn.mos.cms.futurecdn.net/63QVV3MEpWXGvUF5mru6Hf-2560-80.jpg"
+          }
+        ],
+        "costDollars": {
+          "total": 0.005
+        }
+      },
+      "requestId": "d5772522f1ae44af0e499318010713fd",
+      "costDollars": 0.005
+    },
+    {
+      "ts": "2026-11-20T19:32:06.592Z",
+      "endpoint": "/search",
+      "request": {
+        "query": "Logitech MX Master 3S buy",
+        "options": {
+          "type": "auto",
+          "numResults": 8,
+          "userLocation": "US",
+          "contents": {
+            "highlights": true,
+            "summary": {
+              "query": "Extract the product listing's price, currency, availability and merchant.",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isProductListing": {
+                    "type": "boolean",
+                    "description": "True only if this page sells one specific product."
+                  },
+                  "productName": {
+                    "type": "string"
+                  },
+                  "merchant": {
+                    "type": "string",
+                    "description": "Store or seller name shown on the page."
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Current listed price as a number, no symbols. Omit if not shown."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "description": "ISO 4217 code such as USD. Omit if not shown."
+                  },
+                  "availability": {
+                    "type": "string",
+                    "enum": [
+                      "in_stock",
+                      "out_of_stock",
+                      "preorder",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "isProductListing"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "requestId": "180ab478ffdc21bc7a947d3aad121250",
+        "resolvedSearchType": "",
+        "results": [
+          {
+            "id": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+            "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech",
+            "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+            "highlights": [
+              "Track anywhere, even glass now with 8K DPI precision\n\n \n\nMX Travel case included - Logitech.com exclusive\n\n \n\nMade with recycled plastic \n\n \n\nAll your MX tools in one flow\n\n \n\n# MX Master 3S Bluetooth Edition\n\nPerformance Wireless Mouse\n\n 1.9k\n\nThe average rating is calculated from all available product reviews, including those sourced from other platforms. Reviews with a \"Verified\" label indicate a confirmed purchase.\n\nSpecial Pricing\n\n$79.99 $99.99 20% off\n\n## Color Black\n\nIn stock. Ready to ship\n\nFree shipping (3-5 business days) on all orders.\n\nImportant delivery estimation information \n\nFree returns within 30 days of your purchase.\n\n## Software and Support\n\n...\n\n## An icon. Remastered.\n\nMeet MX Master 3S – an iconic mouse remastered. Feel every moment of your workflow with even more precision, tactility, and performance, thanks to Quiet Clicks and an 8,000 DPI track-on-glass* sensor.\n\n*4 mm minimum glass thickness.\n\n \n\n### Feel it. Barely hear it.\n\nIntroducing Quiet Clicks – create, make and do with the same click feel, but less noise. Quiet Clicks deliver satisfying, soft tactile feedback with 90% less click noise*. Add that to a remarkably quiet MagSpeed electromagnetic scroll wheel for a high performance experience with zero distraction.\n\n*Compared to MX Master 3, MX Master 3S has 90% less Sound Power Level left and right click, measured at 1m.\n\n...\n\n### 8k DPI any-surface tracking\n\nMX Master 3S is outfitted with our most accurate sensor ever, with next-gen precision and responsiveness. The 8,000 DPI optical sensor tracks virtually anywhere – even on glass*. You can adjust your tracking sensitivity in Logi Options+** and set the right level for your workflow and monitor resolution.\n\n*4 mm minimum glass thickness., **Available on Windows and macOS at logitech.com/optionsplus\n\n...\n\n### Scroll 1,000 lines per second\n\nMagSpeed Electromagnetic scrolling is precise enough to stop on a pixel and quick enough to scroll 1,000 lines per second. Oh, and it’s nearly silent."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"MX Master 3S Wireless Mouse - 8K Optical Sensor | Logitech\",\"merchant\":\"Logitech\",\"price\":79.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png"
+          },
+          {
+            "id": "https://www.amazon.com/dp/B09HM94VDS",
+            "title": "Logitech MX Master 3S Wireless Bluetooth Mouse, Ultra-Fast Scrolling 8K DPI",
+            "url": "https://www.amazon.com/dp/B09HM94VDS",
+            "highlights": [
+              "# Logitech MX Master 3S Wireless Bluetooth Mouse, Ultra-Fast Scrolling 8K DPI\nBrand: Logitech\nCategory: Keyboards, Mice & Accessories > Mice\n\n## Features\nLogitech MX Master 3S Standard Edition comes with a Logi Bolt USB receiver (dongle), and a USB-C charging cable (USB-A to USB-C); Install free Logi Options+ App to enable Logi AI Prompt Builder for your Logitech wireless mouse and keyboard setups; 8K DPI Any-surface tracking: Use MX Master 3S cordless computer mouse to work on any surface - even glass (1) - with an 8000 DPI sensor with customizable sensitivity; Quiet Clicks: MX Master 3S Bluetooth mouse with Quiet Clicks - offering the same satisfying feel but with 90% less click noise (2); Magspeed scrolling: A computer mouse with remarkable speed, precision, and near silence - MagSpeed scrolling is 90% faster (3), 87% more precise (4), and ultra quiet.; FLOW cross-computer control: Work seamlessly on multiple computers or laptops, and transfer text, images, and files – between Windows & macOS (5); Multi-device and multi-OS: Connect the comfort mouse with up to 3 devices via Bluetooth (6) on Windows, macOS, Chrome OS or Linux. Logi Bolt USB receiver not included.; Plastic parts in MX Master 3S include certified post consumer recycled plastic (Graphite and Black: 27%(10).\n\n## Specifications\nColor: Graphite; Enclosure Material: Plastic; Additional Features: Lightweight, Portable, Rechargeable, Wireless; Connectivity Technology: Radio Frequency, USB, Wi-Fi; Movement Detection: Optical\n\n## Pricing & Reviews\nPrice: 113.99 USD.\nRated 4.5 from 8712 reviews.\n\n## Details\nModel: 910-006557. UPC: 097855174789"
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Master 3S Wireless Bluetooth Mouse, Ultra-Fast Scrolling 8K DPI\",\"merchant\":\"Amazon\",\"price\":113.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "entities": [
+              {
+                "id": "https://www.amazon.com/dp/B09HM94VDS",
+                "type": "product",
+                "version": 1,
+                "properties": {
+                  "name": "Logitech MX Master 3S Wireless Bluetooth Mouse, Ultra-Fast Scrolling 8K DPI",
+                  "description": "Logitech MX Master 3S Performance Wireless Mouse Introducing the Logitech MX Master 3S – a logitech bluetooth mouse remastered. Now with Quiet Clicks(2) and 8K DPI any-surface tracking, suitable for use as a Windows mouse and PC mouse, providing more feel and performance than ever before. This black wireless mouse is an ergonomic mouse wireless option featuring a rechargeable Li-Po (500 mAh) battery. Product details: Weight: 4.97 oz (141 g) Dimensions: 2 x 3.3 x 4.9 in (51 x 84.3 x 124.9 mm). Compatible with Windows, macOS, Linux, Chrome OS, iPadOS, Android (8), the wireless mouse for pc is equipped with advanced Darkfield high precision sensor technology. With 7 buttons including Left/Right-click, Back/Forward, App-Switch, Wheel mode-shift, Middle click, it serves well as a bluetooth mouse for laptop. The Scroll Wheel, Thumbwheel, and Gesture button make it a more ergonomic mouse that users will appreciate. Operates wirelessly up to a distance of 33 ft (10 m)(9). Additional key features include wireless mouse bluetooth technology and multi-device compatibility, making it an apt choice as a laptop mouse wireless alternative. The Logitech MX Master 3S is not just a standard computer mouse, but an effective wireless bluetooth mouse and cordless mouse, meeting diverse user needs.",
+                  "images": [
+                    "https://m.media-amazon.com/images/I/61+OT7FPABL._AC_SY355_.jpg",
+                    "https://m.media-amazon.com/images/I/61+OT7FPABL._AC_SY450_.jpg",
+                    "https://m.media-amazon.com/images/I/61+OT7FPABL._AC_SX425_.jpg",
+                    "https://m.media-amazon.com/images/I/61+OT7FPABL._AC_SX466_.jpg",
+                    "https://m.media-amazon.com/images/I/61+OT7FPABL._AC_SX522_.jpg",
+                    "https://m.media-amazon.com/images/I/61+OT7FPABL._AC_SX569_.jpg",
+                    "https://m.media-amazon.com/images/I/61+OT7FPABL._AC_SX679_.jpg"
+                  ],
+                  "brand": {
+                    "id": null,
+                    "name": "Logitech"
+                  },
+                  "identifiers": {
+                    "gtin": "097855174789",
+                    "mpn": "910-006557"
+                  },
+                  "offer": {
+                    "price": {
+                      "amount": 113.99,
+                      "currency": "USD"
+                    },
+                    "availability": "low_stock",
+                    "sku": "B09HM94VDS",
+                    "seller": {
+                      "id": "A2L77EE7U53NWQ",
+                      "name": "Amazon Resale",
+                      "url": null
+                    }
+                  },
+                  "rating": {
+                    "value": 4.5,
+                    "count": 8712
+                  },
+                  "attributes": [
+                    {
+                      "name": "Connectivity Technology",
+                      "value": "Radio Frequency, USB, Wi-Fi"
+                    },
+                    {
+                      "name": "Additional Features",
+                      "value": "Lightweight, Portable, Rechargeable, Wireless"
+                    },
+                    {
+                      "name": "Movement Detection",
+                      "value": "Optical"
+                    },
+                    {
+                      "name": "Button Quantity",
+                      "value": "7"
+                    },
+                    {
+                      "name": "Hand Orientation",
+                      "value": "Left"
+                    },
+                    {
+                      "name": "Compatible Devices",
+                      "value": "Laptop, Personal Computer"
+                    },
+                    {
+                      "name": "Operating System",
+                      "value": "Multi OS"
+                    },
+                    {
+                      "name": "Battery Average Life",
+                      "value": "70 days"
+                    },
+                    {
+                      "name": "Number of Batteries",
+                      "value": "1 Lithium Polymer batteries required. (included)"
+                    },
+                    {
+                      "name": "Hardware Platform",
+                      "value": "Mac, PC"
+                    },
+                    {
+                      "name": "Power Source",
+                      "value": "Battery Powered"
+                    },
+                    {
+                      "name": "Mouse Maximum Sensitivity",
+                      "value": "8000 dots_per_inch"
+                    },
+                    {
+                      "name": "Minimum Required Operating System Version",
+                      "value": "Windows 11"
+                    },
+                    {
+                      "name": "Range",
+                      "value": "10.0 meters"
+                    },
+                    {
+                      "name": "Item Weight",
+                      "value": "4.97 ounces"
+                    },
+                    {
+                      "name": "Item Dimensions L x W",
+                      "value": "4.92\"L x 3.32\"W"
+                    },
+                    {
+                      "name": "Unit Count",
+                      "value": "1 Count"
+                    },
+                    {
+                      "name": "Enclosure Material",
+                      "value": "Plastic"
+                    },
+                    {
+                      "name": "Antenna Location",
+                      "value": "Office"
+                    },
+                    {
+                      "name": "Included Components",
+                      "value": "Mouse, Logi Bolt USB receiver, USB-C charging cable, user documentation"
+                    },
+                    {
+                      "name": "Warranty Description",
+                      "value": "1 Year Limited Hardware Warranty"
+                    },
+                    {
+                      "name": "Color",
+                      "value": "Graphite"
+                    },
+                    {
+                      "name": "Style Name",
+                      "value": "Mouse"
+                    },
+                    {
+                      "name": "Pattern",
+                      "value": "PC/MAC"
+                    },
+                    {
+                      "name": "Theme",
+                      "value": "Computer Accessories"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+            "title": "Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples",
+            "url": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+            "highlights": [
+              "Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples\n\n$79.99\n\nHighlights\n\n- 8K DPI Any-surface tracking: Use MX Master 3S cordless computer mouse to work on any surface - even glass - with an 8000 DPI sensor with customizable sensitivity\n- Quiet Clicks: MX Master 3S Bluetooth mouse with Quiet Clicks - offering the same satisfying feel but with 90% less click noise\n- Magspeed scrolling: A computer mouse with remarkable speed, precision, and near silence - MagSpeed scrolling is 90% faster, 87% more precise, and ultra quiet.\n\n# Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500)\n\n4.52\n\n172 Reviews \n\n 2 Questions \n\nFinal price is $79.99\n\nComp Value\n\nOriginal price is $99.99\n\n20% off, more pricing info\n\nFree Returns\n\nOnline. In store. Always free.\n\n## About this product\n\nLogitech MX Master 3S – Ultra-Precise Wireless Mouse with 8K DPI, Quiet Clicks & Ergonomic Design for Peak Productivity\n\nIntroducing Logitech MX Master 3S – a productivity mouse for ultimate tactility, precision, and flow. Quiet Click buttons deliver a satisfying tactile feel with 90% less click noise. MX Master 3S also features an 8K optical sensor for next-gen responsiveness on any surface – even glass. MagSpeed electromagnetic scrolling delivers remarkable speed, precision, and near silence – with the ability to scroll 1,000 lines a second. The ergonomic silhouette is crafted to support your palm and fingers. Logi Options+ app enables Flow cross-computer control and introduces more customizations than ever. MX Master 3S stays powered up to 70 days on a full charge – and delivers three hours of use from a one minute quick charge. Charging cable not included.\n\n- 8K DPI Any-surface tracking: Use MX Master 3S cordless computer mouse to work on any surface - even glass - with an 8000 DPI sensor with customizable sensitivity\n- Quiet Clicks: MX Master 3S Bluetooth mouse with Quiet Clicks - offering the same satisfying feel but with 90% less click noise\n- Magspeed scrolling: A computer mouse with remarkable speed, precision, and near silence - MagSpeed scrolling is 90% faster, 87% more precise, and ultra quiet.\n- Ergonomic design: Work comfortably with a precision mouse featuring a silhouette crafted for a more natural wrist posture and optimally placed thumb controls\n- Countless Customizations: Customize buttons and optimize your workflow with App specific profiles in the Logi Options+ app\n- FLOW cross-computer control: Work seamlessly on multiple computers or laptops, and transfer text, images, and files – between Windows & macOS\n- Multi-device and multi-OS: Connect the comfort mouse with up to 3 devices via Bluetooth on Windows, macOS, Chrome OS or Linux. Logi Bolt USB receiver not included.\n- Plastic parts in MX Master 3S include certified post consumer recycled plastic (Graphite and Black: 27%).\n- Package contents: wireless mouse, user documentation\n- Safety Data Sheet"
+            ],
+            "summary": "{\"isProductListing\":false,\"productName\":\"Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples\",\"merchant\":\"Staples\",\"price\":79.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://assets.staples-static.com/sbd/cre/products/home-banners/20190414/images/nad_staples_logo2.png"
+          },
+          {
+            "id": "https://www.amazon.com/Logitech-MX-Master-3S-Performance/dp/B0B11LJ69K",
+            "title": "Logitech MX Master 3S Performance Wireless Mouse - Graphite With Bolt Reciever",
+            "url": "https://www.amazon.com/Logitech-MX-Master-3S-Performance/dp/B0B11LJ69K",
+            "highlights": [
+              "# Logitech MX Master 3S Performance Wireless Mouse - Graphite With Bolt Reciever\nBrand: Logitech\nCategory: Keyboards, Mice &\n...\n## Pricing & Reviews\nPrice: 118.99 USD.\nRated 4.6 from 8937 reviews.\n\n## Details\nModel: 910-006561. UPC: 097855175359"
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Master 3S Performance Wireless Mouse - Graphite With Bolt Reciever\",\"merchant\":\"Amazon\",\"price\":118.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}"
+          },
+          {
+            "id": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+            "title": "Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low",
+            "url": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+            "publishedDate": "2026-11-17T19:18:27.000Z",
+            "author": "XDA Deals Desk",
+            "highlights": [
+              "# Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low\n\n By XDA Deals Desk \n\n Published Nov 17, 2026, 2:18 PM EST \n\nIf you spend your day in spreadsheets, browser tabs, and video calls, a quiet, precise mouse is one of the easiest desk upgrades to appreciate. That's where the Logitech MX Master 3S Bluetooth Wireless Mouse comes in—it's on sale at Amazon for $79.99, matching its all-time low at the retailer.\n\n##### Logitech MX Master 3S \n\n Weight \n\n 141 g \n\n Sensor \n\n Darkfield high-precision sensor \n\n Battery \n\n ~70 days \n\n Maximum DPI \n\n 8000 \n\nThe MX Master 3S is an excellent mouse if you want to amp up your productivity. It offers multiple programmable buttons, Logitech's MagSpeed scroll wheel, multi-device support, an ergonomic design, and more.\n\n## Comfortable ergonomics for a fair price \n\nCredit: Logitech\n\n The 8,000DPI optical sensor tracks on most surfaces, including glass that's at least 4mm thick, so you're not tied to one spot on your desk. That's handy if your desk or table has a glass top, as long as the glass meets that 4mm minimum. You can also adjust the sensitivity in Logi Options+ if you'd rather have the cursor move faster or slower.\n\nLogitech says its clicks are 90% quieter than those on the older MX Master 3, which matters if you share an office with others. The MagSpeed electromagnetic scroll wheel is machined steel and nearly silent, and Logitech says it can scroll up to 1,000 lines per second, so long spreadsheets and web pages fly by when you give it a spin.\n\nThe Logi Options+ app is available on Windows and macOS, and it includes specific customizations for Chrome, Safari, Photoshop, Premiere Pro, Final Cut Pro, Zoom, Teams, and Microsoft Office. You can also tune how the mouse behaves exactly you need in the programs you use most.\n\nHowever, there are a couple of things worth knowing first. The listing is marked with \"No Receiver,\" essentially meaning you won't get a Bluetooth dongle to plug into your PC. Make sure you can connect with Bluetooth without a dongle before picking this up. Also, if you already own an MX Master 3, the quieter clicks are the main difference here, so weigh that against the price before you upgrade.\n\nAt $80, the Logitech MX Master 3S is a solid pick if you want a quieter, more customizable mouse for desk work, and it's $20 under its regular price at Amazon. Between the sensor, the near-silent scroll wheel, and the Quiet Clicks, you're getting a well-rounded mouse for the money."
+            ],
+            "summary": "{\"isProductListing\":false,\"productName\":\"Logitech MX Master 3S Bluetooth Wireless Mouse\",\"merchant\":\"Amazon\",\"price\":79.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://static0.xdaimages.com/wordpress/wp-content/uploads/wm/2024/04/logitech-mx-master-3s-5.jpg?w=1600&h=900&fit=crop"
+          },
+          {
+            "id": "https://1computeroutlet.com/products/peripherals-input-devices/mice-trackballs/mx-master-3s-bluetooth-black-3d20f429",
+            "title": "MX Master 3S Bluetooth Black",
+            "url": "https://1computeroutlet.com/products/peripherals-input-devices/mice-trackballs/mx-master-3s-bluetooth-black-3d20f429",
+            "author": "1ComputerOutlet.com",
+            "highlights": [
+              "# MX Master 3S Bluetooth Black\n\n$104.99\n\n| Brand | Logitech Core |\n| --- | --- |\n| Manufacturer part number | 910-007500 |\n| UPC | 097855201812 |\n| Condition | New |\n\n$104.99\n\n✓ In Stock\n\nAvailability Ships from Warehouse Network(7 total available)\n\n2 warehouse locations\n\nDeLand, FL(our store) Out\n\nSouth Bend, IN 7 in stock\n\nAvailable for store pickup or direct shipping. Delivery times may vary by location.\n\n## More ways to pay\n\n- Local store · DeLand, FL\n- Returns policy\n- Secure checkout\n\n## Product information\n\nBrand\n\nLogitech Core\n\nManufacturer part number\n\n910-007500\n\nUPC\n\n097855201812\n\nCondition\n\nNew\n\n## Product Details\n\nMX Master 3S Bluetooth Black. Brand: Logitech Core. Manufacturer part number: 910-007500.\n\n## Shipping & Returns\n\nShipping policy\n\nShips from our network or pick up at our DeLand, FL store. Delivery options and costs are shown at checkout.\n\nShipping policy\n\nReturns policy\n\nReturns are accepted under our returns policy."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"MX Master 3S Bluetooth Black\",\"merchant\":\"1computeroutlet\",\"price\":104.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://1computeroutlet.com/og-default.jpg"
+          },
+          {
+            "id": "https://www.amazon.it/Logitech-Master-prestazioni-scorrimento-tracciamento/dp/B0FHHV6YR5",
+            "title": "Logitech MX Master 3S High Performance Wireless Mouse with Ultra Fast Scrolling, Ergo, 8000 DPI, Glass Tracking, Discrete Clicks, Bluetooth, Windows, Linux, Chrome - Graphite : Amazon.it: Computers",
+            "url": "https://www.amazon.it/Logitech-Master-prestazioni-scorrimento-tracciamento/dp/B0FHHV6YR5",
+            "author": "From Logitech",
+            "highlights": [
+              "€69.99€ 69. 99 \n\n FREE Delivery Wednesday, 25 November \n\n In stock \n\n FREE Delivery Wednesday, 25 November. Order within 8 hrs 29 mins. Details \n\n In stock \n\n Shipper / Seller \n\n Amazon \n\n Amazon \n\n Shipper / Seller Amazon \n\n Returns \n\n Returnable until Jan 15, 2027 or within 14 days from receipt (whichever is later) \n\n Returnable until Jan 15, 2027 or within 14 days from receipt (whichever is later) \n\n If you purchase this item between November 1 and December 25, 2026, you may request a return by January 15, 2027 or within 14 days from receipt as per your legal right of withdrawal (whichever is later). \n\n Payment \n\n Secure transaction \n\n Your transaction is secure\n\n...\n\nWarranty and Repairs \n\n Get a repair if you experience an item defect for 2 years under legal warranty. ... The legal warranty against hidden defects also applies.\n\n...\n\n€67.89€ 67. 89 \n\n FREE returns \n\n FREE Delivery Thursday, 26 November \n\n Dispatches from: Amazon \n\n Sold by: Amazon Seconda mano \n\n FREE returns \n\n L'articolo verrà fornito nell'imballaggio originale. L'imballaggio sarà danneggiato. \n\n FREE Delivery Thursday, 26 November. Details \n\n Only 1 left in stock. \n\n€€69.99 69. 99 () Includes selected options. Includes initial monthly payment and selected options. \n\n Sold by Amazon Seconda mano and Fulfilled by Amazon.\n\n...\n\n# Logitech MX Master 3S High Performance Wireless Mouse \n\n 4.5 4.5 out of 5 stars (1,139) \n\nRRP: €99.99 RRP: €99.99€99.99 \n\n FREE returns \n\n Pattern Name: MX Master 3S\n\n...\n\n| --- | --- |\n| Colour | graphite grey |\n| Connectivity Technology | Bluetooth, Wireless |\n\n...\n\n# Product Summary: Logitech MX Master 3S High Performance Wireless Mouse | Ultra-fast scrolling, Ergo, 8000 DPI, glass tracking, discrete clicks, Bluetooth, Windows, Linux, Chrome - Graphite \n\nFrom Logitech\n\n 4.5 out of 5 stars, 1,139 ratings \n\n Customer reviews \n\n300+ bought in past month\n\n## Price \n\n One-time purchase: €69.99 30% Savings \n\n List Price: €99.99 \n\n Deal ends: 1796079599000 \n\n The prices of products sold on Amazon include VAT. Depending on your delivery address, VAT may vary at the checkout. For more information, click here."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Master 3S High Performance Wireless Mouse | Ultra-fast scrolling, Ergo, 8000 DPI, glass tracking, discrete clicks, Bluetooth, Windows, Linux, Chrome - Graphite\",\"merchant\":\"Amazon\",\"price\":69.99,\"currency\":\"EUR\",\"availability\":\"in_stock\"}"
+          },
+          {
+            "id": "https://www.bestbuy.com/product/logitech-mx-master-3s-wireless-usb-a-laser-mouse-with-ultrafast-scrolling-wireless-black/J7H7ZY8XTK/sku/10315527",
+            "title": "Logitech - MX Master 3S Wireless (USB-A) Laser Mouse with Ultrafast Scrolling - Wireless - Black",
+            "url": "https://www.bestbuy.com/product/logitech-mx-master-3s-wireless-usb-a-laser-mouse-with-ultrafast-scrolling-wireless-black/J7H7ZY8XTK/sku/10315527",
+            "highlights": [
+              "# Logitech - MX Master 3S Wireless (USB-A) Laser Mouse with Ultrafast Scrolling - Wireless - Black\nBrand: Logitech\nCategory: Mice, Keyboards & Accessories > Mice\n\n## Features\nUse MX Master 3S cordless computer mouse to work on any surface - even glass - with the upgraded 8000 DPI sensor with customizable sensitivity.¹; MX Master 3S Bluetooth mouse introduces Quiet Clicks - offering the same satisfying feel but with 90% less click noise compared to MX Master 3 edition.; A computer ... , precision, ... 9 ... , ... .; ... or ... , and ... files ... & ... Connect the comfort mouse with up to 3 devices via Bluetooth or the included Logi Bolt USB receiver on Windows, macOS, Chrome OS or Linux\n\n...\n\n## Specifications\nColor: Black; Lighting Type: None; Maximum Sensitivity: 8000 dots per inch; Number of Buttons (Total): 7; Connection Type: Wireless\n\n## Pricing & Reviews\nPrice: 119 USD.\nRated 4.7 from 2977 reviews.\n\n## Details\nModel: 910-006556. UPC: 097855174819"
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech - MX Master 3S Wireless (USB-A) Laser Mouse with Ultrafast Scrolling - Wireless - Black\",\"merchant\":\"Best Buy\",\"price\":119,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577_sd.jpg",
+            "entities": [
+              {
+                "id": "https://www.bestbuy.com/product/logitech-mx-master-3s-wireless-usb-a-laser-mouse-with-ultrafast-scrolling-wireless-black/J7H7ZY8XTK/sku/10315527",
+                "type": "product",
+                "version": 1,
+                "properties": {
+                  "name": "Logitech - MX Master 3S Wireless (USB-A) Laser Mouse with Ultrafast Scrolling - Wireless - Black",
+                  "description": "Introducing Logitech MX Master 3S – an iconic mouse remastered. Designed for designers and engineered for coders, now with Quiet Clicks and 8K DPI any-surface tracking for more feel and performance than ever before. It’s ergonomic silhouette is crafted to support your palm and fingers and allows you to work comfortably for hours across multiple computers and operating systems in one fluid workflow. With MX Master 3S, you can truly master what you make.",
+                  "images": [
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577_sd.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv11d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv12d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv13d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/97c828f7-2a7c-4664-b1e1-5688e35442fd.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/22579ca0-8c7f-4bc6-9715-a062d10e00c2.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv16d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv17d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv18d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/9d73c6a3-375c-4dcc-867b-a03c818506c0.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv19d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6502/6502577cv20d.jpg"
+                  ],
+                  "brand": {
+                    "id": null,
+                    "name": "Logitech"
+                  },
+                  "identifiers": {
+                    "gtin": "097855174819",
+                    "mpn": "910-006556"
+                  },
+                  "offer": {
+                    "price": {
+                      "amount": 119,
+                      "currency": "USD"
+                    },
+                    "availability": "in_stock",
+                    "sku": null,
+                    "seller": null
+                  },
+                  "rating": {
+                    "value": 4.7,
+                    "count": 2977
+                  },
+                  "attributes": [
+                    {
+                      "name": "Lighting Type",
+                      "value": "None"
+                    },
+                    {
+                      "name": "Maximum Sensitivity",
+                      "value": "8000 dots per inch"
+                    },
+                    {
+                      "name": "Number of Buttons (Total)",
+                      "value": "7"
+                    },
+                    {
+                      "name": "Connection Type",
+                      "value": "Wireless"
+                    },
+                    {
+                      "name": "Color",
+                      "value": "Black"
+                    },
+                    {
+                      "name": "System Requirements",
+                      "value": "Via Logi Bolt USB Receiver: available USB Port, Windows 10, 11 or later, macOS 10.15 or later, Linux, Chrome OS. Via Bluetooth Low Energy: Windows 10, 11 or later, macOS 10.15 or later, Linux, Chrome OS, iPadOS 14 or later, Android 8.0 or later"
+                    },
+                    {
+                      "name": "Mouse Type",
+                      "value": "Standard"
+                    },
+                    {
+                      "name": "Mouse Operation",
+                      "value": "Button(s), Scroll wheel"
+                    },
+                    {
+                      "name": "Mouse Grip Style",
+                      "value": "Ergonomic, Standard, Palm grip"
+                    },
+                    {
+                      "name": "Handedness",
+                      "value": "Right-handed"
+                    },
+                    {
+                      "name": "Tracking Method",
+                      "value": "Laser"
+                    },
+                    {
+                      "name": "Minimum Sensitivity",
+                      "value": "200 dots per inch"
+                    },
+                    {
+                      "name": "Number of Thumb Buttons",
+                      "value": "2"
+                    },
+                    {
+                      "name": "Number of Programmable Buttons",
+                      "value": "7"
+                    },
+                    {
+                      "name": "Adjustable Weight",
+                      "value": "false"
+                    },
+                    {
+                      "name": "Wireless Connectivity",
+                      "value": "Bluetooth, Radio Frequency (RF)"
+                    },
+                    {
+                      "name": "Maximum Wireless Range",
+                      "value": "32.8 feet"
+                    },
+                    {
+                      "name": "Operating System Compatibility",
+                      "value": "Windows, Mac, Chrome, Linux, Apple iPadOS, Android"
+                    },
+                    {
+                      "name": "Plug and Play Operation",
+                      "value": "true"
+                    },
+                    {
+                      "name": "Mouse Power Source",
+                      "value": "Battery-powered"
+                    },
+                    {
+                      "name": "On/Off Switch",
+                      "value": "true"
+                    },
+                    {
+                      "name": "Rechargeable Battery (Mouse)",
+                      "value": "true"
+                    },
+                    {
+                      "name": "Wireless Charging",
+                      "value": "false"
+                    },
+                    {
+                      "name": "Charging Interface(s)",
+                      "value": "USB-C"
+                    },
+                    {
+                      "name": "Battery Chemistry",
+                      "value": "Lithium-polymer"
+                    },
+                    {
+                      "name": "Mouse Pad Included",
+                      "value": "false"
+                    },
+                    {
+                      "name": "Product Height",
+                      "value": "2 inches"
+                    },
+                    {
+                      "name": "Product Length",
+                      "value": "4.92 inches"
+                    },
+                    {
+                      "name": "Product Width",
+                      "value": "3.3 inches"
+                    },
+                    {
+                      "name": "Product Weight",
+                      "value": "141 grams"
+                    },
+                    {
+                      "name": "Warranty - Parts",
+                      "value": "1 year"
+                    },
+                    {
+                      "name": "Warranty - Labor",
+                      "value": "None"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "searchTime": 2014.6,
+        "costDollars": {
+          "total": 0.015,
+          "search": {
+            "neural": 0.007
+          },
+          "summary": 0.008
+        }
+      },
+      "requestId": "180ab478ffdc21bc7a947d3aad121250",
+      "costDollars": 0.015
+    },
+    {
+      "ts": "2026-11-20T19:32:07.931Z",
+      "endpoint": "/search",
+      "request": {
+        "query": "Logitech MX Vertical buy",
+        "options": {
+          "type": "auto",
+          "numResults": 8,
+          "userLocation": "US",
+          "contents": {
+            "highlights": true,
+            "summary": {
+              "query": "Extract the product listing's price, currency, availability and merchant.",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isProductListing": {
+                    "type": "boolean",
+                    "description": "True only if this page sells one specific product."
+                  },
+                  "productName": {
+                    "type": "string"
+                  },
+                  "merchant": {
+                    "type": "string",
+                    "description": "Store or seller name shown on the page."
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Current listed price as a number, no symbols. Omit if not shown."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "description": "ISO 4217 code such as USD. Omit if not shown."
+                  },
+                  "availability": {
+                    "type": "string",
+                    "enum": [
+                      "in_stock",
+                      "out_of_stock",
+                      "preorder",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "isProductListing"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "requestId": "cf0602e6232c747911b8c9fb7324c483",
+        "resolvedSearchType": "",
+        "results": [
+          {
+            "id": "https://www.logitech.com/en-us/shop/p/mx-vertical-ergonomic-mouse",
+            "title": "Logitech MX Vertical Ergonomic Wireless Mouse",
+            "url": "https://www.logitech.com/en-us/shop/p/mx-vertical-ergonomic-mouse",
+            "highlights": [
+              "# MX Vertical\n\nAdvanced Ergonomic Mouse\n\n 478\n\nThe average rating is calculated from all available product reviews, including those sourced from other platforms. Reviews with a \"Verified\" label indicate a confirmed purchase.\n\n$99.99 $119.99 $20.00 off\n\n## Color Graphite\n\nIn stock. Ready to ship\n\nImportant delivery estimation information \n\nFree returns within 30 days of your purchase.\n\n## Description\n\nMX Vertical is an advanced ergonomic mouse that combines science-driven design with the elevated performance of Logitech’s MX series. Rise above discomfort with a mouse designed to reduce muscle strain, decrease wrist pressure, and improve posture.\n\n## Software and Support\n\n...\n\n## Natural handshake position\n\nMX Vertical’s natural handshake position reduces muscular strain by 10 percent and promotes a more ergonomic posture.\n\n \n\n### 57° vertical angle for improved wrist posture\n\nMX Vertical’s unique 57° vertical angle reduces the pressure on your wrist, while your thumb is positioned comfortably on the thumb rest.\n\n...\n\n### Great fit for large to medium hands\n\nMX Vertical is great for large to medium hands, specially designed and sculpted by Logitech’s team of ergonomic and design experts. Not sure about your hand size?\n\n...\n\n### 4x less hand movement\n\nAdvanced optical tracking with a dedicated cursor speed switch results in 4x less hand movement – reducing muscle and hand fatigue. Cursor speed and accuracy can be customized in Logi Options+."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Vertical Ergonomic Wireless Mouse\",\"merchant\":\"Logitech\",\"price\":99.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png"
+          },
+          {
+            "id": "https://www.bestbuy.com/product/logitech-mx-vertical-advanced-wireless-optical-ergonomic-mouse-with-usb-and-bluetooth-connection-wireless-graphite/J7H7ZYX82S",
+            "title": "Logitech MX Vertical Advanced Wireless Optical Ergonomic Mouse ...",
+            "url": "https://www.bestbuy.com/product/logitech-mx-vertical-advanced-wireless-optical-ergonomic-mouse-with-usb-and-bluetooth-connection-wireless-graphite/J7H7ZYX82S",
+            "highlights": [
+              "# Logitech - MX Vertical Advanced Wireless Optical Ergonomic Mouse with USB and Bluetooth Connection - Wireless - Graphite\nBrand: Logitech\nCategory: Computer Accessories & Peripherals > Mice\n\n## Features\nMX Vertical's natural handshake position reduces muscular activity by 10 percent compared to a standard mouse - without any loss in overall performance.; MX Vertical's unique 57° vertical angle reduces the pressure on your wrist, while your thumb is positioned comfortably on the thumb rest.; MX Vertical has been designed and tested with criteria set out by leading ergonomists - improve posture, lower muscle strain, and reduce wrist pressure.; The 4000 DPI high-precision sensor results in 4x less hand movement and reduces fatigue. The cursor speed switch instantly adjusts DPI speed and accuracy with the touch of a button.¹; Connect MX Vertical via the included Logitech Unifying receiver, or Bluetooth.; MX Vertical is shaped for the human hand and smooth to the touch. Its unique form fits a variety of hand shapes and sizes, and the textured rubber surface assures a natural grip.; MX Vertical stays powered for up to four months on a full charge – and gets three hours of use from a one-minute quick charge.²; Connect to up to three devices and switch between them at the tap of a button or by simply moving the cursor from one screen to another with Logitech FLOW.³; Work across devices, set tracking speed, customize buttons and use ready-made app-specific customizations with Logi Options+.; Uses FSC-certified paper for responsible packaging.; ¹As compared with a traditional mouse with 1000 DPI sensor.; ²Battery life may vary based on user and computing conditions.; ³Requires Logitech Options+ software.\n\n## Specifications\nColor: Graphite; Lighting Type: None; Maximum Sensitivity: 4000 dots per inch; Number of Buttons (Total): 6; Connection Type: Wireless\n\n## Pricing & Reviews\nPrice: 99.99 USD.\n\n## Details\nModel: 910-005447. UPC: 097855144461"
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech - MX Vertical Advanced Wireless Optical Ergonomic Mouse with USB and Bluetooth Connection - Wireless - Graphite\",\"merchant\":\"Best Buy\",\"price\":99.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602_sd.jpg",
+            "entities": [
+              {
+                "id": "https://www.bestbuy.com/product/logitech-mx-vertical-advanced-wireless-optical-ergonomic-mouse-with-usb-and-bluetooth-connection-wireless-graphite/J7H7ZYX82S",
+                "type": "product",
+                "version": 1,
+                "properties": {
+                  "name": "Logitech - MX Vertical Advanced Wireless Optical Ergonomic Mouse with USB and Bluetooth Connection - Wireless - Graphite",
+                  "description": "MX Vertical is an advanced ergonomic mouse that combines science-driven design with the elevated performance of Logitech’s MX series. The natural handshake position of MX Vertical reduces wrist pressure and forearm strain. The unique 57° vertical angle has been optimized for an ergonomic posture without compromising a pixel of performance. MX Vertical features a 4000 DPI high-precision sensor, resulting in 4x less hand movement and reducing fatigue. And the cursor speed switch allows you to instantly adjust DPI speed and accuracy with the touch of a button. MX Vertical stays powered for up to four months on a full charge – and gets three hours of use from a one-minute quick charge.",
+                  "images": [
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602_sd.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv11d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv12d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/e14eff78-5674-443b-9826-bd35aa77cf9e.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv14d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv15d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv16d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv17d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv18d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv19d.jpg",
+                    "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6282/6282602cv20d.jpg"
+                  ],
+                  "brand": {
+                    "id": null,
+                    "name": "Logitech"
+                  },
+                  "identifiers": {
+                    "gtin": "097855144461",
+                    "mpn": "910-005447"
+                  },
+                  "offer": {
+                    "price": {
+                      "amount": 99.99,
+                      "currency": "USD"
+                    },
+                    "availability": null,
+                    "sku": null,
+                    "seller": null
+                  },
+                  "rating": null,
+                  "attributes": [
+                    {
+                      "name": "Lighting Type",
+                      "value": "None"
+                    },
+                    {
+                      "name": "Maximum Sensitivity",
+                      "value": "4000 dots per inch"
+                    },
+                    {
+                      "name": "Number of Buttons (Total)",
+                      "value": "6"
+                    },
+                    {
+                      "name": "Connection Type",
+                      "value": "Wireless"
+                    },
+                    {
+                      "name": "Color",
+                      "value": "Graphite"
+                    },
+                    {
+                      "name": "System Requirements",
+                      "value": "Windows 10, 11 or later, Linux, Chrome OS, macOS, iPadOS, Android"
+                    },
+                    {
+                      "name": "Mouse Type",
+                      "value": "Standard"
+                    },
+                    {
+                      "name": "Mouse Operation",
+                      "value": "Button(s), Scroll wheel"
+                    },
+                    {
+                      "name": "Mouse Grip Style",
+                      "value": "Ergonomic"
+                    },
+                    {
+                      "name": "Handedness",
+                      "value": "Right-handed"
+                    },
+                    {
+                      "name": "Tracking Method",
+                      "value": "Optical"
+                    },
+                    {
+                      "name": "Minimum Sensitivity",
+                      "value": "400 dots per inch"
+                    },
+                    {
+                      "name": "Number of Thumb Buttons",
+                      "value": "2"
+                    },
+                    {
+                      "name": "Number of Programmable Buttons",
+                      "value": "4"
+                    },
+                    {
+                      "name": "Adjustable Weight",
+                      "value": "false"
+                    },
+                    {
+                      "name": "Wireless Connectivity",
+                      "value": "Bluetooth, Radio Frequency (RF)"
+                    },
+                    {
+                      "name": "Maximum Wireless Range",
+                      "value": "33 feet"
+                    },
+                    {
+                      "name": "Operating System Compatibility",
+                      "value": "Mac, Windows, Chrome, Linux, Android, Apple iPadOS"
+                    },
+                    {
+                      "name": "Plug and Play Operation",
+                      "value": "true"
+                    },
+                    {
+                      "name": "Mouse Power Source",
+                      "value": "Battery-powered"
+                    },
+                    {
+                      "name": "On/Off Switch",
+                      "value": "true"
+                    },
+                    {
+                      "name": "Rechargeable Battery (Mouse)",
+                      "value": "true"
+                    },
+                    {
+                      "name": "Wireless Charging",
+                      "value": "true"
+                    },
+                    {
+                      "name": "Battery Chemistry",
+                      "value": "Lithium-polymer"
+                    },
+                    {
+                      "name": "Mouse Pad Included",
+                      "value": "false"
+                    },
+                    {
+                      "name": "Product Height",
+                      "value": "3.09 inches"
+                    },
+                    {
+                      "name": "Product Length",
+                      "value": "5.9 inches"
+                    },
+                    {
+                      "name": "Product Width",
+                      "value": "3.11 inches"
+                    },
+                    {
+                      "name": "Product Weight",
+                      "value": "135 grams"
+                    },
+                    {
+                      "name": "Warranty - Parts",
+                      "value": "1 Year"
+                    },
+                    {
+                      "name": "Warranty - Labor",
+                      "value": "None"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "https://www.logitech.com/en-us/shop/p/mx-vertical-refurbished",
+            "title": "Refurbished MX Vertical | Logitech",
+            "url": "https://www.logitech.com/en-us/shop/p/mx-vertical-refurbished",
+            "highlights": [
+              "Refurbished MX Vertical | Logitech\n\n \n\n 3D\n\n \n\n \n\nInspected & cleaned; 1-year warranty\n\n \n\nCosmetic: like new (no scratches or marks)\n\n \n\n100% functional (with updated firmware)\n\n \n\n# Refurbished MX Vertical\n\nAdvanced Ergonomic Mouse\n\n 10\n\nThe average rating is calculated from all available product reviews, including those sourced from other platforms. Reviews with a \"Verified\" label indicate a confirmed purchase.\n\n$69.99 $50.00 off\n\nOriginal price: $119.99 \n\n## Color Graphite\n\nIn stock. Ready to ship\n\nFree shipping (3-5 business days) on all orders.\n\nImportant delivery estimation information \n\nFree returns within 30 days of your purchase.\n\n## Description\n\nLogitech Certified Refurbished. Excellent condition. MX Vertical is an advanced ergonomic mouse that combines science-driven design with the elevated performance of Logitech’s MX series. Rise above discomfort with a mouse designed to reduce muscle strain, decrease wrist pressure, and improve posture.\n\n## Items we suggest\n\n### Logitech Refurbished, Guaranteed Quality\n\nCertified Refurbished products are rigorously tested, inspected, and cleaned to meet Logitech standards. They arrive in new brown box packaging with all standard accessories and manuals. Enjoy a 1-year warranty and Logitech support as new products, ensuring quality and peace of mind. \n\n## Logitech Certified Refurbished: Like-New Product\n\n...\n\n### 1-year warranty\n\nYou’ll receive the same 1-year warranty and Logitech support you’d get from one of our new products."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Refurbished MX Vertical\",\"merchant\":\"Logitech\",\"price\":50,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png"
+          },
+          {
+            "id": "https://the-gadgeteer.com/2026/11/16/logitech-cuts-mx-keys-mini-for-mac-mx-vertical-and-boom-4-in-its-early-black-friday-sale/",
+            "title": "Logitech cuts MX Keys Mini for Mac, MX Vertical and BOOM 4 in its early Black Friday sale - The Gadgeteer",
+            "url": "https://the-gadgeteer.com/2026/11/16/logitech-cuts-mx-keys-mini-for-mac-mx-vertical-and-boom-4-in-its-early-black-friday-sale/",
+            "publishedDate": "2026-11-16T06:52:30.000Z",
+            "author": "Satsuki Then",
+            "highlights": [
+              "# Logitech cuts MX Keys Mini for Mac, MX Vertical and BOOM 4 in its early Black Friday sale\n\nST\n\n By Satsuki Then November 16, 2026 · 5 min read · Updated November 19, 2026 \n\nLogitech started its official early Black Friday sale ahead of the main event, and three familiar desk and speaker names carry cuts worth taking before November 18, 2026. Amazon matches or beats the Logitech store price on all three picks.\n\n...\n\n## MX Vertical holds the hand at a 57 degree handshake angle\n\nMX Vertical stands the mouse on its side at a 57 degree angle, and Logitech built that handshake posture to cut muscular strain by 10 percent.\n\nLogitech MX Vertical 57-degree vertical angle · 4000 DPI sensor · Bluetooth and Unifying receiver · USB-C rechargeable · Graphite Price: $73.99 $119.99 (save $46.00, 38% off) Where to buy: Buy on Amazon\n\nAmazon sells the Graphite mouse for $73.99 today, and that price undercuts Logitech’s own $99.99 sale price by a full $26.00. A 4000 DPI sensor tracks movement, and a switch on top changes cursor speed without a trip into settings menus. The shape suits medium and large hands. Anyone switching from a flat mouse should expect an adjustment stretch while the new grip becomes familiar.\n\nPairing covers three computers over Bluetooth or the included Unifying receiver, and Logitech Flow moves the cursor between screens as if they shared one desk. The battery recharges over USB-C, and the mouse keeps working while the cable stays plugged in during a charge. Graphite is the single finish on offer. Easy-Switch keys move the mouse between paired computers without a fresh pairing routine each time.\n\nWhen wrist pressure ends the workday early and a flat mouse shape keeps causing it, MX Vertical at $73.99 is the fix. Skip it for small hands, because the tall shell needs palm room that compact mice never ask for."
+            ],
+            "summary": "{\"isProductListing\":false,\"productName\":\"MX Keys Mini for Mac; MX Vertical; BOOM 4\",\"merchant\":\"Logitech and Amazon (as referenced in article)\",\"price\":114.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://the-gadgeteer.com/wp-content/uploads/2026/11/hero-logitech-bf.jpg"
+          },
+          {
+            "id": "https://www.amazon.com/Logitech-Vertical-Wireless-Mouse-Rechargeable/dp/B07FNJB8TT/ref=sxts_sxwds-bia-wc-p13n1_0?cv_ct_cx=logitech+vertical&dchild=1&keywords=logitech+vertical&pd_rd_i=B07FNJB8TT&pd_rd_r=45205f08-00b4-489c-88c6-fe47ab30b6fa&pd_rd_w=NCNnk&pd_rd_wg=mUvky&pf_rd_p=d027eaac-7531-45fe-a61e-20ae30db06de&pf_rd_r=602P298W9B2TRYGSYW3V&psc=1",
+            "title": "Amazon Prime includes:",
+            "url": "https://www.amazon.com/Logitech-Vertical-Wireless-Mouse-Rechargeable/dp/B07FNJB8TT/ref=sxts_sxwds-bia-wc-p13n1_0?cv_ct_cx=logitech+vertical&dchild=1&keywords=logitech+vertical&pd_rd_i=B07FNJB8TT&pd_rd_r=45205f08-00b4-489c-88c6-fe47ab30b6fa&pd_rd_w=NCNnk&pd_rd_wg=mUvky&pf_rd_p=d027eaac-7531-45fe-a61e-20ae30db06de&pf_rd_r=602P298W9B2TRYGSYW3V&psc=1",
+            "highlights": [
+              "Amazon.com: Logitech MX Vertical Wireless Mouse – Ergonomic Design Reduces Muscle Strain, Move Content Between 3 Windows and Apple Computers, Rechargeable, Graphite - With Free Adobe Creative Cloud Subscription : Electronics\n\n...\n\nOther sellers on Amazon\n\n---\n\nNew & Used (8) from $79.99   & FREE Shipping.\n\n- IMAGES\n- 360° VIEW\n- VIDEOS\n\nVisit the Logitech Store\n\n4.4 4.4 out of 5 stars 13,050 ratings\n\n| Search this page\n\n...\n\n3K+ bought in past month\n\n---\n\n$89.99 with 10 percent savings\n\nList Price: $99.99\n\nThe List Price is the suggested retail price of a new product as provided by a manufacturer, supplier, or seller. Except for books, Amazon will display a List Price if the product was purchased by customers on Amazon or offered by other retailers at or above the List Price in at least the past 90 days. List prices may not necessarily reflect the product's prevailing market price. Learn more\n\nFREE Returns\n\n$80.25 with 20 percent savings\n\nList Price: $99.99\n\nThe List Price is the suggested retail price of a new product as provided by a manufacturer, supplier, or seller. Except for books, Amazon will display a List Price if the product was purchased by customers on Amazon or offered by other retailers at or above the List Price in at least the past 90 days. List prices may not necessarily reflect the product's prevailing market price. Learn more\n\nFREE Returns\n\nSavings Free Adobe Creative Cloud with Purchase Shop items\n\nGet $10 off instantly: Pay $79.99 $89.99 upon approval for the Amazon Store Card. No annual fee.\n\nGet $10 off instantly: Pay $70.25 $80.25 upon approval for the Amazon Store Card. No annual fee.\n\nAvailable at a lower price from other sellers that may not offer free Prime shipping.\n\nExtra Savings Amazon Music offer with this purchase 1 Applicable Promotion\n\n...\n\n_ ... _ ... displayPrice\":\" ... 9.99 ... Amount ... buyingOption ... \":\" ... . ... US ... buyingOption ... USED ... Buying\n\n...\n\n### Purchase options and add-ons\n\n---\n\n| Brand | Logitech |\n| --- | --- |\n| Color | GRAPHITE |\n| Connectivity Technology | USB |\n| Special Feature | Wireless, Touch Scroll, Ergonomic Design, Rechargeable |\n| Movement Detection Technology | Optical |\n\n---\n\n# About this item\n\n- Uses FSC-certified paper for responsible packaging; Certified carbon neutral: the carbon impact of the product and packaging has been reduced to zero\n- COMFORT FORM WITH TEXTURED SURFACE: MX Vertical is shaped for the human hand and smooth to the touch. Its unique form fits a variety of hand shapes and sizes, and the textured rubber surface assures a natural grip.\n- ADVANCED OPTICAL TRACKING WITH CURSOR SPEED SWITCH: The 4000 DPI high-precision sensor results in 4x less hand movement and reduces fatigue. The cursor speed switch instantly adjusts DPI speed and accuracy with the touch of a button.\n- USER TESTED. ERGONOMIST-APPROVED: MX Vertical has been designed and tested with criteria set out by leading ergonomists – improve posture, lower muscle strain, and reduce wrist pressure.\n- 57° VERTICAL ANGLE FOR IMPROVED WRIST POSTURE: MX Vertical’s unique 57° vertical angle reduces the pressure on your wrist, while your thumb is positioned comfortably on the thumb rest.\n- NATURAL HANDSHAKE POSITION: MX Vertical’s natural handshake position reduces muscular activity by 10 percent compared to a standard mouse – without any loss in overall performance.\n\nReport an issue with this product or seller\n\n---\n\n#### Buy this product as Renewed and save $15.00 off the current New price.\n\nlogitech MX Vertical Advanced Ergonomic Mouse, Wireless via Bluetooth or Included USB Receiver (Renewed)$74.99 & FREE Shipping. Details(953) Works and looks like new and backed by the Amazon Renewed Guarantee\n\n---\n\n## Frequently bought together\n\n$89.99\n\nIn Stock\n\nShips from and sold by Amazon.com.\n\n...\n\n## Customer reviews\n\n4.4 out of 5 stars\n\n4.4 out of 5\n\nWe don’t use a simple average to calculate the overall star rating and percentage breakdown by star. Our system gives more weight to certain factors—including how recent the review is and if the reviewer bought it on Amazon. Learn more\n\n13,050 global ratings\n\n| 5 star | 73% |\n| --- | --- |\n| 4 star | 11% |\n| 3 star | 6% |\n| 2 star | 4% |\n| 1 star | 6% |\n\n...\n\n### Customers say\n\nCustomers like the comfort of the mouse. They say the ergonomics feel better than other budget mice and that it works with your arm comfortably resting on the desk. They also like the battery life. However, some customers disagree on ease of use, quality, size, performance, value, and connectivity.\n\nAI-generated from the text of customer reviews\n\n...\n\n183 customers mention128 positive55 negative\n\nCustomers have mixed opinions about the connectivity of the mouse. Some find the Bluetooth connectivity convenient and strong, while others say that it randomly drops or switches channels.\n\n...\n\n672 customers mention402 positive270 negative\n\nCustomers are mixed about the quality of the mouse. Some mention it's sturdy, has great construction, and feels solid. However, others say that it has a dubious build quality and lacks support. Some say that the mouse is already pretty worn out and not the best for gaming.\n\n...\n\nCustomers have mixed opinions about the ease of use of the mouse. Some find the buttons easy to find and hit, and convenient. They also say the button clicks are crisp. However, others say it's frustrating to have to click repeatedly, like 4 to 5 times instead of one or two times. Some customers also report miss-clicking issues, and random clicks.\n\n...\n\nSome mention that it's a perfect size for them, while others say that it feels a little small to them."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Vertical Wireless Mouse – Ergonomic Design\",\"merchant\":\"Amazon.com\",\"price\":89.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://fls-na.amazon.com/1/batch/1/OP/ATVPDKIKX0DER:140-7908821-6653657:H610CQJ7JZWSGSAXXBK6$uedata=s:%2Frd%2Fuedata%3Fstaticb%26id%3DH610CQJ7JZWSGSAXXBK6:0"
+          },
+          {
+            "id": "https://www.staples.com/logitech-mx-advanced-ergonomic-vertical-wireless-usb-mouse-graphite-910-005447/product_24342520",
+            "title": "Logitech MX Vertical Wireless Ergonomic Optical Mouse, Graphite ...",
+            "url": "https://www.staples.com/logitech-mx-advanced-ergonomic-vertical-wireless-usb-mouse-graphite-910-005447/product_24342520",
+            "highlights": [
+              "Logitech MX Vertical Wireless Ergonomic Optical Mouse, Graphite (910-005447) | Staples\n\nLogitech MX Vertical Wireless Ergonomic Optical Mouse, Graphite (910-005447)\n\n$99.99\n\nHighlights\n\n- NATURAL HANDSHAKE POSITION – MX Vertical’s natural handshake position reduces muscular activity by 10% compared to a standard mouse – without any loss in overall performance.\n- IMPROVED WRIST POSTURE – The mouse’s unique 57° vertical angle reduces the pressure on your wrist, while your thumb is positioned comfortably on the thumb rest.\n- USER TESTED. ERGONOMIST-APPROVED. MX Vertical has been designed and tested with criteria set out by leading ergonomists – improve posture, lower muscle strain and reduce wrist pressure.\n\n# Logitech MX Vertical Wireless Ergonomic Optical Mouse, Graphite (910-005447)\n\n4.49\n\n658 Reviews \n\n 12 Questions \n\nFinal price is $99.99\n\nComp Value\n\nOriginal price is $119.99\n\n17% off, more pricing info\n\nFree Returns\n\nOnline. In store. Always free.\n\n## About this product\n\nIntroducing MX Vertical, an advanced ergonomic mouse that combines science-driven design with precision and performance.\n\nMX Vertical is an advanced ergonomic mouse that combines science-driven design with the elevated performance of Logitech’s MX series. The natural handshake position reduces wrist pressure and forearm strain. The unique 57° vertical angle has been optimized for an ergonomic posture without compromising a pixel of performance. The mouse’s 4000 DPI high-precision sensor results in 4x less hand movement* and reduces fatigue. And the cursor speed switch allows you to instantly adjust DPI speed and accuracy with the touch of a button. MX Vertical stays powered for up to four months on a full charge – and gets three hours of use from a one-minute quick charge.**\n\n...\n\n- RECHARGEABLE BATTERY WITH QUICK-CHARGING – MX Vertical stays powered for up to four months on a full charge – and gets three hours of use from a one-minute quick charge.\n- EASY-SWITCH™ AND FLOW-ENABLED – Connect to up to three devices and switch between them at the tap of a button or by simply moving the cursor from one screen to another with Logitech FLOW.***\n\n*As compared with a traditional mouse with 1000 DPI sensor. **Battery life may vary based on user and computing conditions. ***Requires Logitech® Options™ software, available at logitech.com/options."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Vertical Wireless Ergonomic Optical Mouse, Graphite (910-005447)\",\"merchant\":\"Staples\",\"price\":99.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://assets.staples-static.com/sbd/cre/products/home-banners/20190414/images/nad_staples_logo2.png"
+          },
+          {
+            "id": "https://sellout.woot.com/offers/logitech-mx-vertical-wireless-mouse-26",
+            "title": "Logitech MX Vertical Wireless Mouse",
+            "url": "https://sellout.woot.com/offers/logitech-mx-vertical-wireless-mouse-26",
+            "highlights": [
+              "Logitech MX Vertical Wireless Mouse\n\n$84.99\n\n $119.99 29% off Reference Price \n\n Condition New \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n# Features\n\n- Logitech MX Vertical Wireless Ergonomic Mouse is a great fit for medium to large size right hands \n- NATURAL HANDSHAKE POSITION: MX Vertical’s natural handshake position reduces muscular activity by 10 percent compared to a standard mouse – without any loss in overall performance.\n\n...\n\nShipping Note: Shipping to Alaska, Hawaii, APO addresses, or PO Boxes is not available for this item.\n\nWarranty: 90 Day Woot Limited Warranty\n\nOptional Asurion Protection Plan: To further protect your purchase, you can buy an Asurion protection plan from Amazon here. Review the FAQs for additional information."
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Vertical Wireless Mouse\",\"merchant\":\"Woot\",\"price\":84.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://images-na.ssl-images-amazon.com/images/S/mediaservice.woot.com/546ee796-8d9a-493b-bcb0-e25fec522676._AC_SR882,441_.jpg"
+          },
+          {
+            "id": "https://www.ebay.com/itm/147321086083",
+            "title": "Logitech MX Vertical Advanced Ergonomic Wireless Optical Mouse 910-005447 - NEW | eBay",
+            "url": "https://www.ebay.com/itm/147321086083",
+            "highlights": [
+              "## Black Logitech MX Vertical Advanced Ergonomic Wireless Optical Mouse 910-005447 in box with ergonomic mouse image and Logitech logo.\n\n# Logitech MX Vertical Advanced Ergonomic Wireless Optical Mouse 910-005447 - NEW\n\nATHQ (15744)\n\n100% positive Seller's other items Seller's other items Message\n\nUS $79.99 or Best Offer\n\nCondition:\n\nNew New\n\nMore than 10 available 17 sold\n\n## Additional service available\n\n2-year protection plan from Allstate - $11.99\n\nBreathe easy. Free shipping and returns.\n\nThis one's trending. 17 have already sold.\n\n## Shipping, returns, and payments\n\nShipping:\n\nFree Standard Shipping. See details for shipping Located in: Fairfield, New Jersey, United States\n\nDelivery:\n\nEstimated between Wed, Nov 18 and Sat, Nov 21 to 80238\n\nInformation - Estimated delivery date - opens a layer\n\nEstimated delivery dates - opens in a new window or tab include seller's handling time, origin ZIP Code, destination ZIP Code and time of acceptance and will depend on shipping service selected and receipt of cleared payment cleared payment - opens in a new window or tab. Delivery times may vary, especially during peak periods.\n\nReturns:\n\n30 days returns. Seller pays for return shipping. See details- for more information about returns\n\nPayments:\n\n . See details\n\n## Shop with confidence\n\nTop Rated Plus\n\nTop rated seller, fast shipping, and free returns. Learn more- Top Rated Plus - opens in a new window or tab\n\neBay Money Back Guarantee\n\nGet the item you ordered or your money back. Learn more eBay Money Back Guarantee - opens new window or tab\n\nSeller assumes all responsibility for this listing.\n\nLast updated on Nov 13, 2026 12:14:27 PST View all revisions View all revisions"
+            ],
+            "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Vertical Advanced Ergonomic Wireless Optical Mouse 910-005447 - NEW | eBay\",\"merchant\":\"ATHQ\",\"price\":79.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+            "image": "https://i.ebayimg.com/images/g/wUUAAeSwciNo0bkU/s-l400.jpg"
+          }
+        ],
+        "searchTime": 3338.4,
+        "costDollars": {
+          "total": 0.015,
+          "search": {
+            "neural": 0.007
+          },
+          "summary": 0.008
+        }
+      },
+      "requestId": "cf0602e6232c747911b8c9fb7324c483",
+      "costDollars": 0.015
+    }
+  ],
+  "exaCalls": [
+    {
+      "stage": "candidates",
+      "op": "answer",
+      "requestCount": 1,
+      "cacheHit": false,
+      "costDollars": 0.005,
+      "errorKind": null,
+      "durationMs": 1964
+    },
+    {
+      "stage": "offers",
+      "op": "search",
+      "requestCount": 3,
+      "cacheHit": false,
+      "costDollars": 0.015,
+      "errorKind": null,
+      "durationMs": 2224
+    },
+    {
+      "stage": "offers",
+      "op": "search",
+      "requestCount": 3,
+      "cacheHit": false,
+      "costDollars": 0.015,
+      "errorKind": null,
+      "durationMs": 3561
+    }
+  ],
+  "displayed": {
+    "comparison": {
+      "text": "The Logitech MX Master 3S is widely considered the top productivity choice for its comfort, programmable buttons, and dual scroll wheels [2, 5, 6]. For those seeking relief from wrist strain, the Logitech MX Vertical offers a neutral handshake position [2, 3]. Alternatively, the Razer Pro Click V2 provides an ergonomic shape with gaming-grade sensor performance [1, 5]. All these options are generally available for $120 or less [1, 3, 5, 6].",
+      "sources": []
+    },
+    "products": [
+      {
+        "candidate": {
+          "name": "MX Master 3S",
+          "brand": "Logitech",
+          "modelIdentifiers": [
+            "MX Master 3S"
+          ]
+        },
+        "offerGroups": [
+          {
+            "currency": "USD",
+            "offers": [
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "logitech.com",
+                "merchantName": "Logitech",
+                "canonicalUrl": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+                "price": {
+                  "amount": 79.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:06.596Z",
+                "exaRequestId": "180ab478ffdc21bc7a947d3aad121250",
+                "productName": "MX Master 3S Wireless Mouse - 8K Optical Sensor | Logitech"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "1computeroutlet.com",
+                "merchantName": "1computeroutlet",
+                "canonicalUrl": "https://1computeroutlet.com/products/peripherals-input-devices/mice-trackballs/mx-master-3s-bluetooth-black-3d20f429",
+                "price": {
+                  "amount": 104.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:06.596Z",
+                "exaRequestId": "180ab478ffdc21bc7a947d3aad121250",
+                "productName": "MX Master 3S Bluetooth Black"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "amazon.com",
+                "merchantName": "Amazon",
+                "canonicalUrl": "https://www.amazon.com/dp/B09HM94VDS",
+                "price": {
+                  "amount": 113.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:06.596Z",
+                "exaRequestId": "180ab478ffdc21bc7a947d3aad121250",
+                "productName": "Logitech MX Master 3S Wireless Bluetooth Mouse, Ultra-Fast Scrolling 8K DPI"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "amazon.com",
+                "merchantName": "Amazon",
+                "canonicalUrl": "https://www.amazon.com/Logitech-MX-Master-3S-Performance/dp/B0B11LJ69K",
+                "price": {
+                  "amount": 118.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:06.596Z",
+                "exaRequestId": "180ab478ffdc21bc7a947d3aad121250",
+                "productName": "Logitech MX Master 3S Performance Wireless Mouse - Graphite With Bolt Reciever"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "bestbuy.com",
+                "merchantName": "Best Buy",
+                "canonicalUrl": "https://www.bestbuy.com/product/logitech-mx-master-3s-wireless-usb-a-laser-mouse-with-ultrafast-scrolling-wireless-black/J7H7ZY8XTK/sku/10315527",
+                "price": {
+                  "amount": 119,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:06.596Z",
+                "exaRequestId": "180ab478ffdc21bc7a947d3aad121250",
+                "productName": "Logitech - MX Master 3S Wireless (USB-A) Laser Mouse with Ultrafast Scrolling - Wireless - Black"
+              }
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "evidence",
+            "category": "not-a-listing",
+            "url": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+            "title": "Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples",
+            "host": "www.staples.com",
+            "reportedPrice": {
+              "amount": 79.99,
+              "currency": "USD"
+            }
+          },
+          {
+            "kind": "evidence",
+            "category": "not-a-listing",
+            "url": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+            "title": "Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low",
+            "host": "www.xda-developers.com",
+            "reportedPrice": {
+              "amount": 79.99,
+              "currency": "USD"
+            }
+          }
+        ],
+        "rejectedCounts": {
+          "irrelevant-product": 0,
+          "unsupported-currency": 1,
+          "url-not-from-run": 0,
+          "invalid-url": 0
+        }
+      },
+      {
+        "candidate": {
+          "name": "MX Vertical",
+          "brand": "Logitech",
+          "modelIdentifiers": [
+            "MX Vertical"
+          ]
+        },
+        "offerGroups": [
+          {
+            "currency": "USD",
+            "offers": [
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "logitech.com",
+                "merchantName": "Logitech",
+                "canonicalUrl": "https://www.logitech.com/en-us/shop/p/mx-vertical-refurbished",
+                "price": {
+                  "amount": 50,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:07.934Z",
+                "exaRequestId": "cf0602e6232c747911b8c9fb7324c483",
+                "productName": "Refurbished MX Vertical"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "sellout.woot.com",
+                "merchantName": "Woot",
+                "canonicalUrl": "https://sellout.woot.com/offers/logitech-mx-vertical-wireless-mouse-26",
+                "price": {
+                  "amount": 84.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:07.934Z",
+                "exaRequestId": "cf0602e6232c747911b8c9fb7324c483",
+                "productName": "Logitech MX Vertical Wireless Mouse"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "amazon.com",
+                "merchantName": "Amazon.com",
+                "canonicalUrl": "https://www.amazon.com/Logitech-Vertical-Wireless-Mouse-Rechargeable/dp/B07FNJB8TT/ref=sxts_sxwds-bia-wc-p13n1_0?cv_ct_cx=logitech+vertical&dchild=1&keywords=logitech+vertical&pd_rd_i=B07FNJB8TT&pd_rd_r=45205f08-00b4-489c-88c6-fe47ab30b6fa&pd_rd_w=NCNnk&pd_rd_wg=mUvky&pf_rd_p=d027eaac-7531-45fe-a61e-20ae30db06de&pf_rd_r=602P298W9B2TRYGSYW3V",
+                "price": {
+                  "amount": 89.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:07.934Z",
+                "exaRequestId": "cf0602e6232c747911b8c9fb7324c483",
+                "productName": "Logitech MX Vertical Wireless Mouse – Ergonomic Design"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "bestbuy.com",
+                "merchantName": "Best Buy",
+                "canonicalUrl": "https://www.bestbuy.com/product/logitech-mx-vertical-advanced-wireless-optical-ergonomic-mouse-with-usb-and-bluetooth-connection-wireless-graphite/J7H7ZYX82S",
+                "price": {
+                  "amount": 99.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:07.934Z",
+                "exaRequestId": "cf0602e6232c747911b8c9fb7324c483",
+                "productName": "Logitech - MX Vertical Advanced Wireless Optical Ergonomic Mouse with USB and Bluetooth Connection - Wireless - Graphite"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "logitech.com",
+                "merchantName": "Logitech",
+                "canonicalUrl": "https://www.logitech.com/en-us/shop/p/mx-vertical-ergonomic-mouse",
+                "price": {
+                  "amount": 99.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:07.934Z",
+                "exaRequestId": "cf0602e6232c747911b8c9fb7324c483",
+                "productName": "Logitech MX Vertical Ergonomic Wireless Mouse"
+              },
+              {
+                "kind": "merchant-offer",
+                "merchantHost": "staples.com",
+                "merchantName": "Staples",
+                "canonicalUrl": "https://www.staples.com/logitech-mx-advanced-ergonomic-vertical-wireless-usb-mouse-graphite-910-005447/product_24342520",
+                "price": {
+                  "amount": 99.99,
+                  "currency": "USD"
+                },
+                "availability": "in_stock",
+                "source": "exa",
+                "retrievedAt": "2026-11-20T19:32:07.934Z",
+                "exaRequestId": "cf0602e6232c747911b8c9fb7324c483",
+                "productName": "Logitech MX Vertical Wireless Ergonomic Optical Mouse, Graphite (910-005447)"
+              }
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "kind": "evidence",
+            "category": "not-a-listing",
+            "url": "https://the-gadgeteer.com/2026/11/16/logitech-cuts-mx-keys-mini-for-mac-mx-vertical-and-boom-4-in-its-early-black-friday-sale/",
+            "title": "Logitech cuts MX Keys Mini for Mac, MX Vertical and BOOM 4 in its early Black Friday sale - The Gadgeteer",
+            "host": "the-gadgeteer.com",
+            "reportedPrice": {
+              "amount": 114.99,
+              "currency": "USD"
+            }
+          },
+          {
+            "kind": "evidence",
+            "category": "merchant-mismatch",
+            "url": "https://www.ebay.com/itm/147321086083",
+            "title": "Logitech MX Vertical Advanced Ergonomic Wireless Optical Mouse 910-005447 - NEW | eBay",
+            "host": "www.ebay.com",
+            "reportedPrice": {
+              "amount": 79.99,
+              "currency": "USD"
+            }
+          }
+        ],
+        "rejectedCounts": {
+          "irrelevant-product": 0,
+          "unsupported-currency": 0,
+          "url-not-from-run": 0,
+          "invalid-url": 0
+        }
+      },
+      {
+        "candidate": {
+          "name": "Pro Click V2",
+          "brand": "Razer",
+          "modelIdentifiers": [
+            "Pro Click V2"
+          ]
+        },
+        "offerGroups": [],
+        "evidence": [],
+        "rejectedCounts": {
+          "irrelevant-product": 0,
+          "unsupported-currency": 0,
+          "url-not-from-run": 0,
+          "invalid-url": 0
+        },
+        "notSearched": "Not searched: an earlier candidate had offers"
+      }
+    ]
+  },
+  "progress": [
+    {
+      "stage": "candidates",
+      "status": "running"
+    },
+    {
+      "stage": "candidates",
+      "status": "done",
+      "detail": "3 candidate(s)"
+    },
+    {
+      "stage": "offers",
+      "status": "running"
+    },
+    {
+      "stage": "offers",
+      "status": "done",
+      "detail": "2 candidate(s) searched"
+    },
+    {
+      "stage": "validate",
+      "status": "running"
+    },
+    {
+      "stage": "validate",
+      "status": "done"
+    },
+    {
+      "stage": "compare",
+      "status": "running"
+    },
+    {
+      "stage": "compare",
+      "status": "done"
+    }
+  ],
+  "usage": {
+    "exaRequests": 3,
+    "cacheHits": 0,
+    "costDollars": 0.035,
+    "monthRequests": 5,
+    "monthLimit": 10
+  },
+  "totals": {
+    "exaRequests": 3,
+    "cacheHits": 0,
+    "costDollars": 0.035
+  },
+  "serverLog": [
+    {
+      "ts": "2026-11-20T19:32:02.406Z",
+      "event": "run_start",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "market": "US",
+      "question": "Best ergonomic wireless mouse for programming under $120"
+    },
+    {
+      "ts": "2026-11-20T19:32:04.373Z",
+      "event": "exa_call",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "stage": "candidates",
+      "op": "answer",
+      "requestCount": 1,
+      "cacheHit": false,
+      "costDollars": 0.005,
+      "durationMs": 1964
+    },
+    {
+      "ts": "2026-11-20T19:32:04.373Z",
+      "event": "stage",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "stage": "candidates",
+      "status": "done",
+      "requestCount": 1,
+      "durationMs": 1966
+    },
+    {
+      "ts": "2026-11-20T19:32:06.597Z",
+      "event": "exa_call",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "stage": "offers",
+      "op": "search",
+      "requestCount": 3,
+      "cacheHit": false,
+      "costDollars": 0.015,
+      "durationMs": 2224
+    },
+    {
+      "ts": "2026-11-20T19:32:07.935Z",
+      "event": "exa_call",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "stage": "offers",
+      "op": "search",
+      "requestCount": 3,
+      "cacheHit": false,
+      "costDollars": 0.015,
+      "durationMs": 3561
+    },
+    {
+      "ts": "2026-11-20T19:32:07.940Z",
+      "event": "stage",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "stage": "offers",
+      "status": "done",
+      "requestCount": 3,
+      "durationMs": 3567
+    },
+    {
+      "ts": "2026-11-20T19:32:07.941Z",
+      "event": "stage",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "stage": "validate",
+      "status": "done",
+      "requestCount": 3,
+      "durationMs": 1
+    },
+    {
+      "ts": "2026-11-20T19:32:07.942Z",
+      "event": "stage",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "stage": "compare",
+      "status": "done",
+      "requestCount": 3,
+      "durationMs": 1
+    },
+    {
+      "ts": "2026-11-20T19:32:07.942Z",
+      "event": "run_end",
+      "runId": "30862531-1e70-422e-9aa0-10743d69837a",
+      "state": "completed",
+      "requestCount": 3,
+      "cacheHits": 0,
+      "costDollars": 0.035,
+      "durationMs": 5536
+    }
+  ]
+}

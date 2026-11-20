@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalizeUrl, classifyHit, matchesIdentity, resolveCitations, splitParagraphs } from "../../src/core";
+import { canonicalizeUrl, classifyHit, matchesIdentity, resolveCitations, segmentMarkers, splitParagraphs } from "../../src/core";
 
 describe("canonicalizeUrl", () => {
   it("drops tracking parameters and keeps the rest in order", () => {
@@ -88,5 +88,24 @@ describe("splitParagraphs and uncited paragraphs", () => {
   it("de-duplicates sources in first-use order", () => {
     const r = resolveCitations("x [2] y [1,2].", ["https://a.example", "https://b.example"]);
     expect(r.sources).toEqual(["https://b.example", "https://a.example"]);
+  });
+});
+
+describe("resolveCitations sources and segmentMarkers", () => {
+  const urls = ["https://a.example", "https://b.example", "https://c.example"];
+
+  it("reports, per cited URL, the numbers that reached it, in order and without the dropped ones", () => {
+    const r = resolveCitations("x [3] y [1,2,9] z [1].", urls);
+    expect(r.sources).toEqual(["https://c.example", "https://a.example", "https://b.example"]);
+    expect(r.citedSources).toEqual([
+      { url: "https://c.example", numbers: [3] },
+      { url: "https://a.example", numbers: [1] },
+      { url: "https://b.example", numbers: [2] },
+    ]);
+  });
+
+  it("splits resolved text into text and marker segments with the same grammar", () => {
+    expect(segmentMarkers("A [1,2] and B[3].")).toEqual(["A ", { citation: [1, 2] }, " and B", { citation: [3] }, "."]);
+    expect(segmentMarkers("no markers, [1, 2] has spaces")).toEqual(["no markers, [1, 2] has spaces"]);
   });
 });

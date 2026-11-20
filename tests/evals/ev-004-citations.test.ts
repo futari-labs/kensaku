@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveCitations } from "../../src/core";
+import { canonicalizeUrl, resolveCitations } from "../../src/core";
+import { FixtureExaPort } from "../../src/exa/fixture-port";
+import { runResearch } from "../../src/research/pipeline";
+import type { RunEvent } from "../../src/research/events";
 import { loadLiveFixture, readJson } from "../core/fixtures";
 
 // Frozen gold cases: evals/cases/citations.json (read-only, every case evaluated).
@@ -34,5 +37,37 @@ describe("EV-004 citation cases", () => {
     expect(result.sources.length).toBe(c.expected.resolvedUrlCount);
     if (c.expected.renderedText !== undefined) expect(result.renderedText).toBe(c.expected.renderedText);
     for (const source of result.sources) expect(citations).toContain(source);
+  });
+});
+
+// Fixture pipeline runs: what the UI would render must come from this run's Exa responses.
+const RUNS = [
+  { scenario: "xm5-us", market: "US", search: "S1-headphones" },
+  { scenario: "xm5-sg", market: "SG", search: "S8-market-sg" },
+  { scenario: "xm5-jp", market: "JP", search: "S9-market-jp" },
+] as const;
+
+describe("EV-004 fixture pipeline runs", () => {
+  it.each(RUNS)("$scenario: every rendered source is a run citation and every offer URL is a run search result", async ({ scenario, market, search }) => {
+    const answer = loadLiveFixture("A1-answer").response;
+    const citations = (answer.citations ?? []).map((x) => x.url);
+    const searchResponse = loadLiveFixture(search).response as unknown as { results: { url: string }[] };
+    const resultUrls = new Set(searchResponse.results.map((r) => r.url));
+
+    const events: RunEvent[] = [];
+    for await (const e of runResearch({ question: "q", market }, FixtureExaPort.load(scenario), new AbortController().signal)) events.push(e);
+
+    const comparison = events.find((e) => e.type === "comparison");
+    const products = events.find((e) => e.type === "products");
+    if (comparison?.type !== "comparison" || products?.type !== "products") throw new Error("run did not complete");
+    expect(comparison.sources.length).toBeGreaterThan(0);
+    for (const source of comparison.sources) expect(citations).toContain(source.url);
+
+    const offers = products.products.flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
+    expect(offers.length).toBeGreaterThan(0);
+    for (const offer of offers) {
+      const fromRun = [...resultUrls].some((url) => canonicalizeUrl(url) === offer.canonicalUrl);
+      expect(fromRun, offer.canonicalUrl).toBe(true);
+    }
   });
 });

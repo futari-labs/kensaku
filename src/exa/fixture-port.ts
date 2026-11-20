@@ -3,12 +3,15 @@ import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { EXA_FAILURE_KINDS, ExaFailure } from "./errors";
+import type { ExaFailureKind } from "./errors";
 import { GuardedExaPort } from "./guarded-port";
 import type { ExaTransport, PortOptions } from "./guarded-port";
 import { CandidateSchema } from "./schemas";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const FROZEN_DIR = "evals/fixtures";
+/** A scripted failure has no HTTP status, so it is retryable exactly when the live mapping would retry a status-less failure of that kind. */
+const TRANSIENT_KINDS: ReadonlySet<ExaFailureKind> = new Set(["rate_limited", "timeout", "upstream"]);
 
 const ResponseSchema = z.object({
   /** Path, relative to the repository root, of a frozen file under evals/fixtures/. Its `response` is replayed. */
@@ -126,6 +129,7 @@ class ScenarioReplayer implements ExaTransport {
     if (step.error) {
       throw new ExaFailure(step.error.kind, step.error.message ?? `Scripted ${step.error.kind} failure.`, {
         ...(step.error.retryAfterMs !== undefined && { retryAfterMs: step.error.retryAfterMs }),
+        retryable: TRANSIENT_KINDS.has(step.error.kind),
       });
     }
     return wire(step, this.rootDir);

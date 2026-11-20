@@ -5,11 +5,12 @@ import type { DiskCache } from "./cache";
 import type { Clock } from "./clock";
 import { systemClock } from "./clock";
 import { ExaFailure, mapExaError } from "./errors";
+import { MAX_CALL_COST_DOLLARS } from "./ledger";
 import type { UsageLedger } from "./ledger";
 import { parseAnswerResponse, parseSearchResponse, readBilling } from "./parse";
 import type { AnswerResult, ExaPort, SearchResult } from "./port";
 import { buildAnswerRequest, buildSearchRequest, cacheKey } from "./requests";
-import type { AnswerMarketMode, AnswerRequest, SearchRequest } from "./requests";
+import type { AnswerMarketMode, AnswerRequest, Endpoint, SearchRequest } from "./requests";
 import { StoredAnswerSchema, StoredSearchSchema } from "./schemas";
 
 /**
@@ -30,6 +31,8 @@ export interface PortOptions {
   answerMarketMode?: AnswerMarketMode;
   /** Called with a short note when a response was billed oddly or partly dropped. Default: ignore. */
   onWarning?: (note: string) => void;
+  /** Called with each request and its raw response as the transport returns it, before parsing. For the live smoke's run log. */
+  onExchange?: (exchange: { endpoint: Endpoint; request: AnswerRequest | SearchRequest; response: unknown }) => void;
 }
 
 interface Call<T extends { costDollars: number; retrievedAt: string }> {
@@ -38,6 +41,8 @@ interface Call<T extends { costDollars: number; retrievedAt: string }> {
   budget: RequestBudget;
   signal: AbortSignal;
   send: () => Promise<unknown>;
+  endpoint: Endpoint;
+  request: AnswerRequest | SearchRequest;
   /** Strict parse of the body; cost and time are added by the guard. */
   parse: (raw: unknown) => Omit<T, "costDollars" | "retrievedAt">;
 }
@@ -56,6 +61,9 @@ export class GuardedExaPort implements ExaPort {
   readonly #clock: Clock;
   readonly #answerMode: AnswerMarketMode;
   readonly #warn: (note: string) => void;
+  readonly #onExchange: PortOptions["onExchange"];
+  /** Calls past the guard whose cost is not settled yet; each holds MAX_CALL_COST_DOLLARS of the monthly cost limit. */
+  #inFlight = 0;
 
   constructor(transport: ExaTransport, options: PortOptions = {}) {
     this.#transport = transport;
@@ -64,11 +72,14 @@ export class GuardedExaPort implements ExaPort {
     this.#clock = options.clock ?? systemClock;
     this.#answerMode = options.answerMarketMode ?? "userLocation";
     this.#warn = options.onWarning ?? (() => {});
+    this.#onExchange = options.onExchange;
   }
 
   answerCandidates(question: string, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<AnswerResult> {
     const request = buildAnswerRequest(question, market, this.#answerMode);
     return this.#guarded({
+      endpoint: "/answer",
+      request,
       key: cacheKey("/answer", request, market),
       schema: StoredAnswerSchema,
       budget,
@@ -81,6 +92,8 @@ export class GuardedExaPort implements ExaPort {
   searchOffers(candidate: Candidate, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<SearchResult> {
     const request = buildSearchRequest(candidate, market);
     return this.#guarded({
+      endpoint: "/search",
+      request,
       key: cacheKey("/search", request, market),
       schema: StoredSearchSchema,
       budget,
@@ -99,9 +112,18 @@ export class GuardedExaPort implements ExaPort {
     const hit = this.#cache?.get(call.key, call.schema, this.#clock());
     if (hit) return { ...hit, costDollars: 0, cached: true };
 
-    if (call.signal.aborted) throw new ExaFailure("timeout", "The Exa request was aborted before it started.");
-    this.#ledger?.assertCanCall(this.#clock());
+    if (call.signal.aborted) throw new ExaFailure("timeout", "The Exa request was aborted before it started.", { retryable: true });
+    this.#ledger?.assertCanCall(this.#clock(), this.#inFlight);
     call.budget.take();
+    this.#inFlight += 1;
+    try {
+      return await this.#send(call);
+    } finally {
+      this.#inFlight -= 1;
+    }
+  }
+
+  async #send<T extends { costDollars: number; retrievedAt: string }>(call: Call<T>): Promise<T & { cached: boolean }> {
     this.#ledger?.recordRequest(this.#clock());
 
     let raw: unknown;
@@ -110,12 +132,19 @@ export class GuardedExaPort implements ExaPort {
     } catch (error) {
       const failure = mapExaError(error);
       if (failure.kind === "credits_exhausted") this.#ledger?.markExhausted(this.#clock());
+      // An aborted or timed-out call may still be billed, and its cost is unknown: keep the ceiling.
+      if (failure.kind === "timeout") this.#ledger?.recordCost(MAX_CALL_COST_DOLLARS, this.#clock());
       throw failure;
     }
 
+    try {
+      this.#onExchange?.({ endpoint: call.endpoint, request: call.request, response: raw });
+    } catch {
+      this.#warn("The exchange observer failed.");
+    }
     const billing = readBilling(raw);
-    if (!billing.costReported) this.#warn("Exa response carried no costDollars.total; recorded as 0.");
-    this.#ledger?.recordCost(billing.costDollars, this.#clock());
+    if (!billing.costReported) this.#warn("Exa response carried no costDollars.total; recorded at the per-call ceiling.");
+    this.#ledger?.recordCost(billing.costReported ? billing.costDollars : MAX_CALL_COST_DOLLARS, this.#clock());
 
     const body = call.parse(raw);
     const result = { ...body, costDollars: billing.costDollars, retrievedAt: this.#clock().toISOString() } as T;

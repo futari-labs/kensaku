@@ -1,5 +1,5 @@
 // EV-005 Spend guard and cache. Unit level (JM-003) lives here; JM-004 adds the run-level describe.
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RequestBudget } from "../../src/exa/budget";
@@ -7,6 +7,9 @@ import { monthOf } from "../../src/exa/ledger";
 import { ExaSdkPort } from "../../src/exa/sdk-port";
 import type { Candidate } from "../../src/core/types";
 import { fakeClient, fakeClock, frozen, HttpError, storage } from "../exa/helpers";
+import { harness } from "../server/helpers";
+import { ofType, readChunks } from "../server/sse";
+import type { Chunk } from "../server/sse";
 
 const signal = new AbortController().signal;
 const cand = (n: number): Candidate => ({ name: `Model ${n}`, brand: "Brand", modelIdentifiers: [`MD-${n}00`] });
@@ -136,5 +139,95 @@ describe("EV-005 unit level: spend guard and cache", () => {
     await expect(port.searchOffers(cand(2), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "auth" });
     expect(store.usage().exhaustedAt).toBeUndefined();
     expect(store.usage().requests).toBe(2);
+  });
+  it("reserves the per-call ceiling for in-flight calls: ledger 7.98 of 8, two parallel searches, the second is blocked before its transport call", async () => {
+    const { fake, port, store } = setup([search(), search()], { costLimit: 8 });
+    mkdirSync(join(store.root, "ledger"), { recursive: true });
+    writeFileSync(join(store.root, "ledger", "2026-11.json"), JSON.stringify({ requests: 3, costDollars: 7.98 }));
+    const budgets = [new RequestBudget(5), new RequestBudget(5)];
+    const results = await Promise.allSettled([
+      port.searchOffers(cand(1), "US", budgets[0]!, signal),
+      port.searchOffers(cand(2), "US", budgets[1]!, signal),
+    ]);
+    expect(results[0]!.status).toBe("fulfilled");
+    expect(results[1]).toMatchObject({ status: "rejected", reason: { kind: "monthly_limit" } });
+    expect(fake.calls).toHaveLength(1);
+    expect(budgets[1]!.used).toBe(0);
+    expect(store.usage().costDollars).toBeLessThanOrEqual(8);
+  });
+
+  it("keeps the ceiling in the ledger when a call times out or is aborted, since it may still be billed", async () => {
+    const aborted = Object.assign(new Error("aborted"), { name: "AbortError" });
+    const { port, store } = setup([aborted]);
+    await expect(port.searchOffers(cand(1), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "timeout" });
+    expect(store.usage()).toEqual({ requests: 1, costDollars: 0.02 });
+  });
+});
+
+// ---- Run level (JM-004): the app, the pipeline, and the guard together ----
+
+const scenarioNames = readdirSync(join(import.meta.dirname, "../fixtures/scenarios"))
+  .filter((f) => f.endsWith(".json"))
+  .map((f) => f.replace(/\.json$/, ""));
+const SLOW = new Set(["slow-answer", "cancel-offers"]);
+const usageOf = (chunks: Chunk[]) => ofType(chunks, "data-usage")[0]?.data;
+const offersOf = (chunks: Chunk[]) =>
+  ofType(chunks, "data-products")[0]!.data.flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
+
+describe("EV-005 run level: spend guard through the app", () => {
+  it.each(scenarioNames)("scenario %s stays within 5 Exa calls", async (name) => {
+    const h = harness();
+    const abort = new AbortController();
+    const pending = h.chat(name, { signal: abort.signal });
+    if (SLOW.has(name)) setTimeout(() => abort.abort(), 40);
+    const chunks = await readChunks(await pending).catch(() => []);
+    expect(h.ports).toHaveLength(1);
+    expect(h.ports[0]!.calls).toBeLessThanOrEqual(5);
+    const usage = usageOf(chunks);
+    if (usage) expect(usage.exaRequests).toBeLessThanOrEqual(5);
+    expect(h.store.usage().requests).toBeLessThanOrEqual(5);
+  });
+
+  it("the worst case (three candidates and the retry) makes exactly 5 calls, and no more", async () => {
+    const h = harness();
+    const chunks = await readChunks(await h.chat("max-calls"));
+    expect(h.ports[0]!.calls).toBe(5);
+    expect(usageOf(chunks)).toMatchObject({ exaRequests: 5 });
+    expect(ofType(chunks, "data-error")).toHaveLength(0);
+  });
+
+  it("a normal question uses at most 3 calls", async () => {
+    for (const [name, calls] of [["xm5-us", 2], ["two-candidates", 3]] as const) {
+      const h = harness();
+      const chunks = await readChunks(await h.chat(name));
+      expect(h.ports[0]!.calls).toBe(calls);
+      expect(usageOf(chunks)!.exaRequests).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it("a repeat within the TTL uses 0 calls and shows the original retrievedAt", async () => {
+    const h = harness({ cache: true });
+    const first = await readChunks(await h.chat("xm5-us"));
+    h.clock.advance(3600_000);
+    const again = await readChunks(await h.chat("xm5-us"));
+    expect(h.ports[1]!.calls).toBe(0);
+    expect(usageOf(again)).toMatchObject({ exaRequests: 0, cacheHits: 2 });
+    const firstOffers = offersOf(first);
+    expect(firstOffers.length).toBeGreaterThan(0);
+    expect(offersOf(again).map((o) => o.retrievedAt)).toEqual(firstOffers.map((o) => o.retrievedAt));
+    expect(h.store.usage().requests).toBe(2);
+  });
+
+  it("a second concurrent POST gets 409 before any stream starts, and the lock frees afterwards", async () => {
+    const h = harness();
+    const abort = new AbortController();
+    const first = await h.chat("slow-answer", { signal: abort.signal });
+    const second = await h.chat("xm5-us");
+    expect(second.status).toBe(409);
+    expect(await second.json()).toMatchObject({ kind: "run_in_progress" });
+    expect(second.headers.get("content-type")).toContain("application/json");
+    abort.abort();
+    await first.text().catch(() => "");
+    expect((await h.chat("xm5-us")).status).toBe(200);
   });
 });
