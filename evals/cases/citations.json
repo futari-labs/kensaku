@@ -1,0 +1,13 @@
+{
+  "_about": "EV-004 gold cases for citation resolution (REQ-002). Live cases reference real /answer responses in evals/fixtures/exa-live; synthetic cases are labeled.",
+  "labelStatus": "Assistant-proposed from the citation rule in docs/futari/ARCHITECTURE.md section 'Citations'. Gold once plan kensaku-mvp-v1 is approved.",
+  "rule": "A marker is '[' n (',' n)* ']' with 1-based integers n. Marker n resolves to citations[n-1].url. An n outside 1..citations.length is removed from the rendered text and counted in unresolvedMarkers. A paragraph (split on blank lines, or the whole text when there are none) with zero resolved markers is flagged uncited. Rendered source links are exactly the resolved citation URLs, de-duplicated in first-use order.",
+  "cases": [
+    { "id": "C01", "fixture": "A1-answer", "answerPath": "answer", "expected": { "unresolvedMarkers": 0, "uncitedParagraphs": 0, "resolvedUrlCount": 4 }, "rationale": "Live: markers [1]-[4] all resolve within the 8 citations; 4 distinct URLs are used in the text." },
+    { "id": "C02", "fixture": "A2-answer-schema", "answerPath": "answer.comparison", "expected": { "unresolvedMarkers": 0, "uncitedParagraphs": 0, "resolvedUrlCount": 4 }, "rationale": "Live: structured comparison with markers [4], [5], [4,5], [6], [7] resolving to 4 distinct URLs." },
+    { "id": "C03", "synthetic": { "text": "Battery life is excellent [1]. Comfort is good [9].", "citations": ["https://a.example/1", "https://b.example/2"] }, "expected": { "unresolvedMarkers": 1, "uncitedParagraphs": 0, "resolvedUrlCount": 1, "renderedText": "Battery life is excellent [1]. Comfort is good." }, "rationale": "Synthetic: [9] is out of range and removed; the paragraph still has [1]." },
+    { "id": "C04", "synthetic": { "text": "First paragraph with a source [2].\n\nSecond paragraph with no source.", "citations": ["https://a.example/1", "https://b.example/2"] }, "expected": { "unresolvedMarkers": 0, "uncitedParagraphs": 1, "resolvedUrlCount": 1 }, "rationale": "Synthetic: the second paragraph is flagged uncited." },
+    { "id": "C05", "synthetic": { "text": "Both are strong [1,2,2].", "citations": ["https://a.example/1", "https://a.example/1"] }, "expected": { "unresolvedMarkers": 0, "uncitedParagraphs": 0, "resolvedUrlCount": 1 }, "rationale": "Synthetic: duplicate URLs and repeated markers de-duplicate to one rendered source." },
+    { "id": "C06", "synthetic": { "text": "No markers at all.", "citations": [] }, "expected": { "unresolvedMarkers": 0, "uncitedParagraphs": 1, "resolvedUrlCount": 0 }, "rationale": "Synthetic: an answer with no citations is shown but flagged uncited." }
+  ]
+}

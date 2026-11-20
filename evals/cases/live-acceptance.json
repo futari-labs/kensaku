@@ -1,0 +1,24 @@
+{
+  "_about": "EV-008 live acceptance query set (REQ-008, D-007). Run only through the live acceptance command with the live budget below. Queries were chosen by the assistant to cover the three markets, a specific-model question, and an open-ended question; the owner approves them with plan kensaku-mvp-v1.",
+  "budget": { "maxRequestsPerQuery": 5, "maxRequestsPerSuiteRun": 30, "maxSuiteRuns": 3, "maxReportedCostDollarsPerSuiteRun": 0.4 },
+  "thresholds": {
+    "queriesWithAtLeastOneMerchantOffer": { "min": 4, "of": 6 },
+    "displayedOffersPassingRevalidation": "100%",
+    "displayedOffersPassingOwnerAudit": "at least 90% of all displayed offers across the run, each audited by the owner as the right product on a direct merchant page",
+    "fabricatedOffers": 0,
+    "unexpectedErrorRuns": 0
+  },
+  "auditRubric": [
+    "Right product: the merchant page sells the candidate model (a colour variant counts; a different model or a bundle does not).",
+    "Direct merchant: the URL is the merchant's own product page, not a review, aggregator, or search page.",
+    "Price display: the shown price, currency, and availability equal the values Exa returned for that URL in this run, as recorded in the run log."
+  ],
+  "queries": [
+    { "id": "Q1", "market": "US", "text": "Sony WH-1000XM5 headphones: where can I buy them and are they worth it?" },
+    { "id": "Q2", "market": "US", "text": "Best ergonomic wireless mouse for programming under $120" },
+    { "id": "Q3", "market": "SG", "text": "Sony WH-1000XM5 price in Singapore" },
+    { "id": "Q4", "market": "SG", "text": "Breville Bambino Plus espresso machine in Singapore" },
+    { "id": "Q5", "market": "JP", "text": "ソニー WH-1000XM5 はどこで買うのがいい？" },
+    { "id": "Q6", "market": "JP", "text": "Kindle Paperwhite 2024 price in Japan" }
+  ]
+}

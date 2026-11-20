@@ -41,7 +41,48 @@ const searchWithOffers = (query, extra = {}) => ({
   },
 });
 
-const plan = [
+const stage2 = [
+  {
+    id: "A2-answer-schema",
+    endpoint: "/answer",
+    body: {
+      query: "Best wireless noise cancelling headphones for frequent flyers under $400",
+      text: false,
+      outputSchema: {
+        type: "object",
+        properties: {
+          comparison: { type: "string", description: "Short comparison with numbered citation markers like [1]." },
+          candidates: {
+            type: "array",
+            maxItems: 3,
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                brand: { type: "string" },
+                modelIdentifiers: { type: "array", items: { type: "string" }, description: "Model numbers or distinctive tokens." },
+              },
+              required: ["name", "brand", "modelIdentifiers"],
+            },
+          },
+        },
+        required: ["comparison", "candidates"],
+      },
+    },
+  },
+  { id: "S8-market-sg", ...searchWithOffers("Sony WH-1000XM5 headphones price Singapore buy"), },
+  { id: "S9-market-jp", ...searchWithOffers("ソニー WH-1000XM5 ヘッドホン 価格 購入") },
+  {
+    id: "A3-answer-stream",
+    endpoint: "/answer",
+    stream: true,
+    body: { query: "Is the Logitech MX Master 3S good for programmers? Summarize pros and cons.", text: false, stream: true },
+  },
+];
+stage2[1].body.userLocation = "SG";
+stage2[2].body.userLocation = "JP";
+
+const stage1 = [
   { id: "S1-headphones", ...searchWithOffers("Sony WH-1000XM5 wireless noise cancelling headphones buy online") },
   { id: "S2-mouse", ...searchWithOffers("Logitech MX Master 3S mouse product page price") },
   { id: "S3-espresso", ...searchWithOffers("Breville Bambino Plus espresso machine for sale") },
@@ -97,6 +138,7 @@ function loadKey() {
   return key;
 }
 
+const plan = process.argv.includes("--stage2") ? stage2 : stage1;
 const used = existsSync(counterPath) ? Number(readFileSync(counterPath, "utf8").trim()) || 0 : 0;
 if (used + plan.length > HARD_CAP) {
   console.error(`Refusing: ${used} requests already used; this run needs ${plan.length}; hard cap is ${HARD_CAP}.`);
@@ -124,7 +166,15 @@ for (const p of plan) {
   const receivedAt = new Date().toISOString();
   const text = await res.text();
   let body;
-  try { body = JSON.parse(text); } catch { body = { nonJsonBody: text.slice(0, 2000) }; }
+  if (p.stream) {
+    // SSE: keep every parsed `data:` event so the stream shape is recorded exactly.
+    const events = text.split(/\r?\n/).filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim())
+      .filter((d) => d && d !== "[DONE]").map((d) => { try { return JSON.parse(d); } catch { return { raw: d }; } });
+    body = { sseEventCount: events.length, sseEvents: events, contentType: res.headers.get("content-type") };
+    body.costDollars = events.findLast?.((e) => e.costDollars)?.costDollars;
+  } else {
+    try { body = JSON.parse(text); } catch { body = { nonJsonBody: text.slice(0, 20000) }; }
+  }
   const cost = body?.costDollars?.total ?? 0;
   totalCost += cost;
   const fixture = {

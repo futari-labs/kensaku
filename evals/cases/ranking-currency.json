@@ -1,0 +1,51 @@
+{
+  "_about": "EV-003 gold cases for currency grouping, market ordering, and deterministic ranking (REQ-004, D-014). All offers are synthetic and labeled as such.",
+  "labelStatus": "Assistant-proposed from the ranking rule in docs/futari/ARCHITECTURE.md section 'Ranking'. Gold once plan kensaku-mvp-v1 is approved.",
+  "rule": "Group by currency. Group order: the market's currency first (US->USD, SG->SGD, JP->JPY), then the remaining supported currencies in the order USD, SGD, JPY. Within a group sort by availability rank (in_stock=0, preorder=1, unknown=2, out_of_stock=3), then amount ascending, then merchantHost ascending, then canonicalUrl ascending. Offers with the same canonicalUrl collapse to the first one received. No amount is ever compared across groups.",
+  "cases": [
+    {
+      "id": "R01",
+      "market": "US",
+      "offers": [
+        { "id": "a", "merchantHost": "adorama.com", "canonicalUrl": "https://www.adorama.com/p/1", "currency": "USD", "amount": 278, "availability": "in_stock" },
+        { "id": "b", "merchantHost": "amazon.com", "canonicalUrl": "https://www.amazon.com/dp/1", "currency": "USD", "amount": 199.95, "availability": "in_stock" },
+        { "id": "c", "merchantHost": "courts.com.sg", "canonicalUrl": "https://www.courts.com.sg/p/1", "currency": "SGD", "amount": 289, "availability": "in_stock" },
+        { "id": "d", "merchantHost": "sony.jp", "canonicalUrl": "https://www.sony.jp/p/1", "currency": "JPY", "amount": 56100, "availability": "in_stock" },
+        { "id": "e", "merchantHost": "electronics.sony.com", "canonicalUrl": "https://electronics.sony.com/p/1", "currency": "USD", "amount": 150, "availability": "out_of_stock" }
+      ],
+      "expectedGroups": [ { "currency": "USD", "order": ["b", "a", "e"] }, { "currency": "SGD", "order": ["c"] }, { "currency": "JPY", "order": ["d"] } ],
+      "rationale": "Out-of-stock sorts last even when cheapest; SGD and JPY stay in their own groups."
+    },
+    {
+      "id": "R02",
+      "market": "JP",
+      "offers": [
+        { "id": "a", "merchantHost": "amazon.com", "canonicalUrl": "https://www.amazon.com/dp/1", "currency": "USD", "amount": 199.95, "availability": "in_stock" },
+        { "id": "b", "merchantHost": "ksdenki.com", "canonicalUrl": "https://www.ksdenki.com/item?sku=1", "currency": "JPY", "amount": 43600, "availability": "in_stock" },
+        { "id": "c", "merchantHost": "sony.jp", "canonicalUrl": "https://www.sony.jp/p/1", "currency": "JPY", "amount": 56100, "availability": "unknown" },
+        { "id": "d", "merchantHost": "courts.com.sg", "canonicalUrl": "https://www.courts.com.sg/p/1", "currency": "SGD", "amount": 289, "availability": "preorder" }
+      ],
+      "expectedGroups": [ { "currency": "JPY", "order": ["b", "c"] }, { "currency": "USD", "order": ["a"] }, { "currency": "SGD", "order": ["d"] } ],
+      "rationale": "JP market puts JPY first, then USD, then SGD."
+    },
+    {
+      "id": "R03",
+      "market": "SG",
+      "offers": [
+        { "id": "a", "merchantHost": "harveynorman.com.sg", "canonicalUrl": "https://www.harveynorman.com.sg/p/2", "currency": "SGD", "amount": 298, "availability": "in_stock" },
+        { "id": "b", "merchantHost": "harveynorman.com.sg", "canonicalUrl": "https://www.harveynorman.com.sg/p/1", "currency": "SGD", "amount": 298, "availability": "in_stock" },
+        { "id": "c", "merchantHost": "challenger.sg", "canonicalUrl": "https://online.challenger.sg/p/1", "currency": "SGD", "amount": 298, "availability": "in_stock" },
+        { "id": "d", "merchantHost": "challenger.sg", "canonicalUrl": "https://online.challenger.sg/p/1", "currency": "SGD", "amount": 250, "availability": "in_stock" }
+      ],
+      "expectedGroups": [ { "currency": "SGD", "order": ["c", "b", "a"] } ],
+      "rationale": "d duplicates c's canonical URL and collapses to c (first received), even though d is cheaper. Ties on amount break by merchantHost, then canonicalUrl."
+    },
+    {
+      "id": "R04",
+      "market": "US",
+      "offers": [],
+      "expectedGroups": [],
+      "rationale": "No offers produces no groups; the UI shows the explicit no-offers state."
+    }
+  ]
+}

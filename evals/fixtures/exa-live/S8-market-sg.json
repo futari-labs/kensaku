@@ -1,0 +1,150 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S8-market-sg",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Sony WH-1000XM5 headphones price Singapore buy",
+      "type": "auto",
+      "numResults": 5,
+      "userLocation": "SG",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:16:08.691Z",
+  "receivedAt": "2026-11-20T17:16:11.333Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "6d76c7504b7545e56907249e80454f44",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.courts.com.sg/sony-wireless-noise-cancellation%2C-headphones-midnight-blue-wh-1000xm5%2Flme-IP183532.html",
+        "title": "Shop SONY Wireless Noise Cancellation, Headphones (midnight Blue) WH-1000XM5/LME in Singapore",
+        "url": "https://www.courts.com.sg/sony-wireless-noise-cancellation%2C-headphones-midnight-blue-wh-1000xm5%2Flme-IP183532.html",
+        "author": "ISKANDAR",
+        "highlights": [
+          "Shop SONY Wireless Noise Cancellation, Headphones (midnight Blue) WH-1000XM5/LME in Singapore\n\n...\n\nDate published: 2025-08-24\n\n SONY Wireless Noise Cancellation, Headphones (midnight Blue) WH-1000XM5/LME \n\n Model: WH-1000XM5/LME \n\n4.4 out of 5 Customer Rating\n\n SONY Wireless Noise Cancellation, Headphones (midnight Blue) WH-1000XM5/LME is rated 5.0 out of 5 by 1. \n\n Item is currently on an indent basis - Depending on product lead time, delivery day may varies\n\nProduct Features \n\n S$ 289.00 \n\n Price reduced from RRP S$ 589.00 to \n\n (Save 51%) \n\n S$ 289.00 \n\n Price reduced from RRP S$ 589.00 to \n\n# SONY Wireless Noise Cancellation, Headphones (midnight Blue) WH-1000XM5/LME \n\n Item is currently on an indent basis - Depending on product lead time, delivery day may varies \n\n Terms & Conditions \n\n * COURTS Extended Warranty \n\nS$ 90.00 \n\nS$ 45.00 \n\n Orders are typically delivered within 3–5 working days (excluding Sundays and public holidays). During peak periods or due to stock availability, some delays may occur. Our team will notify you by email if there are any changes. We appreciate your patience and understanding. \n\n- In Stock"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"SONY Wireless Noise Cancellation, Headphones (midnight Blue) WH-1000XM5/LME\",\"merchant\":\"COURTS\",\"price\":289,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://www.courts.com.sg/on/demandware.static/-/Sites-courts-m-catalog-sg/default/dwede2d62d/images/hires/media/catalog/product/i/p/ip183532_00.jpg"
+      },
+      {
+        "id": "https://online.challenger.sg/products/sony-wh-1000xm5-wireless-noise-cancelling-headphones-black",
+        "title": "Sony WH-1000XM5 Wireless Noise Cancelling Headphones (Black)",
+        "url": "https://online.challenger.sg/products/sony-wh-1000xm5-wireless-noise-cancelling-headphones-black",
+        "highlights": [
+          "Sony WH-1000XM5 Wireless Noise Cancelling Headphones (Black) – Challenger Singapore \n\n \n\n This stock availability is not real-time, please contact customer service to confirm \n\n 313@Somerset \n\n Limited Availability \n\n 313 Orchard Road #04-01/02, 313@Somerset Singapore 238895 \n\n Opening Hours: 11:00am - 09:30pm \n\n Ang Mo Kio Hub (Level 2) \n\n Available \n\n 53 Ang Mo Kio Avenue 3 #02-09 to 14, Ang Mo Kio Hub Singapore 569933 \n\n Opening Hours: 11:00am - 09:30pm \n\n Bedok Mall \n\n Limited Availability \n\n 311 New Upper Changi Road #B1-18/19/20, Bedok Mall Singapore 467360 \n\n Opening Hours: 11:00am - 09:30pm\n\n...\n\nPLQ Mall \n\n Out of Stock \n\n 10 Paya Lebar Road #04-01, Paya Lebar Quarter Singapore 409057\n\n...\n\nSingPost Centre \n\n Out of Stock \n\n 10 Eunos Road 8 #02-135 Singapore Post Centre Singapore 408600 \n\n Opening Hours: 11:00am - 09:30pm \n\n# Sony WH-1000XM5 Wireless Noise Cancelling Headphones (Black) \n\n S$309.00 \n\n S$589.00 \n\n Variant: BLACK \n\n $309.00 \n\n $589.00 \n\nTypically takes 1 - 3 working days. \n\n Overview Video"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5 Wireless Noise Cancelling Headphones (Black)\",\"merchant\":\"Challenger Singapore\",\"price\":309,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "http://online.challenger.sg/cdn/shop/files/4548736132603_MeCzoRiO2u6do3E89JcCKhIyCW9aEBOEu9AhjW4r.jpg?v=1754983817",
+        "entities": [
+          {
+            "id": "https://online.challenger.sg/products/sony-wh-1000xm5-wireless-noise-cancelling-headphones-black",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Sony WH-1000XM5 Wireless Noise Cancelling Headphones (Black)",
+              "description": null,
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0614/3180/8075/files/4548736132603_MeCzoRiO2u6do3E89JcCKhIyCW9aEBOEu9AhjW4r.jpg?v=1754983817"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 329,
+                  "currency": "SGD"
+                },
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.amazon.sg/dp/B09ZFD9CBB?language=en_SG&linkCode=ll1&linkId=4e6c630f5726bc5bf547183f49f18002&tag=8days-22&th=1",
+        "title": "Sony WH-1000XM5 Noise Cancelling Wireless Over-Ear Headphones, Bluetooth, Clear Call Quality, Hi-Res, Up to 30hr Battery Life, Quick Charge, Alexa & Google Assistant, iOS & Android - Black : Amazon.sg: Electronics",
+        "url": "https://www.amazon.sg/dp/B09ZFD9CBB?language=en_SG&linkCode=ll1&linkId=4e6c630f5726bc5bf547183f49f18002&tag=8days-22&th=1",
+        "highlights": [
+          "Sony WH-1000XM5 Noise Cancelling Wireless Over-Ear Headphones, Bluetooth, Clear Call Quality, Hi-Res, Up to 30hr Battery Life, Quick Charge, Alexa & Google Assistant, iOS & Android - Black : Amazon.sg: Electronics\n\nS$310.00\n\nThis item cannot be shipped to your selected delivery location. Please choose a different delivery location.\n\nUsually dispatched within 2 to 3 days\n\nS$S$310.00 () Includes selected options. Includes initial monthly payment and selected options. Details\n\nPrice\n\n---\n\nSubtotal\n\nS$S$310.00\n\nSubtotal\n\n---\n\n---\n\nInitial payment breakdown\n\n---\n\nPostage cost, delivery date and order total (including tax) shown at checkout\n\nEnhancements you chose aren’t available for this seller. Details\n\n...\n\nShipper / Seller\n\nShipper / Seller\n\nReturns\n\nEligible for 15-day change of mind returns\n\nThis item can be returned in its original condition within 15 days of receipt for change of mind. However, if your item is damaged or defective, you may be entitled to a remedy after 15 days. Contact the seller or visit Third-Party Seller Returns to learn more.\n\nRead full return policy\n\n...\n\nVisit the Sony Store\n\n#1 Best Seller in Over-Ear Headphones\n\n---\n\nS$310.00 with 46 percent savings\n\nList Price: S$575.00\n\nSign in to redeem. Get S$7 off S$150 with PayLater by Grab. Enter code GRAB7 at checkout. Discount by Amazon. Terms off S$150 with PayLater by Grab. Promo code GRAB7 is saved to your account. Discount by Amazon. Terms\n\n...\n\nStyle: New Version\n\nMake a Style selection\n\nColour: Black\n\nMake a Colour selection\n\nSee 0 options with no featured offers\n\n...\n\n| Brand | Sony |\n| --- | --- |\n| Colour | Black |\n| Ear placement | Over Ear |\n| Form factor | Over Ear |\n\n...\n\n| Headphone jack | No Jack |\n| Model name | WH1000XM5/BME |\n\n...\n\n## Frequently bought together\n\nThis item: Sony WH-1000XM5 Noise Cancelling Wireless Over-Ear Headphones, Bluetooth, Clear Call Quality, Hi-Res, Up to 30hr Battery Life, Quick Charge, Alexa & Google Assistant, iOS & Android - Black\n\nS$310.00\n\nUsually dispatched within 2 to 3 days\n\nShips from and sold by D-Lifestyles SG.\n\n...\n\nSony WH-1000XM5 Wireless Noise-Cancelling Headphones, Black (WH1000XM5/B)\n\n3 offers from S$347.67\n\n...\n\n# Product Summary: Sony WH-1000XM5 Noise Cancelling Wireless Over-Ear Headphones, Bluetooth, Clear Call Quality, Hi-Res, Up to 30hr Battery Life, Quick Charge, Alexa & Google Assistant, iOS & Android - Black\n\nFrom Sony\n\n4.4 out of 5 stars, 4,276 ratings\n\n## Price\n\nOne-time purchase: S$310.00 46% Savings\n\nList Price: S$575.00"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5 Noise Cancelling Wireless Over-Ear Headphones, Bluetooth, Clear Call Quality, Hi-Res, Up to 30hr Battery Life, Quick Charge, Alexa & Google Assistant, iOS & Android - Black : Amazon.sg: Electronics\",\"merchant\":\"Amazon.sg\",\"price\":310,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://fls-fe.amazon.sg/1/batch/1/OP/A19VAU5U5O7RUS:356-8163780-7106125:2MCNGN638GZWJPB9M1JM$uedata=s:%2Frd%2Fuedata%3Fstaticb%26id%3D2MCNGN638GZWJPB9M1JM:0"
+      },
+      {
+        "id": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/sony-wh-1000xm5-lme-wireless-noise-cancelling-headphones-midnight-blue.html",
+        "title": "Sony WH-1000XM5/LME Wireless Noise Cancelling Headphones - Midnight Blue | Harvey Norman Singapore | Harvey Norman Singapore",
+        "url": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/sony-wh-1000xm5-lme-wireless-noise-cancelling-headphones-midnight-blue.html",
+        "highlights": [
+          "Sony WH-1000XM5/LME Wireless Noise Cancelling Headphones - Midnight Blue | Harvey Norman Singapore | Harvey Norman Singapore\n\n# Sony WH-1000XM5/LME Wireless Noise Cancelling Headphones - Midnight Blue\n\n \n\n S$ 298 was S$ 589 \n\n You Save S$ 291\n\n...\n\n### Specifications\n\n###### General \n\n| Brand | Sony |\n| --- | --- |\n| Colour | Midnight Blue |\n| Model | WH-1000XM5/LME |\n| Product-Type | Over-Ear Headphones |\n\n...\n\n### Delivery & Pickup Information\n\nAll items available for online purchase are not guaranteed to be in stock at the time of order processing. If we are unable to fulfill your order, you will be offered an alternative or given a refund for the unavailable product.\n\nSelf Collect: Ready for collection within 1-3 Working days from the date of your order notification confirmation. Or 2-4 Working days for orders made on Public Holidays, Saturday and Sunday. Subjected to stock availability. Self collection ONLY applies for selected Small Items. \n\nSmall Items: Delivery estimate of 2-7 Working days from the date of your order. Excluding Saturday, Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by SingPost and local couriers.\n\nLarge / Bulky Items: Delivery estimate of 7-14 Working days from the date of your order. Excluding Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by Harvey Norman. \n\nDelivery cost does not include installation/dismantling/carrying up or down by staircase. Installation/Dismantling cost and any other 3rd party cost applies separately."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5/LME Wireless Noise Cancelling Headphones - Midnight Blue\",\"merchant\":\"Harvey Norman Singapore\",\"price\":298,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://hnsgsfp.imgix.net/4/images/detailed/108/Sony_WH-1000XM5_Wireless_Noise_Cancelling_Headphones_-_Midnight_Blue_(Main).jpg?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress"
+      },
+      {
+        "id": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/sony-wireless-noise-cancelling-headphones-wh1000xm5pme-smoky-pink.html",
+        "title": "Sony Wireless Noise Cancelling Headphones - WH1000XM5PME (Smoky Pink) | Harvey Norman Singapore",
+        "url": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/sony-wireless-noise-cancelling-headphones-wh1000xm5pme-smoky-pink.html",
+        "highlights": [
+          "Sony Wireless Noise Cancelling Headphones - WH1000XM5PME (Smoky Pink) | Harvey Norman Singapore\n\n# Sony Wireless Noise Cancelling Headphones - WH1000XM5PME (Smoky Pink)\n\n \n\n S$ 298 was S$ 589 \n\n You Save S$ 291\n\n...\n\n### Specifications\n\n###### General \n\n| Brand | Sony |\n| --- | --- |\n| Colour | Smoky Pink |\n| Model | WH-1000XM5 |\n| Product-Type | Wireless Headphones |\n\n...\n\n### Delivery & Pickup Information\n\nAll items available for online purchase are not guaranteed to be in stock at the time of order processing. If we are unable to fulfill your order, you will be offered an alternative or given a refund for the unavailable product.\n\nSelf Collect: Ready for collection within 1-3 Working days from the date of your order notification confirmation. Or 2-4 Working days for orders made on Public Holidays, Saturday and Sunday. Subjected to stock availability. Self collection ONLY applies for selected Small Items. \n\nSmall Items: Delivery estimate of 2-7 Working days from the date of your order. Excluding Saturday, Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by SingPost and local couriers.\n\nLarge / Bulky Items: Delivery estimate of 7-14 Working days from the date of your order. Excluding Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by Harvey Norman."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony Wireless Noise Cancelling Headphones - WH1000XM5PME (Smoky Pink)\",\"merchant\":\"Harvey Norman Singapore\",\"price\":298,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://hnsgsfp.imgix.net/4/images/detailed/146/Slide1_ycwo-0e.JPG?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress"
+      }
+    ],
+    "searchTime": 2454.9,
+    "costDollars": {
+      "total": 0.012,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.005
+    }
+  }
+}

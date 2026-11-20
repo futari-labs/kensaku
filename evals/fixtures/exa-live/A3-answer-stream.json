@@ -1,0 +1,1402 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "A3-answer-stream",
+  "request": {
+    "endpoint": "/answer",
+    "body": {
+      "query": "Is the Logitech MX Master 3S good for programmers? Summarize pros and cons.",
+      "text": false,
+      "stream": true
+    }
+  },
+  "requestedAt": "2026-11-20T17:16:13.851Z",
+  "receivedAt": "2026-11-20T17:16:14.790Z",
+  "httpStatus": 200,
+  "response": {
+    "sseEventCount": 121,
+    "sseEvents": [
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "Yes"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "—"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "Log"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "itech"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " MX"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Master"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " 3"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "S"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " is"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " good"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " for"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " programmers"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " because"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " it"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "’s"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " a"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " productivity"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "-focused"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " mouse"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " with"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " an"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " excellent"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Mag"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "Speed"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " scroll"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " wheel"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " for"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " fast"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " navigation"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " (like long code files),"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " precise"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " tracking"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " (even on glass),"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " quiet"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " clicks"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ","
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " and"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " strong"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " customization"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " via"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Log"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "i"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Options"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "+"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " including"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " per"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "-"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "application"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " button"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " rem"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "apping"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " and"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Log"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "i"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Flow"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " for"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " switching"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "/control"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " across"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " up"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " to"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " 3"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " devices"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "."
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Pros"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ":"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " comfy"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " ergonomic"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " build"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ","
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " dual"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " scroll"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " wheels"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " +"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " thumb"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " controls"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ","
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " multi"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "-device"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " support"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ","
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " silent"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " operation"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ","
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " tracks"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " on"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " glass"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "."
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Cons"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ":"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " right"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "-handed"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " only"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ","
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " device"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "-switch"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " button"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " is"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " awkward"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "ly"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " on"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " the"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " underside"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ","
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " and"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " full"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " customization"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " depends"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " on"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Log"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "i"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " Options"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "+"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " (no onboard custom profiles)."
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": " [1]"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "[2]"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": "[3]"
+            },
+            "finish_reason": null
+          }
+        ]
+      },
+      {
+        "choices": [
+          {
+            "index": 0,
+            "delta": {},
+            "finish_reason": "stop"
+          }
+        ]
+      },
+      {
+        "citations": [
+          {
+            "id": "https://www.tomshardware.com/reviews/logitech-mx-master-3s-mouse",
+            "title": "Logitech MX Master 3S Mouse Review: King of Wireless Productivity | Tom's Hardware",
+            "url": "https://www.tomshardware.com/reviews/logitech-mx-master-3s-mouse",
+            "publishedDate": "2022-05-24T07:00:00.000Z",
+            "author": "Reviews By Avram Piltch",
+            "image": "https://cdn.mos.cms.futurecdn.net/h2rRjfo54zEYixauMG4AHb-1999-80.jpg"
+          },
+          {
+            "id": "https://www.wfhkit.co.uk/logitech-mx-master-3s-review/",
+            "title": "Logitech MX Master 3S Review: Still the King in 2026",
+            "url": "https://www.wfhkit.co.uk/logitech-mx-master-3s-review/",
+            "publishedDate": "2026-05-11T07:55:44.000Z",
+            "image": "https://www.wfhkit.co.uk/wp-content/uploads/2026/05/Logitech-MX-Master-3S-Review.png"
+          },
+          {
+            "id": "https://binaryfork.com/logitech-mx-master-3s-review-15545/",
+            "title": "Logitech MX Master 3S review: good office mouse, but with a few issues",
+            "url": "https://binaryfork.com/logitech-mx-master-3s-review-15545/",
+            "publishedDate": "2025-06-13T10:31:05.000Z",
+            "author": "Ionuț-Alexandru Popa",
+            "image": "https://binaryfork.com/wp-content/uploads/2025/06/logitech-mx-master-3s-view-from-front-left.jpg"
+          },
+          {
+            "id": "https://www.macworld.com/article/2374078/logitech-mx-master-3s-for-mac-review-seven-button-wonder-mouse.html",
+            "title": "Logitech MX Master 3S for Mac review: seven-button wonder mouse | Macworld",
+            "url": "https://www.macworld.com/article/2374078/logitech-mx-master-3s-for-mac-review-seven-button-wonder-mouse.html",
+            "publishedDate": "2024-06-21T13:19:40.000Z",
+            "author": "Cliff Joseph, Simon Jary",
+            "image": "https://www.macworld.com/wp-content/uploads/2024/06/MX-Master-3S-For-Mac-Mouse-2.jpg?quality=50&strip=all&w=1024"
+          },
+          {
+            "id": "https://www.t3.com/reviews/Logitech-MX-Master-3S-review",
+            "title": "Logitech MX Master 3S review: the master just got even more commanding | T3",
+            "url": "https://www.t3.com/reviews/Logitech-MX-Master-3S-review",
+            "publishedDate": "2022-07-10T09:00:00.000Z",
+            "author": "Steve Boxer",
+            "image": "https://cdn.mos.cms.futurecdn.net/xSEmUDSkXaWRWLz9n466w6-2560-80.jpg"
+          },
+          {
+            "id": "https://www.rtings.com/mouse/reviews/logitech/mx-master-3s",
+            "title": "Logitech MX Master 3S Review - RTINGS.com",
+            "url": "https://www.rtings.com/mouse/reviews/logitech/mx-master-3s",
+            "image": "https://i.rtings.com/assets/products/tfI79vsP/logitech-mx-master-3s/design-medium.jpg?format=auto"
+          },
+          {
+            "id": "https://www.techradar.com/pro/the-best-wireless-mouse-for-enhancing-workplace-productivity-logitechs-mx-master-3s-offers-quiet-clicks-magspeed-scrolling-and-extensive-customization-and-its-on-sale-at-amazon",
+            "title": "Logitech MX Master 3S wireless mouse gets a price cut at Amazon | TechRadar",
+            "url": "https://www.techradar.com/pro/the-best-wireless-mouse-for-enhancing-workplace-productivity-logitechs-mx-master-3s-offers-quiet-clicks-magspeed-scrolling-and-extensive-customization-and-its-on-sale-at-amazon",
+            "publishedDate": "2026-08-20T15:08:04.000Z",
+            "author": "Wayne Williams",
+            "image": "https://cdn.mos.cms.futurecdn.net/DbxcofrbpbBmvFHvUaprhj-1920-80.jpg"
+          },
+          {
+            "id": "https://thehnsolutions.com/logitech-mx-master-3s-review/",
+            "title": "Logitech MX Master 3S Review: Still the Mouse to Beat?",
+            "url": "https://thehnsolutions.com/logitech-mx-master-3s-review/",
+            "publishedDate": "2026-05-30T16:58:00.000Z",
+            "author": "Haris Naseer",
+            "image": "https://thehnsolutions.com/wp-content/uploads/2026/06/logitech-mx-master-3s-review.png"
+          }
+        ]
+      },
+      {
+        "costDollars": {
+          "total": 0.005
+        },
+        "requestId": "4ca68f9dbd1c5a9c53fc4744c546ac57"
+      }
+    ],
+    "contentType": "text/event-stream",
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}

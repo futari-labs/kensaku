@@ -1,0 +1,152 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "A2-answer-schema",
+  "request": {
+    "endpoint": "/answer",
+    "body": {
+      "query": "Best wireless noise cancelling headphones for frequent flyers under $400",
+      "text": false,
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "comparison": {
+            "type": "string",
+            "description": "Short comparison with numbered citation markers like [1]."
+          },
+          "candidates": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "brand": {
+                  "type": "string"
+                },
+                "modelIdentifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Model numbers or distinctive tokens."
+                }
+              },
+              "required": [
+                "name",
+                "brand",
+                "modelIdentifiers"
+              ]
+            }
+          }
+        },
+        "required": [
+          "comparison",
+          "candidates"
+        ]
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:16:06.574Z",
+  "receivedAt": "2026-11-20T17:16:08.686Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "15d1d62e71cc178b4ab5f25d44b154ff",
+    "answer": {
+      "comparison": "For travelers prioritizing budget, the Sennheiser Momentum 4 Wireless [4] and Momentum 5 Wireless [5] are top choices under $400, offering exceptional battery life and travel-friendly features [4,5]. For even greater savings, the EarFun Wave Pro [6] is a highly-rated budget option under $100, while the Sony WH-1000XM4Cs offer a flagship-level experience for under $300 [7].",
+      "candidates": [
+        {
+          "brand": "Sennheiser",
+          "name": "Momentum Series Wireless",
+          "modelIdentifiers": [
+            "Momentum 4 Wireless",
+            "Momentum 5 Wireless"
+          ]
+        },
+        {
+          "brand": "EarFun",
+          "modelIdentifiers": [
+            "Wave Pro"
+          ],
+          "name": "Wave Pro"
+        },
+        {
+          "brand": "Sony",
+          "modelIdentifiers": [
+            "WH-1000XM4Cs (2nd Gen)"
+          ],
+          "name": "WH-1000XM4Cs"
+        }
+      ]
+    },
+    "citations": [
+      {
+        "id": "https://packandgovacation.com/noise-cancelling-headphones-for-flights/",
+        "title": "Noise Cancelling Headphones for Flights: Top Picks",
+        "url": "https://packandgovacation.com/noise-cancelling-headphones-for-flights/",
+        "publishedDate": "2026-11-06T14:50:00.000Z",
+        "author": "Jonah Pruitt",
+        "image": "https://packandgovacation.com/wp-content/uploads/2026/10/cottonbro-studio-source-httpswww.-.comphotowireless-earphones-table.jpeg"
+      },
+      {
+        "id": "https://www.stuff.tv/review/sennheiser-momentum-5-wireless-review/",
+        "title": "Sennheiser Momentum 5 Wireless review: these keenly priced ANC over-ears have costlier rivals licked in two key areas | Stuff",
+        "url": "https://www.stuff.tv/review/sennheiser-momentum-5-wireless-review/",
+        "publishedDate": "2026-06-03T11:24:26.000Z",
+        "author": "Tom Morgan-Freelander",
+        "image": "https://www.stuff.tv/wp-content/uploads/sites/2/2026/05/Sennheiser-Momentum-5-Wireless-review-lead.jpg?quality=75"
+      },
+      {
+        "id": "https://www.soundguys.com/best-budget-noise-cancelling-headphones-7142/",
+        "title": "Best budget noise canceling headphones under $150 in 2026 - SoundGuys",
+        "url": "https://www.soundguys.com/best-budget-noise-cancelling-headphones-7142/",
+        "publishedDate": "2026-10-21T20:50:48.000Z",
+        "author": "Dave Carr",
+        "image": "https://www.soundguys.com/wp-content/uploads/2026/04/Best-ANC-Headphones-under-150-1-scaled.jpeg"
+      },
+      {
+        "id": "https://sea.mashable.com/headphones/56997/plenty-of-great-headphones-under-300-exist-these-three-are-the-best-i-tested-in-2026",
+        "title": "Plenty of great headphones under $300 exist: These three are the best I tested in 2026",
+        "url": "https://sea.mashable.com/headphones/56997/plenty-of-great-headphones-under-300-exist-these-three-are-the-best-i-tested-in-2026",
+        "publishedDate": "2026-11-19T10:00:43.000Z",
+        "author": "Bethany Allard",
+        "image": "https://sm.mashable.com/t/mashable_sea/roundup/p/plenty-of-/plenty-of-great-headphones-under-300-exist-these-three-are-t_cvgg.1200.jpg"
+      },
+      {
+        "id": "https://www.soundguys.com/best-noise-cancelling-headphones-for-airplane-84923/",
+        "title": "Best noise canceling headphones for airplanes in 2026 - SoundGuys",
+        "url": "https://www.soundguys.com/best-noise-cancelling-headphones-for-airplane-84923/",
+        "author": "Jasper Lastoria",
+        "image": "https://www.soundguys.com/wp-content/uploads/2019/05/Jabra_Elite-85h-5_headphones-folded-case-beige.jpg"
+      },
+      {
+        "id": "https://www.nytimes.com/wirecutter/reviews/best-noise-cancelling-headphones/",
+        "title": "The 4 Best Noise-Cancelling Headphones of 2026 | Reviews by Wirecutter",
+        "url": "https://www.nytimes.com/wirecutter/reviews/best-noise-cancelling-headphones/",
+        "publishedDate": "2013-04-01T11:53:38.000Z",
+        "author": "Lauren Dragan",
+        "image": "https://cdn.thewirecutter.com/wp-content/media/2026/07/BEST-NOISE-CANCELLING-HEADPHONES-2048px-6435-2x1-1.jpg?auto=webp&quality=75&crop=1.91:1&width=1200"
+      },
+      {
+        "id": "https://www.techradar.com/audio/headphones/best-noise-cancelling-headphones",
+        "title": "The best noise cancelling headphones for all budgets, all real-world tested | TechRadar",
+        "url": "https://www.techradar.com/audio/headphones/best-noise-cancelling-headphones",
+        "publishedDate": "2025-11-26T14:09:14.000Z",
+        "author": "Matt Bolton",
+        "image": "https://cdn.mos.cms.futurecdn.net/7ZJKS3SrqycqQkwwxFhQb3-1920-80.jpg"
+      },
+      {
+        "id": "https://www.engadget.com/audio/headphones/best-noise-canceling-headphones-130029881.html",
+        "title": "The best noise-canceling headphones for 2026",
+        "url": "https://www.engadget.com/audio/headphones/best-noise-canceling-headphones-130029881.html",
+        "publishedDate": "2024-04-23T13:00:29.000Z",
+        "author": "Billy Steele",
+        "image": "https://www.engadget.com/engadget/best-noise-canceling-headphones-130029881/b855b620-fe02-11f0-be7f-227632f6e263.jpg"
+      }
+    ],
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}
