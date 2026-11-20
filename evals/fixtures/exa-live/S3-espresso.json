@@ -1,0 +1,121 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S3-espresso",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Breville Bambino Plus espresso machine for sale",
+      "type": "auto",
+      "numResults": 5,
+      "userLocation": "US",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:18.713Z",
+  "receivedAt": "2026-11-20T17:08:23.516Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "198b5ad15b0cf65fc9abeb166db757fe",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.amazon.com/Breville-Bambino-Espresso-Machine-Truffle/dp/B08ZK13CJN",
+        "title": "Breville BES500BTR Bambino Plus Espresso Machine, Black Truffle",
+        "url": "https://www.amazon.com/Breville-Bambino-Espresso-Machine-Truffle/dp/B08ZK13CJN",
+        "author": "From Breville",
+        "highlights": [
+          "Amazon.com: Breville BES500BTR Bambino Plus Espresso Machine, Black Truffle | Make café-quality espresso, lattes and cappuccinos at home with this compact, semi-automatic coffee maker for home baristas: Home & Kitchen\n\n...\n\n$499.95$ 499. 95 \n\n FREE delivery Wednesday, November 25 \n\n Ships from: Amazon.com \n\n Sold by: Amazon.com \n\n FREE delivery Wednesday, November 25 \n\n Or Prime members get FREE delivery Tomorrow, November 21. Order within 2 hrs 50 mins. Join Prime \n\n In Stock \n\n Shipper / Seller \n\n Returns \n\n For the 2026 holiday season, eligible items purchased between November 1 and December 31, 2026 can be returned until January 31, 2027. \n\n Convenient dropoff At any of our 50,000 US locations.\n\n...\n\n$434.05$ 434. 05 \n\n FREE delivery Wednesday, November 25 \n\n Ships from: Amazon \n\n Sold by: Amazon Resale \n\nWe offer easy, convenient returns with at least one free return option: no shipping charges. All returns must comply with our returns policy.\n\n1. Go to your orders and start the return\n2. Select your preferred free shipping option\n3. Drop off and leave!\n\n No item damage observed during inspection. Item will come in original packaging. \n\n FREE delivery Wednesday, November 25 \n\n Or Prime members get FREE delivery Sunday, November 22. Order within 14 hrs 55 mins. Join Prime \n\n Only 6 left in stock - order soon. \n\n Sold by Amazon Resale and Fulfilled by Amazon. \n\n- View in virtual showroom \n\n# Breville BES500BTR Bambino Plus Espresso Machine, Black Truffle \n\n 4.1 4.1 out of 5 stars (231) \n\n $434.05 with 13 percent savings -13% $ 434. 05 \n\n Available at a lower price from other sellers that may not offer free Prime shipping. \n\n| Brand | Breville |\n| --- | --- |\n| Capacity | 64 fluid ounces |\n| Color | Black Truffle |\n| Product Dimensions | 14.25\"D x 7.5\"W x 12\"H |\n| Special Feature | Automatic Milk Steam Wand |\n\n# About this item \n\n- MICROFOAM MILK TEXTURING: Cappuccino maker and latte machine has an automatic steam wand allowing you to adjust milk temperature and texture, creating barista-quality microfoam for latte art at home \n- PRECISE DOSE GRINDING: This semi-automatic espresso machine allows you to achieve a consistent and balanced espresso using the right amount of ground coffee with the 54mm porta-filter with 19 grams \n- WATER PRESSURE: Low pressure pre-infusion gradually increases pressure at the start and draws out all flavors evenly during the extraction so home baristas can enjoy a balanced-tasting cup of espresso \n- RECEIVE 2 FREE BAGS OF SPECIALTY COFFEE: Included when you purchase and register any Breville coffee machine; T&Cs apply \n- FASTER HEAT UP TIME: Coffee maker includes innovative ThermoJet heating system that achieves extraction temperature in 3 seconds; Make your own cappuccinos and lattes at home without the wait \n- ESPRESSO MAKER WITH PRECISE EXTRACTION: Digital temperature regulation (PID) delivers water at precisely the right temperature, allowing for even espresso extraction, whether you're a beginner or a pro \n- COMPACT DESIGN: With a width of 7.7 inches, the Bambino Plus is a small espresso machine that fits easily on your kitchen countertop without compromising on the 4 keys formula for third wave specialty coffee \n\n- AUTO PURGE: This home espresso machine automatically purges the heat system after steaming, so your next espresso is extracted at the right temperature\n- THIRD-WAVE SPECIALTY: Uses the 4 keys formula; Part of the Bambino Series, this espresso coffee maker offers the faster way to café-quality results in a compact design\n- SETTINGS: 1 or 2 Cups; Steam Button; Adjustable Milk Temperature and Texture Level; WARRANTY: 2 Year Limited Product Warranty; Power: 1560 Watts; Voltage: 110 to 120 Volts\n\n These items are shipped from and sold by different sellers.\n\n...\n\nFeatures & Specs \n\n| Other Special Features of the Product | Automatic Milk Steam Wand |\n| --- | --- |\n| Coffee Maker Type | Espresso Machine |\n| Specific Uses For Product | Espresso |\n| Recommended Uses For Product | Espresso-based beverages |\n| Operation Mode | Semi-Automatic |\n| Wattage | 1560 watts |\n| Voltage | 120 volts |\n| Human Interface Input | Buttons |\n| Output Pressure | 9 bar |\n| Coffee Input Type | ground_coffee |\n| Filter Type | Reusable |\n\n...\n\n| Capacity | 64 fluid ounces |\n| --- | --- |\n| Item Dimensions D x W x H | 14.25\"D x 7.5\"W x 12\"H |\n| Item Weight | 11\n\n...\n\n### Customers say\n\nCustomers find the espresso machine produces excellent results and appreciate its compact size. The automatic steaming feature is positive, with one customer noting it's more consistent than manual steaming. However, the machine's reliability and ease of use receive mixed feedback - while some say it works beyond expectations and is super simple to use, others report it stops working within weeks and find it difficult to operate. Moreover, the value for money, cleaning capabilities, and durability are also mixed aspects, with some finding it worth the money while others warn not to waste money on it, and some praising the self-cleaning feature while others find it requires heavy-duty cleaning.\n\n...\n\n37 customers mention reliability, 20 positive, 17 negative 37 customers mention \"Reliability\" 20 positive 17 negative\n\nCustomers report mixed experiences with the espresso machine's reliability, with some saying it works well while others mention issues with the steam function failing after a few cycles and the machine stopping working within weeks of use.\n\n...\n\n# Product Summary: Breville BES500BTR Bambino Plus Espresso Machine, Black Truffle | Make café-quality espresso, lattes and cappuccinos at home with this compact, semi-automatic coffee maker for home baristas \n\nFrom Breville\n\n 4.1 out of 5 stars, 231 ratings \n\n100+ bought in past month\n\n## Price \n\n One-time purchase: $499.95 \n\n## About this Item\n\n...\n\n- RECEIVE 2 FREE BAGS OF SPECIALTY COFFEE: Included when you purchase and register any Breville coffee machine; T&Cs apply\n\n...\n\n- SETTINGS: 1 or 2 Cups; Steam Button; Adjustable Milk Temperature and Texture Level; WARRANTY: 2 Year Limited Product Warranty; Power: 1560 Watts; Voltage: 110 to 120 Volts"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Breville BES500BTR Bambino Plus Espresso Machine, Black Truffle\",\"merchant\":\"Amazon.com\",\"price\":434.05,\"currency\":\"USD\",\"availability\":\"in_stock\"}"
+      },
+      {
+        "id": "https://www.bestbuy.com/product/breville-the-bambino-plus-espresso-machine-with-15-bars-of-pressure-and-milk-frother-stainless-steel/J7266L533Z",
+        "title": "Breville the Bambino Plus Espresso Machine with 15 bars of pressure and ...",
+        "url": "https://www.bestbuy.com/product/breville-the-bambino-plus-espresso-machine-with-15-bars-of-pressure-and-milk-frother-stainless-steel/J7266L533Z",
+        "highlights": [
+          "# Breville - the Bambino Plus Espresso Machine with 15 bars of pressure and Milk Frother - Stainless Steel\n\n1 Video\n\n3D\n\n## Reviews\n\nRating 4.6 out of 5 stars with 280 reviews\n\n4.6(280)\n\n### Features\n\n- #### Espresso coffee machine\n\nQuickly and easily prepare your favorite beverage.\n- #### Milk frother jug (480 ml)\n\nPerfect for making frothed milk to create your favorite specialty drink from flat whites to cappuccinos.\n- #### Stainless steel material\n\nCreates a stylish appearance.\n\n### Specifications\n\n- Care And Cleaning Instructions Hand wash\n\nAutomation Level\n\nManual\n\nIntegrated Grinder\n\nNo\n\nBars of Pressure\n\n9"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Breville the Bambino Plus Espresso Machine with 15 bars of pressure and Milk Frother Stainless Steel - Best Buy\",\"merchant\":\"Best Buy\",\"price\":null,\"currency\":null,\"availability\":null}"
+      },
+      {
+        "id": "https://www.breville.com/en-us/product/bes500",
+        "title": "Bambino Plus - Small Home Espresso Machine | Breville | Breville (US)",
+        "url": "https://www.breville.com/en-us/product/bes500",
+        "highlights": [
+          "# the Bambino® Plus\n\n#### $499.95\n\n$499.95\n\n## Serious espresso. Plus auto milk.\n\nLike professional machines, the Bambino Plus can deliver third wave specialty coffee. This is made possible by the 4 keys formula. Delivering barista quality performance using a 54mm stainless steel portafilter with 18 grams of coffee for full flavor and a powerful hands-free automatic steam wand that makes microfoam milk for you ready for latte art. With a proprietary ThermoJet heating system the machine is ready to start in 3 seconds.\n\nLearn more about third wave specialty coffee.\n\n## Experience third wave specialty coffee at home, made possible by the 4 keys formula\n\nOur espresso machines are designed to use the right dose of freshly ground beans, ensure precise temperature control, optimal water pressure and create true microfoam milk essential for latte art. You're only a touch away from getting the 4 keys formula used by professional cafe machines.\n\n## ThermoJet® heating system\n\nDigitally printed heating circuit, up to 44.3% more energy efficient when compared to a Thermoblock heating system*. Fast heat up achieves the optimum extraction temperature in seconds. * Based on internal benchmark testing as of September 2026.\n\n## Auto and manual milk with powerful 266°F steam for easy silky microfoam\n\nEnjoy silky, velvety microfoam milk automatically with 3 adjustable milk temperatures and 3 levels of texture. Or hands on manual texturing like a barista.\n\n## 54 mm stainless steel portafilter delivers full flavor with dual and single wall filters\n\nFull bodied coffee with rich and complex flavors is created using the ideal dose of 18g of freshly ground beans delivered by a professional style 54mm stainless steel portafilter.\n\n## Low pressure pre-infusion followed by 9 bar extraction\n\nAn opulent, creamy and caramel colored espresso starts with low pressure pre-infusions, followed by a high pressure (9 bar) extraction process delivered via our 15 bar Italian pump.\n\n## Simple interface with volumetric shot control\n\nConvenient one-touch 1 & 2 shot volumetric control and steam.\n\n## Compact Footprint for all countertops\n\nBig in performance, yet small in size the Bambino Plus will feel at home in any kitchen.\n\nAccessories\n\n- Included Accessories:\n- 54mm Tamper\n- the Razor™ Precision Dosing Tool\n- 16 fl.oz / 480ml Stainless Steel Milk Jug\n- 1 & 2 Cup Single Wall & Dual Wall Filter Baskets\n- Cleaning Tool\n- Cleaning Disc\n\nDimensions (WxDxH)\n\n- 11.9 x 7.4 x 14.3 in\n\nConstruction Materials\n\n- Stainless Steel"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Bambino Plus - Small Home Espresso Machine | Breville | Breville (US)\",\"merchant\":\"Breville\",\"price\":499.95,\"currency\":\"USD\",\"availability\":\"unknown\"}",
+        "image": "https://assets.breville.com/cdn-cgi/image/width=1300,format=auto/BES500/BES500BSS1BUS1/pdp_1300px.png?pdp"
+      },
+      {
+        "id": "https://www.williams-sonoma.com/products/breville-the-bambino-plus/",
+        "title": "Breville Bambino Plus Espresso Machine with Milk Frother | Williams Sonoma",
+        "url": "https://www.williams-sonoma.com/products/breville-the-bambino-plus/",
+        "highlights": [
+          "# Breville Bambino® Plus Espresso Machine\n\n- $ 499.95\n\n## Frequently Asked Questions\n\n- 1. What is low-pressure pre-infusion for the Breville Bambino® Plus Espresso Machine?\n\nThe Breville Bambino® Plus Espresso Machine starts by wetting the grounds with low, steady water pressure before full extraction to gently expand them for a more even extraction.\n\n- Pressure gradually increases before extraction.\n- Designed to support balanced flavor and thick crema.\n- 2. Can the Breville Bambino® Plus Espresso Machine create microfoam for latte art?\n\nYes, it has automatic microfoam texturing that produces barista-quality froth for making latte art.\n\n- The hands-free frothing system produces light and billowy microfoam.\n- A stainless-steel swivel steam wand froths milk for lattes and cappuccinos."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Breville Bambino® Plus Espresso Machine\",\"merchant\":\"Williams Sonoma\",\"price\":499.95,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://assets.wsimgs.com/wsimgs/rk/images/dp/wcm/202641/0006/breville-bambino-plus-espresso-machine-c.jpg"
+      },
+      {
+        "id": "https://www.macys.com/shop/product/breville-bambino-plus-thermojet-espresso-maker-with-steam?ID=14629410",
+        "title": "Breville Bambino Plus ThermoJet Espresso Maker with Steam - Macy's",
+        "url": "https://www.macys.com/shop/product/breville-bambino-plus-thermojet-espresso-maker-with-steam?ID=14629410",
+        "highlights": [
+          "# Breville Bambino Plus ThermoJet Espresso Maker with Steam\n\n4.4 (1,748) \n\n$499.95 Details\n\nColor: Brushed Stainless Steel\n\n- Color: Brushed Stainless Steel\n- Color: Black Truffle\n\n## Product Details\n\n- Barista-quality performance in a compact footprint. The Bambino Plus from Breville delivers full-flavor espresso, with a hands-free automatic steam wand lets you create microfoam for topping your drinks.\n- #### Features\n\n- Approx. dimensions: 13.5\"L x 8\"W x 12\"H\n- Approx. weight: 11.3 lbs.\n- Approx. capacity: 64-oz. water tank, 16-oz. milk jug\n- ThermoJet™ technology heats in as little as three seconds\n- Low-pressure pre-infusion followed by nine-bar extraction from a 15-bar Italian pump\n- Simple interface with shot control \n- 54mm portafilter with 18 grams of coffee for full flavor \n- Powerful automatic wand with 266°F steam for easy silky microfoam \n- Includes descaling powder, steam-wand cleaning tool, cleaning kit \n- WARNING: Do not use any power adapter, charger or cords other than those included with your product. Using incompatible, counterfeit or non-certified accessories can cause fire or accidents. Contact the manufacturer for replacements.\n- Stainless steel\n- Wipe clean\n- #### Shipping & Returns\n\n- Our Normal Gift Boxing is not available for this item.\n- Returns must be within 30 days of purchase in the original packaging and in salable condition.\n- Enjoy a longer window to return most of your holiday purchases. See our Extended Holiday Return Policy to see if this item qualifies.\n- California and Minnesota customers call 1-800-289-6229 (18002896229) for Free Shipping information.\n- For complete details, see our Shipping and Returns policies. \n- Web ID: 14629410\n\n## Ratings & Reviews\n\n##### Here's what customers think\n\n- Customers consistently praise the machine for producing excellent coffee and espresso.\n- The automatic milk frother is highly valued for creating quality microfoam and being easy to use.\n- The compact size and quick heat-up time are frequently highlighted as positive attributes.\n- Some customers report mixed experiences with the machine's durability and consistency of performance over time.\n- Reviewers note that the machine is lightweight, which can make inserting or removing the portafilter challenging.\n\nAI-generated summary from 1,381 customers reviews.\n\n4.4/5 \n\n1,748 star ratings, 1,733 reviews \n\nWrite a Review\n\n5 Stars\n\n1220\n\n4 Stars\n\n261\n\n3 Stars\n\n98\n\n2 Stars\n\n60\n\n1 Star\n\n109"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Breville Bambino Plus ThermoJet Espresso Maker with Steam\",\"merchant\":\"Macy's\",\"price\":499.95,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://slimages.macysassets.com/is/image/MCY/products/7/optimized/22520597_fpx.tif?$filterlrg$&wid=327"
+      }
+    ],
+    "searchTime": 4512.8,
+    "costDollars": {
+      "total": 0.012,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.005
+    }
+  }
+}

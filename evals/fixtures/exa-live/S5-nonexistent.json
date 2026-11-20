@@ -1,0 +1,165 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S5-nonexistent",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Zorblax QX-9000 hyperflux toaster buy",
+      "type": "auto",
+      "numResults": 5,
+      "userLocation": "US",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:26.295Z",
+  "receivedAt": "2026-11-20T17:08:29.388Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "38d16dd13cf41df91ea12c357f6c90ba",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.bestbuy.com/site/shop/best-high-end-toaster",
+        "title": "Top Rated High End Toaster",
+        "url": "https://www.bestbuy.com/site/shop/best-high-end-toaster",
+        "highlights": [
+          "# Top Rated High End Toaster\n\nChoosing the best high-end toaster starts with how you toast and the space you have. Compare premium toasters by slot size, number of slots, browning controls, and ease of cleaning. Check each model’s specifications against the breads you use most often and the countertop space available to find a fit for your daily routine.\n\n## What to look for in a high-end toaster\n\nChoosing the best high-end toaster for your kitchen means balancing consistent browning, versatile settings, capacity, and everyday convenience.\n\n 1.\n\n...\n\nConsider how many slices you typically toast at once and whether you need room for thick bread, bagels, or longer artisan slices.\n\n...\n\n3. Toasting Functions \n\nChoose functions that suit your routine, such as bagel, defrost, and reheat settings. A cancel button and the ability to check progress without restarting the cycle can add convenience."
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Top Rated High End Toaster - Best Buy\",\"merchant\":\"Best Buy\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}"
+      },
+      {
+        "id": "https://www.amazon.com/Display%EF%BC%8C9-Stainless-Toasters-Removable-Toaster%EF%BC%8CAuto/dp/B092VV2RWT",
+        "title": "2 Slice Toaster LED Display，9 Shade Stainless Steel Toasters with Cancel, Bagel and Defrost Function, Extra Wide Slots Removable Crumb Trays Compact Toaster，Auto Pop Up，900W",
+        "url": "https://www.amazon.com/Display%EF%BC%8C9-Stainless-Toasters-Removable-Toaster%EF%BC%8CAuto/dp/B092VV2RWT",
+        "highlights": [
+          "# 2 Slice Toaster LED Display，9 Shade Stainless Steel Toasters with Cancel, Bagel and Defrost Function, Extra Wide Slots Removable Crumb Trays Compact Toaster，Auto Pop Up，900W\nBrand: AZ\nCategory: Ovens & Toasters > Toasters\n\n## Specifications\nColor: Stainless Steel; Material: Stainless Steel\n\n## Details\nUPC: 738530966267\n\nASIN: B092VV2RWT"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"2 Slice Toaster LED Display，9 Shade Stainless Steel Toasters with Cancel, Bagel and Defrost Function, Extra Wide Slots Removable Crumb Trays Compact Toaster，Auto Pop Up，900W\",\"merchant\":\"AZ\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}",
+        "entities": [
+          {
+            "id": "https://www.amazon.com/Display%EF%BC%8C9-Stainless-Toasters-Removable-Toaster%EF%BC%8CAuto/dp/B092VV2RWT",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "2 Slice Toaster LED Display，9 Shade Stainless Steel Toasters with Cancel, Bagel and Defrost Function, Extra Wide Slots Removable Crumb Trays Compact Toaster，Auto Pop Up，900W",
+              "description": null,
+              "images": [
+                "https://m.media-amazon.com/images/I/71L2j2ZnhUL._AC_SL1500_.jpg",
+                "https://m.media-amazon.com/images/I/710a78WNYoL._AC_SL1500_.jpg",
+                "https://m.media-amazon.com/images/I/711+0GO2P1L._AC_SL1500_.jpg",
+                "https://m.media-amazon.com/images/I/712PQA-a-tL._AC_SL1500_.jpg",
+                "https://m.media-amazon.com/images/I/71AwLC1kkeL._AC_SL1500_.jpg"
+              ],
+              "brand": {
+                "id": null,
+                "name": "AZ"
+              },
+              "identifiers": {
+                "gtin": "738530966267",
+                "mpn": null
+              },
+              "offer": {
+                "price": null,
+                "availability": "in_stock",
+                "sku": "B092VV2RWT",
+                "seller": {
+                  "id": "ATVPDKIKX0DER",
+                  "name": null,
+                  "url": "https://www.amazon.com/sp?ie=UTF8&seller=ATVPDKIKX0DER&asin=B092VV2RWT"
+                }
+              },
+              "rating": null,
+              "attributes": [
+                {
+                  "name": "Color",
+                  "value": "Stainless Steel"
+                },
+                {
+                  "name": "Material",
+                  "value": "Stainless Steel"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.mytoque.com/collections/toasters-toaster-ovens",
+        "title": "Buy Toasters and Toaster Ovens With Reliable Appliances",
+        "url": "https://www.mytoque.com/collections/toasters-toaster-ovens",
+        "highlights": [
+          "Buy Toasters and Toaster Ovens With Reliable Appliances – Toque Blanche\n\nCollection: \n\n \n\n### Breville Bit More 2 Slot Toaster \n\nRegular price $109.99 USD\n\n Sale price Regular price \n\n \n\n### Breville Mini Smart Oven \n\n Sale price $127.99 USD Regular price $159.99 USD \n\n \n\n### Breville Bit More 4 Slot Toaster \n\nRegular price $119.99 USD\n\n \n\n### Breville Die-Cast 2 Slot Smart Toaster \n\nRegular price $199.99 USD\n\n...\n\n### Breville Die-Cast Smart 4 Slot Toaster \n\nRegular price $219.99 USD\n\n### Breville Smart Oven® Air Fryer Pro, Convection Countertop Oven, Air Fryer Toaster Oven Combo - Brushed Stainless Steel \n\n### Breville 4 Slot Toaster \n\n### Visit Us \n\nToque Blanche 1527 Pacific Avenue Santa Cruz, CA 95060\n\n### Store Hours \n\nOpen Daily:\n\n10am to 6pm\n\n### Call Us \n\n(831) 426-1351 (+18314261351)"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":null,\"merchant\":\"Toque Blanche\",\"price\":109.99,\"currency\":\"USD\",\"availability\":\"unknown\"}",
+        "image": "http://www.mytoque.com/cdn/shop/files/Toque_Blanche_Brand_Classic_Cast_Iron_Le_Creuset_Cookbook_Visit_Toque_BlancheS.jpg?v=1739006556"
+      },
+      {
+        "id": "https://www.bimart.com/home-kitchen-appliances-toasters/c/11024",
+        "title": "BiMart Toasters  - Bi-Mart",
+        "url": "https://www.bimart.com/home-kitchen-appliances-toasters/c/11024",
+        "highlights": [
+          "BiMart Toasters - Bi-Mart\n\nNow! Shop Bi-Mart Online, Pick Up In Store! Learn More\n\nShop by Department| Home| Kitchen Appliances| Toasters\n\n# Toasters\n\nShow: 15 25 50 100 Results: 1 - 11 of 11\n\nSort by: Default NEW Items First-if applicable CLEARANCE First- if applicable WEB ONLY First-if applicable Price: Low to High Price: High to Low Alphabetical: A-Z Alphabetical: Z-A Date Added: Most Recent First Date Added: Most Recent Last\n\nClear All Filters\n\nDone\n\n## Categories\n\nFacet Values\n\ntenant-brand\n\n### Brand\n\nFilter Values\n\ntenant-colorflavor\n\n### Color or Flavor\n\nFilter Values\n\ntenant-packagesize\n\n### Package Size\n\nFilter Values\n\ntenant-productsize\n\n### Product Size\n\nFilter Values\n\nPrice\n\n### Price\n\nClear All Filters\n\nCompare label\n\nCompare\n\nWEST BEND 4 SLICE TOASTER\n\nSKU #: 986993\n\n$44.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nCUISINART CPT160P1 2-SLICE TOASTER\n\nSKU #: 801614\n\n$57.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nSALE\n\nCUISINART BRUSHED STAINLESS 4 SLICE CLASSIC TOASTER\n\nSKU #: 801615\n\n$77.99 $67.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nSALE\n\nTOASTMASTER 2 SLICE TOASTER\n\nSKU #: 870702\n\n$29.99 $25.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nSALE\n\n4 SLICE COUNTDOWN TOASTER\n\nSKU #: 870703\n\n$49.99 $39.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\n4 SLICE COOL TOUCH TOASTER\n\nSKU #: 924692\n\n$29.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nSKU #: 950911\n\n$12.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nINSPIREX TOUCHSCREEN 2-SLICE STAINLESS STEEL TOASTER\n\nSKU #: 992554\n\n$37.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nNOSTALGIA RETRO 4 SLICE TOASTER - CREAM\n\nSKU #: 987077\n\n$49.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nNOSTALGIA RETRO 2 SLICE TOASTER - CREAM\n\nSKU #: 987076\n\n$39.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\nCompare label\n\nCompare\n\nTOASTMASTER 2 SLICE COOL TOUCH TOASTER\n\nSKU #: 983584\n\n$16.99\n\nOut of stock Add to Cart\n\nIn-Store Purchase Only\n\n1"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":null,\"merchant\":\"Bi-Mart\",\"price\":null,\"currency\":null,\"availability\":\"out_of_stock\"}"
+      },
+      {
+        "id": "https://www.surlatable.com/o?c=premium-stainless-steel-toasters",
+        "title": "Premium Stainless Steel Toasters",
+        "url": "https://www.surlatable.com/o?c=premium-stainless-steel-toasters",
+        "highlights": [
+          "# Premium Stainless Steel Toasters\n\nPremium stainless steel toasters bring both style and reliability to your countertop, making every morning routine a little easier—and a bit more enjoyable. Designed for those who appreciate thoughtful details and lasting quality, these toasters fit seamlessly into any kitchen décor while helping you achieve perfectly toasted results. Whether you’re preparing breakfast for one or serving a crowd, premium stainless steel toasters offer the durability and timeless look that busy kitchens demand.\n\n- \n\n Revolution Connect Plus Smart Toaster Premium Wi-Fi Touchscreen Toaster with Digital Photo Frame \n\n $449.95 \n\nA stainless steel smart toaster with InstaGLO® heating, touchscreen controls and Wi-Fi digital photo frame.\n- \n\n Lotus The Two Slice Precision Toaster \n\n $349.95 \n\nA stainless steel toaster with intuitive controls for perfectly customized toast every morning.\n- \n\n Lotus The Four Slice Precision Toaster \n\n $499.95 \n\nA stainless steel toaster with intuitive controls, designed for effortless, precise toasting of four slices at once.\n- \n\n Dualit Classic Two-Slice Toaster \n\n $299.95 \n\n (3) \n\nA metallic charcoal stainless steel toaster with extra-wide slots, manual controls, and patented ProHeat® elements.\n- \n\n Dualit Classic Four-Slice Toaster \n\n $379.95 \n\nA white stainless steel toaster featuring extra-wide slots, ProHeat® elements, and a manual ejector lever.\n- \n\n Breville Toast Select Luxe \n\n $219.95 \n\n (26) \n\nA red stainless steel toaster with six settings, countdown display, and convenient progress-checking functions.\n- \n\n Cuisinart Metal Classic 4-Slice Toaster \n\n $69.95 \n\n (633) \n\nA sleek silver toaster with dual control panels for toasting two items at once.\n- \n\n Breville Die-Cast Toaster, 4-Slice \n\n $249.95 \n\n (153) \n\nA smart toaster with innovative features, adjustable settings, extra-large slots, and a brushed die-cast metal design.\n- \n\n Breville A-Bit-More 2-Slice Toaster \n\n $109.95 \n\n (256) \n\nA sleek stainless-steel toaster with 'A Bit More' browning and 'Lift and Look' features.\n- \n\n Smeg 50's Retro Style Aesthetic 4 Slice Toaster \n\n $279.95\n\n...\n\n- \n\n Smeg 50's Retro Style Aesthetic 2 Slice Toaster \n\n $229.95 \n\n (13) \n\nA navy blue stainless steel toaster featuring extra-wide slots, chrome accents, and six browning levels.\n- \n\n Cuisinart Classic 2-Slice Toaster \n\n $49.95 \n\n (173) \n\nA black stainless steel toaster with adjustable browning, defrost, reheating, and versatile bread settings.\n- \n\n Breville Die-Cast 2-Slice Smart Toaster \n\n $199.95 \n\n (190) \n\nA silver, stainless steel toaster with smart toasting technology, adjustable settings, and extra-large slots.\n- \n\n Cuisinart 2-Slice XL Slot Stainless Steel Toaster \n\n $59.95 \n\n (32) \n\nA stainless steel toaster with extra-large slots and a check-in-progress lever for perfect browning.\n- \n\n Revolution Connect Smart Toaster Wi-Fi Touchscreen Toaster with Weather Display \n\n $399.95 \n\nA stainless steel smart toaster with rapid heating, Wi-Fi connectivity, touchscreen controls, and customizable settings.\n- \n\n Cuisinart Toaster \n\n $79.95 \n\n (616) \n\nA sleek, silver stainless steel toaster with generous slots and adjustable shade settings.\n- \n\n Breville A Bit More 4-Slice Toaster \n\n $119.95 \n\n (231) \n\nA silver stainless-steel toaster with extra-long slots and “A Bit More” and “Lift and Look” settings.\n- \n\n CAFÉ™ Express Finish Toaster \n\n $99 \n\n (28) \n\nA stainless steel metal toaster with intuitive controls and an illuminated LED ring for effortless toasting."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Premium Stainless Steel Toasters\",\"merchant\":\"Sur La Table\",\"price\":449.95,\"currency\":\"USD\",\"availability\":\"unknown\"}"
+      }
+    ],
+    "searchTime": 2909,
+    "costDollars": {
+      "total": 0.012,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.005
+    }
+  }
+}

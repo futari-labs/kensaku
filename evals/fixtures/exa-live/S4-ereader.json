@@ -1,0 +1,120 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S4-ereader",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Kindle Paperwhite 16GB 2024 shop",
+      "type": "auto",
+      "numResults": 5,
+      "userLocation": "US",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:23.518Z",
+  "receivedAt": "2026-11-20T17:08:26.293Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "93a17bcb8f2f700235052a5314860d5d",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.bestbuy.com/product/amazon-kindle-paperwhite-16-gb-2024-black/J39HW6QL86",
+        "title": "Amazon Kindle Paperwhite (16 GB) 2024 Black",
+        "url": "https://www.bestbuy.com/product/amazon-kindle-paperwhite-16-gb-2024-black/J39HW6QL86",
+        "highlights": [
+          "Amazon Kindle Paperwhite (16 GB) 2024 Black - Best Buy\n\n# Amazon - Kindle Paperwhite (16 GB) - 2024 - Black\n\n1 Video\n\nCustomer Images\n\n## Reviews\n\n### Features\n\n### Specifications\n\n- Screen Size\n\n7 inches\n\nScreen Resolution 300 pixels per inch\n\nTotal Storage Capacity 16 gigabytes\n\nVoice Assistant Built-in\n\nNo\n\nWorks With\n\nAmazon Alexa\n\nWireless Connectivity\n\nWi-Fi, Bluetooth, Wi-Fi\n\n...\n\n- How much is the fee to remove ads, how dies it work?\n\nHi Lockscreen- Thanks for reaching out. The fee to remove ads (also called \"Special Offers\") from a Kindle device is $20. This is a one-time payment, not a subscription, and it permanently removes advertising from your device's lock screen and home screen. You can make this payment through your Amazon account's \"Manage Your Content and Devices\" section. I hope this helps, have a great day!\n\nAnswered 1 year ago by Amazon Devices Customer Support"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Amazon Kindle Paperwhite (16 GB) 2024 Black - Best Buy\",\"merchant\":\"Best Buy\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}"
+      },
+      {
+        "id": "https://www.amazon.com/All-new-Amazon-Kindle-Paperwhite-glare-free/dp/B0CFPJYX7P",
+        "title": "Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – Black",
+        "url": "https://www.amazon.com/All-new-Amazon-Kindle-Paperwhite-glare-free/dp/B0CFPJYX7P",
+        "highlights": [
+          ".com\n\n#### Click the button below to continue shopping\n\nContinue shopping\n\nConditions of Use Privacy Policy\n\n© 1996-2025, Amazon.com, Inc. or its affiliates\n\nAmazon.com\n**\n**\n#### Click the button below to continue shopping\nContinue shopping\n[Conditions of"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Amazon Kindle Paperwhite 16GB (2024 model) – 7\\\" glare-free display and weeks of battery life – Black\",\"merchant\":\"Amazon.com\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}"
+      },
+      {
+        "id": "https://www.target.com/p/amazon-kindle-paperwhite-2024-black/-/A-91563138",
+        "title": "Amazon Kindle Paperwhite (2024) - Black",
+        "url": "https://www.target.com/p/amazon-kindle-paperwhite-2024-black/-/A-91563138",
+        "highlights": [
+          "Amazon Kindle Paperwhite (2024) - Black : Target\n\n...\n\nExplore Tech Gifts\n\n# Amazon Kindle Paperwhite (2024) - Black\n\n4.44 out of 5 stars\n\n276\n\n76 Questions\n\n Bestseller\n\nEligible for registries and wish lists\n\n## At a glance\n\n- Bluetooth\n\n## About this item"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite (2024) - Black\",\"merchant\":\"Target\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}",
+        "image": "https://target.scene7.com/is/image/Target/GUEST_8608ea59-7cd0-4700-9575-7624d4dc5a89"
+      },
+      {
+        "id": "https://www.amazon.nl/-/en/kindle-paperwhite-2024/dp/B0CFPWLGF2",
+        "title": "Amazon Kindle Paperwhite (16 GB) – Our fastest Kindle ever, with new 7\" glare-free display and weeks of battery life – black : Amazon.nl",
+        "url": "https://www.amazon.nl/-/en/kindle-paperwhite-2024/dp/B0CFPWLGF2",
+        "author": "Visit the Amazon Kindle Store",
+        "highlights": [
+          "Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – black : Amazon.nl\n\n €154.99€ 154. 99 \n\n FREE delivery Tuesday, 24 November \n\n Or fastest delivery Tomorrow, 21 November. Order within 10 hrs 21 mins \n\n In stock \n\n€€154.99 154. 99 () Includes selected options. Includes initial monthly payment and selected options. \n\n Price (€ 154. 99 x) € 154. 99 \n\n Delivery cost, delivery date and order total (including tax) shown at checkout. \n\n Shipper / Seller \n\n Amazon \n\n Amazon \n\n Shipper / Seller Amazon \n\n Returns \n\n Returnable until Jan 31, 2027 \n\n For the 2026 holiday season, this item if purchased between November 1 and December 25, 2026 can be returned until January 31, 2027 or within 30 days from receipt (whichever is later). \n\n Read full return policy \n\n Payment \n\n Secure transaction \n\n Your transaction is secure \n\n- \n- To view this video download Flash Player \n\n## Safety and product resources\n\n...\n\n### Images and contacts\n\n- Product safety images Manufacturer information Responsible person\n\nThis device doesn't include a power adapter.\n\n# Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – black \n\n Brand: Amazon \n\n 4.6 4.6 out of 5 stars (19,545) \n\n- Kindle Paperwhite – 7“ Paperwhite display with high contrast ratio and fast page turns. \n- Ready for travel – The ultra-thin design has a larger glare-free screen so pages stay sharp no matter where you are. \n- Escape into your books – Your Kindle doesn't have social media, notifications or other distracting apps. \n- Battery life for your longest novel – A single charge via USB-C lasts up to 12 weeks. \n- Read in any light – Adjust the display from white to amber to read in bright sunlight or in the dark. \n- Waterproof and worry-free – Take your stories by the pool, in the bath, or anywhere in between. \n- Massive selection – Get instant access to millions of titles in the Kindle Store.\n\n...\n\n4.6 out of 5 stars\n\n4.6 out of 5\n\n19,545 global ratings"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite 16GB (2024 model) – 7\\\" glare-free display and weeks of battery life – black\",\"merchant\":\"Amazon\",\"price\":154.99,\"currency\":\"EUR\",\"availability\":\"in_stock\"}"
+      },
+      {
+        "id": "https://www.officeworks.com.au/shop/officeworks/p/kindle-paperwhite-2024-16gb-black-amcfpl6cfy",
+        "title": "Kindle Paperwhite 2024 16GB Black | Officeworks",
+        "url": "https://www.officeworks.com.au/shop/officeworks/p/kindle-paperwhite-2024-16gb-black-amcfpl6cfy",
+        "highlights": [
+          "Kindle Paperwhite 2024 16GB Black | Officeworks\n\n# Kindle Paperwhite 2024 16GB Black\n\nBrand: Kindle Product code: AMCFPL6CFY\n\n$227.00\n\nCapacity\n\n- 16GB\n- 32GB\n\n Product recalls: Your safety and satisfaction is our priority. Visit the Product recalls page."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Kindle Paperwhite 2024 16GB Black\",\"merchant\":\"Officeworks\",\"price\":227,\"currency\":\"AUD\",\"availability\":\"in_stock\"}",
+        "image": "https://images.officeworks.com.au/api/2/img/https://s3-ap-southeast-2.amazonaws.com/wc-prod-pim/JPEG_300x300/AMCFPL6CFY_kindle_paperwhite_2024_16gb_black.jpg/resize?size=300&auth=MjA5OTcwODkwMg__"
+      }
+    ],
+    "searchTime": 2562.1,
+    "costDollars": {
+      "total": 0.012,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.005
+    }
+  }
+}

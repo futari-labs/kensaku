@@ -1,0 +1,84 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "A1-answer",
+  "request": {
+    "endpoint": "/answer",
+    "body": {
+      "query": "For frequent flyers, compare Sony WH-1000XM5 and Bose QuietComfort Ultra headphones: noise cancelling, comfort, battery, and typical price.",
+      "text": false
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:38.192Z",
+  "receivedAt": "2026-11-20T17:08:40.244Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "3488ec4ee987cafd4dc3eb2191bfea6b",
+    "answer": "Sony WH-1000XM5 and Bose QuietComfort Ultra are both excellent for noise cancelling, but Bose usually has the edge on low-frequency cabin/engine rumble while Sony can be better at handling mid/treble sounds like chatter [1][2]. Comfort is a slight Bose advantage for long flights (softer clamping/plusher fit) [3][2]. Battery favors Sony: SoundGuys measured 31h53m (ANC on) vs Bose 27h37m; other sources rate Sony up to ~30h vs Bose ~24h (less with Immersive Audio) [3][4]. Typical price: MSRP Bose $429 vs Sony $399, with frequent discounts—Sony commonly around $300, Bose around ~$330 (as of the cited reporting) [1].",
+    "citations": [
+      {
+        "id": "https://www.whathifi.com/advice/bose-quietcomfort-ultra-headphones-vs-sony-wh-1000xm5",
+        "title": "Bose QuietComfort Ultra Headphones vs Sony WH-1000XM5: which is better? | What Hi-Fi?",
+        "url": "https://www.whathifi.com/advice/bose-quietcomfort-ultra-headphones-vs-sony-wh-1000xm5",
+        "publishedDate": "2023-09-19T08:00:10.000Z",
+        "author": "Andy Madden",
+        "image": "https://cdn.mos.cms.futurecdn.net/3mLaL8W23dQmxWDRe94SEC-1920-80.jpg"
+      },
+      {
+        "id": "https://kitauthority.com/travel/sony-xm5-vs-bose-quietcomfort-ultra",
+        "title": "Sony WH-1000XM5 vs Bose QuietComfort Ultra: which to pick for travel | Kit Authority",
+        "url": "https://kitauthority.com/travel/sony-xm5-vs-bose-quietcomfort-ultra",
+        "publishedDate": "2026-06-04T10:59:03.000Z",
+        "author": "Joel Kelly",
+        "image": "https://kitauthority.com/images/travel/sony-xm5-vs-bose-quietcomfort-ultra/hero.jpg"
+      },
+      {
+        "id": "https://www.soundguys.com/bose-quietcomfort-ultra-headphones-vs-sony-wh-1000xm5-104454/",
+        "title": "Bose QuietComfort Ultra Headphones vs Sony WH-1000XM5 - SoundGuys",
+        "url": "https://www.soundguys.com/bose-quietcomfort-ultra-headphones-vs-sony-wh-1000xm5-104454/",
+        "publishedDate": "2025-10-16T16:58:16.000Z",
+        "author": "Christian Thomas",
+        "image": "https://www.soundguys.com/wp-content/uploads/2023/11/bose-quietcomfort-ultra-vs-sony-wh-1000xm5-hero.jpg"
+      },
+      {
+        "id": "https://www.bestproducts.com/tech/gadgets/a60294935/bose-vs-sony-headphones/",
+        "title": "Bose vs. Sony Headphones 2024 - Bose vs. Sony Headphones Sound Quality",
+        "url": "https://www.bestproducts.com/tech/gadgets/a60294935/bose-vs-sony-headphones/",
+        "publishedDate": "2024-04-01T21:23:21.000Z",
+        "author": "Stefan Vazharov",
+        "image": "https://hips.hearstapps.com/hmg-prod/images/bose-quietcomfort-ultra-sony-wh-1000xm5-003-660b03bb241b3.jpg?crop=1.00xw:0.669xh;0,0.179xh&resize=1200:*"
+      },
+      {
+        "id": "https://www.pocket-lint.com/bose-quietcomfort-ultra-vs-sony-wh-1000xm5/",
+        "title": "Bose QuietComfort Ultra vs Sony WH-1000XM5",
+        "url": "https://www.pocket-lint.com/bose-quietcomfort-ultra-vs-sony-wh-1000xm5/",
+        "publishedDate": "2023-10-26T16:30:26.000Z",
+        "author": "Yasmine Crossland",
+        "image": "https://static0.pocketlintimages.com/wordpress/wp-content/uploads/wm/2023/12/switch-vs-oled-switch-thumbnail-1-1.jpg?w=1600&h=900&fit=crop"
+      },
+      {
+        "id": "https://versusnest.com/bose-quietcomfort-ultra-vs-sony-wh-1000xm5/",
+        "title": "Bose QuietComfort Ultra vs Sony WH-1000XM5: Which Should You Buy in 2026? – VersusNest",
+        "url": "https://versusnest.com/bose-quietcomfort-ultra-vs-sony-wh-1000xm5/",
+        "publishedDate": "2026-04-29T15:17:38.000Z",
+        "image": "https://versusnest.com/?vn_blog_image=1746&v=1792929946"
+      },
+      {
+        "id": "https://bestsounds.net/sony-wh-1000xm5-vs-bose-quietcomfort-ultra-comparison/",
+        "title": "Sony Wh 1000xm5 Vs Bose Quietcomfort Ultra Comparison",
+        "url": "https://bestsounds.net/sony-wh-1000xm5-vs-bose-quietcomfort-ultra-comparison/",
+        "publishedDate": "2026-09-06T15:23:22.000Z",
+        "author": "James Whitfield",
+        "image": "https://bestsounds.net/wp-content/uploads/2026/09/sony-wh-1000xm5-vs-bose-quietcomfort-ultra-comparison.png"
+      },
+      {
+        "id": "https://cartwise.com.au/articles/sony-xm5-vs-bose-quietcomfort-ultra",
+        "title": "Sony WH-1000XM5 vs Bose QuietComfort Ultra: which should you buy? · Cartwise",
+        "url": "https://cartwise.com.au/articles/sony-xm5-vs-bose-quietcomfort-ultra",
+        "publishedDate": "2026-07-17T04:38:49.000Z"
+      }
+    ],
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}

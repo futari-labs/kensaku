@@ -1,0 +1,121 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S2-mouse",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Logitech MX Master 3S mouse product page price",
+      "type": "auto",
+      "numResults": 5,
+      "userLocation": "US",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:15.911Z",
+  "receivedAt": "2026-11-20T17:08:18.711Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "2310e06af92afa35e6d71a790209903b",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+        "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech",
+        "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+        "highlights": [
+          "# MX Master 3S Bluetooth Edition\n\nPerformance Wireless Mouse\n\n 1.9k\n\nThe average rating is calculated from all available product reviews, including those sourced from other platforms. Reviews with a \"Verified\" label indicate a confirmed purchase.\n\nSpecial Pricing\n\n$79.99 $99.99 20% off\n\n## Color Black\n\nIn stock. Ready to ship\n\nFree shipping (3-5 business days) on all orders.\n\nImportant delivery estimation information \n\nFree returns within 30 days of your purchase."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech\",\"merchant\":\"Logitech\",\"price\":79.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png"
+      },
+      {
+        "id": "https://www.logitech.com/en-gb/shop/p/mx-master-3s",
+        "title": "MX Master 3S Bluetooth Edition Wireless Mouse - 8K Optical Sensor | Logitech",
+        "url": "https://www.logitech.com/en-gb/shop/p/mx-master-3s",
+        "highlights": [
+          "# MX Master 3S Bluetooth Edition\n\nPerformance Wireless Mouse\n\n 1.3k\n\nThe average rating is calculated from all available product reviews, including those sourced from other platforms. Reviews with a \"Verified\" label indicate a confirmed purchase.\n\n£76.49 £89.99 15% off\n\n## Color Graphite\n\nIn stock. Ready to ship"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"MX Master 3S Bluetooth Edition Wireless Mouse - 8K Optical Sensor | Logitech\",\"merchant\":\"Logitech\",\"price\":76.49,\"currency\":\"GBP\",\"availability\":\"in_stock\"}",
+        "image": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png"
+      },
+      {
+        "id": "https://www.logitech.com/en-gb/shop/p/mx-master-3s.910-006560",
+        "title": "MX Master 3S",
+        "url": "https://www.logitech.com/en-gb/shop/p/mx-master-3s.910-006560",
+        "highlights": [
+          "MX Master 3S\n\n# MX Master 3S\n\n381\n\n£89.99 £119.99\n\n£30.00 off\n\nSale\n\nSee all\n\n3D\n\nTrack anywhere, even glass now with 8K DPI precision\n\nQuiet clicks - 90% less noise\n\nMade with recycled plastic\n\n## Color\n\nPale Gray\n\n---\n\nIn stock. Ready to ship\n\nAdd to"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"MX Master 3S\",\"merchant\":\"Logitech\",\"price\":89.99,\"currency\":\"GBP\",\"availability\":\"in_stock\"}",
+        "image": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png"
+      },
+      {
+        "id": "https://www.logitech.com/en-us/business/shop/p/mx-master-3s-business-wireless-mouse",
+        "title": "MX Master 3S for Business Wireless Mouse | Logitech",
+        "url": "https://www.logitech.com/en-us/business/shop/p/mx-master-3s-business-wireless-mouse",
+        "highlights": [
+          "3S for Business Wireless Mouse | Logitech\n\n# MX Master 3S for Business\n\nOur iconic mouse featuring Quiet Click technology, 8,000 DPI tracking for high-resolution monitors, and MagSpeed scrolling.\n\n 3D\n\n$109.99 \n\n## Color Graphite\n\nIn stock. Ready to ship"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"MX Master 3S for Business Wireless Mouse\",\"merchant\":\"Logitech\",\"price\":109.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/common/og-generic/og-image-electrico.png"
+      },
+      {
+        "id": "https://www.bestbuy.com/product/logitech-mx-master-3s-bluetooth-edition-performance-wireless-optical-mouse-with-ultra-fast-scrolling-and-quiet-clicks-wireless-black/J7H7ZYG559",
+        "title": "Logitech MX Master 3S Bluetooth Edition Performance Wireless ...",
+        "url": "https://www.bestbuy.com/product/logitech-mx-master-3s-bluetooth-edition-performance-wireless-optical-mouse-with-ultra-fast-scrolling-and-quiet-clicks-wireless-black/J7H7ZYG559",
+        "highlights": [
+          "3S Bluetooth Edition Performance Wireless Optical Mouse with Ultra fast Scrolling and Quiet Clicks Wireless Black - Best Buy\n\n# Logitech - MX Master 3S Bluetooth Edition Performance Wireless Optical Mouse with Ultra-fast Scrolling and Quiet Clicks -"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Logitech MX Master 3S Bluetooth Edition Performance Wireless Optical Mouse with Ultra-fast Scrolling and Quiet Clicks - Wireless - Black\",\"merchant\":\"Best Buy\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}"
+      }
+    ],
+    "searchTime": 2600.6,
+    "costDollars": {
+      "total": 0.012,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.005
+    }
+  }
+}

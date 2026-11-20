@@ -1,0 +1,14 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Spike bookkeeping (the counter is local state; captured fixtures are committed)
+spikes/exa/.request-count
+
+.DS_Store

@@ -1,0 +1,48 @@
+name: Futari contract
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futari-contract-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Futari contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect the proposed head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up the validation runtime
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Validate with the approved base's checker
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$|^[0-9a-f]{64}$ ]]
+          git show "$BASE_SHA:.futari/plan-gate.mjs" > "$RUNNER_TEMP/futari-base-gate.mjs"
+          git show "$BASE_SHA:.futari/ci-check.mjs" > "$RUNNER_TEMP/futari-base-ci.mjs"
+          FUTARI_GATE_PATH="$RUNNER_TEMP/futari-base-gate.mjs" node "$RUNNER_TEMP/futari-base-ci.mjs"
+
+# Keep this control workflow protected by review and required-check rules.
+# Its scripts come from the approved base, but this workflow itself is a
+# pull_request workflow. It is an integrity control for cooperative agents,
+# not a security boundary against an actor allowed to rewrite/bypass workflows.
+# Product build/test/eval jobs belong in separate workflows. Do not add secrets,
+# PR-controlled commands, dependency installation, or caches to this inspector.
+# Merge queues need their own reviewed merge_group integration before use.

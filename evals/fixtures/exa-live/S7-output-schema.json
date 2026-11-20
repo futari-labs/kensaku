@@ -1,0 +1,422 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S7-output-schema",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Where to buy Logitech MX Master 3S mouse, with current prices from different stores",
+      "type": "auto",
+      "numResults": 8,
+      "userLocation": "US",
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "offers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "merchant": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "availability": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "offers"
+        ]
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:35.456Z",
+  "receivedAt": "2026-11-20T17:08:38.186Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "481528cc08d53bde0a99789486da0309",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+        "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech",
+        "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s"
+      },
+      {
+        "id": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+        "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai",
+        "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52"
+      },
+      {
+        "id": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+        "title": "Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low",
+        "url": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+        "publishedDate": "2026-11-17T19:18:27.000Z",
+        "author": "XDA Deals Desk"
+      },
+      {
+        "id": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+        "title": "Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples",
+        "url": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798"
+      },
+      {
+        "id": "https://www.amazon.com/Logitech-MX-Master-3S-Performance/dp/B0B11LJ69K",
+        "title": "Logitech MX Master 3S Performance Wireless Mouse - Graphite With Bolt Reciever",
+        "url": "https://www.amazon.com/Logitech-MX-Master-3S-Performance/dp/B0B11LJ69K"
+      },
+      {
+        "id": "https://www.idealo.de/preisvergleich/OffersOfProduct/201968116_-mx-master-3s-logitech.html",
+        "title": "Logitech MX Master 3S ab 82,18 € (März 2026 Preise) | Preisvergleich bei idealo.de",
+        "url": "https://www.idealo.de/preisvergleich/OffersOfProduct/201968116_-mx-master-3s-logitech.html",
+        "author": "Michael Miskulin"
+      },
+      {
+        "id": "https://www.smartworld.it/black-friday/clic-muti-sensore-vetro-logitech-mx-master-3s-scende-69-99-euro-amazon.html",
+        "title": "Clic quasi muti e sensore che funziona pure sul vetro: Logitech MX Master 3S scende a 69,99€ su Amazon | SmartWorld",
+        "url": "https://www.smartworld.it/black-friday/clic-muti-sensore-vetro-logitech-mx-master-3s-scende-69-99-euro-amazon.html",
+        "publishedDate": "2026-11-17T17:23:00.000Z",
+        "author": "SW Shopping"
+      },
+      {
+        "id": "https://www.bestbuy.com/product/logitech-mx-master-3s-wireless-usb-a-laser-mouse-with-ultrafast-scrolling-wireless-black/J7H7ZY8XTK/sku/10315527",
+        "title": "Logitech - MX Master 3S Wireless (USB-A) Laser Mouse with Ultrafast Scrolling - Wireless - Black",
+        "url": "https://www.bestbuy.com/product/logitech-mx-master-3s-wireless-usb-a-laser-mouse-with-ultrafast-scrolling-wireless-black/J7H7ZY8XTK/sku/10315527"
+      }
+    ],
+    "searchTime": 192.4,
+    "costDollars": {
+      "total": 0.007,
+      "search": {
+        "neural": 0.007
+      }
+    },
+    "output": {
+      "content": {
+        "offers": [
+          {
+            "availability": "In stock",
+            "merchant": "Logitech",
+            "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+            "currency": "USD",
+            "price": 79.99
+          },
+          {
+            "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+            "availability": "In stock",
+            "merchant": "Target",
+            "price": 79.99,
+            "currency": "USD"
+          },
+          {
+            "currency": "USD",
+            "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+            "availability": "In stock",
+            "price": 84.95,
+            "merchant": "Best Buy"
+          },
+          {
+            "url": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+            "currency": "USD",
+            "price": 89.99,
+            "availability": "In stock",
+            "merchant": "Staples"
+          },
+          {
+            "currency": "USD",
+            "availability": "In stock",
+            "price": 79.99,
+            "merchant": "Amazon",
+            "url": "https://www.amazon.com/Logitech-MX-Master-3S-Performance/dp/B0B11LJ69K"
+          }
+        ]
+      },
+      "grounding": [
+        {
+          "field": "offers[0].availability",
+          "citations": [
+            {
+              "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+              "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[0].merchant",
+          "citations": [
+            {
+              "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+              "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[0].url",
+          "citations": [
+            {
+              "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+              "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[0].currency",
+          "citations": [
+            {
+              "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+              "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[0].price",
+          "citations": [
+            {
+              "url": "https://www.logitech.com/en-us/shop/p/mx-master-3s",
+              "title": "MX Master 3s Wireless Mouse - 8K Optical Sensor | Logitech"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[1].url",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[1].availability",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[1].merchant",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[1].price",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[1].currency",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[2].currency",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[2].url",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[2].availability",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[2].price",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[2].merchant",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[3].url",
+          "citations": [
+            {
+              "url": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+              "title": "Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[3].currency",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[3].price",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            },
+            {
+              "url": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+              "title": "Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[3].availability",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[3].merchant",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            },
+            {
+              "url": "https://www.staples.com/logitech-mx-master-3s-ergonomic-wireless-optical-usb-mouse-black-910-006556/product_24531798",
+              "title": "Logitech MX Master 3S Wireless Optical Bluetooth Mouse, Black (910-007500) | Staples"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[4].currency",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            },
+            {
+              "url": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+              "title": "Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[4].availability",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            },
+            {
+              "url": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+              "title": "Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[4].price",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            },
+            {
+              "url": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+              "title": "Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[4].merchant",
+          "citations": [
+            {
+              "url": "https://deal.ai/p/logitech-mx-master-3s-wireless-mouse-6ae80d8569f2d09f6aecfc52",
+              "title": "Logitech MX Master 3S Wireless Mouse Price History: $69.99 at Walmart — Deal.ai"
+            },
+            {
+              "url": "https://www.xda-developers.com/logitechs-mx-master-3s-bluetooth-mouse-drops-to-just-7999-and-matches-its-all-time-low/",
+              "title": "Logitech's MX Master 3S Bluetooth mouse drops to just $80, matching its all-time low"
+            }
+          ],
+          "confidence": "high"
+        },
+        {
+          "field": "offers[4].url",
+          "citations": [
+            {
+              "url": "https://www.amazon.com/Logitech-MX-Master-3S-Performance/dp/B0B11LJ69K",
+              "title": "Logitech MX Master 3S Performance Wireless Mouse - Graphite With Bolt Reciever"
+            }
+          ],
+          "confidence": "high"
+        }
+      ]
+    }
+  }
+}

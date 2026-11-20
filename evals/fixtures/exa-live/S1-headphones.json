@@ -1,0 +1,121 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S1-headphones",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Sony WH-1000XM5 wireless noise cancelling headphones buy online",
+      "type": "auto",
+      "numResults": 5,
+      "userLocation": "US",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:11.627Z",
+  "receivedAt": "2026-11-20T17:08:15.907Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "02a29b5a185673d085e5bf3ed44c3a93",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.bestbuy.com/product/sony-wh-1000xm5-wireless-noise-cancelling-over-the-ear-headphones-black/J7XSRH5CXG/sku/6505727",
+        "title": "Sony WH 1000XM5 Wireless Noise Cancelling Over the Ear ...",
+        "url": "https://www.bestbuy.com/product/sony-wh-1000xm5-wireless-noise-cancelling-over-the-ear-headphones-black/J7XSRH5CXG/sku/6505727",
+        "highlights": [
+          "# Sony - WH-1000XM5 Wireless Noise Cancelling Over-the-Ear Headphones - Black\n\n## Reviews\n\nDoorBOOsters are here Ends Sunday. Limited quantities. No rainchecks. Shop now\n\nRating 4.6 out of 5 stars with 6669 reviews\n\n4.6(6,669)\n\n## Customers are saying\n\nCustomers are pleased with the impeccable sound quality, exceptional comfort, and impressive battery life of these headphones. Users also frequently highlight the lightweight design, snug fit, and effective noise cancellation as standout features. While some individuals find the price point high and note occasional connectivity or volume limitations, the overall reception remains very positive. Additionally, some users feel that the product could be more portable compared to other market alternatives.\n\n### Features\n\n- #### Active Noise Cancelation\n\nFrom airplane noise to people’s voices, our WH-1000XM5 wireless headphones with multiple microphone noise Cancelling keep out more high and mid frequency sounds than ever.\n- #### Magnificent sound, engineered to perfection\n\nThe light and rigid precision-engineered driver unit improves high frequency sensitivity for more natural sound quality.\n- #### Crystal clear hands-free calling\n\nWith Precise Voice Pickup Technology and advanced audio signal processing, the person on the other end of the call will hear your voice clearly, even when you are in noisy situations.\n- #### All day power and quick charging\n\nWith up to 30 hours of battery life, you’ll have enough power even for long trips. If you need to charge in a hurry, you can get 3 hours' worth of charge after just 3 minutes with an additional USB-PD compatible AC adapter.\n- #### All day comfort with an elegant design\n\nThese lightweight headphones are beautifully finished in newly developed soft fit leather. This material fits snugly around the head with less pressure on the ears while keeping out external sounds.\n- #### Multipoint connection\n\nFor total convenience, these Bluetooth headphones can be paired with two Bluetooth devices at the same time. So when a call comes in, your headphones know which device is ringing and connects to the right one automatically.\n- #### Speak to Chat\n\nAs soon as you start a conversation, Speak-to-Chat automatically stops your music and lets in ambient sound – handy if you want to keep your headphones on or talk hands-free.\n- #### Collapsible case saves space\n\nCarry your headphones effortlessly in the redesigned case.\n- #### Instant pause. Instant play.\n\nJust take the headphones off and the music stops – a capacitive sensor knows when you are wearing them. It also helps improve detection accuracy and design. Put the headphones back on and the music starts again.\n\n### Specifications\n\n- Noise Cancelling (Active) Yes\n\nConnection Type Wireless\n\nWireless Connectivity\n\nBluetooth\n\nTrue Wireless\n\nNo\n\nMaximum Wireless Range 32.81 feet\n\nWater Resistant\n\nNo"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Sony WH 1000XM5 Wireless Noise Cancelling Over the Ear Headphones Black - Best Buy\",\"merchant\":\"Best Buy\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}"
+      },
+      {
+        "id": "https://www.target.com/p/sony-wh-1000xm5-bluetooth-wireless-noise-canceling-headphones-black/-/A-86314264",
+        "title": "Sony WH-1000XM5 Bluetooth Wireless Noise-Canceling ...",
+        "url": "https://www.target.com/p/sony-wh-1000xm5-bluetooth-wireless-noise-canceling-headphones-black/-/A-86314264",
+        "highlights": [
+          "-1000XM5 Bluetooth Wireless Noise-Canceling Headphones, 1 of 14\n\n# Sony WH-1000XM5 Bluetooth Wireless Noise-Canceling Headphones - Black\n\n4.32 out of 5 stars\n\n9 Questions\n\nPickup\n\nEligible for registries and wish lists\n\n## At a glance\n\n- Noise Canceling\n-"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5 Bluetooth Wireless Noise-Canceling Headphones - Black\",\"merchant\":\"Target\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}",
+        "image": "https://target.scene7.com/is/image/Target/GUEST_e47219be-8eb6-4843-bce5-b9e70b45fa01"
+      },
+      {
+        "id": "https://www.amazon.com/Sony-WH-1000XM5-Canceling-Headphones-Hands-Free/dp/B09XS7JWHH",
+        "title": "Sony WH-1000XM5 Premium Noise Cancelling Wireless Headphones, Black",
+        "url": "https://www.amazon.com/Sony-WH-1000XM5-Canceling-Headphones-Hands-Free/dp/B09XS7JWHH",
+        "author": "From Sony",
+        "highlights": [
+          "Sony WH-1000XM5 Wireless Industry Leading Noise Canceling Headphones with Auto Noise Canceling Optimizer, Crystal Clear Hands-Free Calling, Black + Free Shipping - Amazon\n\n Used - Very Good \n\n $199.95$ 199. 95 \n\n FREE delivery November 17 - 22 \n\n Ships from: Amazon \n\n Sold by: OlympicWireless \n\n FREE Returns \n\nWe offer easy, convenient returns with at least one free return option: no shipping charges. All returns must comply with our returns policy.\n\n1. Go to your orders and start the return\n2. Select your preferred free shipping option\n3. Drop off and leave!\n\n FREE delivery November 17 - 22 Or fastest delivery November 17 - 20 \n\n$$199.95 199. 95 () Includes selected options. Includes initial monthly payment and selected options. \n\n Shipping cost, delivery date, and order total (including tax) shown at checkout. \n\n Sold by OlympicWireless and Fulfilled by Amazon. \n\n Used - Very Good \n\n $177.99$ 177. 99 \n\n FREE delivery Thursday, November 19 \n\n Ships from: onlineshopping22 \n\n Sold by: onlineshopping22 \n\n FREE delivery Thursday, November 19. Details \n\n Only 2 left in stock - order soon. \n\n Ships from and sold by onlineshopping22. \n\n \n\n# Sony WH-1000XM5 Premium Noise Cancelling Wireless Headphones, Black \n\n 4.2 4.2 out of 5 stars (20,335) \n\n 500+ bought in past month \n\n $199.95 $ 199. 95 \n\nWe offer easy, convenient returns with at least one free return option: no shipping charges. All returns must comply with our returns policy.\n\n Model: WH-1000XM5 \n\n Ask to play music, get directions, control smart home devices, and more with this device. \n\n Alexa Built-in \n\n#### Alexa Built-in \n\n This device has been certified by Amazon. With Alexa built-in, just ask to play music, get directions, control smart home devices, and more. \n\n| Brand | Sony |\n| --- | --- |\n| Color | Black |\n| Ear Placement | Over Ear |\n| Form Factor | Over Ear |\n| Impedance | 48 ohm |\n\n# About this item \n\n- PREMIUM NOISE CANCELLATION: Two processors control 8 microphones for unprecedented noise cancellation. With Auto NC Optimizer, noise canceling is automatically optimized based on your wearing conditions and environment. \n- MAGNIFICENT SOUND: Engineered to perfection with the new Integrated Processor V1. \n- CRYSTAL CLEAR HANDS-FREE CALLING: 4 beamforming microphones, precise voice pickup, and advanced audio signal processing. \n- LONG BATTERY LIFE: Up to 30-hour battery life with quick charging (3 min charge for 3 hours of playback). \n- ULTRA-COMFORTABLE: Lightweight design with soft fit leather. \n- MULTIPOINT CONNECTION: Quickly switch between devices. \n- CARRY CASE INCLUDED: Carry your headphones effortlessly in the redesigned case. \n\n- INTUTIVE TOUCH CONTROLS: Pause play skip tracks, control volume, activate your voice assistant, and answer phone calls.\n- SPEAK-TO-CHAT: Automatically pauses music when you speak, letting sound in so you can conduct your conversation.\n- INSTANT PAUSE/INSTANT PLAY: Music automatically pauses when headphones are taken off and starts again when they are put back on.\n\n## Check Compatibility \n\n#### This product is available as Renewed.\n\n...\n\nAmazon.com Return Policy: Amazon.com Voluntary 30-Day Return Guarantee: You can return many items you have purchased within 30 days following delivery of the item to you. Our Voluntary 30-Day Return Guarantee does not affect your legal right of withdrawal in any way. You can find out more about the exceptions and conditions here.\n\n...\n\n### Customers say\n\nCustomers praise the headphones' sound quality, noise cancellation, and incredible battery life. The fit receives mixed feedback, with some finding it comfortable while others say it's very tight on the head. Moreover, durability is a concern as customers report the headphones breaking easily, particularly at the hinge. Additionally, connectivity and reliability are mixed aspects, with some reporting great Bluetooth connectivity while others experience frequent disconnections, and some units stop working entirely. Value for money is also mixed, with some finding them absolutely worth the money while others say they're not worth the price."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5 Premium Noise Cancelling Wireless Headphones, Black\",\"merchant\":\"Amazon\",\"price\":199.95,\"currency\":\"USD\",\"availability\":\"in_stock\"}"
+      },
+      {
+        "id": "https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-s",
+        "title": "Sony WH-1000XM5 Premium Wireless Noise Cancelling ...",
+        "url": "https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-s",
+        "highlights": [
+          "Sony WH-1000XM5 Premium Wireless Noise Cancelling Headphones | Silver | Sony Electronics\n\nProduct Details\n\nWH-1000XM5 Premium Wireless Noise Cancelling Headphones | Silver\n\n $198.00\n\n$399.99\n\nWH-1000XM5 Premium Wireless Noise Cancelling Headphones | Silver\n\nModel: WH-1000XM5\n\nSale Price $198.00 \n\n Save $201.99 \n\nOriginal Price\n\n$399.99\n\n- Premium Noise Cancellation\n- Extraordinary Sound Quality\n- Crystal Clear Call Quality\n- Up to 30-Hour Battery Life\n- Quick Charging\n- Enjoy All-Day Comfort\n- Multipoint Connection\n- Sound Connect App Compatible\n\nSale Price $198.00 \n\n Save $201.99 \n\nOriginal Price\n\n$399.99\n\n Color : Silver \n\nAbout This Item\n\n- Premium noise cancellation optimized to you 1 \n- Magnificent Sound, engineered to perfection\n- Crystal clear hands-free calling\n\n...\n\n## YOUR WORLD. NOTHING ELSE. \n\n The WH-1000XM5 headphones rewrite the rules for distraction-free listening. 2 processors control 8 microphones for unprecedented noise cancellation and exceptional call quality. With a newly developed driver, DSEE – Extreme and Hi-Res audio support the WH-1000XM5 headphones provide awe-inspiring audio quality.\n\n...\n\n1. As of 01/01/2022 Headband-style of noise-cancelling headphones\n2. Actual performance varies based on settings, environmental conditions, and usage. Battery capacity decreases over time and use.\n\n...\n\n## How long does the battery last on the WH-1000XM5?\n\nThe WH-1000XM5 offers up to 30 hours of battery life with noise canceling on, making them well suited for travel and all-day use. They also feature quick charging that delivers several hours of playback from a short charge.\n\n## Does the WH-1000XM5 have ambient sound or transparency mode?\n\nYes. The WH-1000XM5 includes Ambient Sound Mode, which lets outside sound in so you can hear your surroundings without removing the headphones. You can toggle it using the NC/AMB button on the left earcup.\n\n## How good is the noise cancellation on the WH-1000XM5?\n\nThe WH-1000XM5 uses 2 processors controlling 8 microphones for unprecedented noise cancellation across low, mid, and high frequencies. An Auto NC Optimizer automatically tunes noise canceling based on your wearing conditions and environment, including atmospheric pressure.\n\n## Are the WH-1000XM5 good for phone calls?\n\nYes. The headphones use four beamforming microphones plus Precise Voice Pickup and advanced signal processing to isolate your voice and reduce background noise for crystal clear hands-free calling.\n\n## How do the WH-1000XM5 charge?\n\nThe WH-1000XM5 support quick charging that provides several hours of playback from a short charge. Note that the charging adapter is not included with the WH-1000XM5.\n\n## What colors are available for the WH-1000XM5?\n\nThe WH-1000XM5 is available in Silver, Black, Midnight Blue, and Smoky Pink finishes.\n\n## Can the WH-1000XM5 connect to two devices at once?\n\nYes. The WH-1000XM5 supports Multipoint Connection, letting you connect to two devices simultaneously for seamless switching, such as between a laptop and a phone.\n\n...\n\n## How much do the WH-1000XM5 headphones cost?\n\nMSRP is listed as $399.99. Given that, these models can go on sale from time to time, and there are several other opportunities to save on price like through their group discounts for education, healthcare and military/veterans (ID.me & Unidays) along with their free loyalty program that gives up to 5% back in points."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"WH-1000XM5 Premium Wireless Noise Cancelling Headphones | Silver\",\"merchant\":\"Sony Electronics\",\"price\":198,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://d1ncau8tqf99kp.cloudfront.net/converted/103375_original_local_1200x1050_v3_converted.webp"
+      },
+      {
+        "id": "https://www.adorama.com/sony-wh-1000xm5-wireless-noise-cancelling-headphones/p/sowh1xm5b",
+        "title": "Sony WH-1000XM5 Wireless Closed-Back Over-Ear Noise Cancelling Headphones, Black WH1000XM5/B",
+        "url": "https://www.adorama.com/sony-wh-1000xm5-wireless-noise-cancelling-headphones/p/sowh1xm5b",
+        "highlights": [
+          "Sony WH-1000XM5 Wireless Closed-Back Over-Ear Noise Cancelling Headphones, Black WH1000XM5/B\n\n...\n\nSee all Sony items\n\nShare:\n\n30% Off\n\n# Sony WH-1000XM5 Wireless Closed-Back Over-Ear Noise Cancelling Headphones, Black\n\nSKU: SOWH1XM5B MFR: WH1000XM5/B\n\n(2480)2 questions, 0 answers\n\n$278.00\n\n$398.00\n\nSave: $120 (30%)\n\nOR\n\nSee all Used options (23) from $168\n\n## Key Features\n\n- Experience superior Sony sound quality with crystal-clear audio on these wireless headphones.\n- Industry-leading noise cancellation adapts to your environment for immersive listening.\n- Enjoy all-day comfort with the lightweight design, perfect for extended wear and travel.\n- With up to 30 hours of battery life, power through long flights or work sessions easily.\n- Bluetooth 5.2 ensures a stable, seamless connection to your devices for music and calls.\n- Optimize settings with touch controls & speak-to-chat for effortless, intuitive control.\n\nSee More Product Details\n\nCalculate Shipping\n\nSee Options\n\n1\n\nAdd to Cart\n\nAdd to ListGet Sale Alert\n\n#### Add Adorama Protect:\n\nAvailable to U.S. customers only.\n\n1-Year Adorama Protect$35.99\n\n2-Year Adorama Protect$42.99\n\n3-Year Adorama Protect$54.99\n\nAdd VIP PRO Membership:\n\n...\n\nAsk our\n\n...\n\n- Industry-leading noise cancellation optimized to you\n- Magnificent Sound, engineered to perfection\n- Crystal clear hands-free calling\n- Up to 30-hour battery life with quick charging (3 min charge for 3 hours of playback)\n- Ultra-comfortable, lightweight design with soft fit leather\n- Multipoint connection allows you to quickly switch between devices\n\n...\n\n### Warranty Information\n\nThis product has a limited warranty of 12 months for parts and 3 months for labor.\n\n...\n\n## What's in the box:\n\nSony WH-1000XM5 Wireless Closed-Back Over-Ear Noise Cancelling Headphones (Black)\n\n3.94' Audio Cable\n\nCollapsible Carrying Case\n\nSony 1 Year Limited Warranty\n\n...\n\n$278.00Add to Cart"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5 Wireless Closed-Back Over-Ear Noise Cancelling Headphones, Black WH1000XM5/B\",\"merchant\":\"Adorama\",\"price\":278,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://www.adorama.com/images/300x300/sony-wh-1000xm5-black_sowh1xm5b.webp"
+      }
+    ],
+    "searchTime": 3955.8,
+    "costDollars": {
+      "total": 0.012,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.005
+    }
+  }
+}

@@ -1,0 +1,526 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the pre-approval spike (D-009). Real data, not a gold label.",
+  "id": "S6-fresh-crawl",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Sony WH-1000XM5 headphones price",
+      "type": "auto",
+      "numResults": 5,
+      "userLocation": "US",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        },
+        "maxAgeHours": 0
+      }
+    }
+  },
+  "requestedAt": "2026-11-20T17:08:29.389Z",
+  "receivedAt": "2026-11-20T17:08:35.453Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "36e690cf7bd9e7bfff60036402b10f0c",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.bestbuy.com/product/sony-wh-1000xm5-wireless-noise-cancelling-over-the-ear-headphones-black/J7XSRH5CXG/sku/6505727",
+        "title": "Sony WH 1000XM5 Wireless Noise Cancelling Over the Ear ...",
+        "url": "https://www.bestbuy.com/product/sony-wh-1000xm5-wireless-noise-cancelling-over-the-ear-headphones-black/J7XSRH5CXG/sku/6505727",
+        "highlights": [
+          "Sony WH 1000XM5 Wireless Noise Cancelling Over the Ear Headphones Black - Best Buy\n\n# Sony - WH-1000XM5 Wireless Noise Cancelling Over-the-Ear Headphones - Black\n\n6 Videos\n\n## Reviews\n\n4.6(6,735)\n...\nour WH-1000XM5 wireless headphones with multiple"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH 1000XM5 Wireless Noise Cancelling Over the Ear Headphones Black - Best Buy\",\"merchant\":\"Best Buy\",\"price\":null,\"currency\":null,\"availability\":null}",
+        "image": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6505/6505727_rd.jpg;maxHeight=128;maxWidth=56?format=webp",
+        "favicon": "https://pisces.bbystatic.com/image2/BestBuy_US/Gallery/favicon-32-72227.png",
+        "entities": [
+          {
+            "id": "https://www.bestbuy.com/product/sony-wh-1000xm5-wireless-noise-cancelling-over-the-ear-headphones-black/J7XSRH5CXG/sku/6505727",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Sony - WH-1000XM5 Wireless Noise Cancelling Over-the-Ear Headphones - Black",
+              "description": "The WH-1000XM5 headphones rewrite the rules for distraction-free listening. Two processors control 8 microphones for unprecedented noise Cancelling and exceptional call quality.",
+              "images": [
+                "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6505/6505727_rd.jpg"
+              ],
+              "brand": {
+                "id": null,
+                "name": "Sony"
+              },
+              "identifiers": {
+                "gtin": null,
+                "mpn": "WH1000XM5/B"
+              },
+              "offer": {
+                "price": null,
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": {
+                "value": 4.6,
+                "count": 6735
+              },
+              "attributes": [
+                {
+                  "name": "Noise Cancelling (Active)",
+                  "value": "true"
+                },
+                {
+                  "name": "Connection Type",
+                  "value": "Wireless, Wired"
+                },
+                {
+                  "name": "Wireless Connectivity",
+                  "value": "Bluetooth"
+                },
+                {
+                  "name": "True Wireless",
+                  "value": "false"
+                },
+                {
+                  "name": "Maximum Wireless Range",
+                  "value": "32.81 feet"
+                },
+                {
+                  "name": "Water Resistant",
+                  "value": "false"
+                },
+                {
+                  "name": "Built-In Microphone",
+                  "value": "true"
+                },
+                {
+                  "name": "Carrying Case",
+                  "value": "true"
+                },
+                {
+                  "name": "Microphone Features",
+                  "value": "Noise cancelling"
+                },
+                {
+                  "name": "Headphone Fit",
+                  "value": "Over-the-Ear"
+                },
+                {
+                  "name": "Adjustable Headband",
+                  "value": "true"
+                },
+                {
+                  "name": "Battery Life",
+                  "value": "30 hours"
+                },
+                {
+                  "name": "Battery Charge Time",
+                  "value": "3.5 hours"
+                },
+                {
+                  "name": "Works With",
+                  "value": "Google Home, Amazon Alexa, Apple Home"
+                },
+                {
+                  "name": "Voice Assistant Built-in",
+                  "value": "Google Assistant, Amazon Alexa"
+                },
+                {
+                  "name": "Brand",
+                  "value": "Sony"
+                },
+                {
+                  "name": "Model Number",
+                  "value": "WH1000XM5/B"
+                },
+                {
+                  "name": "Product Name",
+                  "value": "WH-1000XM5 Wireless Noise Cancelling Over-the-Ear Headphones"
+                },
+                {
+                  "name": "Color",
+                  "value": "Black"
+                },
+                {
+                  "name": "Noise Cancelling (Active)",
+                  "value": "true"
+                },
+                {
+                  "name": "Sound Isolating",
+                  "value": "true"
+                },
+                {
+                  "name": "Environmental Noise Control",
+                  "value": "true"
+                },
+                {
+                  "name": "Minimum Frequency Response",
+                  "value": "4 hertz"
+                },
+                {
+                  "name": "Maximum Frequency Response",
+                  "value": "40 kilohertz"
+                },
+                {
+                  "name": "Impedance",
+                  "value": "48 ohms"
+                },
+                {
+                  "name": "Sensitivity",
+                  "value": "102 decibels adjusted"
+                },
+                {
+                  "name": "Integrated Amplifier",
+                  "value": "false"
+                },
+                {
+                  "name": "Volume Limiting Function",
+                  "value": "false"
+                },
+                {
+                  "name": "Driver Size",
+                  "value": "30 millimeters"
+                },
+                {
+                  "name": "Connection Type",
+                  "value": "Wireless, Wired"
+                },
+                {
+                  "name": "Wireless Connectivity",
+                  "value": "Bluetooth"
+                },
+                {
+                  "name": "True Wireless",
+                  "value": "false"
+                },
+                {
+                  "name": "Bluetooth Version",
+                  "value": "5.2"
+                },
+                {
+                  "name": "Maximum Wireless Range",
+                  "value": "32.81 feet"
+                },
+                {
+                  "name": "Number Of Devices Connectable Simultaneously",
+                  "value": "2"
+                },
+                {
+                  "name": "Connector Size",
+                  "value": "1/8 in. (3.5mm)"
+                },
+                {
+                  "name": "Detachable Cord",
+                  "value": "true"
+                },
+                {
+                  "name": "Water Resistant",
+                  "value": "false"
+                },
+                {
+                  "name": "Waterproof",
+                  "value": "false"
+                },
+                {
+                  "name": "Built-In Microphone",
+                  "value": "true"
+                },
+                {
+                  "name": "Carrying Case",
+                  "value": "true"
+                },
+                {
+                  "name": "Microphone Features",
+                  "value": "Noise cancelling"
+                },
+                {
+                  "name": "Controls",
+                  "value": "Volume, Track selection, Mute, Call"
+                },
+                {
+                  "name": "Body Metrics Measured",
+                  "value": "Not Applicable"
+                },
+                {
+                  "name": "Lighting Type",
+                  "value": "None"
+                },
+                {
+                  "name": "Maximum Talk Time",
+                  "value": "24 hours"
+                },
+                {
+                  "name": "High Resolution Audio",
+                  "value": "true"
+                },
+                {
+                  "name": "Headphone Fit",
+                  "value": "Over-the-Ear"
+                },
+                {
+                  "name": "Style",
+                  "value": "General use"
+                },
+                {
+                  "name": "Adjustable Headband",
+                  "value": "true"
+                },
+                {
+                  "name": "Foldable Design",
+                  "value": "false"
+                },
+                {
+                  "name": "Cup Style",
+                  "value": "Closed-back"
+                },
+                {
+                  "name": "Rechargeable",
+                  "value": "true"
+                },
+                {
+                  "name": "Battery Life",
+                  "value": "30 hours"
+                },
+                {
+                  "name": "Battery Charge Time",
+                  "value": "3.5 hours"
+                },
+                {
+                  "name": "Charging Accessory Included",
+                  "value": "Cable"
+                },
+                {
+                  "name": "Fast Charging",
+                  "value": "Yes"
+                },
+                {
+                  "name": "Charging Interface(s)",
+                  "value": "USB-C"
+                },
+                {
+                  "name": "On/Off Switch",
+                  "value": "Yes"
+                },
+                {
+                  "name": "Works With",
+                  "value": "Google Home, Amazon Alexa, Apple Home"
+                },
+                {
+                  "name": "Voice Assistant Built-in",
+                  "value": "Google Assistant, Amazon Alexa"
+                },
+                {
+                  "name": "Product Height",
+                  "value": "10.36 inches"
+                },
+                {
+                  "name": "Product Width",
+                  "value": "8.85 inches"
+                },
+                {
+                  "name": "Product Length",
+                  "value": "8.65 inches"
+                },
+                {
+                  "name": "Product Weight",
+                  "value": "0.551 pounds"
+                },
+                {
+                  "name": "Cord Length",
+                  "value": "3.94 feet"
+                },
+                {
+                  "name": "Warranty - Parts",
+                  "value": "1 year"
+                },
+                {
+                  "name": "Warranty - Labor",
+                  "value": "1 year"
+                },
+                {
+                  "name": "UPC",
+                  "value": "027242923232"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.theverge.com/gadgets/1037790/sony-wh-1000xm5-black-friday-deal-sale",
+        "title": "Sony’s WH-1000XM5 are cheaper than ever for Black Friday | The Verge",
+        "url": "https://www.theverge.com/gadgets/1037790/sony-wh-1000xm5-black-friday-deal-sale",
+        "publishedDate": "2026-11-19T19:35:52.000Z",
+        "author": "Brad Bourque",
+        "highlights": [
+          "by Brad Bourque\n\nNov 19, 2026, 7:35 PM UTC\n\nAll four colors of the WH-1000XM5 are in stock at the discounted price.\n\nBack in my day, the only “Doorbuster” sales were at physical retail stores. But now, you can get ultra-low prices before Black Friday whether you want to shop in-store or online. One that stands out is the previous-generation Sony WH-1000XM5 noise-canceling headphones, which are marked down to their lowest price ever, just $169.99 at Best Buy. While their MSRP is $399.99, they’ve been spotted as low as $198 in the last few months."
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Sony WH-1000XM5\",\"merchant\":\"Best Buy\",\"price\":169.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://platform.theverge.com/wp-content/uploads/sites/2/2025/04/DSCF7932.webp?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200",
+        "favicon": "https://www.theverge.com/static-assets/icons/favicon-32x32.png",
+        "entities": [
+          {
+            "id": "https://www.theverge.com/gadgets/1037790/sony-wh-1000xm5-black-friday-deal-sale",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Sony WH-1000XM5",
+              "description": null,
+              "images": [
+                "https://platform.theverge.com/wp-content/uploads/sites/2/chorus/uploads/chorus_asset/file/23454336/DSCF7813.jpg?quality=90&strip=all&crop=0,0,100,100"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": null,
+              "rating": null,
+              "attributes": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.howtogeek.com/save-57-on-sonys-wh-1000xm5-headphones-and-cut-the-background-noise/",
+        "title": "The Sony WH-1000XM5 Headphones are a steal at only $170",
+        "url": "https://www.howtogeek.com/save-57-on-sonys-wh-1000xm5-headphones-and-cut-the-background-noise/",
+        "publishedDate": "2026-11-20T00:15:08.000Z",
+        "author": "HTG Deals Desk",
+        "highlights": [
+          "By HTG Deals Desk \n\n Published Nov 19, 2026, 7:15 PM EST \n\nA loud train, a crowded flight, or an open-plan office can wear you down before the day has really started. Noise-cancelling headphones like Sony's WH-1000XM5 Headphones are made for exactly that problem. The black pair is $169.99 at Best Buy as part of a Black Friday deal, with 57% off.\n\n...\n\nOverall, Sony's WH-1000XM5 Headphones in black are 57% off at Best Buy as part of a Black Friday deal. You pay just $169.99 and save $228 off the $398 full retail price. Just one thing to check before you buy: This deal covers the black model, so confirm black is selected on the Best Buy page before you check out."
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Sony WH-1000XM5 Headphones\",\"merchant\":\"Best Buy\",\"price\":169.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://static0.howtogeekimages.com/wordpress/wp-content/uploads/2022/09/sony-wh-1000xm5-wearing.jpg?w=1200&h=675&fit=crop",
+        "favicon": "https://www.howtogeek.com/public/build/images/favicon-48x48.png",
+        "entities": [
+          {
+            "id": "https://www.howtogeek.com/save-57-on-sonys-wh-1000xm5-headphones-and-cut-the-background-noise/",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Sony WH-1000XM5",
+              "description": "The Sony WH-1000XM5 headphones deliver industry-leading noise cancellation, exceptional sound quality, and premium comfort. With advanced AI noise-canceling technology, 30-hour battery life, and intuitive touch controls, they're perfect for immersive listening on the go.",
+              "images": [
+                "https://static0.howtogeekimages.com/wordpress/wp-content/uploads/2025/01/sony-wh-1000xm5-tag.png"
+              ],
+              "brand": {
+                "id": null,
+                "name": "Sony"
+              },
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 170,
+                  "currency": "USD"
+                },
+                "availability": null,
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://hothardware.com/news/best-buy-doorbuster-deals-slash-sony-wh-1000xm5-all-time-low",
+        "title": "Best Buy's Doorbuster Deals Slash Sony WH-1000XM5 To All-Time Low",
+        "url": "https://hothardware.com/news/best-buy-doorbuster-deals-slash-sony-wh-1000xm5-all-time-low",
+        "publishedDate": "2026-11-20T15:57:00.000Z",
+        "author": "Paul Lilly",
+        "highlights": [
+          "by Paul Lilly — Friday, November 20, 2026, 10:57 AM EDT \n\nSony WH-1000XM5 wireless nose cancelling headphones - Image: Sony\n\nBest Buy is dishing up deals on a bevy of headphones as part of its Black Friday sale, which is already underway and runs through November 28, 2026. We took a look at what's on tap and found some notable doorbuster deals, including hefty discounts on over-the-ear headphones from Sony, Bose, and other popular brands. One standout is Sony's WH-1000XM5, which has dropped to an all-time low price.\n\n### Sony WH-1000XM5 Wireless Noise Cancelling Over-The-Ear Headphones Hit All-Time Low\n\nListed as one of the doorbuster deals, Sony's WH-1000XM5 is on sale for $169.99 at Best Buy (save $228.01). This is the lowest price we've ever seen for Sony's former flagship headphones, which, despite having been replaced at the top of Sony's stack by the newer WH-1000XM6, remain an awesome choice, especially at this price."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5 Wireless Noise Cancelling Over-The-Ear Headphones\",\"merchant\":\"Best Buy\",\"price\":169.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://images.hothardware.com/contentimages/newsitem/72167/content/16x9_2133x1200_highres-sony-wh-1000xm5.jpg",
+        "favicon": "https://hothardware.com/favicon.ico?ver=2"
+      },
+      {
+        "id": "https://www.bestpricescanner.com/product/B0CFSD4TSQ",
+        "title": "Sony WH-1000XM5 Wireless Noise Cancelling Over-the-Ear",
+        "url": "https://www.bestpricescanner.com/product/B0CFSD4TSQ",
+        "highlights": [
+          "Sony WH-1000XM5 Wireless Noise Cancelling Over-the-Ear\n\nOver-Ear Headphones\n\n# Sony WH-1000XM5 Wireless Noise Cancelling Over-the-Ear\n\nby Sony\n\nLowest Price Found\n\n$169.99\n\n## Price Comparison\n\nComparing 3 retailers for the best deal\n\nPrices range $169.99-$288.00 - save up to $118.01 by choosing the right store.\n\nBest Buy In Stock\n\n$169.99\n\nBest Value\n\neBay Seller listings In Stock\n\n$189.99\n\n+$20.00 more\n\nWalmart In Stock\n\n$288.00\n\n+$118.01 more\n\nLast checked 5 hours ago(Nov 20, 2026, 9:42 AM UTC)\n\nProduct prices and availability are accurate as of Nov 20, 2026, 9:42 AM UTC and are subject to change. Any price and availability information displayed on the retailer's site at the time of purchase will apply.\n\n...\n\nWhat is the best price for Sony WH-1000XM5 Wireless Noise Cancelling Over-the-Ear?+\n\nThe lowest in-stock price right now is $169.99 at Best Buy. We compare 3 retailers every day so you always see the cheapest current price."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Sony WH-1000XM5 Wireless Noise Cancelling Over-the-Ear\",\"merchant\":\"BestPricescanner (aggregated)\",\"price\":169.99,\"currency\":\"USD\",\"availability\":\"in_stock\"}",
+        "image": "https://pisces.bbystatic.com/prescaled/500/500/image2/BestBuy_US/images/products/6505/6505727_rd.jpg",
+        "favicon": "https://www.bestpricescanner.com/favicon-32x32.png",
+        "entities": [
+          {
+            "id": "https://www.bestpricescanner.com/product/B0CFSD4TSQ",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Sony WH-1000XM5 Wireless Noise Cancelling Over-the-Ear",
+              "description": null,
+              "images": [
+                "https://pisces.bbystatic.com/prescaled/500/500/image2/BestBuy_US/images/products/6505/6505727_rd.jpg"
+              ],
+              "brand": {
+                "id": null,
+                "name": "Sony"
+              },
+              "identifiers": {
+                "gtin": "027242923232",
+                "mpn": "WH1000XM5B"
+              },
+              "offer": {
+                "price": {
+                  "amount": 169.99,
+                  "currency": "USD"
+                },
+                "availability": null,
+                "sku": "B0CFSD4TSQ",
+                "seller": null
+              },
+              "rating": null,
+              "attributes": []
+            }
+          }
+        ]
+      }
+    ],
+    "searchTime": 5855.4,
+    "costDollars": {
+      "total": 0.012,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.005
+    }
+  }
+}

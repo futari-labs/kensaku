@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "planId": "SET_DURING_BOOTSTRAP",
+  "projectName": "SET_DURING_BOOTSTRAP",
+  "repository": "SET_DURING_BOOTSTRAP",
+  "completionCondition": "TBD: observable product acceptance and final integration state",
+  "maxParallelTasks": 2,
+  "maxRepairAttemptsPerTask": 3,
+  "liveEvaluationBudget": {
+    "currency": "USD",
+    "maxSpend": 0
+  },
+  "pstack": {
+    "plugin": "pstack@pstack-claude",
+    "version": "SET_DURING_BOOTSTRAP",
+    "projectPlaybook": ".agents/playbooks/futari-approved-plan.md",
+    "compatibilityVerified": false
+  },
+  "permissions": {
+    "createIssues": true,
+    "pushBranches": true,
+    "openPullRequests": true,
+    "mergePolicy": "manual",
+    "deploy": false
+  },
+  "protectedFiles": [
+    ".futari/plan.json",
+    ".futari/plan-gate.mjs",
+    ".futari/ci-check.mjs",
+    ".agents/playbooks/futari-approved-plan.md",
+    "CLAUDE.md",
+    ".claude/pstack-models.md",
+    ".github/workflows/futari-contract.yml",
+    "docs/futari/PRODUCT_SPEC.md",
+    "docs/futari/ARCHITECTURE.md",
+    "docs/futari/EVALUATION_PLAN.md",
+    "docs/futari/EXECUTION_PLAN.md",
+    "docs/futari/DECISIONS.md",
+    "docs/futari/RISKS.md",
+    "docs/futari/PSTACK_HANDOFF.md",
+    "docs/futari/templates/task-brief.md",
+    "docs/futari/templates/pr-body.md",
+    "docs/futari/templates/evidence.md"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "description": "TBD: first user outcome",
+      "acceptanceCriteria": [
+        "TBD: observable behavior and failure handling"
+      ]
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "EV-001",
+      "requirementIds": [
+        "REQ-001"
+      ],
+      "description": "TBD: discriminating acceptance evaluation",
+      "kind": "deterministic",
+      "passRule": "TBD: approved predicate or threshold",
+      "command": "TBD: actual executable evaluation command"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "JM-001",
+      "title": "TBD: first end-to-end vertical slice",
+      "requirementIds": [
+        "REQ-001"
+      ],
+      "evalIds": [
+        "EV-001"
+      ],
+      "dependsOn": [],
+      "allowedPaths": [
+        "src/",
+        "tests/"
+      ],
+      "acceptanceCriteria": [
+        "TBD: independently observable task outcome"
+      ],
+      "verificationCommands": [
+        "TBD: real task and regression checks"
+      ],
+      "milestone": "vertical-slice"
+    }
+  ],
+  "verticalSliceTaskIds": [
+    "JM-001"
+  ],
+  "blockingQuestions": [
+    "TBD: conduct discovery, architecture, evaluation, and execution review"
+  ]
+}
