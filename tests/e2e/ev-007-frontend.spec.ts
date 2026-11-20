@@ -5,6 +5,8 @@ import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import type { Offer } from "../../src/core/types";
+import type { ProductResult } from "../../src/research/events";
 import { Q1 } from "../fixtures/questions";
 import { TEST_EXA_KEY } from "../fixtures/test-key";
 
@@ -17,6 +19,8 @@ const MARKET_KEY = "kensaku.market.v1";
 
 const question = (page: Page) => page.getByRole("textbox", { name: "Question" });
 const ask = async (page: Page, text = Q1) => {
+  // The page sends a fixture scenario only once /api/health has said the server is in fixture mode.
+  await expect(page.getByTestId("fixture-banner")).toBeVisible();
   await question(page).fill(text);
   await question(page).press("Enter");
 };
@@ -27,11 +31,28 @@ const chooseMarket = async (page: Page, name: RegExp) => {
   await page.getByRole("option", { name }).click();
 };
 
-const uiStream = (chunks: object[]) => ({
-  status: 200,
-  headers: { "content-type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" },
-  body: [...chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`), "data: [DONE]\n\n"].join(""),
-});
+/** One server-sent event of the UI message stream; the page's stubbed fetch receives these strings as they are. */
+const sseEvent = (chunk: object) => `data: ${JSON.stringify(chunk)}\n\n`;
+const SSE_HEADERS = { "content-type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" };
+const uiStream = (chunks: object[]) => ({ status: 200, headers: SSE_HEADERS, body: [...chunks.map(sseEvent), "data: [DONE]\n\n"].join("") });
+
+/**
+ * Records, in the page, every text the announcer shows and whether a "Run cancelled" alert ever rendered.
+ * A run that fails must never pass through "cancelled" on its way to "failed".
+ */
+const watchRunStates = (page: Page) =>
+  page.addInitScript(() => {
+    const seen = { announced: [] as string[], cancelledAlert: false };
+    (window as unknown as { __watched: typeof seen }).__watched = seen;
+    const look = () => {
+      const text = document.querySelector('[data-testid="announcer"]')?.textContent ?? "";
+      if (text && seen.announced.at(-1) !== text) seen.announced.push(text);
+      if (document.querySelector('[data-testid="run-cancelled"]')) seen.cancelledAlert = true;
+    };
+    new MutationObserver(look).observe(document, { childList: true, characterData: true, subtree: true });
+    setInterval(look, 5);
+  });
+const watched = (page: Page) => page.evaluate(() => (window as unknown as { __watched: { announced: string[]; cancelledAlert: boolean } }).__watched);
 
 // Item 1: primary journey.
 test("1. primary journey: stages in order, cited comparison, offer table fields, separate evidence, last-observed notice", async ({ page }) => {
@@ -44,12 +65,27 @@ test("1. primary journey: stages in order, cited comparison, offer table fields,
   }
   await finished(page);
 
-  expect(await page.getByTestId("inline-citation").count()).toBeGreaterThan(0);
+  const citations = page.getByTestId("inline-citation");
+  const citationCount = await citations.count();
+  expect(citationCount).toBeGreaterThan(0);
+  // Each inline citation opens and every link in it goes to one of the fixture's citation URLs.
+  for (let i = 0; i < citationCount; i++) {
+    await citations.nth(i).click();
+    const links = page.getByTestId("citation-card").getByTestId("citation-link");
+    await expect(links.first()).toBeVisible();
+    const cited = await links.evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
+    expect(cited.length).toBeGreaterThan(0);
+    for (const href of cited) expect(citationUrls).toContain(href);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("citation-card")).toHaveCount(0);
+  }
   await page.getByRole("button", { name: /Used \d+ sources/ }).click();
   const hrefs = await page.getByTestId("source-link").evaluateAll((links) => links.map((a) => (a as HTMLAnchorElement).href));
   expect(hrefs.length).toBeGreaterThan(0);
   for (const href of hrefs) expect(citationUrls).toContain(href);
 
+  // Fixture mode has no usage ledger, so the footer leaves out the monthly figure (it would read "0 of 400").
+  await expect(page.getByTestId("usage")).not.toContainText("this month");
   await expect(page.getByTestId("last-observed-notice")).toContainText("last observed");
   const row = page.getByTestId("offer-row").first();
   await expect(row.locator("td").nth(0)).not.toBeEmpty();
@@ -78,6 +114,7 @@ test.describe("2. states", () => {
   });
 
   test("running state: input and market disabled, a stage running, Cancel works", async ({ page }) => {
+    // The `cancel-offers` fixture scenario holds the run open once the offers stage starts, so there is a running state to observe and cancel.
     await page.goto("/?scenario=cancel-offers");
     await ask(page);
     await expect(page.locator('[data-stage="offers"]')).toHaveAttribute("data-status", "running");
@@ -170,10 +207,16 @@ test.describe("2. states", () => {
       await page.route("**/api/chat", (route) =>
         reject ? route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ kind, message: "x" }) }) : route.continue(),
       );
+      await watchRunStates(page);
       await page.goto("/");
       await ask(page);
       await expect(page.getByTestId("run-error")).toHaveAttribute("data-kind", kind);
       await expect(page.getByTestId("run-error")).toContainText(text);
+      await expect(page.getByTestId("announcer")).toHaveText("The run failed.");
+      // A failed request is never "cancelled", not even for a moment before its error is recorded.
+      const seen = await watched(page);
+      expect(seen.announced).not.toContain("Run cancelled.");
+      expect(seen.cancelledAlert).toBe(false);
       reject = false;
       await ask(page);
       await finished(page);
@@ -184,9 +227,15 @@ test.describe("2. states", () => {
 
   test("a broken connection is shown as a failed run", async ({ page }) => {
     await page.route("**/api/chat", (route) => route.abort("connectionrefused"));
+    await watchRunStates(page);
     await page.goto("/");
     await ask(page);
     await expect(page.getByTestId("run-error")).toHaveAttribute("data-kind", "upstream");
+    await expect(page.getByTestId("announcer")).toHaveText("The run failed.");
+    const seen = await watched(page);
+    expect(seen.announced).not.toContain("Run cancelled.");
+    expect(seen.cancelledAlert).toBe(false);
+    await expect(page.getByTestId("turn")).toHaveAttribute("data-state", "failed");
   });
 
   test("partial results are labeled partial and stay visible", async ({ page }) => {
@@ -194,6 +243,9 @@ test.describe("2. states", () => {
     await ask(page);
     await expect(page.getByTestId("run-error")).toContainText("results below are partial");
     await expect(page.getByTestId("product")).toBeVisible();
+    // "Below" is true: the notice sits above the results it qualifies.
+    const [notice, product] = await Promise.all([page.getByTestId("run-error").boundingBox(), page.getByTestId("product").first().boundingBox()]);
+    expect(notice!.y).toBeLessThan(product!.y);
   });
 });
 
@@ -304,7 +356,7 @@ test.describe("4. market", () => {
   test("the page shows the server's group order: the market's currency first, whichever market is chosen", async ({ page }) => {
     // The server's own ordering is EV-003; this stands in for it to show the page keeps the order it receives and sends the market.
     const order = { US: ["USD", "SGD"], SG: ["SGD", "USD"], JP: ["JPY", "USD"] } as const;
-    const offer = (currency: string, amount: number) => ({
+    const offer = (currency: "USD" | "SGD" | "JPY", amount: number): Offer => ({
       kind: "merchant-offer", merchantHost: "shop.example", merchantName: "Example Shop", canonicalUrl: `https://shop.example/${currency}`,
       price: { amount, currency }, availability: "in_stock", source: "exa", retrievedAt: "2026-11-21T00:00:00.000Z", exaRequestId: "r", productName: "Widget",
     });
@@ -315,9 +367,9 @@ test.describe("4. market", () => {
           candidate: { name: "Widget", brand: "Acme", modelIdentifiers: ["W1"] },
           offerGroups: order[market].map((currency, i) => ({ currency, offers: [offer(currency, 100 + i)] })),
           evidence: [],
-          rejectedCounts: {},
+          rejectedCounts: { "irrelevant-product": 0, "unsupported-currency": 0, "url-not-from-run": 0, "invalid-url": 0 },
         },
-      ];
+      ] satisfies ProductResult[];
       return route.fulfill(uiStream([{ type: "start", messageId: `run-${market}` }, { type: "data-products", id: "products", data: products }, { type: "finish" }]));
     });
     await page.goto("/");
@@ -331,10 +383,13 @@ test.describe("4. market", () => {
 
 // Item 5: accessibility.
 test.describe("5. accessibility", () => {
-  const seriousOrCritical = async (page: Page) =>
-    (await new AxeBuilder({ page }).analyze()).violations
+  const seriousOrCritical = async (page: Page) => {
+    // Axe reads colors mid-transition otherwise (the prompt's dimmed hint fades back in when a run ends).
+    await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+    return (await new AxeBuilder({ page }).analyze()).violations
       .filter((v) => v.impact === "serious" || v.impact === "critical")
       .map((v) => `${v.id}: ${v.help} [${v.nodes.map((n) => n.target.join(" ")).join(" | ")}]`);
+  };
 
   test("axe: no serious or critical violations on empty, running, completed, and error states", async ({ page }) => {
     await page.goto("/?scenario=cancel-offers");
@@ -350,6 +405,10 @@ test.describe("5. accessibility", () => {
     await ask(page);
     await finished(page);
     await page.getByRole("button", { name: /Used \d+ sources/ }).click();
+    await page.getByTestId("inline-citation").first().click();
+    const card = page.getByTestId("citation-card");
+    await expect(card).toBeVisible();
+    await card.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
     expect(await seriousOrCritical(page)).toEqual([]);
 
     await page.goto("/?scenario=error-402");
@@ -386,8 +445,22 @@ test.describe("5. accessibility", () => {
     await finished(page);
     await expect(page.getByTestId("turn")).toHaveAttribute("data-state", "completed");
 
+    // A citation opens with Enter, its link is reachable with Tab, and Escape closes it again.
+    await tabTo(/^Citation: /);
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("citation-card")).toBeVisible();
+    for (let i = 0; i < 5 && !(await page.evaluate(() => document.activeElement?.matches('[data-testid="citation-link"]'))); i++) await page.keyboard.press("Tab");
+    const citedHref = await page.evaluate(() => (document.activeElement as HTMLAnchorElement).href);
+    expect(citationUrls).toContain(citedHref);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("citation-card")).toHaveCount(0);
+
+    // Then on to an offer's link.
+    await tabTo(/^View offer for /);
+    expect(await page.evaluate(() => (document.activeElement as HTMLAnchorElement).href)).toMatch(/^https:\/\//);
+
     // Market: open the list with the keyboard, pick Japan, and the choice is stored.
-    await tabTo(/^Market$/, "Shift+Tab");
+    await tabTo(/^Market$/);
     await page.keyboard.press("Enter");
     await expect(page.getByRole("listbox")).toBeVisible();
     await page.keyboard.press("ArrowDown");
@@ -410,31 +483,31 @@ test.describe("5. accessibility", () => {
 
   test("progress changes are announced through an ARIA live region", async ({ page }) => {
     // The fixture server replays a run in milliseconds, so a staged stream stands in for a slow one.
-    await page.addInitScript(() => {
+    const stage = (name: string, status: string) => ({ type: "data-progress", id: name, data: { stage: name, status } });
+    const events = [
+      { type: "start", messageId: "run-1" },
+      ...["candidates", "offers", "validate", "compare"].flatMap((name) => [stage(name, "running"), stage(name, "done")]),
+      { type: "data-usage", id: "usage", data: { exaRequests: 1, cacheHits: 0, costDollars: 0, monthRequests: 1, monthLimit: 400 } },
+      { type: "finish" },
+    ].map(sseEvent);
+    await page.addInitScript(({ events, headers }) => {
       const realFetch = window.fetch.bind(window);
-      const stage = (name: string, status: string) => ({ type: "data-progress", id: name, data: { stage: name, status } });
-      const chunks = [
-        { type: "start", messageId: "run-1" },
-        ...["candidates", "offers", "validate", "compare"].flatMap((name) => [stage(name, "running"), stage(name, "done")]),
-        { type: "data-usage", id: "usage", data: { exaRequests: 1, cacheHits: 0, costDollars: 0, monthRequests: 1, monthLimit: 400 } },
-        { type: "finish" },
-      ];
       window.fetch = (input, init) => {
         if (!String(input instanceof Request ? input.url : input).endsWith("/api/chat")) return realFetch(input, init);
         const encoder = new TextEncoder();
         const body = new ReadableStream({
           async start(controller) {
-            for (const chunk of chunks) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+            for (const event of events) {
+              controller.enqueue(encoder.encode(event));
               await new Promise((r) => setTimeout(r, 120));
             }
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
             controller.close();
           },
         });
-        return Promise.resolve(new Response(body, { headers: { "content-type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" } }));
+        return Promise.resolve(new Response(body, { headers }));
       };
-    });
+    }, { events, headers: SSE_HEADERS });
     await page.goto("/");
     const live = page.getByTestId("announcer");
     await expect(live).toHaveAttribute("role", "status");

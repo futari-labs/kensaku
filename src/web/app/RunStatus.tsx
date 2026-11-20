@@ -2,6 +2,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/web/components/ui/alert";
 import { Shimmer } from "@/web/components/ai-elements/shimmer";
 import { STAGES } from "../../research/events";
 import { STAGE_LABEL } from "./messages";
+import type { FailureData } from "./messages";
 import type { ApiErrorKind, ProgressData, UsageData } from "../../research/events";
 
 /** The four stages in order. Changes are announced by the live region in App, not here. */
@@ -38,7 +39,7 @@ const ERROR_TEXT: Record<ApiErrorKind, string> = {
   run_in_progress: "A research run is already in progress.",
 };
 
-export function ErrorNotice({ error }: { error: { kind: ApiErrorKind; partial: boolean } }) {
+export function ErrorNotice({ error }: { error: Pick<FailureData, "kind" | "partial"> }) {
   return (
     <Alert variant="destructive" className="*:data-[slot=alert-description]:text-foreground" data-testid="run-error" data-kind={error.kind}>
       <AlertTitle>{error.partial ? "The run failed; the results below are partial" : "The run failed"}</AlertTitle>
@@ -47,11 +48,12 @@ export function ErrorNotice({ error }: { error: { kind: ApiErrorKind; partial: b
   );
 }
 
-export function UsageFooter({ usage }: { usage: UsageData }) {
+/** Fixture mode keeps no usage ledger, so its month figures are always 0 and are left out. */
+export function UsageFooter({ usage, fixture }: { usage: UsageData; fixture: boolean }) {
   return (
     <p className="text-xs text-muted-foreground" data-testid="usage">
-      Exa requests: {usage.exaRequests} · cache hits: {usage.cacheHits} · reported cost: ${usage.costDollars.toFixed(3)} · this month:{" "}
-      {usage.monthRequests} of {usage.monthLimit} requests
+      Exa requests: {usage.exaRequests} · cache hits: {usage.cacheHits} · reported cost: ${usage.costDollars.toFixed(3)}
+      {!fixture && ` · this month: ${usage.monthRequests} of ${usage.monthLimit} requests`}
     </p>
   );
 }

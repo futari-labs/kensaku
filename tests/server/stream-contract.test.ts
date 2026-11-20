@@ -2,7 +2,7 @@
 import { readUIMessageStream } from "ai";
 import { describe, expect, it } from "vitest";
 import type { KensakuMessage } from "../../src/research/events";
-import { emptyView, runStateOf, viewOf } from "../../src/web/app/messages";
+import { runStateOf, viewOf } from "../../src/web/app/messages";
 import { harness } from "./helpers";
 import { readChunks } from "./sse";
 
@@ -23,24 +23,27 @@ describe("stream contract: toChunks to viewOf", () => {
     expect(view.products?.[0]?.offerGroups.length).toBeGreaterThan(0);
     expect(view.usage).toMatchObject({ exaRequests: 2, monthLimit: 400 });
     expect(view.error).toBeUndefined();
-    expect(runStateOf(view, { streaming: false, cancelled: false })).toBe("completed");
+    expect(runStateOf(view, { streaming: false, requestFailed: false })).toBe("completed");
   });
 
   it("a failed run reads back as failed", async () => {
     const view = viewOf(await messageOf("error-401"));
     expect(view.error).toMatchObject({ kind: "auth", partial: false });
-    expect(runStateOf(view, { streaming: false, cancelled: false })).toBe("failed");
+    expect(runStateOf(view, { streaming: false, requestFailed: false })).toBe("failed");
   });
 });
 
 describe("runStateOf", () => {
-  const view = emptyView();
-  it("is running while streaming, and cancelled wins over the stream", () => {
-    expect(runStateOf(view, { streaming: true, cancelled: false })).toBe("running");
-    expect(runStateOf(view, { streaming: true, cancelled: true })).toBe("cancelled");
+  const view = viewOf(undefined);
+  it("is running while streaming", () => {
+    expect(runStateOf(view, { streaming: true, requestFailed: false })).toBe("running");
   });
 
-  it("is cancelled for a run that never got an assistant message", () => {
-    expect(runStateOf(emptyView(), { streaming: false, cancelled: true })).toBe("cancelled");
+  it("is failed as soon as the request fails, before an error part exists", () => {
+    expect(runStateOf(view, { streaming: false, requestFailed: true })).toBe("failed");
+  });
+
+  it("is cancelled for a finished run with no closing part, including one with no assistant message", () => {
+    expect(runStateOf(view, { streaming: false, requestFailed: false })).toBe("cancelled");
   });
 });

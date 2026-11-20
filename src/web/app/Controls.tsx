@@ -2,7 +2,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/web/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/web/components/ui/select";
 import type { Market } from "../../core/types";
-import { MARKETS, MARKET_LABEL } from "./storage";
+import { MARKETS, MARKET_LABEL } from "./markets";
 
 export function MarketSelect({ value, onChange, disabled }: { value: Market; onChange: (market: Market) => void; disabled: boolean }) {
   return (
