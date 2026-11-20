@@ -12,3 +12,8 @@ coverage/
 spikes/exa/.request-count
 
 .DS_Store
+
+# Local cache, test output
+.cache/
+test-results/
+playwright-report/
