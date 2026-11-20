@@ -3,8 +3,8 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 
-export const HOST = "127.0.0.1";
-export const PORT = 8787;
+const HOST = "127.0.0.1";
+const PORT = 8787;
 
 export const app = new Hono();
 

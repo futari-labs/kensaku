@@ -5,6 +5,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
+    // noUncheckedIndexedAccess is off here only because the generated, never-edited
+    // ai-elements/prompt-input.tsx fails it; src/core keeps it via tsconfig.node.json.
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
