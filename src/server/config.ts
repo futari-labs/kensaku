@@ -20,6 +20,8 @@ export interface ServerConfig {
   /** Present only in live mode. It goes to the SDK constructor and nowhere else. */
   exaApiKey: string | undefined;
   limits: Limits;
+  /** File that receives each Exa request and raw response as JSON lines (live smoke only). */
+  exchangeLog: string | undefined;
 }
 
 /** What the app needs to know about its own configuration. Never carries the key. */
@@ -39,6 +41,7 @@ const EnvSchema = z.object({
   KENSAKU_PORT: z.preprocess(blank, z.coerce.number().int().min(1024).max(65535).default(DEFAULT_PORT)),
   KENSAKU_ANSWER_MARKET_MODE: z.preprocess(blank, z.enum(["userLocation", "question-text"]).default("userLocation")),
   EXA_API_KEY: z.preprocess(blank, z.string().optional()),
+  KENSAKU_EXCHANGE_LOG: z.preprocess(blank, z.string().optional()),
 });
 
 /** Parses the environment once, at the boundary. Fixture mode is refused outside `NODE_ENV=test`. */
@@ -58,6 +61,7 @@ export function parseConfig(env: Record<string, string | undefined>): ServerConf
     answerMarketMode: e.KENSAKU_ANSWER_MARKET_MODE,
     exaApiKey: e.KENSAKU_EXA_MODE === "live" ? e.EXA_API_KEY : undefined,
     limits: limitsFromEnv(env),
+    exchangeLog: e.KENSAKU_EXCHANGE_LOG,
   };
 }
 

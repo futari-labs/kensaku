@@ -10,7 +10,7 @@ import type { UsageLedger } from "./ledger";
 import { parseAnswerResponse, parseSearchResponse, readBilling } from "./parse";
 import type { AnswerResult, ExaPort, SearchResult } from "./port";
 import { buildAnswerRequest, buildSearchRequest, cacheKey } from "./requests";
-import type { AnswerMarketMode, AnswerRequest, SearchRequest } from "./requests";
+import type { AnswerMarketMode, AnswerRequest, Endpoint, SearchRequest } from "./requests";
 import { StoredAnswerSchema, StoredSearchSchema } from "./schemas";
 
 /**
@@ -31,6 +31,8 @@ export interface PortOptions {
   answerMarketMode?: AnswerMarketMode;
   /** Called with a short note when a response was billed oddly or partly dropped. Default: ignore. */
   onWarning?: (note: string) => void;
+  /** Called with each request and its raw response as the transport returns it, before parsing. For the live smoke's run log. */
+  onExchange?: (exchange: { endpoint: Endpoint; request: AnswerRequest | SearchRequest; response: unknown }) => void;
 }
 
 interface Call<T extends { costDollars: number; retrievedAt: string }> {
@@ -39,6 +41,8 @@ interface Call<T extends { costDollars: number; retrievedAt: string }> {
   budget: RequestBudget;
   signal: AbortSignal;
   send: () => Promise<unknown>;
+  endpoint: Endpoint;
+  request: AnswerRequest | SearchRequest;
   /** Strict parse of the body; cost and time are added by the guard. */
   parse: (raw: unknown) => Omit<T, "costDollars" | "retrievedAt">;
 }
@@ -57,6 +61,7 @@ export class GuardedExaPort implements ExaPort {
   readonly #clock: Clock;
   readonly #answerMode: AnswerMarketMode;
   readonly #warn: (note: string) => void;
+  readonly #onExchange: PortOptions["onExchange"];
   /** Calls past the guard whose cost is not settled yet; each holds MAX_CALL_COST_DOLLARS of the monthly cost limit. */
   #inFlight = 0;
 
@@ -67,11 +72,14 @@ export class GuardedExaPort implements ExaPort {
     this.#clock = options.clock ?? systemClock;
     this.#answerMode = options.answerMarketMode ?? "userLocation";
     this.#warn = options.onWarning ?? (() => {});
+    this.#onExchange = options.onExchange;
   }
 
   answerCandidates(question: string, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<AnswerResult> {
     const request = buildAnswerRequest(question, market, this.#answerMode);
     return this.#guarded({
+      endpoint: "/answer",
+      request,
       key: cacheKey("/answer", request, market),
       schema: StoredAnswerSchema,
       budget,
@@ -84,6 +92,8 @@ export class GuardedExaPort implements ExaPort {
   searchOffers(candidate: Candidate, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<SearchResult> {
     const request = buildSearchRequest(candidate, market);
     return this.#guarded({
+      endpoint: "/search",
+      request,
       key: cacheKey("/search", request, market),
       schema: StoredSearchSchema,
       budget,
@@ -127,6 +137,11 @@ export class GuardedExaPort implements ExaPort {
       throw failure;
     }
 
+    try {
+      this.#onExchange?.({ endpoint: call.endpoint, request: call.request, response: raw });
+    } catch {
+      this.#warn("The exchange observer failed.");
+    }
     const billing = readBilling(raw);
     if (!billing.costReported) this.#warn("Exa response carried no costDollars.total; recorded at the per-call ceiling.");
     this.#ledger?.recordCost(billing.costReported ? billing.costDollars : MAX_CALL_COST_DOLLARS, this.#clock());

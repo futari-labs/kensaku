@@ -1,10 +1,11 @@
-import { mkdtempSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { DiskCache } from "../exa/cache";
 import { systemClock } from "../exa/clock";
 import { ExaFailure } from "../exa/errors";
 import { FixtureExaPort } from "../exa/fixture-port";
+import type { PortOptions } from "../exa/guarded-port";
 import { UsageLedger } from "../exa/ledger";
 import type { ExaPort } from "../exa/port";
 import { ExaSdkPort } from "../exa/sdk-port";
@@ -27,10 +28,17 @@ function stdoutLogger(secret: string | undefined): (line: LogLine) => void {
   };
 }
 
+/** Appends each Exa exchange to a JSON-lines file. The exchange holds no key and no header. */
+function exchangeRecorder(path: string): NonNullable<PortOptions["onExchange"]> {
+  mkdirSync(dirname(resolve(path)), { recursive: true });
+  return (exchange) => appendFileSync(path, `${JSON.stringify({ ts: new Date().toISOString(), ...exchange })}\n`);
+}
+
 /**
  * Builds the app's real dependencies from a parsed config. Live: the SDK port over `.cache/`, with
- * the monthly ledger. Fixture: a scenario replayer per run, over a throwaway ledger and no cache, so a
- * fixture run never touches `.cache/` and never serves another scenario's cached answer.
+ * the monthly ledger. Fixture: a scenario replayer per run with no cache and no ledger writes, so a
+ * fixture run never touches `.cache/`, never serves another scenario's cached answer, and a scripted
+ * 402 cannot block the next scenario (the ledger shown by `/api/usage` is a throwaway one).
  */
 export function createRuntime(config: ServerConfig): AppDeps {
   const clock = systemClock;
@@ -45,7 +53,7 @@ export function createRuntime(config: ServerConfig): AppDeps {
       ledger,
       clock,
       log,
-      portFor: (scenario) => FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { ledger, clock, answerMarketMode: config.answerMarketMode, onWarning }),
+      portFor: (scenario) => FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock, answerMarketMode: config.answerMarketMode, onWarning }),
     };
   }
 
@@ -56,6 +64,7 @@ export function createRuntime(config: ServerConfig): AppDeps {
         cache: new DiskCache({ dir: join(storage, "exa") }),
         answerMarketMode: config.answerMarketMode,
         onWarning,
+        ...(config.exchangeLog && { onExchange: exchangeRecorder(config.exchangeLog) }),
       })
     : unconfiguredPort;
   return { config: appConfigOf(config), ledger, clock, log, portFor: () => port };
