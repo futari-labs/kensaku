@@ -40,13 +40,14 @@ A fixed procedure, not an open-ended agent loop (adopted from the Aria Labs and 
 
 1. **Cache lookup.** Key = SHA-256 of `{endpoint, normalized request body, market}`. A hit returns the stored response with its original `receivedAt` and costs no request. TTL 6 hours.
 2. **Stage `candidates` (1 request).** `exa.answer(question, { outputSchema })` with schema `{ comparison: string, candidates: [{ name, brand, modelIdentifiers[] }] (max 3) }` and the market's `userLocation`. Spike A2 confirmed this returns cited comparison text plus candidates in one $0.005 call.
-3. **Stage `offers` (1 request per candidate).** For the first 2 candidates by default, at most 3: `exa.search("<brand> <name> buy", { type: "auto", numResults: 8, userLocation, contents: { highlights: true, summary: { query, schema: OfferSummarySchema } } })`. `OfferSummarySchema` is the spike's schema: `isProductListing`, `productName`, `merchant`, `price`, `currency`, `availability`. About $0.015 per call.
+   `userLocation` on `/answer` is unverified (spike A2 omitted it). If the API rejects or ignores it, `ExaSdkPort` omits it and appends "Market: United States | Singapore | Japan" to the question text instead; the live smoke records which path works.
+3. **Stage `offers` (1 request per candidate).** Search candidates 1 and 2. Search candidate 3 only if candidates 1 and 2 together yielded zero merchant offers and a budget token remains. Request: `exa.search("<brand> <name> buy", { type: "auto", numResults: 8, userLocation, contents: { highlights: true, summary: { query, schema: OfferSummarySchema } } })`. `OfferSummarySchema` is the spike's schema: `isProductListing`, `productName`, `merchant`, `price`, `currency`, `availability`. About $0.015 per call.
 4. **Stage `validate` (no request).** `src/core` classifies every result as a merchant offer, labeled evidence, or rejected (rules below), then ranks offers.
 5. **Stage `compare` (no request).** Resolves the comparison's `[n]` markers against the answer's citations.
 
 Request count: normal question = 1 + 2 = 3 (meets the 1-3 target). Maximum = 1 + 3 candidates + 1 retry = 5. `RequestBudget(5)` issues one token per Exa call; `ExaSdkPort` cannot call the SDK without a token, so a sixth call is impossible by construction (EV-005). Cache hits consume no token.
 
-Retries: one retry for HTTP 429 (honouring `Retry-After` up to 5 s), 5xx, or timeout, only if a budget token remains. Timeout 30 s per Exa call, 90 s per run. Client cancel aborts the in-flight call through `AbortSignal`.
+Retries: at most one retry per run in total (not per call), for HTTP 429 (honouring `Retry-After` up to 5 s), 5xx, or timeout, and only if a budget token remains. Timeout 30 s per Exa call, 90 s per run. Client cancel aborts the in-flight call through `AbortSignal`.
 
 ## Offer classification
 
@@ -55,15 +56,16 @@ Applied in this order to each search result; the first matching rule decides. `U
 1. URL is not `http(s)` → **rejected: invalid-url**.
 2. URL is not one of this run's Exa result URLs → **rejected: url-not-from-run** (offers can never come from synthesized text; spike L6).
 3. Product identity fails (below) → **rejected: irrelevant-product** (spike L1).
-4. Host is on the aggregator list (`src/core/hosts.ts`: kakaku.com, product.rakuten.co.jp, bestpricescanner.com, deal.ai, idealo.*, pricespy.*, google.com/shopping, camelcamelcamel.com, shopsavvy.com) → **evidence: aggregator**.
-5. Host is on the editorial list (theverge.com, howtogeek.com, rtings.com, soundguys.com, techradar.com, whathifi.com, wirecutter / nytimes.com, cnet.com, engadget.com, tomsguide.com, pcmag.com) → **evidence: editorial**.
+4. Host is on the aggregator list → **evidence: aggregator**. List (`src/core/hosts.ts`), each entry a host with an optional path prefix: `kakaku.com`, `product.rakuten.co.jp`, `bestpricescanner.com`, `deal.ai`, `idealo.com`, `idealo.de`, `idealo.co.uk`, `pricespy.co.uk`, `pricespy.co.nz`, `google.com` with path `/shopping`, `camelcamelcamel.com`, `shopsavvy.com`.
+5. Host is on the editorial list → **evidence: editorial**: `theverge.com`, `howtogeek.com`, `rtings.com`, `soundguys.com`, `techradar.com`, `whathifi.com`, `nytimes.com` with path `/wirecutter`, `cnet.com`, `engadget.com`, `tomsguide.com`, `pcmag.com`.
+   Host matching (rules 4 and 5): an entry matches when the URL hostname (lowercased) equals the entry host or ends with `.` + entry host, and, if the entry has a path prefix, the URL path starts with it.
 6. `isProductListing !== true` → **evidence: not-a-listing**.
-7. Price invalid → **evidence: merchant-no-price** (D-015). Valid means: a finite number > 0; currency, after trim and uppercase, is a 3-letter ISO 4217 code; USD and SGD at most 2 decimal places; JPY an integer.
+7. Price invalid → **evidence: merchant-no-price** (D-015). Valid means: a finite number > 0, and a currency that after trim and uppercase is three ASCII letters `A-Z`; USD and SGD have at most 2 decimal places; JPY is an integer.
 8. Currency not in {USD, SGD, JPY} → **rejected: unsupported-currency** (D-014).
-9. Merchant/host consistency fails → **evidence: merchant-mismatch** (spike L3). Normalize the extracted merchant with NFKC, lowercase, remove punctuation, split into tokens, drop stopwords (`com co net jp sg us www store shop online official singapore japan usa inc ltd the`) and tokens under 3 characters. If any Latin-script tokens remain, at least one must be a substring of some host label (host split on `.` and `-`). If none remain (for example a Japanese name), the check is skipped (RISKS R-7).
+9. Merchant/host consistency fails → **evidence: merchant-mismatch** (spike L3). A missing or empty merchant fails. Otherwise normalize the extracted merchant with NFKC and lowercase, **replace every character that is not a Unicode letter or digit with a space**, split on spaces into tokens, and drop stopwords (`com co net jp sg us www store shop online official singapore japan usa inc ltd the`) and tokens under 3 characters. If any remaining token consists of ASCII letters and digits only, at least one such token must be a substring of some host label (hostname split on `.` and `-`). If no such token remains (for example a Japanese name), the check is skipped (RISKS R-7). Examples: "Amazon.com" → `amazon`; "Macy's" → `macy`; "Harvey Norman Singapore" → `harvey`, `norman`.
 10. Otherwise → **merchant offer**.
 
-Offer fields: `merchantHost` (from the URL, displayed as the merchant), `merchantName` (extracted, shown secondary), `canonicalUrl`, `price {amount, currency}`, `availability` (`in_stock | out_of_stock | preorder | unknown`; any other value becomes `unknown`), `source: "exa"`, `retrievedAt` (Kensaku's receipt time of the Exa response; spike L5 showed Exa provides no observation time), `exaRequestId`, `productName`.
+Offer fields: `merchantHost` (the URL hostname, lowercased, with one leading `www.` removed; displayed as the merchant), `merchantName` (extracted, shown secondary), `canonicalUrl`, `price {amount, currency}`, `availability` (`in_stock | out_of_stock | preorder | unknown`; any other value becomes `unknown`), `source: "exa"`, `retrievedAt` (Kensaku's receipt time of the Exa response; spike L5 showed Exa provides no observation time), `exaRequestId`, `productName`.
 
 URL canonicalization removes `utm_*`, `tag`, `linkCode`, `linkId`, `ref`, `ref_`, `psc`, `gclid`, `fbclid` and keeps all other parameters in their original order. Kensaku adds no affiliate parameters.
 
@@ -71,7 +73,7 @@ Evidence items keep `url`, `title`, `host`, `category`, and any reported price, 
 
 ## Product identity
 
-Identity text = the summary's `productName`, falling back to the result title. Normalize with NFKC and lowercase, then split on non-alphanumeric characters into tokens. Each candidate `modelIdentifier` is normalized and tokenized the same way. An identifier is usable if its joined form has at least 4 characters and it either contains a digit or has 2 or more tokens. A result matches if any usable identifier equals the concatenation of some run of consecutive tokens in the identity text. So `WH-1000XM5` matches "WH 1000XM5" and "WH-1000XM5/LME", but not "WH-1000XM4". `MX Master 3` does not match "MX Master 3S" (EV-002 cases Y06, Y07). A candidate with no usable identifier gets no offers.
+Identity text = the summary's `productName`, or the result title when `productName` is missing or empty after trimming. Normalize with NFKC and lowercase, then split into tokens on every character that is not a Unicode letter or digit (`/[^\p{L}\p{N}]+/u`). Each candidate `modelIdentifier` is normalized and tokenized the same way. An identifier is usable if its joined form has at least 4 characters and it either contains a digit or has 2 or more tokens. A result matches if any usable identifier equals the concatenation of some run of consecutive tokens in the identity text. So `WH-1000XM5` matches "WH 1000XM5" and "WH-1000XM5/LME", but not "WH-1000XM4". `MX Master 3` does not match "MX Master 3S" (EV-002 cases Y06, Y07). A candidate with no usable identifier gets no offers.
 
 ## Ranking
 
@@ -83,6 +85,52 @@ Defined in `evals/cases/citations.json` `rule`. Markers resolve 1-based into the
 
 ## Interfaces and data
 
+Module contracts that JM-002, JM-003, and JM-004 implement against (names are binding; internal helpers are free):
+
+```ts
+// src/core/types.ts
+type Market = "US" | "SG" | "JP";
+type Currency = "USD" | "SGD" | "JPY";
+type Availability = "in_stock" | "out_of_stock" | "preorder" | "unknown";
+interface Candidate { name: string; brand: string; modelIdentifiers: string[] }
+interface OfferSummary { isProductListing?: boolean; productName?: string; merchant?: string;
+  price?: number; currency?: string; availability?: string }           // as returned by Exa
+interface SearchHit { url: string; title: string | null; summary: OfferSummary | null;
+  exaRequestId: string; retrievedAt: string }
+interface Offer { kind: "merchant-offer"; merchantHost: string; merchantName: string;
+  canonicalUrl: string; price: { amount: number; currency: Currency }; availability: Availability;
+  source: "exa"; retrievedAt: string; exaRequestId: string; productName: string }
+type EvidenceCategory = "aggregator" | "editorial" | "not-a-listing" | "merchant-no-price" | "merchant-mismatch";
+interface Evidence { kind: "evidence"; category: EvidenceCategory; url: string; title: string | null;
+  host: string; reportedPrice?: { amount: number; currency: string } }
+type RejectCategory = "irrelevant-product" | "unsupported-currency" | "url-not-from-run" | "invalid-url";
+interface Rejected { kind: "rejected"; category: RejectCategory; url: string }
+interface OfferGroup { currency: Currency; offers: Offer[] }
+interface ResolvedCitations { renderedText: string; sources: string[]; unresolvedMarkers: number;
+  uncitedParagraphs: number[] }
+
+// src/core/index.ts
+function classifyHit(hit: SearchHit, candidate: Candidate, runResultUrls: ReadonlySet<string>): Offer | Evidence | Rejected;
+function matchesIdentity(identityText: string, candidate: Candidate): boolean;
+function canonicalizeUrl(url: string): string;
+function rankOffers(offers: Offer[], market: Market): OfferGroup[];
+function resolveCitations(text: string, citationUrls: string[]): ResolvedCitations;
+
+// src/exa/port.ts
+interface AnswerResult { comparison: string; candidates: Candidate[]; citationUrls: string[];
+  exaRequestId: string; retrievedAt: string; costDollars: number; cached: boolean }
+interface SearchResult { hits: SearchHit[]; exaRequestId: string; retrievedAt: string;
+  costDollars: number; cached: boolean }
+interface ExaPort {
+  answerCandidates(question: string, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<AnswerResult>;
+  searchOffers(candidate: Candidate, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<SearchResult>;
+}
+class RequestBudget { constructor(max: 5); take(): BudgetToken /* throws BudgetExhausted */; used: number }
+class ExaFailure extends Error { kind: "auth" | "credits_exhausted" | "monthly_limit" | "rate_limited" | "upstream" | "timeout" | "budget_exhausted"; retryAfterMs?: number }
+```
+
+Fixture scenarios: `FixtureExaPort` does not match requests; it replays a named scenario from `tests/fixtures/scenarios/<name>.json`. A scenario lists, per call in order, a response (a reference to a frozen `evals/fixtures/exa-live` file or a synthetic, labeled body), an injected error kind, or a delay. Baseline scenario `xm5-us`: a synthetic, labeled candidates answer (one candidate, Sony WH-1000XM5) composed with the real `A1-answer` comparison and citations, followed by the real `S1-headphones` search; `xm5-sg` and `xm5-jp` use `S8` and `S9`. Error, slow, and cancel scenarios cover EV-006 and EV-007. In fixture mode only, the request body may name the scenario (`fixtureScenario`); in live mode that field is rejected with `invalid_request`. JM-003 creates the scenario loader and baseline scenarios; JM-004 and JM-005 may add scenarios.
+
 `POST /api/chat`. Request: AI SDK `useChat` body `{ messages: UIMessage[], market: "US" | "SG" | "JP" }`, parsed with zod at the boundary. Only the last user message's text is researched; earlier turns are display history. Response: `createUIMessageStreamResponse` with these parts:
 
 | Part | Payload |
@@ -92,7 +140,9 @@ Defined in `evals/cases/citations.json` `rule`. Markers resolve 1-based into the
 | `source-url` | One per resolved citation |
 | `data-products` | `[{ candidate, offerGroups: [{ currency, offers[] }], evidence[], rejectedCounts }]` |
 | `data-usage` | `{ exaRequests, cacheHits, costDollars, monthRequests, monthLimit }` |
-| `data-error` | `{ kind: "auth" \| "credits_exhausted" \| "monthly_limit" \| "rate_limited" \| "upstream" \| "timeout" \| "cancelled" \| "invalid_request", message, partial: boolean }` |
+| `data-error` | `{ kind: "auth" \| "credits_exhausted" \| "monthly_limit" \| "rate_limited" \| "upstream" \| "timeout" \| "invalid_request", message, partial: boolean }` |
+
+`cancelled` is a client-derived state: when the user cancels, `useChat` aborts the request and the client marks the run cancelled. The server sees the abort, aborts the in-flight Exa call, writes no further parts, and logs `cancelled`. EV-006 checks the server side (Exa call aborted, no parts after the abort, log line); EV-007 checks the client side.
 
 `GET /api/usage` returns the ledger for the current month. `GET /api/health` returns `{ ok, exaConfigured, mode }`, never the key.
 
@@ -103,7 +153,7 @@ History (D-016): the client stores `{ version: 1, messages, savedAt }` in `local
 ## Spend guard and usage ledger
 
 - Per run: `RequestBudget(5)` (D-017).
-- Per month: `.cache/ledger/YYYY-MM.json` `{ requests, costDollars, exhaustedAt? }`, written atomically (temporary file plus rename) behind an in-process mutex. Limits: `KENSAKU_MONTHLY_REQUEST_LIMIT` (default 400) and `KENSAKU_MONTHLY_COST_LIMIT` (default 8.00 dollars, under the $10 monthly free credit). When either would be exceeded the run fails with `monthly_limit` before calling Exa.
+- Per month: `.cache/ledger/YYYY-MM.json` `{ requests, costDollars, exhaustedAt? }`, written atomically (temporary file plus rename). The server handles one research run at a time; a second concurrent `POST /api/chat` gets HTTP 409, so the ledger has a single writer. Limits: `KENSAKU_MONTHLY_REQUEST_LIMIT` (default 400) and `KENSAKU_MONTHLY_COST_LIMIT` (default 8.00 dollars, under the $10 monthly free credit). When either would be exceeded the run fails with `monthly_limit` before calling Exa.
 - Exa HTTP 402, or any error whose message matches credit/quota/billing text, sets `exhaustedAt`; all live calls stop until the owner deletes the ledger file or the month changes. The UI explains this.
 - Every Exa response's `costDollars.total` is added to the ledger and to the run's usage part.
 
@@ -126,7 +176,7 @@ JM-001 pins exact versions in `package.json` and commits `pnpm-lock.yaml`. If a 
 
 - Start: `pnpm dev` (Vite on 127.0.0.1:5173 proxying `/api` to Hono on 127.0.0.1:8787) or `pnpm start` (build, then Hono serves the web build and API on 127.0.0.1:8787).
 - Secrets: the server reads `EXA_API_KEY` with `process.loadEnvFile` from `.env.local`, or from the path in `EXA_ENV_FILE` (so a worktree can use the main checkout's file without copying it). The key never appears in the client bundle (no `VITE_` variable), logs, cache files, fixtures, or responses (EV-009).
-- Network: the server binds to `127.0.0.1` and refuses to start on any other host. It rejects requests whose `Host` header is not `127.0.0.1:<port>` or `localhost:<port>` (DNS-rebinding guard), and rejects a `POST` whose `Origin` is present and not same-origin.
+- Network: the listen address is hard-coded to `127.0.0.1` (no host setting exists). The server rejects with 403 requests whose `Host` header is not `127.0.0.1:<port>` or `localhost:<port>` (DNS-rebinding guard), and any `POST` whose `Origin` is present and not one of those. Under `pnpm dev` (`KENSAKU_DEV=1`) the Vite origins `http://127.0.0.1:5173` and `http://localhost:5173` are also allowed; Vite's proxy keeps the original `Host` header.
 - Modes: `KENSAKU_EXA_MODE=live` (default) or `fixture`. Fixture mode is accepted only when `NODE_ENV=test`. In fixture mode the UI shows a persistent "Fixture data" banner. There is no silent fallback from live to fixtures; Kensaku fails closed (ShopSense reference).
 - Observability: one JSON log line per stage and per Exa call to stdout: run ID, stage, request count, cache hit, cost, duration, error kind. Query text is logged locally; the key and request headers never are.
 - No deployment, auth, or remote storage (D-010).
@@ -145,4 +195,4 @@ JM-001 pins exact versions in `package.json` and commits `pnpm-lock.yaml`. If a 
 
 ## Vertical slice
 
-The first milestone (JM-001 to JM-004) proves the whole path through real boundaries: browser `useChat` → Hono `/api/chat` → research pipeline → `ExaSdkPort` (live Exa with the real key) → `src/core` classification → UI message stream → AI Elements conversation showing progress, a cited comparison, and an offer table with evidence listed separately. Acceptance: the fixture-backed end-to-end test passes, and one live smoke run of query Q1 (at most 5 requests) produces at least one merchant offer that passes revalidation. Market selection, history persistence, full error states, and accessibility polish follow in JM-005.
+The first milestone (JM-001 to JM-004) proves the whole path through real boundaries: browser `useChat` → Hono `/api/chat` → research pipeline → `ExaSdkPort` (live Exa with the real key) → `src/core` classification → UI message stream → AI Elements conversation showing progress, a cited comparison, and an offer table with evidence listed separately. Acceptance: the fixture-backed end-to-end test passes, and a live smoke of Q1 (named model) and Q2 (open-ended, so Exa-generated `modelIdentifiers` are exercised) makes at most 10 requests in total; Q1 shows at least one merchant offer that passes revalidation, and the Q2 outcome (offers or an explicit no-offers state) is recorded. Both run logs are committed under `.futari/evidence/live/` at or before the evidence file's `Tested-Commit`. Market selection, history persistence, full error states, and accessibility polish follow in JM-005.

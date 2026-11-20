@@ -44,7 +44,8 @@ Prerequisites observed: git 2.40.1, Node.js `v22.20.0`, pnpm `10.22.0`, `gh` aut
 - Allowed: one GitHub issue per task; push task branches `jm-00N-<slug>`; open PRs into `dev`; merge into `dev` after required checks and independent review pass (`mergePolicy: after-required-checks`).
 - Forbidden: pushing to, merging into, or changing rules on `main`; force pushes; repository setting changes; bypassing or disabling checks; deployment.
 - Parallelism 2; repair limit 3 per task.
-- Live Exa: JM-004 smoke (≤ 5 requests) and EV-008 (≤ 30 requests per run, ≤ 3 runs); total ≤ 120 requests and ≤ $2.00 reported cost from free credits; additional spend $0; stop on exhausted credits or a 402.
+- Merging into `dev` is process-gated (R-13): confirm the `CI` and `Futari contract` runs succeeded on the PR head SHA and the branch is current with `dev`, then merge; confirm CI on the new `dev` head before dependent work (EXECUTION_PLAN "Permissions and limits").
+- Live Exa: JM-004 smoke (Q1 and Q2, ≤ 10 requests) and EV-008 (≤ 30 requests per run, ≤ 3 runs); total ≤ 120 requests and ≤ $2.00 reported cost from free credits; additional spend $0; stop on exhausted credits or a 402.
 
 ## Resume and acceptance
 

@@ -1,6 +1,12 @@
 {
   "_about": "EV-008 live acceptance query set (REQ-008, D-007). Run only through the live acceptance command with the live budget below. Queries were chosen by the assistant to cover the three markets, a specific-model question, and an open-ended question; the owner approves them with plan kensaku-mvp-v1.",
   "budget": { "maxRequestsPerQuery": 5, "maxRequestsPerSuiteRun": 30, "maxSuiteRuns": 3, "maxReportedCostDollarsPerSuiteRun": 0.4 },
+  "runRules": [
+    "Each suite run starts with an empty cache (the suite bypasses and does not read the 6-hour cache), so every run makes fresh Exa calls.",
+    "Every suite run's log is committed under .futari/evidence/live/, including failed and blocked runs.",
+    "A second or third run is allowed only after a recorded fix (commit SHA and reason in .futari/evidence/JM-006.md) or after a run recorded as BLOCKED by an Exa outage. The verdict comes from the last run; best-of-N selection is not allowed.",
+    "Revalidation is a self-consistency check: each displayed offer is reclassified from the recorded Exa response and must equal what the UI showed. It detects display or pipeline mutation, not extraction errors; the owner audit covers those."
+  ],
   "thresholds": {
     "queriesWithAtLeastOneMerchantOffer": { "min": 4, "of": 6 },
     "displayedOffersPassingRevalidation": "100%",

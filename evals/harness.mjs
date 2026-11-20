@@ -87,24 +87,30 @@ for (const f of fixtureCache.values()) {
 }
 
 // Per-evaluation readiness. Paths are the test files tasks must create (see .futari/plan.json).
+// The fifth column names the frozen case file a READY test must load.
 const evals = [
-  ["EV-001", "Merchant authenticity", "tests/evals/ev-001-merchant-authenticity.test.ts", "src/core/offers.ts"],
-  ["EV-002", "Product relevance", "tests/evals/ev-002-product-relevance.test.ts", "src/core/identity.ts"],
-  ["EV-003", "Currency and ranking", "tests/evals/ev-003-ranking-currency.test.ts", "src/core/rank.ts"],
-  ["EV-004", "Citations", "tests/evals/ev-004-citations.test.ts", "src/core/citations.ts"],
+  ["EV-001", "Merchant authenticity", "tests/evals/ev-001-merchant-authenticity.test.ts", "src/core/offers.ts", "offer-classification.json"],
+  ["EV-002", "Product relevance", "tests/evals/ev-002-product-relevance.test.ts", "src/core/identity.ts", "offer-classification.json"],
+  ["EV-003", "Currency and ranking", "tests/evals/ev-003-ranking-currency.test.ts", "src/core/rank.ts", "ranking-currency.json"],
+  ["EV-004", "Citations", "tests/evals/ev-004-citations.test.ts", "src/core/citations.ts", "citations.json"],
   ["EV-005", "Spend guard and cache", "tests/evals/ev-005-spend-guard.test.ts", "src/exa/budget.ts"],
   ["EV-006", "Streaming and failure states", "tests/evals/ev-006-stream-failures.test.ts", "src/server/app.ts"],
   ["EV-007", "Frontend quality", "tests/e2e/ev-007-frontend.spec.ts", "src/web/main.tsx"],
-  ["EV-008", "Live acceptance", "scripts/live-acceptance.ts", "src/research/pipeline.ts"],
+  ["EV-008", "Live acceptance", "scripts/live-acceptance.ts", "src/research/pipeline.ts", "live-acceptance.json"],
   ["EV-009", "Local and key safety", "tests/evals/ev-009-key-safety.test.ts", "src/server/index.ts"],
 ];
 
 console.log(errors.length ? `HARNESS INVALID (${errors.length} problems)` : `HARNESS OK: ${oc.cases.length} classification cases (${live} live), ${rc.cases.length} ranking cases, ${cc.cases.length} citation cases, ${la.queries.length} live queries.`);
 for (const e of errors) console.log(`  - ${e}`);
-for (const [id, name, test, product] of evals) {
-  const state = !existsSync(join(root, product)) ? `NOT RUNNABLE (product module ${product} does not exist)`
-    : !existsSync(join(root, test)) ? `NOT RUNNABLE (test ${test} does not exist)`
-    : `READY (run the command listed for ${id} in .futari/plan.json)`;
+for (const [id, name, test, product, caseFile] of evals) {
+  let state;
+  if (!existsSync(join(root, product))) state = `NOT RUNNABLE (product module ${product} does not exist)`;
+  else if (!existsSync(join(root, test))) state = `NOT RUNNABLE (test ${test} does not exist)`;
+  else if (caseFile && !readFileSync(join(root, test), "utf8").includes(caseFile)) {
+    state = `INVALID TEST (${test} does not load frozen evals/cases/${caseFile})`;
+    errors.push(`${id}: ${test} must load evals/cases/${caseFile}`);
+  } else state = `READY (run the command listed for ${id} in .futari/plan.json)`;
   console.log(`${id} ${name}: ${state}`);
 }
+if (errors.length) console.log(`HARNESS INVALID after test checks (${errors.length} problems)`);
 process.exitCode = errors.length ? 1 : 0;

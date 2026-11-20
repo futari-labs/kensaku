@@ -87,7 +87,7 @@
         "Every displayed offer has merchant host, positive price, supported ISO currency, canonical http(s) URL from this run, availability enum value, source exa, and retrievedAt.",
         "Aggregator, editorial, non-listing, price-less, and merchant-mismatch pages appear only in a separately labeled evidence section.",
         "Irrelevant products, unsupported currencies, URLs not from the run, and non-http URLs never appear as offers.",
-        "All 50 cases in evals/cases/offer-classification.json produce their labeled outcome, category, and offer fields."
+        "All 54 cases in evals/cases/offer-classification.json produce their labeled outcome, category, and offer fields."
       ]
     },
     {
@@ -121,8 +121,8 @@
       "id": "REQ-007",
       "description": "Local and key safety: the server listens only on 127.0.0.1, rejects foreign Host or Origin, and the Exa key never leaves the server process.",
       "acceptanceCriteria": [
-        "Starting with a non-loopback host fails; requests with a foreign Host or cross-origin Origin get 403.",
-        "A test key string is absent from dist/, server logs, .cache/, evals/fixtures/, API responses, and browser storage."
+        "The listen address is hard-coded to 127.0.0.1; requests with a foreign Host or cross-origin Origin get 403.",
+        "A test key string is absent from a production build, server logs, .cache/, evals/fixtures/, API responses, and browser storage."
       ]
     },
     {
@@ -158,9 +158,9 @@
     {
       "id": "EV-001",
       "requirementIds": ["REQ-003"],
-      "description": "Merchant authenticity: classify all frozen cases (40 live Exa results, 10 synthetic) as merchant offer, labeled evidence, or rejected.",
+      "description": "Merchant authenticity: classify all frozen cases (40 live Exa results, 14 synthetic) as merchant offer, labeled evidence, or rejected.",
       "kind": "deterministic",
-      "passRule": "50/50 cases in evals/cases/offer-classification.json match the labeled outcome and category, and for offers the labeled currency, amount, canonicalUrl and availability where given.",
+      "passRule": "54/54 cases in evals/cases/offer-classification.json match the labeled outcome and category, and for offers the labeled currency, amount, canonicalUrl and availability where given; the test asserts the evaluated case count equals the file's case count.",
       "command": "pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts"
     },
     {
@@ -190,9 +190,9 @@
     {
       "id": "EV-005",
       "requirementIds": ["REQ-006"],
-      "description": "Per-run request cap, cache, monthly ledger limits, exhausted-credit stop, and concurrent ledger updates.",
+      "description": "Spend guard at two levels: unit (RequestBudget, cache, ledger limits, exhausted-credit stop; JM-003) and run (pipeline call counts, cached repeats, single-run lock; JM-004).",
       "kind": "deterministic",
-      "passRule": "Every scripted scenario stays within 5 calls, a normal question uses at most 3, a cached repeat uses 0 with the original retrievedAt, limits block before calling, a 402 blocks later calls, and two concurrent runs produce the exact ledger total.",
+      "passRule": "Unit: a sixth token is refused, cache hits use no token and keep retrievedAt, limits block before calling, and a 402 or credit error blocks later calls. Run: every scripted scenario stays within 5 calls, a normal question uses at most 3, a cached repeat uses 0 with the original retrievedAt, and a concurrent second run gets 409.",
       "command": "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts"
     },
     {
@@ -205,8 +205,8 @@
     },
     {
       "id": "EV-007",
-      "requirementIds": ["REQ-001", "REQ-002", "REQ-003", "REQ-009", "REQ-010"],
-      "description": "Frontend quality: Playwright journey, states, history, market, accessibility, layout, browser-storage secrets, and component integrity, plus owner visual review.",
+      "requirementIds": ["REQ-001", "REQ-002", "REQ-003", "REQ-007", "REQ-009", "REQ-010"],
+      "description": "Frontend quality: Playwright journey, states, history, market, accessibility, layout, absence of the key from browser storage, and component integrity, plus owner visual review.",
       "kind": "deterministic plus human review",
       "passRule": "All Playwright checks listed in docs/futari/EVALUATION_PLAN.md section Frontend quality pass, scripts/check-components.mjs exits 0, and the owner's visual review is recorded as accepted.",
       "command": "pnpm test:e2e && node scripts/check-components.mjs"
@@ -224,7 +224,7 @@
       "requirementIds": ["REQ-007"],
       "description": "Loopback binding, Host and Origin guards, and absence of the key from every artifact.",
       "kind": "deterministic",
-      "passRule": "Non-loopback start fails, foreign Host and Origin get 403, and a test key string is absent from dist/, logs, .cache/, evals/fixtures/, and API responses.",
+      "passRule": "The running server listens on 127.0.0.1, foreign Host and Origin get 403, and a test key string is absent from a production build the test makes itself, from server logs of a fixture run, .cache/, evals/fixtures/, and API responses.",
       "command": "pnpm vitest run tests/evals/ev-009-key-safety.test.ts"
     }
   ],
@@ -240,6 +240,7 @@
         "pnpm-lock.yaml",
         ".npmrc",
         ".gitignore",
+        ".mcp.json",
         "tsconfig.json",
         "tsconfig.app.json",
         "tsconfig.node.json",
@@ -257,14 +258,15 @@
         "src/web/main.tsx",
         "src/server/index.ts",
         "tests/smoke/",
+        "tests/e2e/",
         ".github/workflows/ci.yml"
       ],
       "acceptanceCriteria": [
         "pnpm install --frozen-lockfile, pnpm typecheck, pnpm lint, pnpm test, and pnpm build succeed.",
         "All runtime and dev dependencies named in docs/futari/ARCHITECTURE.md are installed with exact versions.",
-        "components.json lists the @ai-elements registry; the shadcn CLI installed AI Elements conversation, message, prompt-input, suggestion, task, inline-citation, sources, shimmer and shadcn table, badge, select, alert-dialog, alert; components.lock.json records their SHA-256 hashes; scripts/check-components.mjs passes.",
+        "components.json lists the @ai-elements registry and aliases hooks to src/web/lib/hooks; .mcp.json pins shadcn@4.23.0; the shadcn CLI installed AI Elements conversation, message, prompt-input, suggestion, task, inline-citation, sources, shimmer and shadcn table, badge, select, alert-dialog, alert; components.lock.json records their SHA-256 hashes; scripts/check-components.mjs passes.",
         "pnpm start serves the web shell and GET /api/health on 127.0.0.1:8787 only.",
-        ".github/workflows/ci.yml runs install, typecheck, lint, test, build, test:e2e, evals/harness.mjs, and check-components on pull requests to dev without secrets.",
+        ".github/workflows/ci.yml, named CI, runs install, typecheck, lint, test, build, test:e2e, evals/harness.mjs, and check-components on pull requests to dev and on pushes to dev, without secrets; pnpm test:e2e passes with a Playwright smoke spec in tests/e2e/ that loads the shell.",
         ".gitignore also ignores .cache/, test-results/, and playwright-report/."
       ],
       "verificationCommands": [
@@ -316,12 +318,13 @@
       "allowedPaths": [
         "src/exa/",
         "tests/exa/",
+        "tests/fixtures/",
         "tests/evals/ev-005-spend-guard.test.ts"
       ],
       "acceptanceCriteria": [
-        "src/exa/port.ts defines ExaPort; ExaSdkPort is the only module importing exa-js; FixtureExaPort serves evals/fixtures responses.",
+        "src/exa/port.ts defines ExaPort, RequestBudget, and ExaFailure with the signatures in docs/futari/ARCHITECTURE.md; ExaSdkPort is the only module importing exa-js; FixtureExaPort replays named scenarios from tests/fixtures/scenarios/, including baseline scenarios xm5-us, xm5-sg, and xm5-jp, with synthetic responses labeled synthetic.",
         "RequestBudget makes a sixth call impossible by construction; the cache, ledger, and error mapping behave as specified in docs/futari/ARCHITECTURE.md.",
-        "EV-005 passes with no network access."
+        "The unit-level part of EV-005 passes with no network access; the run-level part is covered by JM-004."
       ],
       "verificationCommands": [
         "pnpm typecheck",
@@ -333,20 +336,28 @@
     {
       "id": "JM-004",
       "title": "Vertical slice: pipeline, streaming API, and minimal AI Elements chat UI with live smoke",
-      "requirementIds": ["REQ-001", "REQ-005", "REQ-007"],
-      "evalIds": ["EV-006", "EV-009", "EV-004"],
+      "requirementIds": ["REQ-001", "REQ-005", "REQ-006", "REQ-007"],
+      "evalIds": ["EV-006", "EV-009", "EV-004", "EV-005"],
       "dependsOn": ["JM-002", "JM-003"],
       "allowedPaths": [
         "src/research/",
         "src/server/",
         "src/web/app/",
         "src/web/main.tsx",
+        "src/core/",
+        "src/exa/",
+        "tests/core/",
+        "tests/exa/",
+        "tests/fixtures/",
         "tests/research/",
         "tests/server/",
         "tests/evals/ev-004-citations.test.ts",
+        "tests/evals/ev-005-spend-guard.test.ts",
         "tests/evals/ev-006-stream-failures.test.ts",
         "tests/evals/ev-009-key-safety.test.ts",
         "tests/e2e/",
+        "playwright.config.ts",
+        "vitest.config.ts",
         "package.json",
         "pnpm-lock.yaml",
         ".futari/evidence/live/"
@@ -355,12 +366,13 @@
         "runResearch executes the fixed stages with at most 5 Exa calls and yields typed RunEvents; POST /api/chat converts them to the UI message stream parts in docs/futari/ARCHITECTURE.md.",
         "The server binds 127.0.0.1 only and enforces the Host and Origin guards; fixture mode requires NODE_ENV=test and shows a banner.",
         "The UI, composed only from installed AI Elements and shadcn components, renders progress, cited comparison, offer table, and separate evidence for a fixture run in a Playwright test.",
-        "EV-004 (including fixture pipeline runs), EV-006, and EV-009 pass.",
-        "One live smoke run of query Q1 makes at most 5 Exa requests and shows at least one merchant offer that passes revalidation; its log is committed under .futari/evidence/live/."
+        "EV-004 (including fixture pipeline runs), the run-level part of EV-005, EV-006, and EV-009 pass, and EV-001 to EV-003 still pass after any src/core fix.",
+        "A live smoke of Q1 and Q2 makes at most 10 Exa requests in total; Q1 shows at least one merchant offer that passes revalidation; the Q2 outcome and whether /answer accepted userLocation are recorded; both logs are committed under .futari/evidence/live/ at or before the Tested-Commit."
       ],
       "verificationCommands": [
         "pnpm typecheck",
         "pnpm vitest run tests/evals/ev-004-citations.test.ts",
+        "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts",
         "pnpm vitest run tests/evals/ev-006-stream-failures.test.ts",
         "pnpm vitest run tests/evals/ev-009-key-safety.test.ts",
         "pnpm test",
@@ -372,15 +384,17 @@
     {
       "id": "JM-005",
       "title": "Complete the frontend: market selector, persistent history, all states, accessibility",
-      "requirementIds": ["REQ-009", "REQ-010"],
+      "requirementIds": ["REQ-009", "REQ-010", "REQ-007"],
       "evalIds": ["EV-007"],
       "dependsOn": ["JM-004"],
       "allowedPaths": [
-        "src/web/app/",
-        "src/web/main.tsx",
-        "src/web/components/",
+        "src/web/",
+        "components.json",
         "components.lock.json",
         "tests/e2e/",
+        "tests/fixtures/",
+        "playwright.config.ts",
+        "vitest.config.ts",
         "package.json",
         "pnpm-lock.yaml"
       ],
@@ -410,8 +424,13 @@
       "allowedPaths": [
         "scripts/live-acceptance.ts",
         "src/research/",
+        "src/exa/",
+        "src/core/",
         "src/web/app/",
         "tests/research/",
+        "tests/exa/",
+        "tests/core/",
+        "tests/fixtures/",
         "tests/e2e/",
         "README.md",
         "package.json",
@@ -419,9 +438,9 @@
         ".futari/evidence/live/"
       ],
       "acceptanceCriteria": [
-        "pnpm live:acceptance runs Q1-Q6 within the live budget and writes a run log with every request, displayed offer, and reported cost under .futari/evidence/live/.",
-        "EV-008 thresholds are met, including the owner's audit of every displayed offer.",
-        "All deterministic suites still pass after any fix made here.",
+        "pnpm live:acceptance runs Q1-Q6 with a fresh cache within the live budget and writes a run log with every request, displayed offer, and reported cost under .futari/evidence/live/; every run log is committed at or before the Tested-Commit.",
+        "EV-008 thresholds are met under the runRules in evals/cases/live-acceptance.json, including the owner's audit of every displayed offer.",
+        "All deterministic suites, including EV-001 to EV-004 on the frozen cases, still pass after any fix made here.",
         "README.md explains setup, EXA_ENV_FILE, pnpm start, limits, and data caveats."
       ],
       "verificationCommands": [

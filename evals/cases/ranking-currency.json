@@ -1,7 +1,7 @@
 {
   "_about": "EV-003 gold cases for currency grouping, market ordering, and deterministic ranking (REQ-004, D-014). All offers are synthetic and labeled as such.",
   "labelStatus": "Assistant-proposed from the ranking rule in docs/futari/ARCHITECTURE.md section 'Ranking'. Gold once plan kensaku-mvp-v1 is approved.",
-  "rule": "Group by currency. Group order: the market's currency first (US->USD, SG->SGD, JP->JPY), then the remaining supported currencies in the order USD, SGD, JPY. Within a group sort by availability rank (in_stock=0, preorder=1, unknown=2, out_of_stock=3), then amount ascending, then merchantHost ascending, then canonicalUrl ascending. Offers with the same canonicalUrl collapse to the first one received. No amount is ever compared across groups.",
+  "rule": "Group by currency. Group order: the market's currency first (US->USD, SG->SGD, JP->JPY), then the remaining supported currencies in the order USD, SGD, JPY. Within a group sort by availability rank (in_stock=0, preorder=1, unknown=2, out_of_stock=3), then amount ascending, then merchantHost ascending, then canonicalUrl ascending (strings compared in Unicode code-point order). merchantHost is the URL hostname, lowercased, with one leading 'www.' removed. Offers with the same canonicalUrl collapse to the first one received. No amount is ever compared across groups.",
   "cases": [
     {
       "id": "R01",
@@ -34,11 +34,11 @@
       "offers": [
         { "id": "a", "merchantHost": "harveynorman.com.sg", "canonicalUrl": "https://www.harveynorman.com.sg/p/2", "currency": "SGD", "amount": 298, "availability": "in_stock" },
         { "id": "b", "merchantHost": "harveynorman.com.sg", "canonicalUrl": "https://www.harveynorman.com.sg/p/1", "currency": "SGD", "amount": 298, "availability": "in_stock" },
-        { "id": "c", "merchantHost": "challenger.sg", "canonicalUrl": "https://online.challenger.sg/p/1", "currency": "SGD", "amount": 298, "availability": "in_stock" },
-        { "id": "d", "merchantHost": "challenger.sg", "canonicalUrl": "https://online.challenger.sg/p/1", "currency": "SGD", "amount": 250, "availability": "in_stock" }
+        { "id": "c", "merchantHost": "online.challenger.sg", "canonicalUrl": "https://online.challenger.sg/p/1", "currency": "SGD", "amount": 298, "availability": "in_stock" },
+        { "id": "d", "merchantHost": "online.challenger.sg", "canonicalUrl": "https://online.challenger.sg/p/1", "currency": "SGD", "amount": 250, "availability": "in_stock" }
       ],
-      "expectedGroups": [ { "currency": "SGD", "order": ["c", "b", "a"] } ],
-      "rationale": "d duplicates c's canonical URL and collapses to c (first received), even though d is cheaper. Ties on amount break by merchantHost, then canonicalUrl."
+      "expectedGroups": [ { "currency": "SGD", "order": ["b", "a", "c"] } ],
+      "rationale": "d duplicates c's canonical URL and collapses to c (first received), even though d is cheaper. Ties on amount break by merchantHost in code-point order ('harveynorman.com.sg' before 'online.challenger.sg'), then canonicalUrl (p/1 before p/2)."
     },
     {
       "id": "R04",
