@@ -37,7 +37,7 @@ function OfferTable({ currency, offers }: { currency: string; offers: Offer[] })
                 href={offer.canonicalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`View ${offer.productName} at ${offer.merchantHost}`}
+                aria-label={`View offer for ${offer.productName} at ${offer.merchantHost}`}
               >
                 View offer
               </a>

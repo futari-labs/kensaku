@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { TEST_EXA_KEY } from "./tests/fixtures/test-key";
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -17,6 +18,6 @@ export default defineConfig({
     // Never attach to a live server on 8787: e2e must run against its own fixture-mode server.
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture" },
+    env: { NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", EXA_API_KEY: TEST_EXA_KEY },
   },
 });

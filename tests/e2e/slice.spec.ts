@@ -93,6 +93,7 @@ test("a failed run shows its specific error, and a partial failure says so", asy
   await expect(page.getByTestId("run-error")).toHaveAttribute("data-kind", "credits_exhausted");
   await expect(page.getByTestId("run-error")).toContainText("credits are exhausted");
 
+  await page.evaluate(() => localStorage.clear());
   await page.goto("/?scenario=error-offers");
   await ask(page, Q1);
   await expect(page.getByTestId("run-error")).toContainText("results below are partial");

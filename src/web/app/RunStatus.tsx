@@ -1,20 +1,14 @@
 import { Alert, AlertDescription, AlertTitle } from "@/web/components/ui/alert";
 import { Shimmer } from "@/web/components/ai-elements/shimmer";
 import { STAGES } from "../../research/events";
+import { STAGE_LABEL } from "./messages";
 import type { ApiErrorKind, ProgressData, UsageData } from "../../research/events";
 
-const STAGE_LABEL = {
-  candidates: "Finding candidates",
-  offers: "Gathering offers",
-  validate: "Validating offers",
-  compare: "Writing the comparison",
-} as const;
-
-/** The four stages in order, announced to assistive technology as they change. */
+/** The four stages in order. Changes are announced by the live region in App, not here. */
 export function Progress({ progress }: { progress: ProgressData[] }) {
   const latest = new Map(progress.map((p) => [p.stage, p]));
   return (
-    <ol className="space-y-1 text-sm" aria-label="Research progress" role="status" aria-live="polite" data-testid="progress">
+    <ol className="space-y-1 text-sm" aria-label="Research progress" data-testid="progress">
       {STAGES.map((stage) => {
         const p = latest.get(stage);
         const status = p?.status ?? "pending";
@@ -46,7 +40,7 @@ const ERROR_TEXT: Record<ApiErrorKind, string> = {
 
 export function ErrorNotice({ error }: { error: { kind: ApiErrorKind; partial: boolean } }) {
   return (
-    <Alert variant="destructive" data-testid="run-error" data-kind={error.kind}>
+    <Alert variant="destructive" className="*:data-[slot=alert-description]:text-foreground" data-testid="run-error" data-kind={error.kind}>
       <AlertTitle>{error.partial ? "The run failed; the results below are partial" : "The run failed"}</AlertTitle>
       <AlertDescription>{ERROR_TEXT[error.kind]}</AlertDescription>
     </Alert>
