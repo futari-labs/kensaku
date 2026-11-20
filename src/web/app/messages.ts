@@ -49,7 +49,18 @@ export type ClientRunState = RunState | "running";
  * Where a run stands for the person watching. A failed request (HTTP 4xx, broken connection) is failed
  * from the moment `useChat` reports it, before its error part is stored in the message.
  */
-export function runStateOf(view: RunView, now: { streaming: boolean; requestFailed: boolean }): ClientRunState {
+/** The view of a question that has no answer yet. */
+export const emptyView = (): RunView => viewOf(undefined);
+
+/**
+ * `cancelled` is an explicit user cancel and wins over everything else; `requestFailed` means the
+ * request itself failed (HTTP error or broken stream) before or without an error part.
+ */
+export function runStateOf(
+  view: RunView,
+  now: { streaming: boolean; requestFailed?: boolean; cancelled?: boolean },
+): ClientRunState {
+  if (now.cancelled) return "cancelled";
   if (now.streaming) return "running";
   if (view.error || now.requestFailed) return "failed";
   if (view.usage) return "completed";
