@@ -1,0 +1,13 @@
+{
+  "name": "error-timeout",
+  "description": "Scripted failure on the first call (timeout).",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "timeout"
+      }
+    }
+  ]
+}

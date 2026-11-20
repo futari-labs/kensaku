@@ -1,0 +1,13 @@
+{
+  "name": "error-402",
+  "description": "Scripted failure on the first call (credits_exhausted).",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "credits_exhausted"
+      }
+    }
+  ]
+}

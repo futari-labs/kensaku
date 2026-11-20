@@ -1,0 +1,23 @@
+{
+  "name": "slow-answer",
+  "description": "First call waits 60 s (cancellable) before replying; for abort and timeout tests.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC candidates answer (one candidate, Sony WH-1000XM5) composed with the real A1 comparison and citations; not a live Exa response",
+      "delayMs": 60000,
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": [
+          {
+            "name": "WH-1000XM5 Wireless Noise Cancelling Headphones",
+            "brand": "Sony",
+            "modelIdentifiers": [
+              "WH-1000XM5"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
