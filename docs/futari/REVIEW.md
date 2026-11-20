@@ -32,4 +32,13 @@ R-1 to R-13 in `RISKS.md`, in particular: offers depend on Exa extraction qualit
 
 ## Re-review
 
-See the section below, appended after the reviewer checked the corrected revision.
+The same reviewer re-reviewed commit `cc3ccc361bd74a227443078c9a40584978606cac` (read-only). It confirmed that findings 1-12, 14, and 15 were resolved. It re-applied the rules to all 54 cases with 0 mismatches and found R03 correct. It reran the gate and the harness (both pass). Verdict: **CHANGES REQUIRED, narrowly**. The reviewer stated that once A and B were fixed it would consider the contract READY (advisory).
+
+| # | Severity | Finding | Resolution (in the approval commit) |
+| --- | --- | --- | --- |
+| A | SHOULD-FIX | Harness readiness paths (`src/core/offers.ts`, `src/exa/budget.ts`, `src/server/app.ts`, and others) were not named by the contract's interface block. | ARCHITECTURE now has a binding file layout naming every path the harness checks; `RequestBudget` lives in `src/exa/budget.ts`; JM-002 and JM-003 acceptance criteria reference the layout. |
+| B | SHOULD-FIX | The cancel resolution had not reached plan.json REQ-005, EV-006, or the EVALUATION_PLAN EV-006 row. | All three now treat cancel as client-derived: the server aborts the Exa call, writes no further parts, and logs `cancelled`; the client state is checked in EV-007. |
+| C | NIT | 409 had no user-visible state; lock release unspecified. | The lock is released in `finally` on completion, failure, or abort; the client shows "A research run is already in progress"; EV-006 asserts the lock is released and the next request succeeds after every scenario. |
+| D | NIT | Leftovers: "non-loopback bind" wording, `budget_exhausted` mapping, `uncitedParagraphs` type versus count, nominal `validate` stage. | Wording fixed; `budget_exhausted` ends the offers stage early with a "Not searched" note (not an error); EV-004 compares `.length`; the stage responsibilities are stated. |
+
+These A-D fixes were verified locally (`plan-gate check` PASS, harness OK, the reference rule check 54/54) but were not sent through a third review pass.

@@ -102,7 +102,7 @@
       "id": "REQ-005",
       "description": "Failure recovery: Exa errors and cancellation end the run with a typed, visible reason, partial results are labeled, and live mode never falls back to fixtures.",
       "acceptanceCriteria": [
-        "401, 402 or credit errors, 429, 5xx, timeout, cancel, no candidates, and no offers each yield the specified data-error kind or empty state.",
+        "401, 402 or credit errors, 429, 5xx, timeout, no candidates, and no offers each yield the specified data-error kind or empty state; a client cancel aborts the Exa call, ends the stream, and shows the client-side cancelled state.",
         "A failure after the candidates stage sets partial true and keeps already validated products visible.",
         "The next question works after any failure."
       ]
@@ -200,7 +200,7 @@
       "requirementIds": ["REQ-001", "REQ-005"],
       "description": "UI message stream shape and failure states through the Hono app with scripted Exa behaviour.",
       "kind": "deterministic",
-      "passRule": "For success, no candidates, no offers, 401, 402, 429, 500, timeout, and cancel scripts, the stream has ordered progress parts, exactly one terminal state, the expected data-error kind and partial flag, and no fixture data in live mode.",
+      "passRule": "For success, no candidates, no offers, 401, 402, 429, 500, and timeout scenarios, the stream has ordered progress parts, exactly one terminal state, the expected data-error kind and partial flag, and no fixture data in live mode; for a client abort, the Exa call is aborted, no parts follow, and a cancelled log line is written; after every scenario the run lock is released and the next request succeeds.",
       "command": "pnpm vitest run tests/evals/ev-006-stream-failures.test.ts"
     },
     {
@@ -295,7 +295,7 @@
         "tests/evals/ev-004-citations.test.ts"
       ],
       "acceptanceCriteria": [
-        "src/core exports the types and functions specified in docs/futari/ARCHITECTURE.md with no I/O and no exa-js import.",
+        "src/core follows the file layout and exports the types and functions specified in docs/futari/ARCHITECTURE.md, with no I/O and no exa-js import.",
         "EV-001, EV-002, EV-003, and EV-004 pass, loading the frozen case files unchanged.",
         "The citation fixture-run part of EV-004 is covered by JM-004; this task covers the six citation cases."
       ],
@@ -322,7 +322,7 @@
         "tests/evals/ev-005-spend-guard.test.ts"
       ],
       "acceptanceCriteria": [
-        "src/exa/port.ts defines ExaPort, RequestBudget, and ExaFailure with the signatures in docs/futari/ARCHITECTURE.md; ExaSdkPort is the only module importing exa-js; FixtureExaPort replays named scenarios from tests/fixtures/scenarios/, including baseline scenarios xm5-us, xm5-sg, and xm5-jp, with synthetic responses labeled synthetic.",
+        "src/exa/ follows the file layout in docs/futari/ARCHITECTURE.md (port.ts ExaPort, budget.ts RequestBudget, errors.ts ExaFailure, sdk-port.ts, fixture-port.ts, cache.ts, ledger.ts) with the signatures given there; ExaSdkPort is the only module importing exa-js; FixtureExaPort replays named scenarios from tests/fixtures/scenarios/, including baseline scenarios xm5-us, xm5-sg, and xm5-jp, with synthetic responses labeled synthetic.",
         "RequestBudget makes a sixth call impossible by construction; the cache, ledger, and error mapping behave as specified in docs/futari/ARCHITECTURE.md.",
         "The unit-level part of EV-005 passes with no network access; the run-level part is covered by JM-004."
       ],

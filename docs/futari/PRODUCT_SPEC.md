@@ -49,7 +49,7 @@ States:
 - Running: stage list with current stage; input disabled; Cancel available.
 - No offers: "No direct merchant offers with a listed price were found" per product, with any evidence still shown. Never a placeholder price.
 - Partial: earlier stages' results stay visible and are labeled partial when a later stage fails.
-- Error: specific messages for Exa authentication failure, exhausted free credits, monthly limit reached, rate limit, Exa unavailable, timeout, cancelled, invalid request.
+- Error: specific messages for Exa authentication failure, exhausted free credits, monthly limit reached, rate limit, Exa unavailable, timeout, cancelled, invalid request, and "A research run is already in progress".
 - History: restored on reload; Clear history asks for confirmation.
 - Accessibility: keyboard-operable throughout, progress announced through an ARIA live region, table headers and link text meaningful, no serious or critical axe violations.
 

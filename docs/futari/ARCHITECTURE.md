@@ -85,6 +85,12 @@ Defined in `evals/cases/citations.json` `rule`. Markers resolve 1-based into the
 
 ## Interfaces and data
 
+File layout (binding; `evals/harness.mjs` uses these paths to decide readiness):
+
+- `src/core/`: `types.ts`, `offers.ts` (`classifyHit`), `identity.ts` (`matchesIdentity`), `url.ts` (`canonicalizeUrl`), `hosts.ts` (lists), `rank.ts` (`rankOffers`), `citations.ts` (`resolveCitations`), `index.ts` (re-exports).
+- `src/exa/`: `port.ts` (`ExaPort`, result types, re-exports), `budget.ts` (`RequestBudget`), `errors.ts` (`ExaFailure`), `sdk-port.ts` (`ExaSdkPort`), `fixture-port.ts` (`FixtureExaPort`), `cache.ts`, `ledger.ts`.
+- `src/research/pipeline.ts` (`runResearch`); `src/server/app.ts` (Hono app factory), `src/server/index.ts` (listen on 127.0.0.1); `src/web/main.tsx` (entry), `src/web/app/` (Kensaku compositions).
+
 Module contracts that JM-002, JM-003, and JM-004 implement against (names are binding; internal helpers are free):
 
 ```ts
@@ -107,7 +113,7 @@ type RejectCategory = "irrelevant-product" | "unsupported-currency" | "url-not-f
 interface Rejected { kind: "rejected"; category: RejectCategory; url: string }
 interface OfferGroup { currency: Currency; offers: Offer[] }
 interface ResolvedCitations { renderedText: string; sources: string[]; unresolvedMarkers: number;
-  uncitedParagraphs: number[] }
+  uncitedParagraphs: number[] /* indexes; EV-004 compares .length with the case's count and sources.length with resolvedUrlCount */ }
 
 // src/core/index.ts
 function classifyHit(hit: SearchHit, candidate: Candidate, runResultUrls: ReadonlySet<string>): Offer | Evidence | Rejected;
@@ -125,7 +131,9 @@ interface ExaPort {
   answerCandidates(question: string, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<AnswerResult>;
   searchOffers(candidate: Candidate, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<SearchResult>;
 }
-class RequestBudget { constructor(max: 5); take(): BudgetToken /* throws BudgetExhausted */; used: number }
+// src/exa/budget.ts
+class RequestBudget { constructor(max: 5); take(): BudgetToken /* throws ExaFailure kind budget_exhausted */; used: number }
+// src/exa/errors.ts
 class ExaFailure extends Error { kind: "auth" | "credits_exhausted" | "monthly_limit" | "rate_limited" | "upstream" | "timeout" | "budget_exhausted"; retryAfterMs?: number }
 ```
 
@@ -141,6 +149,10 @@ Fixture scenarios: `FixtureExaPort` does not match requests; it replays a named 
 | `data-products` | `[{ candidate, offerGroups: [{ currency, offers[] }], evidence[], rejectedCounts }]` |
 | `data-usage` | `{ exaRequests, cacheHits, costDollars, monthRequests, monthLimit }` |
 | `data-error` | `{ kind: "auth" \| "credits_exhausted" \| "monthly_limit" \| "rate_limited" \| "upstream" \| "timeout" \| "invalid_request", message, partial: boolean }` |
+
+`budget_exhausted` is not a user-facing error: if the budget runs out during the offers stage, the stage ends early, unsearched candidates show "Not searched: per-question request limit reached", and the run completes. Classification runs per candidate inside the `offers` stage; the `validate` stage performs final ranking and de-duplication across candidates.
+
+Run lock: the server runs one research run at a time. A second concurrent `POST /api/chat` gets HTTP 409 before any stream starts, and the client shows "A research run is already in progress". The lock is released in a `finally` block on completion, failure, or abort.
 
 `cancelled` is a client-derived state: when the user cancels, `useChat` aborts the request and the client marks the run cancelled. The server sees the abort, aborts the in-flight Exa call, writes no further parts, and logs `cancelled`. EV-006 checks the server side (Exa call aborted, no parts after the abort, log line); EV-007 checks the client side.
 
