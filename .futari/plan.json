@@ -258,6 +258,7 @@
         "src/web/index.css",
         "src/web/main.tsx",
         "src/server/index.ts",
+        "src/core/types.ts",
         "tests/smoke/",
         "tests/e2e/",
         ".github/workflows/ci.yml"
@@ -268,7 +269,8 @@
         "components.json lists the @ai-elements registry and aliases hooks to src/web/lib/hooks; .mcp.json pins shadcn@4.23.0; the shadcn CLI installed AI Elements conversation, message, prompt-input, suggestion, task, inline-citation, sources, shimmer and shadcn table, badge, select, alert-dialog, alert; components.lock.json records their SHA-256 hashes; scripts/check-components.mjs passes.",
         "pnpm start serves the web shell and GET /api/health on 127.0.0.1:8787 only.",
         ".github/workflows/ci.yml, named CI, runs install, typecheck, lint, test, build, test:e2e, evals/harness.mjs, and check-components on pull requests to dev and on pushes to dev, without secrets; pnpm test:e2e passes with a Playwright smoke spec in tests/e2e/ that loads the shell.",
-        ".gitignore also ignores .cache/, test-results/, and playwright-report/."
+        ".gitignore also ignores .cache/, test-results/, and playwright-report/.",
+        "src/core/types.ts contains the type declarations from docs/futari/ARCHITECTURE.md 'Interfaces and data' verbatim, so JM-002 and JM-003 compile against the same types."
       ],
       "verificationCommands": [
         "pnpm install --frozen-lockfile",
@@ -276,6 +278,7 @@
         "pnpm lint",
         "pnpm test",
         "pnpm build",
+        "pnpm test:e2e",
         "node scripts/check-components.mjs",
         "node evals/harness.mjs"
       ],
@@ -296,7 +299,7 @@
         "tests/evals/ev-004-citations.test.ts"
       ],
       "acceptanceCriteria": [
-        "src/core follows the file layout and exports the types and functions specified in docs/futari/ARCHITECTURE.md, with no I/O and no exa-js import.",
+        "src/core follows the file layout and exports the types and functions specified in docs/futari/ARCHITECTURE.md, with no I/O and no exa-js import; src/core/types.ts (created by JM-001) is not changed.",
         "EV-001, EV-002, EV-003, and EV-004 pass, loading the frozen case files unchanged.",
         "The citation fixture-run part of EV-004 is covered by JM-004; this task covers the six citation cases."
       ],
@@ -404,7 +407,7 @@
         "History persists across reloads, clears with confirmation, and recovers from invalid stored data with a notice.",
         "Every UI state in docs/futari/PRODUCT_SPEC.md is implemented.",
         "Files under src/web/components/ change only through the shadcn CLI, with components.lock.json updated in the same commit.",
-        "EV-007 automated checks pass and the owner's visual review is recorded in .futari/evidence/JM-005.md."
+        "EV-007 automated checks live in tests/e2e/ev-007-frontend.spec.ts (the path evals/harness.mjs checks) and pass, and the owner's visual review is recorded in .futari/evidence/JM-005.md."
       ],
       "verificationCommands": [
         "pnpm typecheck",

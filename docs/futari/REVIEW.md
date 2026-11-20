@@ -28,7 +28,7 @@ Verdict on `551288c`: **CHANGES REQUIRED** (1 blocking, 9 should-fix, 5 nits). A
 
 ## Accepted risks
 
-R-1 to R-13 in `RISKS.md`, in particular: offers depend on Exa extraction quality (R-1, R-2), a 6-query live suite is a sanity gate rather than a statistical guarantee (R-3), and `main`/`dev` protection is process-only on GitHub Free (R-13, D-023).
+R-1 to R-14 in `RISKS.md`, in particular: offers depend on Exa extraction quality (R-1, R-2), a 6-query live suite is a sanity gate rather than a statistical guarantee (R-3), GitHub enforces no protection on `main` or `dev` (R-13), and agents act with the owner's admin credentials (R-14).
 
 ## Re-review
 

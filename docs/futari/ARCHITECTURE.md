@@ -90,6 +90,7 @@ File layout (binding; `evals/harness.mjs` uses these paths to decide readiness):
 - `src/core/`: `types.ts`, `offers.ts` (`classifyHit`), `identity.ts` (`matchesIdentity`), `url.ts` (`canonicalizeUrl`), `hosts.ts` (lists), `rank.ts` (`rankOffers`), `citations.ts` (`resolveCitations`), `index.ts` (re-exports).
 - `src/exa/`: `port.ts` (`ExaPort`, result types, re-exports), `budget.ts` (`RequestBudget`), `errors.ts` (`ExaFailure`), `sdk-port.ts` (`ExaSdkPort`), `fixture-port.ts` (`FixtureExaPort`), `cache.ts`, `ledger.ts`.
 - `src/research/pipeline.ts` (`runResearch`); `src/server/app.ts` (Hono app factory), `src/server/index.ts` (listen on 127.0.0.1); `src/web/main.tsx` (entry), `src/web/app/` (Kensaku compositions).
+- Evaluation tests: `tests/evals/ev-001-merchant-authenticity.test.ts`, `ev-002-product-relevance.test.ts`, `ev-003-ranking-currency.test.ts`, `ev-004-citations.test.ts`, `ev-005-spend-guard.test.ts`, `ev-006-stream-failures.test.ts`, `ev-009-key-safety.test.ts`; `tests/e2e/ev-007-frontend.spec.ts`; `scripts/live-acceptance.ts` (EV-008).
 
 Module contracts that JM-002, JM-003, and JM-004 implement against (names are binding; internal helpers are free):
 

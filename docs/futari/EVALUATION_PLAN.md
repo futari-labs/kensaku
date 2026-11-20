@@ -36,7 +36,7 @@ EV-001 .. EV-009: NOT RUNNABLE (product module does not exist)
 
 States are kept distinct: **harness valid** (cases and fixtures are consistent), **not runnable** (product module or test file missing), **product assertion failing** (test runs and a case mismatches), **blocked** (an external dependency such as Exa or the browser runtime is unavailable). Only a run of the listed command can produce PASS or FAIL. An Exa outage during EV-008 is BLOCKED, not FAIL, and not PASS.
 
-Tests that implement EV-001 to EV-006 and EV-009 must load the frozen case files directly and assert per case; they may not copy, filter, or edit cases. Once a test file exists, `node evals/harness.mjs` fails if it does not reference its frozen case file, and the case-driven tests assert that the number of evaluated cases equals the file's case count.
+Tests that implement EV-001 to EV-004, and the EV-008 script, must load their frozen case files directly and assert per case (EV-005, EV-006, and EV-009 have no case file; they use fixture scenarios); they may not copy, filter, or edit cases. Once a test file exists, `node evals/harness.mjs` fails if it does not reference its frozen case file, and the case-driven tests assert that the number of evaluated cases equals the file's case count.
 
 ## AI quality
 
@@ -80,4 +80,4 @@ Owner review (human, recorded in `.futari/evidence/JM-005.md`): visual polish an
 
 ## Frozen inputs
 
-Added to `protectedFiles`: `evals/cases/offer-classification.json`, `evals/cases/ranking-currency.json`, `evals/cases/citations.json`, `evals/cases/live-acceptance.json`, `evals/harness.mjs`, all 12 `evals/fixtures/exa-live/*.json`, and the research notes `docs/futari/research/exa-2026-11-21.md` and `docs/futari/research/references-2026-11-21.md`. Test files written during execution are not frozen, but they must load these frozen inputs unchanged.
+Added to `protectedFiles`: `evals/cases/offer-classification.json`, `evals/cases/ranking-currency.json`, `evals/cases/citations.json`, `evals/cases/live-acceptance.json`, `evals/harness.mjs`, all 12 `evals/fixtures/exa-live/*.json`, and the research notes `docs/futari/research/exa-2026-11-21.md`, `docs/futari/research/references-2026-11-21.md`, and `docs/futari/research/github-2026-11-21.md`. Test files written during execution are not frozen, but they must load these frozen inputs unchanged.
