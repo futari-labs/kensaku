@@ -43,6 +43,7 @@
     "docs/futari/templates/evidence.md",
     "docs/futari/research/exa-2026-11-21.md",
     "docs/futari/research/references-2026-11-21.md",
+    "docs/futari/research/github-2026-11-21.md",
     "evals/harness.mjs",
     "evals/cases/offer-classification.json",
     "evals/cases/ranking-currency.json",
