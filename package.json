@@ -1,0 +1,63 @@
+{
+  "name": "kensaku",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n web,api \"vite\" \"KENSAKU_DEV=1 tsx watch src/server/index.ts\"",
+    "build": "vite build",
+    "start": "pnpm build && tsx src/server/index.ts",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check:components": "node scripts/check-components.mjs"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "4.0.182",
+    "@fontsource-variable/geist": "5.3.0",
+    "@hono/node-server": "2.1.11",
+    "ai": "7.0.178",
+    "class-variance-authority": "0.7.1",
+    "cmdk": "1.1.1",
+    "cn": "0.5.2",
+    "embla-carousel-react": "8.6.0",
+    "exa-js": "2.29.0",
+    "hono": "4.13.19",
+    "lucide-react": "1.77.0",
+    "motion": "14.14.0",
+    "nanoid": "6.0.2",
+    "radix-ui": "1.8.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "shadcn": "4.23.0",
+    "streamdown": "2.8.0",
+    "tw-animate-css": "1.4.0",
+    "use-stick-to-bottom": "1.1.6",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
+    "@tailwindcss/vite": "4.3.5",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "@vitejs/plugin-react": "6.3.0",
+    "concurrently": "10.0.7",
+    "eslint": "10.15.0",
+    "globals": "17.14.0",
+    "tailwindcss": "4.3.5",
+    "tsx": "4.23.15",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.73.0",
+    "vite": "8.3.8",
+    "vitest": "5.1.1"
+  }
+}

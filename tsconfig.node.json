@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": [
+    "src/server", "src/core", "src/exa", "src/research",
+    "tests", "scripts",
+    "vite.config.ts", "vitest.config.ts", "playwright.config.ts"
+  ]
+}
