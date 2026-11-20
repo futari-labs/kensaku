@@ -7,8 +7,9 @@ import { monthOf } from "../../src/exa/ledger";
 import { ExaSdkPort } from "../../src/exa/sdk-port";
 import type { Candidate } from "../../src/core/types";
 import { fakeClient, fakeClock, frozen, HttpError, storage } from "../exa/helpers";
-import { harness, ofType, readChunks } from "../server/helpers";
-import type { Chunk } from "../server/helpers";
+import { harness } from "../server/helpers";
+import { ofType, readChunks } from "../server/sse";
+import type { Chunk } from "../server/sse";
 
 const signal = new AbortController().signal;
 const cand = (n: number): Candidate => ({ name: `Model ${n}`, brand: "Brand", modelIdentifiers: [`MD-${n}00`] });
@@ -169,11 +170,9 @@ const scenarioNames = readdirSync(join(import.meta.dirname, "../fixtures/scenari
   .filter((f) => f.endsWith(".json"))
   .map((f) => f.replace(/\.json$/, ""));
 const SLOW = new Set(["slow-answer", "cancel-offers"]);
-const usageOf = (chunks: Chunk[]) => ofType(chunks, "data-usage")[0]?.data as { exaRequests: number; cacheHits: number } | undefined;
+const usageOf = (chunks: Chunk[]) => ofType(chunks, "data-usage")[0]?.data;
 const offersOf = (chunks: Chunk[]) =>
-  (ofType(chunks, "data-products")[0]!.data as unknown as { offerGroups: { offers: { retrievedAt: string }[] }[] }[]).flatMap((p) =>
-    p.offerGroups.flatMap((g) => g.offers),
-  );
+  ofType(chunks, "data-products")[0]!.data.flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
 
 describe("EV-005 run level: spend guard through the app", () => {
   it.each(scenarioNames)("scenario %s stays within 5 Exa calls", async (name) => {

@@ -112,7 +112,7 @@ export class GuardedExaPort implements ExaPort {
     const hit = this.#cache?.get(call.key, call.schema, this.#clock());
     if (hit) return { ...hit, costDollars: 0, cached: true };
 
-    if (call.signal.aborted) throw new ExaFailure("timeout", "The Exa request was aborted before it started.");
+    if (call.signal.aborted) throw new ExaFailure("timeout", "The Exa request was aborted before it started.", { retryable: true });
     this.#ledger?.assertCanCall(this.#clock(), this.#inFlight);
     call.budget.take();
     this.#inFlight += 1;

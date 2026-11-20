@@ -1,6 +1,7 @@
 import type { UIMessageChunk } from "ai";
 import { z } from "zod";
-import type { RunEvent } from "../research/events";
+import type { Market } from "../core/types";
+import type { ExaMode, KensakuDataParts, RunEvent, UsageData } from "../research/events";
 
 const MAX_QUESTION_CHARS = 2_000;
 
@@ -12,14 +13,14 @@ const ChatBodySchema = z.object({
 
 export interface ChatRequest {
   question: string;
-  market: "US" | "SG" | "JP";
+  market: Market;
   fixtureScenario: string | undefined;
 }
 
 export type ParsedChat = { ok: true; request: ChatRequest } | { ok: false; message: string };
 
 /** The request boundary: `{ messages, market }` from useChat. Only the last user message's text is researched. */
-export function parseChatBody(raw: unknown, mode: "live" | "fixture"): ParsedChat {
+export function parseChatBody(raw: unknown, mode: ExaMode): ParsedChat {
   const body = ChatBodySchema.safeParse(raw);
   if (!body.success) return { ok: false, message: "Expected { messages, market } with market US, SG, or JP." };
   const { messages, market, fixtureScenario } = body.data;
@@ -34,13 +35,12 @@ export function parseChatBody(raw: unknown, mode: "live" | "fixture"): ParsedCha
   return { ok: true, request: { question, market, fixtureScenario } };
 }
 
-export interface MonthUsage {
-  monthRequests: number;
-  monthLimit: number;
-}
+export type MonthUsage = Pick<UsageData, "monthRequests" | "monthLimit">;
+
+type Chunk = UIMessageChunk<unknown, KensakuDataParts>;
 
 /** One run event as UI message stream parts (ARCHITECTURE, `POST /api/chat`). A cancelled run writes nothing. */
-export function toChunks(event: RunEvent, month: () => MonthUsage): UIMessageChunk[] {
+export function toChunks(event: RunEvent, month: () => MonthUsage): Chunk[] {
   switch (event.type) {
     case "progress": {
       const data = { stage: event.stage, status: event.status, ...(event.detail !== undefined && { detail: event.detail }) };
@@ -51,7 +51,7 @@ export function toChunks(event: RunEvent, month: () => MonthUsage): UIMessageChu
         { type: "text-start", id: "comparison" },
         { type: "text-delta", id: "comparison", delta: event.text },
         { type: "text-end", id: "comparison" },
-        ...event.sources.map((s): UIMessageChunk => ({ type: "source-url", sourceId: s.sourceId, url: s.url })),
+        ...event.sources.map((s): Chunk => ({ type: "source-url", sourceId: s.sourceId, url: s.url })),
       ];
     case "products":
       return [{ type: "data-products", id: "products", data: event.products }];

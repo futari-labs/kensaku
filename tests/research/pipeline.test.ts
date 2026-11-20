@@ -59,31 +59,33 @@ async function run(port: ExaPort, options: RunOptions = {}, signal: AbortSignal 
 
 describe("runResearch retries", () => {
   it("retries a 429 once, waiting the reported Retry-After capped at 5 s", async () => {
-    const port = scripted([new ExaFailure("rate_limited", "x", { retryAfterMs: 60_000 }), answer([])], []);
+    const port = scripted([new ExaFailure("rate_limited", "x", { retryAfterMs: 60_000, retryable: true }), answer([])], []);
     const { sleeps, end } = await run(port);
     expect(sleeps).toEqual([5_000]);
     expect(end).toEqual({ type: "end", state: "completed" });
   });
 
   it("falls back to a short fixed wait when the 429 carries no Retry-After", async () => {
-    const port = scripted([new ExaFailure("rate_limited", "x"), answer([])], []);
+    const port = scripted([new ExaFailure("rate_limited", "x", { retryable: true }), answer([])], []);
     expect((await run(port)).sleeps).toEqual([1_000]);
   });
 
   it("allows one retry per run in total, not one per call", async () => {
-    const port = scripted([answer([xm5, other(2)])], [new ExaFailure("upstream", "x", { status: 503 }), new ExaFailure("upstream", "x", { status: 503 }), search([])]);
+    const port = scripted([answer([xm5, other(2)])], [new ExaFailure("upstream", "x", { status: 503, retryable: true }), new ExaFailure("upstream", "x", { status: 503, retryable: true }), search([])]);
     const { sleeps, error, end } = await run(port);
     expect(sleeps).toHaveLength(1);
     expect(error).toMatchObject({ kind: "upstream", partial: true });
     expect(end).toEqual({ type: "end", state: "failed" });
   });
 
-  it("does not retry auth, credit, limit, or a 4xx upstream error", async () => {
+  it("does not retry auth, credit, limit, a 4xx upstream error, or any failure not marked retryable", async () => {
     for (const failure of [
       new ExaFailure("auth", "x"),
       new ExaFailure("credits_exhausted", "x"),
       new ExaFailure("monthly_limit", "x"),
       new ExaFailure("upstream", "x", { status: 400 }),
+      new ExaFailure("upstream", "malformed", { status: 200 }),
+      new ExaFailure("timeout", "x"),
     ]) {
       const { sleeps, error } = await run(scripted([failure], []));
       expect(sleeps).toEqual([]);
@@ -92,7 +94,7 @@ describe("runResearch retries", () => {
   });
 
   it("retries a timeout once", async () => {
-    const { sleeps, end } = await run(scripted([new ExaFailure("timeout", "x"), answer([])], []));
+    const { sleeps, end } = await run(scripted([new ExaFailure("timeout", "x", { retryable: true }), answer([])], []));
     expect(sleeps).toHaveLength(1);
     expect(end.type === "end" && end.state).toBe("completed");
   });
@@ -118,6 +120,24 @@ describe("runResearch offers stage", () => {
     const noOffer = scripted([answer([xm5, other(2), other(3)])], [search([]), search([]), search([])]);
     await run(noOffer);
     expect(noOffer.searchCalls).toBe(3);
+  });
+
+  it("tells a third candidate the budget ran out, not that an earlier one had offers", async () => {
+    const port = scripted([answer([xm5, other(2), other(3)])], [search([]), search([]), new ExaFailure("budget_exhausted", "x")]);
+    const { events, end } = await run(port);
+    expect(end).toEqual({ type: "end", state: "completed" });
+    const products = events.find((e) => e.type === "products");
+    expect(products?.type === "products" && products.products[2]!.notSearched).toBe("Not searched: per-question request limit reached");
+  });
+
+  it("does not search the third candidate after a failed search, and says why", async () => {
+    const port = scripted([answer([xm5, other(2), other(3)])], [new ExaFailure("upstream", "x", { status: 400 }), search([])]);
+    const { events, error } = await run(port);
+    expect(port.searchCalls).toBe(2);
+    expect(error).toMatchObject({ kind: "upstream", partial: true });
+    const products = events.find((e) => e.type === "products");
+    if (products?.type !== "products") throw new Error("no products");
+    expect(products.products.map((p) => p.notSearched)).toEqual(["Search did not complete", undefined, "Not searched: an earlier search did not complete"]);
   });
 
   it("shows an offer URL once, under the first candidate that has it", async () => {

@@ -15,11 +15,14 @@ export class ExaFailure extends Error {
   readonly retryAfterMs?: number;
   /** HTTP status of the upstream reply, when there was one. */
   readonly status?: number;
+  /** Whether the run may spend its one retry on this failure: only transient ones the request did not bill. */
+  readonly retryable: boolean;
 
-  constructor(kind: ExaFailureKind, message: string, options: { retryAfterMs?: number; status?: number } = {}) {
+  constructor(kind: ExaFailureKind, message: string, options: { retryAfterMs?: number; status?: number; retryable?: boolean } = {}) {
     super(message);
     this.name = "ExaFailure";
     this.kind = kind;
+    this.retryable = options.retryable ?? false;
     if (options.retryAfterMs !== undefined) this.retryAfterMs = options.retryAfterMs;
     if (options.status !== undefined) this.status = options.status;
   }
@@ -51,7 +54,7 @@ export function mapExaError(error: unknown): ExaFailure {
   const text = error instanceof Error ? error.message : "";
 
   if (name === "AbortError" || name === "TimeoutError" || status === 408) {
-    return new ExaFailure("timeout", "The Exa request timed out or was aborted.");
+    return new ExaFailure("timeout", "The Exa request timed out or was aborted.", { retryable: true });
   }
   if (status === 402 || CREDIT_TEXT.test(text)) {
     return new ExaFailure("credits_exhausted", "Exa reports that credits are exhausted.");
@@ -61,11 +64,11 @@ export function mapExaError(error: unknown): ExaFailure {
   }
   if (status === 429) {
     const ms = retryAfterMs(error);
-    return new ExaFailure("rate_limited", "Exa rate limit reached (HTTP 429).", { status, ...(ms !== undefined && { retryAfterMs: ms }) });
+    return new ExaFailure("rate_limited", "Exa rate limit reached (HTTP 429).", { status, retryable: true, ...(ms !== undefined && { retryAfterMs: ms }) });
   }
   return new ExaFailure(
     "upstream",
     status === undefined ? "The Exa request failed." : `Exa request failed (HTTP ${status}).`,
-    status === undefined ? {} : { status },
+    { ...(status !== undefined && { status }), retryable: status === undefined || status >= 500 },
   );
 }

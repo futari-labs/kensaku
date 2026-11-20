@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/web/components/ui/alert";
 import { Shimmer } from "@/web/components/ai-elements/shimmer";
 import { STAGES } from "../../research/events";
-import type { ProgressData, UsageData } from "./messages";
+import type { ApiErrorKind, ProgressData, UsageData } from "../../research/events";
 
 const STAGE_LABEL = {
   candidates: "Finding candidates",
@@ -33,7 +33,7 @@ export function Progress({ progress }: { progress: ProgressData[] }) {
   );
 }
 
-const ERROR_TEXT: Record<string, string> = {
+const ERROR_TEXT: Record<ApiErrorKind, string> = {
   auth: "Exa rejected the API key. Check EXA_API_KEY on the server.",
   credits_exhausted: "Exa reports the free credits are exhausted. Live calls stay blocked until you add credits and delete the usage ledger.",
   monthly_limit: "The monthly Exa request or cost limit is reached. Raise the limit in the environment or wait for next month.",
@@ -44,11 +44,11 @@ const ERROR_TEXT: Record<string, string> = {
   run_in_progress: "A research run is already in progress.",
 };
 
-export function ErrorNotice({ error }: { error: { kind: string; partial: boolean } }) {
+export function ErrorNotice({ error }: { error: { kind: ApiErrorKind; partial: boolean } }) {
   return (
     <Alert variant="destructive" data-testid="run-error" data-kind={error.kind}>
       <AlertTitle>{error.partial ? "The run failed; the results below are partial" : "The run failed"}</AlertTitle>
-      <AlertDescription>{ERROR_TEXT[error.kind] ?? "Something went wrong."}</AlertDescription>
+      <AlertDescription>{ERROR_TEXT[error.kind]}</AlertDescription>
     </Alert>
   );
 }

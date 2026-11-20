@@ -1,10 +1,37 @@
+import type { UIMessage } from "ai";
+import { z } from "zod";
 import type { Candidate, Evidence, Market, OfferGroup, RejectCategory } from "../core/types";
+import type { ExaFailureKind } from "../exa/errors";
 
 export const STAGES = ["candidates", "offers", "validate", "compare"] as const;
 export type Stage = (typeof STAGES)[number];
 
-/** The errors a run can end with, as the UI message stream's `data-error` names them (plus `invalid_request`, which the server adds). */
-export type RunErrorKind = "auth" | "credits_exhausted" | "monthly_limit" | "rate_limited" | "upstream" | "timeout";
+/** The errors a run can end with. `budget_exhausted` is never one: it ends the offers stage early instead. */
+export type RunErrorKind = Exclude<ExaFailureKind, "budget_exhausted">;
+
+/** Every `kind` an error reaches the client with: a run's own, or the HTTP 4xx bodies `POST /api/chat` returns. */
+export type ApiErrorKind = RunErrorKind | "invalid_request" | "run_in_progress";
+
+export const API_ERROR_KINDS = [
+  "auth",
+  "credits_exhausted",
+  "monthly_limit",
+  "rate_limited",
+  "upstream",
+  "timeout",
+  "invalid_request",
+  "run_in_progress",
+] as const satisfies readonly ApiErrorKind[];
+
+// Fails to compile when ApiErrorKind gains a member that API_ERROR_KINDS lacks.
+const everyKindListed: Exclude<ApiErrorKind, (typeof API_ERROR_KINDS)[number]> extends never ? true : never = true;
+void everyKindListed;
+
+/** The body of a 4xx reply from `POST /api/chat`. */
+export const ApiErrorBodySchema = z.object({ kind: z.enum(API_ERROR_KINDS), message: z.string() });
+
+/** `"live"` calls Exa; `"fixture"` replays recorded scenarios (tests only). */
+export type ExaMode = "live" | "fixture";
 
 export interface ProductResult {
   candidate: Candidate;
@@ -37,6 +64,21 @@ export type RunEvent =
   | { type: "usage"; usage: RunUsage }
   | { type: "error"; kind: RunErrorKind; message: string; partial: boolean }
   | { type: "end"; state: RunState };
+
+type EventOf<T extends RunEvent["type"]> = Extract<RunEvent, { type: T }>;
+export type ProgressData = Omit<EventOf<"progress">, "type">;
+export type ErrorData = Omit<EventOf<"error">, "type">;
+export type UsageData = RunUsage & { monthRequests: number; monthLimit: number };
+
+/** The `data-*` parts `POST /api/chat` streams, written by `toChunks` and read by the web app. */
+export type KensakuDataParts = {
+  progress: ProgressData;
+  products: ProductResult[];
+  usage: UsageData;
+  error: ErrorData;
+};
+
+export type KensakuMessage = UIMessage<unknown, KensakuDataParts>;
 
 export interface RunInput {
   question: string;

@@ -1,16 +1,17 @@
 // EV-009 Local and key safety: a real server process, a production build, and every place the key could leak.
-import { spawn, spawnSync } from "node:child_process";
-import type { ChildProcess } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import http from "node:http";
 import net from "node:net";
 import { networkInterfaces, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { Q1 } from "../fixtures/questions";
+import { spawnServer } from "../server/process";
+import type { ServerProcess } from "../server/process";
 
 const ROOT = join(import.meta.dirname, "../..");
 const KEY = `sk-test-ev009-${Math.random().toString(36).slice(2)}${Date.now()}`;
-const Q1 = "Sony WH-1000XM5 headphones: where can I buy them and are they worth it?";
 const CHAT = JSON.stringify({ messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: Q1 }] }], market: "US", fixtureScenario: "xm5-us" });
 
 function freePort(): Promise<number> {
@@ -56,34 +57,23 @@ function filesUnder(dir: string): string[] {
 const holdsKey = (path: string) => readFileSync(path).includes(KEY);
 
 describe("EV-009 running server", () => {
-  let child: ChildProcess;
+  let server: ServerProcess;
   let port = 0;
-  let output = "";
   const responses: string[] = [];
 
   beforeAll(async () => {
     port = await freePort();
-    child = spawn(join(ROOT, "node_modules/.bin/tsx"), ["src/server/main.ts"], {
-      cwd: ROOT,
-      env: { ...process.env, NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", KENSAKU_PORT: String(port), EXA_API_KEY: KEY },
-    });
-    child.stdout!.on("data", (d: Buffer) => (output += d.toString()));
-    child.stderr!.on("data", (d: Buffer) => (output += d.toString()));
-    const started = Date.now();
-    while (!output.includes('"event":"listening"')) {
-      if (Date.now() - started > 20_000) throw new Error(`server did not start:\n${output}`);
-      await new Promise((r) => setTimeout(r, 50));
-    }
+    server = await spawnServer({ ...process.env, NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", KENSAKU_PORT: String(port), EXA_API_KEY: KEY });
   }, 30_000);
 
   afterAll(() => {
-    child?.kill();
+    server?.stop();
   });
 
   const own = () => ({ host: `127.0.0.1:${port}` });
 
   it("listens on 127.0.0.1 only", async () => {
-    expect(JSON.parse(output.split("\n").find((l) => l.includes('"listening"'))!)).toMatchObject({ host: "127.0.0.1", port });
+    expect(server.lines.find((l) => l.event === "listening")).toMatchObject({ host: "127.0.0.1", port });
     const external = Object.values(networkInterfaces())
       .flat()
       .filter((i) => i && i.family === "IPv4" && !i.internal)
@@ -120,6 +110,7 @@ describe("EV-009 running server", () => {
   });
 
   it("keeps the key out of API responses, server logs, .cache/, and evals/fixtures/", () => {
+    const output = server.output();
     expect(responses.length).toBeGreaterThanOrEqual(3);
     for (const body of responses) expect(body).not.toContain(KEY);
     expect(output).toContain('"event":"run_start"');

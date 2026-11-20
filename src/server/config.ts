@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { z } from "zod";
+import type { ExaMode } from "../research/events";
 import { limitsFromEnv } from "../exa/ledger";
 import type { Limits } from "../exa/ledger";
 import type { AnswerMarketMode } from "../exa/requests";
@@ -13,7 +14,7 @@ export const VITE_DEV_PORT = 5173;
 export class ConfigError extends Error {}
 
 export interface ServerConfig {
-  mode: "live" | "fixture";
+  mode: ExaMode;
   dev: boolean;
   port: number;
   answerMarketMode: AnswerMarketMode;
@@ -26,7 +27,7 @@ export interface ServerConfig {
 
 /** What the app needs to know about its own configuration. Never carries the key. */
 export interface AppConfig {
-  mode: ServerConfig["mode"];
+  mode: ExaMode;
   dev: boolean;
   port: number;
   exaConfigured: boolean;

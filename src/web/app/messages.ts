@@ -1,46 +1,19 @@
-import type { UIMessage } from "ai";
-import type { ProductResult, RunErrorKind, RunUsage, Stage } from "../../research/events";
-
-export interface ProgressData {
-  stage: Stage;
-  status: "running" | "done" | "failed";
-  detail?: string;
-}
-
-export interface UsageData extends RunUsage {
-  monthRequests: number;
-  monthLimit: number;
-}
-
-export interface ErrorData {
-  kind: RunErrorKind;
-  message: string;
-  partial: boolean;
-}
-
-/** The `data-*` parts `POST /api/chat` streams (ARCHITECTURE, "Interfaces and data"). */
-export type KensakuDataParts = {
-  progress: ProgressData;
-  products: ProductResult[];
-  usage: UsageData;
-  error: ErrorData;
-};
-
-export type KensakuMessage = UIMessage<unknown, KensakuDataParts>;
-export type KensakuPart = KensakuMessage["parts"][number];
+import type { ErrorData, KensakuMessage, ProductResult, ProgressData, SourceRef, UsageData } from "../../research/events";
 
 export interface RunView {
   progress: ProgressData[];
   text: string | undefined;
-  sources: { sourceId: string; url: string }[];
+  sources: SourceRef[];
   products: ProductResult[] | undefined;
   usage: UsageData | undefined;
   error: ErrorData | undefined;
 }
 
+export const emptyView = (): RunView => ({ progress: [], text: undefined, sources: [], products: undefined, usage: undefined, error: undefined });
+
 /** Collects what an assistant message's parts say about its run. */
 export function viewOf(message: KensakuMessage): RunView {
-  const view: RunView = { progress: [], text: undefined, sources: [], products: undefined, usage: undefined, error: undefined };
+  const view = emptyView();
   for (const part of message.parts) {
     switch (part.type) {
       case "data-progress":
@@ -64,6 +37,18 @@ export function viewOf(message: KensakuMessage): RunView {
     }
   }
   return view;
+}
+
+export type ClientRunState = "running" | "completed" | "failed" | "cancelled";
+
+/**
+ * Where a run stands for the person watching. A cancel wins over everything the stream said, and it
+ * counts even when no assistant message exists yet (cancelled while the request was still `submitted`).
+ */
+export function runStateOf(view: RunView, now: { streaming: boolean; cancelled: boolean }): ClientRunState {
+  if (now.cancelled) return "cancelled";
+  if (now.streaming) return "running";
+  return view.error ? "failed" : "completed";
 }
 
 export const textOf = (message: KensakuMessage): string =>

@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { Q1 } from "../fixtures/questions";
 
-const Q1 = "Sony WH-1000XM5 headphones: where can I buy them and are they worth it?";
 const a1 = JSON.parse(readFileSync(join(import.meta.dirname, "../../evals/fixtures/exa-live/A1-answer.json"), "utf8")) as {
   response: { citations: { url: string }[] };
 };
@@ -75,6 +75,16 @@ test("running state: input disabled, Cancel works, and the server is free for th
     });
     expect(res.status()).toBe(200);
   }).toPass({ timeout: 10_000 });
+});
+
+test("cancelling before the reply starts (no assistant message yet) still ends cancelled", async ({ page }) => {
+  // The request never answers, so useChat stays in `submitted`.
+  await page.route("**/api/chat", () => new Promise(() => {}));
+  await page.goto("/");
+  await ask(page, Q1);
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByTestId("run-cancelled")).toContainText("No results were received");
+  await expect(page.getByRole("textbox", { name: "Question" })).toBeEnabled();
 });
 
 test("a failed run shows its specific error, and a partial failure says so", async ({ page }) => {

@@ -1,5 +1,6 @@
 import { Fragment } from "react";
-import { splitParagraphs } from "../../core";
+import { segmentMarkers, splitParagraphs } from "../../core";
+import type { SourceRef } from "../../research/events";
 import { Badge } from "@/web/components/ui/badge";
 import {
   InlineCitation,
@@ -11,31 +12,24 @@ import {
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/web/components/ai-elements/sources";
 import { hostOf } from "./format";
 
-const MARKER = /\[(\d+(?:,\d+)*)\]/g;
-
-interface SourceRef {
-  sourceId: string;
-  url: string;
-}
-
-function urlsFor(numbers: string, sources: SourceRef[]): string[] {
+function urlsFor(numbers: number[], sources: SourceRef[]): string[] {
   const urls: string[] = [];
-  for (const n of numbers.split(",")) {
-    const source = sources.find((s) => s.sourceId.split(",").includes(n));
+  for (const n of numbers) {
+    const source = sources.find((s) => s.sourceId.split(",").includes(String(n)));
     if (source && !urls.includes(source.url)) urls.push(source.url);
   }
   return urls;
 }
 
 function Paragraph({ text, sources }: { text: string; sources: SourceRef[] }) {
-  const parts = text.split(MARKER);
-  const cited = parts.some((_, i) => i % 2 === 1);
+  const segments = segmentMarkers(text);
+  const cited = segments.some((seg) => typeof seg !== "string");
   return (
     <p className="whitespace-pre-line" data-testid="comparison-paragraph" data-cited={cited}>
-      {parts.map((part, i) => {
-        if (i % 2 === 0) return <Fragment key={i}>{part}</Fragment>;
-        const urls = urlsFor(part, sources);
-        if (urls.length === 0) return <Fragment key={i}>[{part}]</Fragment>;
+      {segments.map((seg, i) => {
+        if (typeof seg === "string") return <Fragment key={i}>{seg}</Fragment>;
+        const urls = urlsFor(seg.citation, sources);
+        if (urls.length === 0) return <Fragment key={i}>[{seg.citation.join(",")}]</Fragment>;
         return (
           <InlineCitation key={i}>
             <InlineCitationCard>

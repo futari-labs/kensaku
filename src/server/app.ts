@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import type { Clock } from "../exa/clock";
 import type { ExaPort } from "../exa/port";
 import type { UsageLedger } from "../exa/ledger";
+import type { ApiErrorKind, KensakuMessage, RunEvent } from "../research/events";
 import { runResearch } from "../research/pipeline";
 import type { RunOptions } from "../research/pipeline";
 import { parseChatBody, toChunks } from "./chat";
@@ -24,7 +25,7 @@ export interface AppDeps {
   run?: Pick<RunOptions, "sleep" | "callTimeoutMs" | "runTimeoutMs">;
 }
 
-const jsonError = (kind: string, message: string) => ({ kind, message });
+const jsonError = (kind: ApiErrorKind, message: string) => ({ kind, message });
 
 /** The Hono app. Everything it touches arrives through `deps`; it holds one run lock and nothing else. */
 export function createApp(deps: AppDeps): Hono {
@@ -58,7 +59,7 @@ export function createApp(deps: AppDeps): Hono {
     const signal = c.req.raw.signal;
     const runId = randomUUID();
     const month = () => ({ monthRequests: ledger.read(clock()).requests, monthLimit: ledger.limits.requestLimit });
-    const stream = createUIMessageStream({
+    const stream = createUIMessageStream<KensakuMessage>({
       execute: async ({ writer }) => {
         try {
           writer.write({ type: "start", messageId: runId });
@@ -69,8 +70,11 @@ export function createApp(deps: AppDeps): Hono {
         } catch (error) {
           log({ event: "run_crashed", runId, error: error instanceof Error ? error.name : "unknown" });
           if (!signal.aborted) {
-            writer.write({ type: "data-error", id: "error", data: { kind: "upstream", message: "Unexpected server error.", partial: false } });
-            writer.write({ type: "finish" });
+            const crash: RunEvent[] = [
+              { type: "error", kind: "upstream", message: "Unexpected server error.", partial: false },
+              { type: "end", state: "failed" },
+            ];
+            for (const event of crash) for (const chunk of toChunks(event, month)) writer.write(chunk);
           }
         } finally {
           running = false;

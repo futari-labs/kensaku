@@ -14,7 +14,8 @@ export default defineConfig({
   webServer: {
     command: "pnpm start",
     url: "http://127.0.0.1:8787/api/health",
-    reuseExistingServer: !process.env.CI,
+    // Never attach to a live server on 8787: e2e must run against its own fixture-mode server.
+    reuseExistingServer: false,
     timeout: 120_000,
     env: { NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture" },
   },

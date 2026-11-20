@@ -5,14 +5,15 @@ import { describe, expect, it } from "vitest";
 import { STAGES } from "../../src/research/events";
 import { ExaSdkPort } from "../../src/exa/sdk-port";
 import { fakeClient, HttpError } from "../exa/helpers";
-import { harness, ofType, parseSse, readChunks } from "../server/helpers";
-import type { Chunk } from "../server/helpers";
+import { harness } from "../server/helpers";
+import { ofType, parseSse, readChunks } from "../server/sse";
+import type { Chunk } from "../server/sse";
 
-const progressOf = (chunks: Chunk[]) => ofType(chunks, "data-progress").map((c) => `${c.data!.stage}:${c.data!.status}`);
+const progressOf = (chunks: Chunk[]) => ofType(chunks, "data-progress").map((c) => `${c.data.stage}:${c.data.status}`);
 
 /** Stage order: running comes first for each stage, then done or failed, and stages never go backwards. */
 function expectOrderedProgress(chunks: Chunk[]) {
-  const seen = ofType(chunks, "data-progress").map((c) => c.data as { stage: (typeof STAGES)[number]; status: string });
+  const seen = ofType(chunks, "data-progress").map((c) => c.data);
   let last = -1;
   const running = new Set<string>();
   for (const p of seen) {
@@ -77,7 +78,7 @@ describe("EV-006 scenarios", () => {
     expect(ofType(chunks, "text-delta")).toHaveLength(1);
     expect(ofType(chunks, "source-url").length).toBeGreaterThan(0);
     const [products] = ofType(chunks, "data-products");
-    const first = (products!.data as unknown as { offerGroups: { offers: unknown[] }[] }[])[0]!;
+    const first = products!.data[0]!;
     expect(first.offerGroups[0]!.offers.length).toBeGreaterThan(0);
     expect(ofType(chunks, "data-usage")[0]!.data).toMatchObject({ exaRequests: 2, cacheHits: 0, monthRequests: 2, monthLimit: 400 });
   });
@@ -87,7 +88,7 @@ describe("EV-006 scenarios", () => {
     expect(ofType(none, "data-products")[0]!.data).toEqual([]);
     expect(ofType(none, "text-delta")).toHaveLength(1);
     const noOffers = await readChunks(await harness().chat("no-offers"));
-    const product = (ofType(noOffers, "data-products")[0]!.data as unknown as { offerGroups: unknown[] }[])[0]!;
+    const product = ofType(noOffers, "data-products")[0]!.data[0]!;
     expect(product.offerGroups).toEqual([]);
   });
 
@@ -124,12 +125,12 @@ describe("EV-006 scenarios", () => {
 
 describe("EV-006 live mode", () => {
   const liveHarness = (reply: Error) => {
-    const h = harness({ mode: "live", portFor: () => liveHarnessPort(h.store, h.clock, reply) });
+    const h = harness({
+      mode: "live",
+      portFor: () => new ExaSdkPort({ client: fakeClient([reply, reply, reply]).client, ledger: h.store.ledger, clock: h.clock }),
+    });
     return h;
   };
-  function liveHarnessPort(store: ReturnType<typeof harness>["store"], clock: ReturnType<typeof harness>["clock"], reply: Error) {
-    return new ExaSdkPort({ client: fakeClient([reply, reply, reply]).client, ledger: store.ledger, clock });
-  }
 
   it("shows no fixture data when Exa fails, and ends with the typed error", async () => {
     const h = liveHarness(new HttpError(500));

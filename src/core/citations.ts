@@ -1,6 +1,8 @@
 import type { ResolvedCitations } from "./types";
 
-const MARKER = /([ \t]*)\[(\d+(?:,\d+)*)\]/g;
+// The marker grammar is frozen in evals/cases/citations.json. A marker may follow spaces or tabs, which are removed with it.
+const BARE_MARKER = /\[(\d+(?:,\d+)*)\]/;
+const MARKER = new RegExp(`([ \\t]*)${BARE_MARKER.source}`, "g");
 // Capturing, so split() keeps each separator at an odd index and the original text can be rejoined unchanged.
 const BLANK_LINE = /(\n(?:[ \t\r]*\n)+)/;
 
@@ -31,27 +33,65 @@ function resolveMarker(numbers: string, citationUrls: string[]): MarkerResolutio
   return out;
 }
 
-/** Resolves 1-based `[n]` and `[n,m]` markers against citation URLs; unresolvable numbers are removed and counted. */
-export function resolveCitations(text: string, citationUrls: string[]): ResolvedCitations {
-  const sources = new Set<string>();
+/** A cited URL with the citation numbers that point at it in the rendered text, ascending. */
+export interface CitedSource {
+  url: string;
+  numbers: number[];
+}
+
+export interface CitedText extends ResolvedCitations {
+  /** One entry per URL in `sources`, in the same order. */
+  citedSources: CitedSource[];
+}
+
+/**
+ * Resolves 1-based `[n]` and `[n,m]` markers against citation URLs; unresolvable numbers are removed
+ * and counted. Each marker is resolved once, and `citedSources` says which numbers reached each URL.
+ */
+export function resolveCitations(text: string, citationUrls: string[]): CitedText {
+  const numbersByUrl = new Map<string, Set<number>>();
   const uncitedParagraphs: number[] = [];
   let unresolvedMarkers = 0;
+  let paragraph = 0;
 
-  splitParagraphs(text).forEach((paragraph, index) => {
+  // The separators are kept at odd indexes, so rejoining the parts restores the text outside markers.
+  const rendered = text.split(BLANK_LINE).map((part, i) => {
+    if (i % 2 === 1) return part;
     let resolved = 0;
-    for (const marker of paragraph.matchAll(MARKER)) {
-      const r = resolveMarker(marker[2]!, citationUrls);
+    const out = part.replace(MARKER, (_marker, lead: string, numbers: string) => {
+      const r = resolveMarker(numbers, citationUrls);
       resolved += r.kept.length;
       unresolvedMarkers += r.dropped;
-      for (const url of r.urls) sources.add(url);
+      r.kept.forEach((raw, k) => {
+        const url = r.urls[k]!;
+        const seen = numbersByUrl.get(url) ?? new Set<number>();
+        seen.add(Number(raw));
+        numbersByUrl.set(url, seen);
+      });
+      return r.kept.length > 0 ? `${lead}[${r.kept.join(",")}]` : "";
+    });
+    if (part.trim() !== "") {
+      if (resolved === 0) uncitedParagraphs.push(paragraph);
+      paragraph++;
     }
-    if (resolved === 0) uncitedParagraphs.push(index);
+    return out;
   });
 
-  const renderedText = text.replace(MARKER, (_marker, lead: string, numbers: string) => {
-    const { kept } = resolveMarker(numbers, citationUrls);
-    return kept.length > 0 ? `${lead}[${kept.join(",")}]` : "";
-  });
+  const citedSources = [...numbersByUrl].map(([url, numbers]) => ({ url, numbers: [...numbers].sort((a, b) => a - b) }));
+  return {
+    renderedText: rendered.join(""),
+    sources: citedSources.map((s) => s.url),
+    unresolvedMarkers,
+    uncitedParagraphs,
+    citedSources,
+  };
+}
 
-  return { renderedText, sources: [...sources], unresolvedMarkers, uncitedParagraphs };
+/** A run of plain text, or the citation numbers of one `[n,m]` marker, in reading order. */
+export type MarkerSegment = string | { citation: number[] };
+
+/** Splits already-resolved text at its markers, using the same grammar as `resolveCitations`. */
+export function segmentMarkers(text: string): MarkerSegment[] {
+  const parts = text.split(BARE_MARKER);
+  return parts.map((part, i) => (i % 2 === 0 ? part : { citation: part.split(",").map(Number) })).filter((seg) => seg !== "");
 }

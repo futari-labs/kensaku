@@ -3,9 +3,8 @@ import { classifyHit, rankOffers, resolveCitations } from "../core";
 import type { Candidate, Evidence, Market, Offer, RejectCategory, SearchHit } from "../core/types";
 import { RequestBudget, MAX_EXA_REQUESTS_PER_RUN } from "../exa/budget";
 import { ExaFailure, mapExaError } from "../exa/errors";
-import type { ExaFailureKind } from "../exa/errors";
 import type { ExaPort } from "../exa/port";
-import type { ProductResult, RunErrorKind, RunEvent, RunInput, RunUsage, SourceRef, Stage } from "./events";
+import type { ProductResult, RunErrorKind, RunEvent, RunInput, RunUsage, Stage } from "./events";
 
 export const CALL_TIMEOUT_MS = 30_000;
 export const RUN_TIMEOUT_MS = 90_000;
@@ -13,7 +12,9 @@ const RETRY_BACKOFF_MS = 500;
 const RETRY_AFTER_CAP_MS = 5_000;
 const RATE_LIMIT_FALLBACK_MS = 1_000;
 const NOT_SEARCHED_BUDGET = "Not searched: per-question request limit reached";
-const MARKER = /\[(\d+(?:,\d+)*)\]/g;
+const NOT_SEARCHED_OFFERS = "Not searched: an earlier candidate had offers";
+const NOT_SEARCHED_FAILED = "Not searched: an earlier search did not complete";
+const SEARCH_INCOMPLETE = "Search did not complete";
 
 export interface RunOptions {
   runId?: string;
@@ -26,24 +27,9 @@ export interface RunOptions {
   clock?: () => number;
 }
 
-/** Maps an Exa failure to the error the user sees. `budget_exhausted` has none: it ends the offers stage early instead. */
-export function userErrorKind(kind: ExaFailureKind): RunErrorKind | undefined {
-  switch (kind) {
-    case "auth":
-    case "credits_exhausted":
-    case "monthly_limit":
-    case "rate_limited":
-    case "upstream":
-    case "timeout":
-      return kind;
-    case "budget_exhausted":
-      return undefined;
-    default: {
-      const unreachable: never = kind;
-      return unreachable;
-    }
-  }
-}
+/** An Exa failure the user sees as an error. `budget_exhausted` is not one: it ends the offers stage early instead. */
+type RunFailure = ExaFailure & { kind: RunErrorKind };
+const isRunFailure = (failure: ExaFailure): failure is RunFailure => failure.kind !== "budget_exhausted";
 
 const abortableSleep = (ms: number, signal: AbortSignal): Promise<void> =>
   new Promise((resolve, reject) => {
@@ -68,32 +54,37 @@ const emptyRejected = (): Record<RejectCategory, number> => ({
   "invalid-url": 0,
 });
 
-interface Searched {
-  candidate: Candidate;
-  hits: SearchHit[];
-  retrievedAt: string;
-  /** Set instead of `hits` when this candidate has no results. */
-  notSearched?: string;
-}
-
 interface Classified {
   candidate: Candidate;
   offers: Offer[];
   evidence: Evidence[];
   rejectedCounts: Record<RejectCategory, number>;
+  /** Set when this candidate has no search results. */
   notSearched?: string;
 }
 
-function classifyAll(searched: Searched, runUrls: ReadonlySet<string>): Classified {
-  const out: Classified = { candidate: searched.candidate, offers: [], evidence: [], rejectedCounts: emptyRejected() };
-  if (searched.notSearched !== undefined) out.notSearched = searched.notSearched;
-  for (const hit of searched.hits) {
-    const result = classifyHit(hit, searched.candidate, runUrls);
+/** What searching one candidate came to. */
+type Searched =
+  | { status: "searched"; classified: Classified }
+  | { status: "not-searched"; candidate: Candidate; reason: string }
+  | { status: "failed"; candidate: Candidate; failure: RunFailure };
+
+function classifyAll(candidate: Candidate, hits: SearchHit[]): Classified {
+  const runUrls = new Set(hits.map((hit) => hit.url));
+  const out: Classified = { candidate, offers: [], evidence: [], rejectedCounts: emptyRejected() };
+  for (const hit of hits) {
+    const result = classifyHit(hit, candidate, runUrls);
     if (result.kind === "merchant-offer") out.offers.push(result);
     else if (result.kind === "evidence") out.evidence.push(result);
     else out.rejectedCounts[result.category]++;
   }
   return out;
+}
+
+function classifiedOf(searched: Searched): Classified {
+  if (searched.status === "searched") return searched.classified;
+  const notSearched = searched.status === "failed" ? SEARCH_INCOMPLETE : searched.reason;
+  return { candidate: searched.candidate, offers: [], evidence: [], rejectedCounts: emptyRejected(), notSearched };
 }
 
 /** Ranks per candidate; an offer URL already shown for an earlier candidate is not shown again. */
@@ -110,15 +101,6 @@ function validate(classified: Classified[], market: Market): ProductResult[] {
       ...(c.notSearched !== undefined && { notSearched: c.notSearched }),
     };
   });
-}
-
-function sourcesFor(renderedText: string, urls: string[], citationUrls: string[]): SourceRef[] {
-  const numbers = new Set<number>();
-  for (const m of renderedText.matchAll(MARKER)) for (const n of m[1]!.split(",")) numbers.add(Number(n));
-  return urls.map((url) => ({
-    url,
-    sourceId: [...numbers].filter((n) => citationUrls[n - 1] === url).sort((a, b) => a - b).join(","),
-  }));
 }
 
 /**
@@ -143,8 +125,17 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
 
   log({ event: "run_start", runId, market, question });
 
-  const stageLog = (stage: Stage, status: string, started: number) =>
-    log({ event: "stage", runId, stage, status, requestCount: budget.used, durationMs: clock() - started });
+  /** The stage's `running` event now, and its closing event (with the log line) when it ends. */
+  function startStage(stage: Stage) {
+    const started = clock();
+    return {
+      running: { type: "progress", stage, status: "running" } satisfies RunEvent,
+      finish(status: "done" | "failed", detail?: string): RunEvent {
+        log({ event: "stage", runId, stage, status, requestCount: budget.used, durationMs: clock() - started });
+        return { type: "progress", stage, status, ...(detail !== undefined && { detail }) };
+      },
+    };
+  }
 
   async function exaCall<T extends { cached: boolean; costDollars: number }>(stage: Stage, op: string, send: (s: AbortSignal) => Promise<T>): Promise<T> {
     for (;;) {
@@ -173,111 +164,94 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     }
   }
 
-  function canRetry(failure: ExaFailure): boolean {
-    const transient =
-      failure.kind === "rate_limited" ||
-      failure.kind === "timeout" ||
-      (failure.kind === "upstream" && (failure.status === undefined || failure.status >= 500));
-    return transient && retriesLeft > 0 && budget.used < MAX_EXA_REQUESTS_PER_RUN && !runSignal.aborted;
-  }
+  const canRetry = (failure: ExaFailure): boolean =>
+    failure.retryable && retriesLeft > 0 && budget.used < MAX_EXA_REQUESTS_PER_RUN && !runSignal.aborted;
 
   const backoffMs = (failure: ExaFailure): number =>
     failure.kind === "rate_limited" ? Math.min(failure.retryAfterMs ?? RATE_LIMIT_FALLBACK_MS, RETRY_AFTER_CAP_MS) : RETRY_BACKOFF_MS;
 
-  const fail = (failure: ExaFailure, partial: boolean): RunEvent[] => {
-    const kind = userErrorKind(failure.kind) ?? "upstream";
+  const fail = (failure: RunFailure, partial: boolean): RunEvent[] => {
     log({ event: "run_end", runId, state: "failed", errorKind: failure.kind, requestCount: budget.used, durationMs: clock() - runStart });
     return [
       { type: "usage", usage },
-      { type: "error", kind, message: failure.message, partial },
+      { type: "error", kind: failure.kind, message: failure.message, partial },
       { type: "end", state: "failed" },
     ];
   };
 
   try {
     // Stage 1: candidates (1 request)
-    let started = clock();
-    yield { type: "progress", stage: "candidates", status: "running" };
+    const candidatesStage = startStage("candidates");
+    yield candidatesStage.running;
     let answer;
     try {
       answer = await exaCall("candidates", "answer", (s) => port.answerCandidates(question, market, budget, s));
     } catch (error) {
       if (error instanceof Cancelled) throw error;
-      stageLog("candidates", "failed", started);
-      yield { type: "progress", stage: "candidates", status: "failed" };
-      yield* fail(mapExaError(error), false);
+      const failure = mapExaError(error);
+      // The first request of a run cannot hit the per-question budget.
+      if (!isRunFailure(failure)) throw failure;
+      yield candidatesStage.finish("failed");
+      yield* fail(failure, false);
       return;
     }
-    stageLog("candidates", "done", started);
-    yield { type: "progress", stage: "candidates", status: "done", detail: `${answer.candidates.length} candidate(s)` };
+    yield candidatesStage.finish("done", `${answer.candidates.length} candidate(s)`);
 
-    const resolved = resolveCitations(answer.comparison, answer.citationUrls);
+    const cited = resolveCitations(answer.comparison, answer.citationUrls);
     const comparison: RunEvent = {
       type: "comparison",
-      text: resolved.renderedText,
-      sources: sourcesFor(resolved.renderedText, resolved.sources, answer.citationUrls),
+      text: cited.renderedText,
+      sources: cited.citedSources.map((s) => ({ url: s.url, sourceId: s.numbers.join(",") })),
     };
 
     // Stage 2: offers (1 request per candidate: 1 and 2, then 3 only if 1 and 2 found no merchant offer)
-    started = clock();
-    yield { type: "progress", stage: "offers", status: "running" };
-    const runUrls = new Set<string>();
-    const searched: Searched[] = [];
-    const offersStage: { failure?: ExaFailure } = {};
+    const offersStage = startStage("offers");
+    yield offersStage.running;
 
-    const search = async (candidate: Candidate): Promise<void> => {
+    const search = async (candidate: Candidate): Promise<Searched> => {
       try {
         const result = await exaCall("offers", "search", (s) => port.searchOffers(candidate, market, budget, s));
-        for (const hit of result.hits) runUrls.add(hit.url);
-        searched.push({ candidate, hits: result.hits, retrievedAt: result.retrievedAt });
+        return { status: "searched", classified: classifyAll(candidate, result.hits) };
       } catch (error) {
         if (error instanceof Cancelled) throw error;
-        const f = mapExaError(error);
-        if (f.kind === "budget_exhausted") searched.push({ candidate, hits: [], retrievedAt: "", notSearched: NOT_SEARCHED_BUDGET });
-        else {
-          offersStage.failure ??= f;
-          searched.push({ candidate, hits: [], retrievedAt: "", notSearched: "Search did not complete" });
-        }
+        const failure = mapExaError(error);
+        if (!isRunFailure(failure)) return { status: "not-searched", candidate, reason: NOT_SEARCHED_BUDGET };
+        return { status: "failed", candidate, failure };
       }
     };
+    const notSearched = (candidate: Candidate, reason: string): Searched => ({ status: "not-searched", candidate, reason });
 
-    const candidates = answer.candidates.slice(0, 3);
-    await Promise.all(candidates.slice(0, 2).map(search));
-    const merchantOffers = () => searched.reduce((n, s) => n + classifyAll(s, runUrls).offers.length, 0);
-    const third = candidates[2];
-    if (third && !offersStage.failure && merchantOffers() === 0 && budget.used < MAX_EXA_REQUESTS_PER_RUN) await search(third);
-    if (third && searched.every((s) => s.candidate !== third)) {
-      searched.push({ candidate: third, hits: [], retrievedAt: "", notSearched: "Not searched: an earlier candidate had offers" });
+    const [first, second, third] = answer.candidates.slice(0, 3);
+    const results = await Promise.all([first, second].flatMap((c) => (c ? [search(c)] : [])));
+    if (third) {
+      const failed = results.some((r) => r.status === "failed");
+      const hasOffers = results.some((r) => r.status === "searched" && r.classified.offers.length > 0);
+      results.push(failed ? notSearched(third, NOT_SEARCHED_FAILED) : hasOffers ? notSearched(third, NOT_SEARCHED_OFFERS) : await search(third));
     }
     if (signal.aborted) throw new Cancelled();
-    searched.sort((a, b) => candidates.indexOf(a.candidate) - candidates.indexOf(b.candidate));
-    const classified = searched.map((s) => classifyAll(s, runUrls));
+    const classified = results.map(classifiedOf);
 
-    const { failure } = offersStage;
+    const failure = results.find((r): r is Extract<Searched, { status: "failed" }> => r.status === "failed")?.failure;
     if (failure) {
-      stageLog("offers", "failed", started);
-      yield { type: "progress", stage: "offers", status: "failed" };
+      yield offersStage.finish("failed");
       yield comparison;
       yield { type: "products", products: validate(classified, market) };
       yield* fail(failure, true);
       return;
     }
-    stageLog("offers", "done", started);
-    yield { type: "progress", stage: "offers", status: "done", detail: `${searched.filter((s) => s.notSearched === undefined).length} candidate(s) searched` };
+    yield offersStage.finish("done", `${results.filter((r) => r.status === "searched").length} candidate(s) searched`);
 
     // Stage 3: validate (no request)
-    started = clock();
-    yield { type: "progress", stage: "validate", status: "running" };
+    const validateStage = startStage("validate");
+    yield validateStage.running;
     yield { type: "products", products: validate(classified, market) };
-    stageLog("validate", "done", started);
-    yield { type: "progress", stage: "validate", status: "done" };
+    yield validateStage.finish("done");
 
     // Stage 4: compare (no request)
-    started = clock();
-    yield { type: "progress", stage: "compare", status: "running" };
+    const compareStage = startStage("compare");
+    yield compareStage.running;
     yield comparison;
-    stageLog("compare", "done", started);
-    yield { type: "progress", stage: "compare", status: "done" };
+    yield compareStage.finish("done");
 
     usage.exaRequests = budget.used;
     log({ event: "run_end", runId, state: "completed", requestCount: budget.used, cacheHits: usage.cacheHits, costDollars: usage.costDollars, durationMs: clock() - runStart });

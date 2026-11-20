@@ -1,4 +1,4 @@
-import type { Availability, Currency } from "../../core/types";
+import type { Availability, Currency, EvidenceCategory } from "../../core/types";
 
 export const hostOf = (url: string): string => {
   try {
@@ -22,7 +22,7 @@ export const AVAILABILITY_LABEL: Record<Availability, string> = {
 
 export const formatTime = (iso: string): string => new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
 
-export const EVIDENCE_LABEL: Record<string, string> = {
+export const EVIDENCE_LABEL: Record<EvidenceCategory, string> = {
   aggregator: "Price aggregator",
   editorial: "Editorial review",
   "not-a-listing": "Not a product listing",

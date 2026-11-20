@@ -4,16 +4,9 @@ import type { AppConfig } from "../../src/server/config";
 import { FixtureExaPort } from "../../src/exa/fixture-port";
 import type { ExaPort } from "../../src/exa/port";
 import { fakeClock, storage } from "../exa/helpers";
+import { Q1 } from "../fixtures/questions";
 
-export const Q1 = "Sony WH-1000XM5 headphones: where can I buy them and are they worth it?";
 export const START = "2026-11-21T10:00:00Z";
-
-export interface Chunk {
-  type: string;
-  id?: string;
-  data?: Record<string, unknown> & { kind?: string; partial?: boolean; stage?: string; status?: string };
-  [key: string]: unknown;
-}
 
 export interface Harness {
   app: ReturnType<typeof createApp>;
@@ -71,17 +64,3 @@ export function harness(options: HarnessOptions = {}): Harness {
     );
   return { app, logs, ports, clock, store, post, chat };
 }
-
-export function parseSse(text: string): Chunk[] {
-  return text
-    .split("\n\n")
-    .map((block) => block.trim())
-    .filter((block) => block.startsWith("data: ") && block !== "data: [DONE]")
-    .map((block) => JSON.parse(block.slice("data: ".length)) as Chunk);
-}
-
-export async function readChunks(res: Response): Promise<Chunk[]> {
-  return parseSse(await res.text());
-}
-
-export const ofType = (chunks: Chunk[], type: string): Chunk[] => chunks.filter((c) => c.type === type);

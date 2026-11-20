@@ -10,17 +10,23 @@ import { Suggestion, Suggestions } from "@/web/components/ai-elements/suggestion
 import { Comparison } from "./Comparison";
 import { Products } from "./Products";
 import { ErrorNotice, Progress, UsageFooter } from "./RunStatus";
-import { textOf, viewOf } from "./messages";
-import type { KensakuMessage } from "./messages";
+import { emptyView, runStateOf, textOf, viewOf } from "./messages";
+import type { ClientRunState, RunView } from "./messages";
+import type { Market } from "../../core/types";
+import { ApiErrorBodySchema } from "../../research/events";
+import type { ApiErrorKind, ExaMode, KensakuMessage } from "../../research/events";
 
 /** The slice fixes the market; the selector arrives with JM-005. */
-const MARKET = "US";
+const MARKET: Market = "US";
 const SUGGESTIONS = [
   "Sony WH-1000XM5 headphones: where can I buy them and are they worth it?",
   "Best ergonomic wireless mouse for programming under $120",
 ];
 
-type Mode = "live" | "fixture" | "unknown";
+/** Set by the e2e tests (`/?scenario=name`) and sent only when the server reports fixture mode. */
+const SCENARIO = new URLSearchParams(window.location.search).get("scenario");
+
+type Mode = ExaMode | "unknown";
 
 function useServerMode(): Mode {
   const [mode, setMode] = useState<Mode>("unknown");
@@ -33,58 +39,75 @@ function useServerMode(): Mode {
   return mode;
 }
 
-/** `{ kind, message }` JSON from a 4xx reply, or a generic failure. */
-function httpErrorOf(error: Error): { kind: string; partial: false } {
+/** The `{ kind, message }` body of a 4xx reply, or a generic upstream failure when the body is anything else. */
+function httpErrorOf(error: Error): { kind: ApiErrorKind; partial: false } {
   try {
-    const body = JSON.parse(error.message) as { kind?: unknown };
-    if (typeof body.kind === "string") return { kind: body.kind, partial: false };
+    const body = ApiErrorBodySchema.safeParse(JSON.parse(error.message));
+    if (body.success) return { kind: body.data.kind, partial: false };
   } catch {
-    // not a Kensaku error body
+    // not JSON
   }
   return { kind: "upstream", partial: false };
 }
 
-function AssistantRun({ message, cancelled, running }: { message: KensakuMessage; cancelled: boolean; running: boolean }) {
-  const view = viewOf(message);
+function RunFooter({ view, state }: { view: RunView; state: ClientRunState }) {
+  switch (state) {
+    case "running":
+      return null;
+    case "cancelled":
+      return (
+        <Alert data-testid="run-cancelled">
+          <AlertTitle>Run cancelled</AlertTitle>
+          <AlertDescription>{view.products || view.text ? "Results received before cancelling are shown above." : "No results were received."}</AlertDescription>
+        </Alert>
+      );
+    case "completed":
+    case "failed":
+      return view.usage ? <UsageFooter usage={view.usage} /> : null;
+  }
+}
+
+function AssistantRun({ view, state }: { view: RunView; state: ClientRunState }) {
   return (
     <div className="space-y-5">
       <Progress progress={view.progress} />
       {view.text !== undefined && <Comparison text={view.text} sources={view.sources} />}
       {view.products !== undefined && <Products products={view.products} />}
       {view.error && <ErrorNotice error={view.error} />}
-      {cancelled && (
-        <Alert data-testid="run-cancelled">
-          <AlertTitle>Run cancelled</AlertTitle>
-          <AlertDescription>{view.products || view.text ? "Results received before cancelling are shown above." : "No results were received."}</AlertDescription>
-        </Alert>
-      )}
-      {view.usage && !running && <UsageFooter usage={view.usage} />}
+      <RunFooter view={view} state={state} />
     </div>
   );
 }
 
 export function App() {
   const mode = useServerMode();
-  const scenario = useRef(new URLSearchParams(window.location.search).get("scenario"));
   const modeRef = useRef<Mode>(mode);
   modeRef.current = mode;
   const transport = useMemo(
     () =>
       new DefaultChatTransport<KensakuMessage>({
         api: "/api/chat",
-        body: () => ({ market: MARKET, ...(modeRef.current === "fixture" && scenario.current ? { fixtureScenario: scenario.current } : {}) }),
+        body: () => ({ market: MARKET, ...(modeRef.current === "fixture" && SCENARIO ? { fixtureScenario: SCENARIO } : {}) }),
       }),
     [],
   );
   const { messages, sendMessage, status, stop, error } = useChat<KensakuMessage>({ transport });
+  // Keyed by the question's message id: the assistant message may not exist yet when the person cancels.
   const [cancelled, setCancelled] = useState<ReadonlySet<string>>(new Set());
   const running = status === "submitted" || status === "streaming";
 
   const cancel = () => {
-    const last = messages.at(-1);
-    if (last?.role === "assistant") setCancelled((prev) => new Set(prev).add(last.id));
+    const question = messages.findLast((m) => m.role === "user");
+    if (question) setCancelled((prev) => new Set(prev).add(question.id));
     void stop();
   };
+
+  const lastQuestion = messages.findLast((m) => m.role === "user");
+  const stateOf = (message: KensakuMessage, question: KensakuMessage | undefined): ClientRunState =>
+    runStateOf(viewOf(message), {
+      streaming: running && message === messages.at(-1),
+      cancelled: question !== undefined && cancelled.has(question.id),
+    });
 
   const ask = (text: string) => {
     if (running || text.trim() === "") return;
@@ -117,17 +140,26 @@ export function App() {
               </div>
             </ConversationEmptyState>
           ) : (
-            messages.map((message, index) => (
-              <Message key={message.id} from={message.role}>
-                <MessageContent>
-                  {message.role === "user" ? (
-                    <p>{textOf(message)}</p>
-                  ) : (
-                    <AssistantRun message={message} cancelled={cancelled.has(message.id)} running={running && index === messages.length - 1} />
-                  )}
-                </MessageContent>
-              </Message>
-            ))
+            <>
+              {messages.map((message, index) => (
+                <Message key={message.id} from={message.role}>
+                  <MessageContent>
+                    {message.role === "user" ? (
+                      <p>{textOf(message)}</p>
+                    ) : (
+                      <AssistantRun view={viewOf(message)} state={stateOf(message, messages[index - 1])} />
+                    )}
+                  </MessageContent>
+                </Message>
+              ))}
+              {lastQuestion && !running && messages.at(-1) === lastQuestion && cancelled.has(lastQuestion.id) && (
+                <Message from="assistant">
+                  <MessageContent>
+                    <AssistantRun view={emptyView()} state="cancelled" />
+                  </MessageContent>
+                </Message>
+              )}
+            </>
           )}
           {error && !running && <ErrorNotice error={httpErrorOf(error)} />}
         </ConversationContent>

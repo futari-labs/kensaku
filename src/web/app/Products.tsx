@@ -60,7 +60,7 @@ function EvidenceList({ evidence }: { evidence: Evidence[] }) {
               {item.title ?? item.url}
             </a>
             <div className="text-xs text-muted-foreground">
-              {EVIDENCE_LABEL[item.category] ?? item.category}
+              {EVIDENCE_LABEL[item.category]}
               {item.reportedPrice && ` · ${item.reportedPrice.amount} ${item.reportedPrice.currency} reported by ${item.host}; not a merchant offer`}
               {!item.reportedPrice && ` · ${item.host}; not a merchant offer`}
             </div>
