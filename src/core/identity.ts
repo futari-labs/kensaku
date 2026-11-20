@@ -1,11 +1,17 @@
-import type { Candidate } from "./types";
+import type { Candidate, SearchHit } from "./types";
 
-function tokenize(text: string): string[] {
+export function tokenize(text: string): string[] {
   return text
     .normalize("NFKC")
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)
     .filter((token) => token !== "");
+}
+
+/** The summary's productName, or the result title when productName is missing or blank. */
+export function identityTextOf(hit: SearchHit): string {
+  const name = hit.summary?.productName;
+  return name?.trim() ? name : (hit.title ?? "");
 }
 
 function usableIdentifiers(candidate: Candidate): string[] {

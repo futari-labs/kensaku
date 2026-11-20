@@ -1,7 +1,7 @@
+import { CURRENCIES } from "./currency";
 import type { Availability, Currency, Market, Offer, OfferGroup } from "./types";
 
 const MARKET_CURRENCY: Record<Market, Currency> = { US: "USD", SG: "SGD", JP: "JPY" };
-const CURRENCY_ORDER: readonly Currency[] = ["USD", "SGD", "JPY"];
 const AVAILABILITY_RANK: Record<Availability, number> = { in_stock: 0, preorder: 1, unknown: 2, out_of_stock: 3 };
 
 function compareCodePoints(a: string, b: string): number {
@@ -37,7 +37,7 @@ export function rankOffers(offers: Offer[], market: Market): OfferGroup[] {
     byCurrency.set(offer.price.currency, group);
   }
   const first = MARKET_CURRENCY[market];
-  const order = [first, ...CURRENCY_ORDER.filter((currency) => currency !== first)];
+  const order = [first, ...CURRENCIES.filter((currency) => currency !== first)];
   return order.flatMap((currency) => {
     const group = byCurrency.get(currency);
     return group ? [{ currency, offers: group.sort(compareOffers) }] : [];

@@ -34,7 +34,7 @@ export const EDITORIAL_HOSTS: readonly HostEntry[] = [
 
 /** An entry matches when the hostname equals the entry host or is a subdomain of it, and the path has the entry's prefix. */
 export function matchesHostList(url: URL, list: readonly HostEntry[]): boolean {
-  const hostname = url.hostname.toLowerCase();
+  const hostname = url.hostname;
   return list.some(
     (entry) =>
       (hostname === entry.host || hostname.endsWith(`.${entry.host}`)) &&

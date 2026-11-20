@@ -22,8 +22,8 @@ export function canonicalizeUrl(url: string): string {
   return parsed.href;
 }
 
-/** The URL hostname, lowercased, with one leading "www." removed. */
+/** The URL hostname (the URL parser already lowercases it), with one leading "www." removed. */
 export function merchantHostOf(url: URL): string {
-  const host = url.hostname.toLowerCase();
+  const host = url.hostname;
   return host.startsWith("www.") ? host.slice(4) : host;
 }

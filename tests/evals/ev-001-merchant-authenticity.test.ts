@@ -24,18 +24,4 @@ describe("EV-001 merchant authenticity", () => {
       expect(result.category).toBe(expected.category);
     }
   });
-
-  it("counts evaluated cases against the file", () => {
-    let evaluated = 0;
-    for (const c of file.cases) {
-      const { hit, candidate, runResultUrls } = buildClassificationInput(file, c);
-      const result = classifyHit(hit, candidate, runResultUrls);
-      const label = c.expected;
-      const ok =
-        result.kind === label.outcome &&
-        (result.kind === "merchant-offer" ? result.price.amount === label.amount : result.category === label.category);
-      if (ok) evaluated++;
-    }
-    expect(evaluated).toBe(file.cases.length);
-  });
 });

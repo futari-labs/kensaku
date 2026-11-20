@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyHit, matchesIdentity } from "../../src/core";
+import { classifyHit, identityTextOf, matchesIdentity } from "../../src/core";
 import { buildClassificationInput, readJson, type ClassificationFile } from "../core/fixtures";
 
 // Frozen gold cases: evals/cases/offer-classification.json (read-only, every case evaluated).
@@ -17,8 +17,7 @@ describe("EV-002 product relevance", () => {
       const labeledIrrelevant = c.expected.outcome === "rejected" && c.expected.category === "irrelevant-product";
       const result = classifyHit(hit, candidate, runResultUrls);
       expect(result.kind === "rejected" && result.category === "irrelevant-product").toBe(labeledIrrelevant);
-      const identityText = hit.summary?.productName?.trim() ? hit.summary.productName : (hit.title ?? "");
-      expect(matchesIdentity(identityText, candidate)).toBe(!labeledIrrelevant);
+      expect(matchesIdentity(identityTextOf(hit), candidate)).toBe(!labeledIrrelevant);
     },
   );
 });

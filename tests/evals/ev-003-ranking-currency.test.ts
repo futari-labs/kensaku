@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rankOffers, type Availability, type Currency, type Market, type Offer } from "../../src/core";
-import { makeOffer, mulberry32 } from "../core/offers";
+import { makeOffer, mulberry32 } from "../core/builders";
 import { readJson } from "../core/fixtures";
 
 // Frozen gold cases: evals/cases/ranking-currency.json (read-only, every case evaluated).
@@ -10,6 +10,7 @@ interface RankingCase {
   offers: { id: string; merchantHost: string; canonicalUrl: string; currency: Currency; amount: number; availability: Availability }[];
   expectedGroups: { currency: Currency; order: string[] }[];
 }
+const MARKET_CURRENCY: Record<Market, Currency> = { US: "USD", SG: "SGD", JP: "JPY" };
 const file = readJson<{ cases: RankingCase[] }>("evals/cases/ranking-currency.json");
 
 describe("EV-003 ranking cases", () => {
@@ -28,7 +29,8 @@ describe("EV-003 ranking cases", () => {
 
 describe("EV-003 property test (seed 20261121, 1000 lists)", () => {
   const CURRENCIES: Currency[] = ["USD", "SGD", "JPY"];
-  const AVAIL: Availability[] = ["in_stock", "out_of_stock", "preorder", "unknown"];
+  // Availability rank order from ARCHITECTURE "Ranking": in stock, preorder, unknown, out of stock.
+  const AVAIL: Availability[] = ["in_stock", "preorder", "unknown", "out_of_stock"];
   const MARKETS: Market[] = ["US", "SG", "JP"];
 
   it("never mixes currencies, loses or duplicates offers, or depends on input order", () => {
@@ -49,16 +51,29 @@ describe("EV-003 property test (seed 20261121, 1000 lists)", () => {
       const market = pick(MARKETS);
       const groups = rankOffers(offers, market);
 
-      // Each group holds one currency, groups are distinct, and the market currency leads.
+      // Each group holds one currency; the market currency leads, then USD, SGD, JPY.
       for (const g of groups) for (const o of g.offers) expect(o.price.currency).toBe(g.currency);
-      expect(new Set(groups.map((g) => g.currency)).size).toBe(groups.length);
-      if (groups.length > 0 && groups.some((g) => g.currency === { US: "USD", SG: "SGD", JP: "JPY" }[market])) {
-        expect(groups[0]!.currency).toBe({ US: "USD", SG: "SGD", JP: "JPY" }[market]);
+      const firstByUrl = new Map<string, Offer>();
+      for (const o of offers) if (!firstByUrl.has(o.canonicalUrl)) firstByUrl.set(o.canonicalUrl, o);
+      const first = MARKET_CURRENCY[market];
+      const expectedOrder = [first, ...CURRENCIES.filter((c) => c !== first)].filter((c) =>
+        [...firstByUrl.values()].some((o) => o.price.currency === c),
+      );
+      expect(groups.map((g) => g.currency)).toEqual(expectedOrder);
+
+      // Within a group: availability rank, amount, merchant host, canonical URL, all ascending.
+      for (const g of groups) {
+        for (let k = 1; k < g.offers.length; k++) {
+          const a = g.offers[k - 1]!;
+          const b = g.offers[k]!;
+          const key = (o: Offer) => [AVAIL.indexOf(o.availability), o.price.amount, o.merchantHost, o.canonicalUrl] as const;
+          const [ka, kb] = [key(a), key(b)];
+          const diff = ka.findIndex((v, idx) => v !== kb[idx]);
+          if (diff !== -1) expect(ka[diff]! < kb[diff]!).toBe(true);
+        }
       }
 
       // Output is exactly the first-received offer per canonical URL: nothing lost, nothing duplicated.
-      const firstByUrl = new Map<string, Offer>();
-      for (const o of offers) if (!firstByUrl.has(o.canonicalUrl)) firstByUrl.set(o.canonicalUrl, o);
       const out = groups.flatMap((g) => g.offers);
       expect(out.length).toBe(firstByUrl.size);
       for (const o of out) expect(firstByUrl.get(o.canonicalUrl)).toBe(o);
