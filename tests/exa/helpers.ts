@@ -28,10 +28,13 @@ export const tempDir = (): string => {
 
 export function storage(clock: () => Date, limits: { requestLimit?: number; costLimit?: number } = {}) {
   const root = tempDir();
+  const ledger = new UsageLedger({ dir: join(root, "ledger"), ...limits });
   return {
     root,
-    cache: new DiskCache({ dir: join(root, "exa"), clock }),
-    ledger: new UsageLedger({ dir: join(root, "ledger"), clock, ...limits }),
+    cache: new DiskCache({ dir: join(root, "exa") }),
+    ledger,
+    /** The ledger's current month at the test clock. */
+    usage: () => ledger.read(clock()),
   };
 }
 

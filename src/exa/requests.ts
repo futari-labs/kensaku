@@ -102,9 +102,6 @@ function normalizeText(text: string): string {
 
 /** Cache key: SHA-256 of `{endpoint, normalized request body, market}` (ARCHITECTURE, Research pipeline). */
 export function cacheKey(endpoint: Endpoint, body: AnswerRequest | SearchRequest, market: Market): string {
-  const normalized =
-    "options" in body
-      ? { ...body, query: normalizeText(body.query) }
-      : { ...body, query: normalizeText(body.query) };
+  const normalized = { ...body, query: normalizeText(body.query) };
   return createHash("sha256").update(JSON.stringify(stable({ endpoint, body: normalized, market }))).digest("hex");
 }

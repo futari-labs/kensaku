@@ -2,17 +2,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import type { Candidate, Market } from "../core/types";
-import type { RequestBudget } from "./budget";
-import { StoredAnswerSchema, StoredSearchSchema } from "./cache";
-import type { Clock } from "./clock";
-import { systemClock } from "./clock";
-import { ExaFailure } from "./errors";
-import { guarded } from "./guard";
-import type { GuardDeps } from "./guard";
-import { CandidateSchema, parseAnswerResponse, parseSearchResponse } from "./parse";
-import type { AnswerResult, ExaPort, SearchResult } from "./port";
-import { buildAnswerRequest, buildSearchRequest, cacheKey } from "./requests";
+import { EXA_FAILURE_KINDS, ExaFailure } from "./errors";
+import { GuardedExaPort } from "./guarded-port";
+import type { ExaTransport, PortOptions } from "./guarded-port";
+import { CandidateSchema } from "./schemas";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const FROZEN_DIR = "evals/fixtures";
@@ -25,7 +18,7 @@ const ResponseSchema = z.object({
 });
 
 const ErrorSchema = z.object({
-  kind: z.enum(["auth", "credits_exhausted", "monthly_limit", "rate_limited", "upstream", "timeout", "budget_exhausted"]),
+  kind: z.enum(EXA_FAILURE_KINDS),
   retryAfterMs: z.number().optional(),
   message: z.string().optional(),
 });
@@ -54,16 +47,14 @@ export const ScenarioSchema = z.object({
 export type Scenario = z.infer<typeof ScenarioSchema>;
 type Step = Scenario["steps"][number];
 
-export interface FixtureOptions extends GuardDeps {
-  clock?: Clock;
-  /** Directory holding `<name>.json` scenarios. Default: tests/fixtures/scenarios in this repository. */
-  scenariosDir?: string;
+export interface FixtureOptions extends PortOptions {
+  /** Repository root holding `tests/fixtures/scenarios/` and `evals/fixtures/`. Default: this repository. */
   rootDir?: string;
 }
 
-export function loadScenario(name: string, options: Pick<FixtureOptions, "scenariosDir" | "rootDir"> = {}): Scenario {
+export function loadScenario(name: string, options: Pick<FixtureOptions, "rootDir"> = {}): Scenario {
   if (!/^[a-z0-9-]+$/.test(name)) throw new Error(`Invalid fixture scenario name: ${name}`);
-  const dir = options.scenariosDir ?? join(options.rootDir ?? REPO_ROOT, "tests/fixtures/scenarios");
+  const dir = join(options.rootDir ?? REPO_ROOT, "tests/fixtures/scenarios");
   const scenario = ScenarioSchema.parse(JSON.parse(readFileSync(join(dir, `${name}.json`), "utf8")));
   if (scenario.name !== name) throw new Error(`Scenario file ${name}.json declares name ${scenario.name}`);
   return scenario;
@@ -103,63 +94,25 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-/**
- * Replays a named scenario, one step per live call in order. It never matches requests. Every
- * replayed call goes through the same guard as the live port, so it takes a budget token, and a
- * cache or ledger passed in behaves exactly as it does live. `calls` counts replayed calls.
- */
-export class FixtureExaPort implements ExaPort {
-  readonly scenario: Scenario;
-  readonly #deps: GuardDeps;
-  readonly #clock: Clock;
-  readonly #rootDir: string;
+/** The fixture transport: step N of the scenario answers call N, in order, with no request matching. */
+class ScenarioReplayer implements ExaTransport {
   #next = 0;
 
-  constructor(scenario: Scenario, options: FixtureOptions = {}) {
-    this.scenario = scenario;
-    this.#deps = { cache: options.cache, ledger: options.ledger };
-    this.#clock = options.clock ?? systemClock;
-    this.#rootDir = options.rootDir ?? REPO_ROOT;
-  }
-
-  static load(name: string, options: FixtureOptions = {}): FixtureExaPort {
-    return new FixtureExaPort(loadScenario(name, options), options);
-  }
+  constructor(
+    readonly scenario: Scenario,
+    readonly rootDir: string,
+  ) {}
 
   get calls(): number {
     return this.#next;
   }
 
-  answerCandidates(question: string, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<AnswerResult> {
-    return guarded(this.#deps, {
-      key: cacheKey("/answer", buildAnswerRequest(question, market, "userLocation"), market),
-      schema: StoredAnswerSchema,
-      budget,
-      signal,
-      call: async () => ({
-        ...parseAnswerResponse(await this.#replay("answer", signal)),
-        retrievedAt: this.#clock().toISOString(),
-      }),
-    });
+  answer(_request: unknown, signal: AbortSignal): Promise<unknown> {
+    return this.#replay("answer", signal);
   }
 
-  searchOffers(candidate: Candidate, market: Market, budget: RequestBudget, signal: AbortSignal): Promise<SearchResult> {
-    return guarded(this.#deps, {
-      key: cacheKey("/search", buildSearchRequest(candidate, market), market),
-      schema: StoredSearchSchema,
-      budget,
-      signal,
-      call: async () => {
-        const parsed = parseSearchResponse(await this.#replay("search", signal));
-        const retrievedAt = this.#clock().toISOString();
-        return {
-          hits: parsed.hits.map((hit) => ({ ...hit, retrievedAt })),
-          exaRequestId: parsed.exaRequestId,
-          costDollars: parsed.costDollars,
-          retrievedAt,
-        };
-      },
-    });
+  search(_request: unknown, signal: AbortSignal): Promise<unknown> {
+    return this.#replay("search", signal);
   }
 
   async #replay(op: Step["op"], signal: AbortSignal): Promise<unknown> {
@@ -175,6 +128,32 @@ export class FixtureExaPort implements ExaPort {
         ...(step.error.retryAfterMs !== undefined && { retryAfterMs: step.error.retryAfterMs }),
       });
     }
-    return wire(step, this.#rootDir);
+    return wire(step, this.rootDir);
+  }
+}
+
+/**
+ * Replays a named scenario through the same guard as the live port (see tests/fixtures/scenarios/README.md),
+ * so every replayed call takes a budget token, and a cache or ledger passed in behaves exactly as it
+ * does live. `calls` counts replayed calls. The ledger is optional here, unlike the live port.
+ */
+export class FixtureExaPort extends GuardedExaPort {
+  readonly scenario: Scenario;
+  readonly #replayer: ScenarioReplayer;
+
+  constructor(scenario: Scenario, options: FixtureOptions = {}) {
+    const { rootDir = REPO_ROOT, ...portOptions } = options;
+    const replayer = new ScenarioReplayer(scenario, rootDir);
+    super(replayer, portOptions);
+    this.scenario = scenario;
+    this.#replayer = replayer;
+  }
+
+  static load(name: string, options: FixtureOptions = {}): FixtureExaPort {
+    return new FixtureExaPort(loadScenario(name, options), options);
+  }
+
+  get calls(): number {
+    return this.#replayer.calls;
   }
 }

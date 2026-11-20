@@ -1,8 +1,9 @@
 // EV-005 Spend guard and cache. Unit level (JM-003) lives here; JM-004 adds the run-level describe.
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RequestBudget } from "../../src/exa/budget";
+import { monthOf } from "../../src/exa/ledger";
 import { ExaSdkPort } from "../../src/exa/sdk-port";
 import type { Candidate } from "../../src/core/types";
 import { fakeClient, fakeClock, frozen, HttpError, storage } from "../exa/helpers";
@@ -41,7 +42,7 @@ describe("EV-005 unit level: spend guard and cache", () => {
     expect(again.hits).toEqual(first.hits);
     expect(budget.used).toBe(0);
     expect(fake.calls).toHaveLength(1);
-    expect(store.ledger.read().requests).toBe(1);
+    expect(store.usage().requests).toBe(1);
   });
 
   it("calls Exa again after the 6 hour TTL, and keys on market and candidate", async () => {
@@ -61,8 +62,8 @@ describe("EV-005 unit level: spend guard and cache", () => {
     await port.searchOffers(cand(1), "US", new RequestBudget(5), signal);
     await port.answerCandidates("best headphones", "US", new RequestBudget(5), signal);
     expect(fake.calls).toHaveLength(2);
-    expect(store.ledger.read().requests).toBe(2);
-    expect(store.ledger.read().costDollars).toBeCloseTo(0.017, 10);
+    expect(store.usage().requests).toBe(2);
+    expect(store.usage().costDollars).toBeCloseTo(0.017, 10);
   });
 
   it("blocks on the monthly request limit before calling, without spending budget", async () => {
@@ -76,10 +77,21 @@ describe("EV-005 unit level: spend guard and cache", () => {
   });
 
   it("blocks on the monthly cost limit before calling", async () => {
-    const { fake, port } = setup([search(), search()], { costLimit: 0.012 });
+    const { fake, port } = setup([search(), search()], { costLimit: 0.03 });
     await port.searchOffers(cand(1), "US", new RequestBudget(5), signal);
     await expect(port.searchOffers(cand(2), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "monthly_limit" });
     expect(fake.calls).toHaveLength(1);
+  });
+
+  it("blocks when the next call could cross the cost limit, even though the month is still under it", async () => {
+    const { fake, port, store } = setup([search()], { costLimit: 8 });
+    mkdirSync(join(store.root, "ledger"), { recursive: true });
+    writeFileSync(join(store.root, "ledger", "2026-11.json"), JSON.stringify({ requests: 3, costDollars: 7.99 }));
+    const budget = new RequestBudget(5);
+    await expect(port.searchOffers(cand(1), "US", budget, signal)).rejects.toMatchObject({ kind: "monthly_limit" });
+    expect(fake.calls).toHaveLength(0);
+    expect(budget.used).toBe(0);
+    expect(store.usage()).toEqual({ requests: 3, costDollars: 7.99 });
   });
 
   it("still serves cache hits when a monthly limit is reached", async () => {
@@ -92,7 +104,7 @@ describe("EV-005 unit level: spend guard and cache", () => {
   it("a 402 sets exhaustedAt and blocks every later live call until the ledger is deleted or the month changes", async () => {
     const { clock, fake, port, store } = setup([new HttpError(402, "Payment required"), search(), search()]);
     await expect(port.searchOffers(cand(1), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "credits_exhausted" });
-    expect(store.ledger.read().exhaustedAt).toBe("2026-11-21T10:00:00.000Z");
+    expect(store.usage().exhaustedAt).toBe("2026-11-21T10:00:00.000Z");
 
     const budget = new RequestBudget(5);
     await expect(port.searchOffers(cand(2), "US", budget, signal)).rejects.toMatchObject({ kind: "credits_exhausted" });
@@ -106,14 +118,14 @@ describe("EV-005 unit level: spend guard and cache", () => {
     await expect(port.searchOffers(cand(3), "US", new RequestBudget(5), signal)).resolves.toBeDefined();
     expect(existsSync(join(store.root, "ledger", "2026-11.json"))).toBe(true);
     clock.advance(10 * 86400_000);
-    expect(store.ledger.month).toBe("2026-12");
-    expect(store.ledger.read()).toEqual({ requests: 0, costDollars: 0 });
+    expect(monthOf(clock())).toBe("2026-12");
+    expect(store.usage()).toEqual({ requests: 0, costDollars: 0 });
   });
 
   it("treats a credit, quota, or billing message as exhausted even without a 402", async () => {
     const { fake, port, store } = setup([new HttpError(400, "Your account has insufficient credits"), search()]);
     await expect(port.searchOffers(cand(1), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "credits_exhausted" });
-    expect(store.ledger.read().exhaustedAt).toBeDefined();
+    expect(store.usage().exhaustedAt).toBeDefined();
     await expect(port.searchOffers(cand(2), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "credits_exhausted" });
     expect(fake.calls).toHaveLength(1);
   });
@@ -122,7 +134,7 @@ describe("EV-005 unit level: spend guard and cache", () => {
     const { port, store } = setup([new HttpError(500), new HttpError(401)]);
     await expect(port.searchOffers(cand(1), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "upstream" });
     await expect(port.searchOffers(cand(2), "US", new RequestBudget(5), signal)).rejects.toMatchObject({ kind: "auth" });
-    expect(store.ledger.read().exhaustedAt).toBeUndefined();
-    expect(store.ledger.read().requests).toBe(2);
+    expect(store.usage().exhaustedAt).toBeUndefined();
+    expect(store.usage().requests).toBe(2);
   });
 });

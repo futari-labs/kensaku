@@ -1,8 +1,8 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { StoredSearchSchema } from "../../src/exa/cache";
-import { DEFAULT_MONTHLY_COST_LIMIT, DEFAULT_MONTHLY_REQUEST_LIMIT, limitsFromEnv } from "../../src/exa/ledger";
+import { StoredSearchSchema } from "../../src/exa/schemas";
+import { DEFAULT_MONTHLY_COST_LIMIT, DEFAULT_MONTHLY_REQUEST_LIMIT, limitsFromEnv, monthOf } from "../../src/exa/ledger";
 import { fakeClock, storage, tempDir } from "./helpers";
 import { DiskCache } from "../../src/exa/cache";
 import { UsageLedger } from "../../src/exa/ledger";
@@ -15,19 +15,20 @@ describe("DiskCache", () => {
     const { cache } = storage(clock);
     cache.set("k", entry("2026-11-21T10:00:00.000Z"));
     clock.advance(6 * 3600_000 - 1);
-    expect(cache.get("k", StoredSearchSchema)?.retrievedAt).toBe("2026-11-21T10:00:00.000Z");
+    expect(cache.get("k", StoredSearchSchema, clock())?.retrievedAt).toBe("2026-11-21T10:00:00.000Z");
     clock.advance(1);
-    expect(cache.get("k", StoredSearchSchema)).toBeUndefined();
+    expect(cache.get("k", StoredSearchSchema, clock())).toBeUndefined();
   });
 
   it("treats a missing, corrupt, or wrongly shaped file as a miss", () => {
     const dir = tempDir();
-    const cache = new DiskCache({ dir, clock: fakeClock("2026-11-21T10:00:00Z") });
-    expect(cache.get("none", StoredSearchSchema)).toBeUndefined();
+    const cache = new DiskCache({ dir });
+    const now = fakeClock("2026-11-21T10:00:00Z")();
+    expect(cache.get("none", StoredSearchSchema, now)).toBeUndefined();
     writeFileSync(join(dir, "bad.json"), "{not json");
     writeFileSync(join(dir, "shape.json"), JSON.stringify({ version: 1, value: { nope: true } }));
-    expect(cache.get("bad", StoredSearchSchema)).toBeUndefined();
-    expect(cache.get("shape", StoredSearchSchema)).toBeUndefined();
+    expect(cache.get("bad", StoredSearchSchema, now)).toBeUndefined();
+    expect(cache.get("shape", StoredSearchSchema, now)).toBeUndefined();
   });
 
   it("writes atomically: no temporary files remain", () => {
@@ -40,15 +41,15 @@ describe("DiskCache", () => {
 describe("UsageLedger", () => {
   it("accumulates requests and cost in YYYY-MM.json and starts empty each month", () => {
     const clock = fakeClock("2026-11-30T23:00:00Z");
-    const { root, ledger } = storage(clock);
-    ledger.recordRequest();
-    ledger.recordCost(0.012);
-    ledger.recordRequest();
-    ledger.recordCost(0.005);
+    const { root, ledger, usage } = storage(clock);
+    ledger.recordRequest(clock());
+    ledger.recordCost(0.012, clock());
+    ledger.recordRequest(clock());
+    ledger.recordCost(0.005, clock());
     expect(JSON.parse(readFileSync(join(root, "ledger", "2026-11.json"), "utf8"))).toEqual({ requests: 2, costDollars: 0.017 });
     clock.advance(2 * 3600_000);
-    expect(ledger.month).toBe("2026-12");
-    expect(ledger.read()).toEqual({ requests: 0, costDollars: 0 });
+    expect(monthOf(clock())).toBe("2026-12");
+    expect(usage()).toEqual({ requests: 0, costDollars: 0 });
   });
 
   it("fails closed on an unreadable ledger instead of treating it as empty", () => {
@@ -56,8 +57,25 @@ describe("UsageLedger", () => {
     const clock = fakeClock("2026-11-21T10:00:00Z");
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, "2026-11.json"), "garbage");
-    const ledger = new UsageLedger({ dir, clock });
-    expect(() => ledger.assertCanCall()).toThrowError(expect.objectContaining({ kind: "monthly_limit" }));
+    const ledger = new UsageLedger({ dir });
+    expect(() => ledger.assertCanCall(clock())).toThrowError(expect.objectContaining({ kind: "monthly_limit" }));
+  });
+
+  it("fails closed when the ledger cannot be written, with an ExaFailure rather than a plain error", () => {
+    const dir = tempDir();
+    const clock = fakeClock("2026-11-21T10:00:00Z");
+    mkdirSync(join(dir, "2026-11.json"), { recursive: true });
+    const ledger = new UsageLedger({ dir });
+    expect(() => ledger.recordRequest(clock())).toThrowError(expect.objectContaining({ name: "ExaFailure", kind: "monthly_limit" }));
+  });
+
+  it("allows a call that exactly fits under the cost limit and blocks one that cannot", () => {
+    const clock = fakeClock("2026-11-21T10:00:00Z");
+    const { ledger } = storage(clock, { costLimit: 1 });
+    ledger.recordCost(0.98, clock());
+    expect(() => ledger.assertCanCall(clock())).not.toThrow();
+    ledger.recordCost(0.001, clock());
+    expect(() => ledger.assertCanCall(clock())).toThrowError(expect.objectContaining({ kind: "monthly_limit" }));
   });
 
   it("reads limits from the environment with defaults for missing or invalid values", () => {

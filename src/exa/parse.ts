@@ -1,49 +1,55 @@
 import { z } from "zod";
 import type { Candidate, OfferSummary, SearchHit } from "../core/types";
 import { ExaFailure } from "./errors";
+import { CandidateSchema, OfferSummarySchema } from "./schemas";
 
-const CandidateSchema = z.object({
-  name: z.string(),
-  brand: z.string(),
-  modelIdentifiers: z.array(z.string()),
+/** What every response is billed for, read before and independently of strict parsing. */
+export interface Billing {
+  costDollars: number;
+  /** False when the response carried no usable `costDollars.total`; the cost is then recorded as 0. */
+  costReported: boolean;
+}
+
+const BillingSchema = z.object({
+  costDollars: z.object({ total: z.number().finite().nonnegative() }),
 });
 
-const lenient = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined);
+/** Never throws. A received response is billed whether or not its body is usable. */
+export function readBilling(raw: unknown): Billing {
+  const r = BillingSchema.safeParse(raw);
+  return r.success ? { costDollars: r.data.costDollars.total, costReported: true } : { costDollars: 0, costReported: false };
+}
 
-const OfferSummarySchema = z.object({
-  isProductListing: lenient(z.boolean()),
-  productName: lenient(z.string()),
-  merchant: lenient(z.string()),
-  price: lenient(z.number()),
-  currency: lenient(z.string()),
-  availability: lenient(z.string()),
-});
+const RequestId = z.string().min(1);
 
 const AnswerBodySchema = z.object({
-  requestId: z.string().optional(),
+  requestId: RequestId,
   answer: z.object({ comparison: z.string(), candidates: z.array(CandidateSchema) }),
-  citations: z.array(z.object({ url: z.string() })).default([]),
-  costDollars: z.object({ total: z.number() }).optional(),
+  citations: z
+    .array(z.object({ url: z.string() }))
+    .nullish()
+    .transform((c) => c ?? []),
 });
 
 const SearchBodySchema = z.object({
-  requestId: z.string().optional(),
-  results: z.array(z.object({ url: z.string(), title: z.string().nullish(), summary: z.unknown().optional() })),
-  costDollars: z.object({ total: z.number() }).optional(),
+  requestId: RequestId,
+  results: z.array(z.unknown()),
 });
+
+const SearchRowSchema = z.object({ url: z.string(), title: z.string().nullish(), summary: z.unknown().optional() });
 
 export interface ParsedAnswer {
   comparison: string;
   candidates: Candidate[];
   citationUrls: string[];
   exaRequestId: string;
-  costDollars: number;
 }
 
 export interface ParsedSearch {
   hits: Omit<SearchHit, "retrievedAt">[];
   exaRequestId: string;
-  costDollars: number;
+  /** Result rows dropped because they were malformed. */
+  skipped: number;
 }
 
 function malformed(what: string): ExaFailure {
@@ -76,26 +82,24 @@ export function parseAnswerResponse(raw: unknown): ParsedAnswer {
     comparison: r.data.answer.comparison,
     candidates: r.data.answer.candidates.slice(0, 3),
     citationUrls: r.data.citations.map((c) => c.url),
-    exaRequestId: r.data.requestId ?? "",
-    costDollars: r.data.costDollars?.total ?? 0,
+    exaRequestId: r.data.requestId,
   };
 }
 
-/** Boundary parse of a raw `/search` response. */
+/** Boundary parse of a raw `/search` response. A malformed row is skipped and counted, not fatal. */
 export function parseSearchResponse(raw: unknown): ParsedSearch {
   const r = SearchBodySchema.safeParse(raw);
   if (!r.success) throw malformed("search");
-  const exaRequestId = r.data.requestId ?? "";
-  return {
-    hits: r.data.results.map((hit) => ({
-      url: hit.url,
-      title: hit.title ?? null,
-      summary: parseSummary(hit.summary),
-      exaRequestId,
-    })),
-    exaRequestId,
-    costDollars: r.data.costDollars?.total ?? 0,
-  };
+  const exaRequestId = r.data.requestId;
+  const hits: ParsedSearch["hits"] = [];
+  let skipped = 0;
+  for (const row of r.data.results) {
+    const hit = SearchRowSchema.safeParse(row);
+    if (!hit.success) {
+      skipped += 1;
+      continue;
+    }
+    hits.push({ url: hit.data.url, title: hit.data.title ?? null, summary: parseSummary(hit.data.summary), exaRequestId });
+  }
+  return { hits, exaRequestId, skipped };
 }
-
-export { CandidateSchema };

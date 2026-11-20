@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RequestBudget } from "../../src/exa/budget";
@@ -11,7 +11,7 @@ const signal = new AbortController().signal;
 const clock = fakeClock("2026-11-21T10:00:00Z");
 
 describe("scenario files", () => {
-  const names = readdirSync(scenariosDir).map((f) => f.replace(/\.json$/, ""));
+  const names = readdirSync(scenariosDir).filter((f) => f.endsWith(".json")).map((f) => f.replace(/\.json$/, ""));
 
   it("include the three baseline scenarios", () => {
     expect(names).toEqual(expect.arrayContaining(["xm5-us", "xm5-sg", "xm5-jp"]));
@@ -19,7 +19,6 @@ describe("scenario files", () => {
 
   it.each(names)("%s is valid, labels synthetic steps, and references only existing frozen files", (name) => {
     const scenario = loadScenario(name);
-    expect(ScenarioSchema.parse(JSON.parse(readFileSync(join(scenariosDir, `${name}.json`), "utf8")))).toEqual(scenario);
     for (const step of scenario.steps) {
       if (step.response?.candidates || step.error) expect(step.label).toMatch(/^SYNTHETIC/);
       if (step.response) {
@@ -29,8 +28,30 @@ describe("scenario files", () => {
     }
   });
 
-  it("rejects names and refs that escape their directories", () => {
+  it("rejects names that escape the scenarios directory", () => {
     expect(() => loadScenario("../x")).toThrow();
+  });
+
+  it("rejects a synthetic step without a SYNTHETIC label", () => {
+    const step = (extra: object) => ({ name: "x", description: "d", steps: [{ op: "answer", ...extra }] });
+    const candidates = [{ name: "n", brand: "b", modelIdentifiers: [] }];
+    const response = { ref: "evals/fixtures/exa-live/A1-answer.json", candidates };
+    expect(ScenarioSchema.safeParse(step({ response })).success).toBe(false);
+    expect(ScenarioSchema.safeParse(step({ response, label: "just a note" })).success).toBe(false);
+    expect(ScenarioSchema.safeParse(step({ error: { kind: "auth" } })).success).toBe(false);
+    expect(ScenarioSchema.safeParse(step({ response, label: "SYNTHETIC composed answer" })).success).toBe(true);
+  });
+
+  it("rejects a ref outside evals/fixtures/ when the step is replayed", async () => {
+    const scenario = ScenarioSchema.parse({
+      name: "escape",
+      description: "d",
+      steps: [{ op: "search", response: { ref: "package.json" } }],
+    });
+    const port = new FixtureExaPort(scenario, { clock });
+    await expect(port.searchOffers({ name: "a", brand: "b", modelIdentifiers: [] }, "US", new RequestBudget(5), signal)).rejects.toMatchObject({
+      kind: "upstream",
+    });
   });
 });
 
@@ -73,6 +94,15 @@ describe("FixtureExaPort baselines", () => {
     await expect(port.searchOffers({ name: "a", brand: "b", modelIdentifiers: [] }, "US", new RequestBudget(5), signal)).rejects.toThrow(/is answer, called search/);
   });
 
+  it("honours answerMarketMode like the live port: a different mode is a different cache key", async () => {
+    const s = storage(clock);
+    await FixtureExaPort.load("xm5-us", { clock, cache: s.cache }).answerCandidates("Q", "US", new RequestBudget(5), signal);
+    const sameMode = FixtureExaPort.load("xm5-us", { clock, cache: s.cache });
+    expect(await sameMode.answerCandidates("Q", "US", new RequestBudget(5), signal)).toMatchObject({ cached: true });
+    const otherMode = FixtureExaPort.load("xm5-us", { clock, cache: s.cache, answerMarketMode: "question-text" });
+    expect(await otherMode.answerCandidates("Q", "US", new RequestBudget(5), signal)).toMatchObject({ cached: false });
+  });
+
   it("honours an injected cache and ledger exactly like the live port", async () => {
     const s = storage(clock);
     const port = FixtureExaPort.load("xm5-us", { clock, cache: s.cache, ledger: s.ledger });
@@ -82,6 +112,6 @@ describe("FixtureExaPort baselines", () => {
     expect(again).toMatchObject({ cached: true, retrievedAt: first.retrievedAt, costDollars: 0 });
     expect(port.calls).toBe(1);
     expect(budget.used).toBe(0);
-    expect(s.ledger.read()).toEqual({ requests: 1, costDollars: 0.005 });
+    expect(s.usage()).toEqual({ requests: 1, costDollars: 0.005 });
   });
 });

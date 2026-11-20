@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { RequestBudget } from "../../src/exa/budget";
-import { ExaFailure } from "../../src/exa/errors";
 
 describe("RequestBudget", () => {
   it("issues five tokens and refuses the sixth", () => {
@@ -9,12 +8,7 @@ describe("RequestBudget", () => {
       budget.take();
       expect(budget.used).toBe(i);
     }
-    expect(() => budget.take()).toThrowError(ExaFailure);
-    try {
-      budget.take();
-    } catch (e) {
-      expect((e as ExaFailure).kind).toBe("budget_exhausted");
-    }
+    expect(() => budget.take()).toThrowError(expect.objectContaining({ kind: "budget_exhausted" }));
     expect(budget.used).toBe(5);
   });
 

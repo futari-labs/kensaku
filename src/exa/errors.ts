@@ -1,11 +1,14 @@
-export type ExaFailureKind =
-  | "auth"
-  | "credits_exhausted"
-  | "monthly_limit"
-  | "rate_limited"
-  | "upstream"
-  | "timeout"
-  | "budget_exhausted";
+export const EXA_FAILURE_KINDS = [
+  "auth",
+  "credits_exhausted",
+  "monthly_limit",
+  "rate_limited",
+  "upstream",
+  "timeout",
+  "budget_exhausted",
+] as const;
+
+export type ExaFailureKind = (typeof EXA_FAILURE_KINDS)[number];
 
 export class ExaFailure extends Error {
   readonly kind: ExaFailureKind;
