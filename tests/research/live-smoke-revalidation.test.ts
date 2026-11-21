@@ -1,56 +1,21 @@
-// Revalidation of the committed live smoke logs (.futari/evidence/live/jm-004-smoke-*.json): every
-// displayed offer is reclassified from the recorded Exa response and must equal what was displayed.
-// This is a self-consistency check (it detects display or pipeline mutation, not extraction errors).
+// Revalidation of the committed live logs under .futari/evidence/live/ (JM-004 smoke logs, one per
+// query, and EV-008 suite run logs, one per run): every displayed offer is reclassified from the
+// recorded Exa response and must equal what was displayed. See revalidate.ts. Skips when none exist.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { classifyHit } from "../../src/core";
 import type { Candidate, Offer } from "../../src/core/types";
-import { parseAnswerResponse, parseSearchResponse } from "../../src/exa/parse";
+import { parseSearchResponse } from "../../src/exa/parse";
 import { frozen } from "../exa/helpers";
+import { offersOf, revalidate } from "./revalidate";
+import type { RecordedRun } from "./revalidate";
 
 const DIR = join(import.meta.dirname, "../../.futari/evidence/live");
 
-interface Product {
-  candidate: Candidate;
-  offerGroups: { offers: Offer[] }[];
-}
-export interface SmokeLog {
-  queryId: string;
-  finalState: string;
-  exaExchanges: { endpoint: string; response: unknown }[];
-  displayed: { products: Product[] | null };
-}
-
-/** Returns one message per displayed offer or candidate that the recorded responses do not reproduce. */
-export function revalidate(log: SmokeLog): string[] {
-  const problems: string[] = [];
-  const answers = log.exaExchanges.filter((e) => e.endpoint === "/answer").map((e) => parseAnswerResponse(e.response));
-  const searches = log.exaExchanges.filter((e) => e.endpoint === "/search").map((e) => parseSearchResponse(e.response));
-  const runUrls = new Set(searches.flatMap((s) => s.hits.map((h) => h.url)));
-
-  for (const product of log.displayed.products ?? []) {
-    const name = `${product.candidate.brand} ${product.candidate.name}`;
-    if (!answers.some((a) => a.candidates.some((c) => JSON.stringify(c) === JSON.stringify(product.candidate)))) {
-      problems.push(`${name}: candidate is not in the recorded answer`);
-    }
-    for (const offer of product.offerGroups.flatMap((g) => g.offers)) {
-      const search = searches.find((s) => s.exaRequestId === offer.exaRequestId);
-      if (!search) {
-        problems.push(`${offer.canonicalUrl}: no recorded search response with request ${offer.exaRequestId}`);
-        continue;
-      }
-      const again = search.hits
-        .map((hit) => classifyHit({ ...hit, retrievedAt: offer.retrievedAt }, product.candidate, runUrls))
-        .filter((r): r is Offer => r.kind === "merchant-offer");
-      if (!again.some((o) => JSON.stringify(o) === JSON.stringify(offer))) problems.push(`${offer.canonicalUrl}: reclassification differs from what was displayed`);
-    }
-  }
-  return problems;
-}
-
+type SmokeLog = RecordedRun;
 const files = existsSync(DIR) ? readdirSync(DIR).filter((f) => /^jm-004-smoke-.*\.json$/.test(f)) : [];
-const offersOf = (log: SmokeLog) => (log.displayed.products ?? []).flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
+const suiteFiles = existsSync(DIR) ? readdirSync(DIR).filter((f) => /^ev-008-run-\d+-.*\.json$/.test(f)) : [];
 
 describe.skipIf(files.length === 0)("live smoke revalidation (committed logs)", () => {
   it.each(files)("%s: every displayed offer is reproduced from the recorded responses", (file) => {
@@ -64,6 +29,13 @@ describe.skipIf(files.length === 0)("live smoke revalidation (committed logs)", 
     const log = JSON.parse(readFileSync(join(DIR, q1), "utf8")) as SmokeLog;
     expect(log.finalState).toBe("completed");
     expect(offersOf(log).length).toBeGreaterThan(0);
+  });
+});
+
+describe.skipIf(suiteFiles.length === 0)("EV-008 suite run logs (committed)", () => {
+  it.each(suiteFiles)("%s: every displayed offer in every query is reproduced from the recorded responses", (file) => {
+    const run = JSON.parse(readFileSync(join(DIR, file), "utf8")) as { queries: RecordedRun[] };
+    for (const query of run.queries) expect(revalidate(query), query.queryId).toEqual([]);
   });
 });
 

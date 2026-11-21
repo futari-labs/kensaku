@@ -209,15 +209,17 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     yield offersStage.running;
 
     const search = async (candidate: Candidate): Promise<Searched> => {
+      let hits: SearchHit[];
       try {
-        const result = await exaCall("offers", "search", (s) => port.searchOffers(candidate, market, budget, s));
-        return { status: "searched", classified: classifyAll(candidate, result.hits) };
+        hits = (await exaCall("offers", "search", (s) => port.searchOffers(candidate, market, budget, s))).hits;
       } catch (error) {
         if (error instanceof Cancelled) throw error;
         const failure = mapExaError(error);
         if (!isRunFailure(failure)) return { status: "not-searched", candidate, reason: NOT_SEARCHED_BUDGET };
         return { status: "failed", candidate, failure };
       }
+      // Outside the try: a classification bug is a bug, not an Exa failure.
+      return { status: "searched", classified: classifyAll(candidate, hits) };
     };
     const notSearched = (candidate: Candidate, reason: string): Searched => ({ status: "not-searched", candidate, reason });
 

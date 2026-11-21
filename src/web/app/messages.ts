@@ -45,10 +45,6 @@ export function viewOf(message: ChatMessage | undefined): RunView {
 
 export type ClientRunState = RunState | "running";
 
-/**
- * Where a run stands for the person watching. A failed request (HTTP 4xx, broken connection) is failed
- * from the moment `useChat` reports it, before its error part is stored in the message.
- */
 /** The view of a question that has no answer yet. */
 export const emptyView = (): RunView => viewOf(undefined);
 
