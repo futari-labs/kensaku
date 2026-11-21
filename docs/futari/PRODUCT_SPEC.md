@@ -72,11 +72,11 @@ REQ-001 to REQ-010 carry over from the MVP. Changes:
 New:
 
 - **REQ-011 Theme.** Dark by default regardless of the OS setting; header toggle with an action-naming accessible name; `localStorage["kensaku.theme.v1"]` holds `dark` or `light`; a blocking head script applies the theme before the app bundle, so there is no flash; invalid or unavailable storage falls back to dark; only the shadcn `.dark` class and existing CSS variables.
-- **REQ-012 Image-first product cards.** Two cards per row at 1280 px (each at least 480 px wide), one at 375 px with no horizontal scroll; full-width 4:3 image (at least 360 px tall on desktop, 250 px on mobile); content order and labels as in the journey; the product heading never names a merchant; reason citations use AI Elements `inline-citation`.
+- **REQ-012 Image-first product cards.** Two cards per row at 1280 px (each at least 480 px wide), one at 375 px with no horizontal scroll; full-bleed 4:3 image (at least 360 px tall on desktop; at least 300 px wide, so 225 px tall, at 375 px); content order and labels as in the journey; the product heading never names a merchant; reason citations use AI Elements `inline-citation`.
 - **REQ-013 Real product images.** Up to 4 candidates per product chosen by rules I1 and I2 from this run's offer pages or the manufacturer's page; skeleton, ordered fallback, "No verified product image"; caption with source host and page title; alt text "<brand> <name>, image from <host>"; nothing generated or edited.
-- **REQ-014 Image proxy safety and cache.** Only run-registered ids; public addresses only (checked on every redirect); no cookies or Referer; 8 s, 5 MiB, rule I3; nosniff and a `default-src 'none'` CSP on image responses; 7-day cache for accepted images, 24 hours for rejections; no Exa use.
+- **REQ-014 Image proxy safety and cache.** Only run-registered ids; cross-site requests refused (`Sec-Fetch-Site`, `Cross-Origin-Resource-Policy: same-origin`); ports 80 and 443 only; public addresses only, checked on every redirect and pinned for the connection; no cookies or Referer; 8 s, 5 MiB, rule I3; nosniff and a `default-src 'none'` CSP on image responses; images reused for 7 days, rejections cached 24 hours, upstream failures 10 minutes, entries pruned after 30 days, 500 MB cap; no Exa use.
 - **REQ-015 Market relevance.** Offer query `"<brand> <name> price <market name> buy"`; main list and price summary in the market's currency only; other currencies collapsed under "Other markets"; prices shown as amount plus ISO code.
-- **REQ-016 Non-merchant pages and currency symbols.** Rule additions 4, 5, 5a, 5b, 5c, and 7 (ARCHITECTURE); EV-011 passes 57/57 including the run 1 Rakuten search page.
+- **REQ-016 Non-merchant pages and currency symbols.** Rule additions 4, 5, 5a, 5b, 5c, and 7 (ARCHITECTURE); EV-011 passes 79/79 including the run 1 Rakuten search page.
 
 Full acceptance criteria are in `.futari/plan.json`.
 
@@ -85,7 +85,7 @@ Full acceptance criteria are in `.futari/plan.json`.
 - Cost: unchanged per question (about $0.035; at most 5 Exa requests). Images add no Exa cost. The longer `/answer` schema did not change the reported price in the spike ($0.005).
 - Latency (reported in EV-016, not gating): first progress event within 1 s; completed run within 45 s at the median; an image typically appears within 2 s of its card when the merchant's CDN responds.
 - Privacy: the browser contacts only 127.0.0.1. The server contacts Exa with the question (as in the MVP) and merchant image hosts with plain image requests that carry no cookies, credentials, or Referer.
-- Disk: the image cache under `.cache/images/` holds at most what recent runs registered; entries expire after 7 days.
+- Disk: the image cache under `.cache/images/` reuses images for 7 days and then refetches them. Entries are pruned 30 days after their last registration, and the bytes are capped at 500 MB in total.
 
 ## Acceptance
 

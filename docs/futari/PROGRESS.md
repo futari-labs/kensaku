@@ -7,10 +7,18 @@ Phase: **v1.1 planning** (plan `kensaku-v1-1`, unapproved). The MVP plan `kensak
 - Started with `/futari:bootstrap Kensaku v1.1 — change request on top of approved kensaku-mvp-v1`, with the owner's v1.1 brief (dark mode, image-first cards, real product images, CR-002 and merchant classification, Singapore investigation, engineering requirements).
 - Worktree `.claude/worktrees/v1-1-plan`, branch `v1-1-plan`, from `dev` `a3a2894`.
 - Owner decisions on AskUserQuestion cards: local image proxy with cache (D-029); collapse other-market offers (D-030); pre-approval spike ≤ 10 requests (D-028); classification additions and currency symbols (D-031, D-032); live budget ≤ 130 requests / ≤ $1.50 (D-034); MVP execution limits (D-035).
-- Spike: 8 Exa requests, $0.10 of free credits; image probe with no Exa use. Findings in `research/v1-1-spike-2026-11-21.md`. The Singapore cause was found and fixed in the plan (D-033).
-- Frozen v1.1 inputs: 57 classification cases, 115 image cases, 3 content cases, 8 live queries, 10 new live fixtures. A reference implementation of the written rules reproduces all 54 MVP labels; the v1.1 rules change only L29 and Y03, recorded as supersessions.
+- Spike: 10 Exa requests, $0.11 of free credits (cap reached); image probe with no Exa use. Findings in `research/v1-1-spike-2026-11-21.md`. The Singapore cause was found and fixed in the plan (D-033).
+- Independent review of `910ed96` (fable, read-only): CHANGES REQUIRED, 22 findings (3 blocking), all labels confirmed correct. All findings resolved (REVIEW.md, D-041). The image proxy became JM-103, and the later tasks were renumbered to JM-104 to JM-106.
+- Frozen v1.1 inputs:
+  - 79 classification cases;
+  - 148 image cases (80 URL, 10 selection, 58 bytes);
+  - 6 content answers (14 candidates);
+  - 8 live queries;
+  - 12 new live fixtures and a real MVP history fixture.
+
+  A reference implementation of the written rules reproduces all 54 MVP labels, and the v1.1 rules change only L29 and Y03, recorded as supersessions. No single-rule mutation survives.
 - `node evals/harness.mjs`: HARNESS OK (exit 0); `--strict` fails until JM-101 by design.
-- Next step: independent review, then the approval card. Nothing executes before an `Approve plan` selection.
+- Next step: re-review of the corrected revision, then the approval card. Nothing executes before an `Approve plan` selection.
 
 ## Execution session 2026-11-21
 

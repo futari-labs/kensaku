@@ -6,7 +6,7 @@
 //   2. Does an extended /answer outputSchema return per-candidate key specs and a cited reason?
 //   3. How often does Exa's `image` field point at a usable product image?
 // Reads EXA_API_KEY from EXA_ENV_FILE (never printed, never copied). Saves each response as a
-// labeled live fixture under spikes/exa-v1-1/out/. Usage: node spikes/exa-v1-1/spike.mjs [--dry-run] [--followup]
+// labeled live fixture under spikes/exa-v1-1/out/. Usage: node spikes/exa-v1-1/spike.mjs [--dry-run] [--followup | --identifiers]
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -95,6 +95,17 @@ const followup = [
 ];
 const isFollowup = process.argv.includes("--followup");
 
+// Run 3 (--identifiers, 2 requests): V8 returned feature names as modelIdentifiers (independent
+// review finding 10). Test a tighter identifier description on the same Q2 text and on Q6.
+const TIGHT_SCHEMA = structuredClone(NO_PRICE_SCHEMA);
+TIGHT_SCHEMA.properties.candidates.items.properties.modelIdentifiers.description =
+  "Manufacturer model names or model numbers only (for example WH-1000XM5 or MX Master 3S). No features, specifications, colours, connectivity, or generation labels.";
+const identifiers = [
+  { id: "V9-answer-us-tight-identifiers", endpoint: "/answer", body: { query: "Best ergonomic wireless mouse for programming under $120", text: false, outputSchema: TIGHT_SCHEMA, userLocation: "US" } },
+  { id: "V10-answer-jp-tight-identifiers", endpoint: "/answer", body: { query: "Kindle Paperwhite 2024 price in Japan", text: false, outputSchema: TIGHT_SCHEMA, userLocation: "JP" } },
+];
+const isIdentifiers = process.argv.includes("--identifiers");
+
 function loadKey() {
   const envPath = process.env.EXA_ENV_FILE ? resolve(process.env.EXA_ENV_FILE) : "";
   if (!envPath || !existsSync(envPath)) throw new Error("Set EXA_ENV_FILE to the untracked .env.local holding EXA_API_KEY");
@@ -105,7 +116,7 @@ function loadKey() {
 }
 
 const used = existsSync(counterPath) ? Number(readFileSync(counterPath, "utf8").trim()) || 0 : 0;
-const needed = isFollowup ? followup.length : fixed.length + DYNAMIC_SEARCHES;
+const needed = isIdentifiers ? identifiers.length : isFollowup ? followup.length : fixed.length + DYNAMIC_SEARCHES;
 if (used + needed > HARD_CAP) {
   console.error(`Refusing: ${used} used; this run needs up to ${needed}; hard cap ${HARD_CAP}.`);
   process.exit(2);
@@ -156,8 +167,8 @@ async function call(p) {
   return body;
 }
 
-if (isFollowup) {
-  for (const p of followup) await call(p);
+if (isFollowup || isIdentifiers) {
+  for (const p of isIdentifiers ? identifiers : followup) await call(p);
   console.log(`Done. Requests used: ${count}/${HARD_CAP}. Reported cost: $${totalCost.toFixed(4)} (free credits).`);
   process.exit(0);
 }

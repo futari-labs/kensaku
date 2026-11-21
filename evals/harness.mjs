@@ -10,7 +10,7 @@
 // Usage: node evals/harness.mjs            (exit 1 only if cases/fixtures are invalid)
 //        node evals/harness.mjs --strict   (also exit 1 while EV-004 does not load the CR-001 spaced cases,
 //                                           or EV-001 does not apply the kensaku-v1-1 supersessions)
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -105,7 +105,12 @@ for (const c of ocv.cases) {
   if (c.fixture) {
     const f = fixture(c.fixture);
     check(f?._label?.startsWith("LIVE EXA RESPONSE"), `${c.id}: fixture ${c.fixture} missing or not labeled live`);
-    check(f?.response?.results?.[c.resultIndex]?.url, `${c.id}: ${c.fixture} has no result ${c.resultIndex}`);
+    const r = f?.response?.results?.[c.resultIndex];
+    check(r?.url, `${c.id}: ${c.fixture} has no result ${c.resultIndex}`);
+    if (r && e.outcome === "merchant-offer") {
+      let s; try { s = JSON.parse(r.summary); } catch { s = null; }
+      check(s && s.price === e.amount, `${c.id}: expected amount ${e.amount} differs from fixture price ${s?.price}`);
+    }
   } else {
     check(c.synthetic?.url && c.synthetic?.summary, `${c.id}: synthetic case needs url and summary`);
   }
@@ -121,12 +126,13 @@ check(ocv.cases.filter((c) => c.fixture).length >= 40, "offer-classification-v1-
 // EV-012 cases (product card content)
 const pc = read("evals/cases/product-content.json");
 for (const c of pc.cases) {
-  const f = fixture(c.fixture);
-  check(f?.response?.answer?.candidates?.length === c.candidates.length, `${c.id}: candidate count differs from ${c.fixture}`);
+  const f = c.fixture ? fixture(c.fixture) : null;
+  const answerCandidates = c.fixture ? f?.response?.answer?.candidates : c.synthetic?.candidates;
+  check(answerCandidates?.length === c.candidates.length, `${c.id}: candidate count differs from its answer`);
   for (const k of c.candidates) {
     const specs = k.expected.keySpecs;
     check(Array.isArray(specs) && specs.length <= 5 && specs.every((s) => typeof s === "string" && s.length > 0 && s.length <= 80), `${c.id}#${k.candidateIndex}: keySpecs must be at most 5 strings of 1-80 characters`);
-    const urls = (f?.response?.citations ?? []).map((x) => x.url);
+    const urls = c.fixture ? (f?.response?.citations ?? []).map((x) => x.url) : c.synthetic.citations;
     if (k.expected.reason) for (const u of k.expected.reason.sources) check(urls.includes(u), `${c.id}#${k.candidateIndex}: source ${u} is not a citation of ${c.fixture}`);
   }
 }
@@ -138,14 +144,22 @@ const BYTE_VERDICTS = ["ok", "too-large", "unsupported-type", "no-dimensions", "
 for (const c of im.urlCases) check(URL_VERDICTS.includes(c.expected) && typeof c.imageUrl === "string", `${c.id}: invalid url case`);
 for (const c of im.bytesCases) check(BYTE_VERDICTS.includes(c.expected), `${c.id}: invalid bytes verdict ${c.expected}`);
 for (const c of im.selectionCases) {
-  const f = fixture(c.fixture);
+  const results = c.fixture ? fixture(c.fixture)?.response?.results : c.synthetic?.hits;
+  check(Array.isArray(results), `${c.id}: needs a fixture or synthetic hits`);
   check(v11Candidates[c.candidate] && ["US", "SG", "JP"].includes(c.market), `${c.id}: unknown candidate or market`);
   check(c.expected.length <= 4, `${c.id}: at most 4 image candidates`);
   for (const e of c.expected) {
-    const r = f?.response?.results?.find((x) => x.url === e.pageUrl);
-    check(r && r.image === e.imageUrl, `${c.id}: ${e.pageUrl} with that image is not a result of ${c.fixture}`);
+    const r = results?.find((x) => x.url === e.pageUrl);
+    check(r && r.image === e.imageUrl, `${c.id}: ${e.pageUrl} with that image is not one of its hits`);
   }
 }
+
+// EV-015 / REQ-009: real MVP history payload (review finding 14)
+const mh = read("evals/fixtures/history/mvp-history-xm5-sg.json");
+check(mh.key === "kensaku.history.v1" && mh._label?.startsWith("REAL kensaku.history.v1"), "mvp-history: key and label required");
+let mhValue = null;
+try { mhValue = JSON.parse(mh.value); } catch { /* checked below */ }
+check(mhValue?.version === 1 && Array.isArray(mhValue?.messages) && mh.value.includes("data-products"), "mvp-history: value must be a version 1 history with a data-products part");
 
 // EV-016 query set (kensaku-v1-1 live acceptance)
 const lv = read("evals/cases/live-acceptance-v1-1.json");
@@ -154,10 +168,12 @@ for (const [m, n] of [["US", 2], ["SG", 4], ["JP", 2]]) check(lv.queries.filter(
 for (const q of la.queries) check(lv.queries.some((x) => x.id === q.id && x.market === q.market && x.text === q.text), `live-acceptance-v1-1: MVP query ${q.id} must be unchanged`);
 check(lv.budget.maxRequestsPerQuery <= 5 && lv.budget.maxRequestsPerSuiteRun <= 40 && lv.budget.maxSuiteRuns <= 3 && lv.budget.maxReportedCostDollarsPerSuiteRun <= 0.5, "live-acceptance-v1-1: budget exceeds the approved caps");
 
-// Fixture hygiene: no key-like strings in any fixture.
-for (const f of fixtureCache.values()) {
-  const s = JSON.stringify(f ?? {});
-  check(!/EXA_API_KEY|x-api-key|authorization/i.test(s), `fixture ${f?.id}: contains credential-like text`);
+// Fixture hygiene: no key-like strings in any fixture file, referenced or not (review finding 20).
+for (const dir of ["evals/fixtures/exa-live", "evals/fixtures/history"]) {
+  for (const name of readdirSync(join(root, dir))) {
+    const s = readFileSync(join(root, dir, name), "utf8");
+    check(!/EXA_API_KEY|x-api-key|authorization/i.test(s), `${dir}/${name}: contains credential-like text`);
+  }
 }
 
 // Per-evaluation readiness. Paths are the test files tasks must create (see .futari/plan.json).

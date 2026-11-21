@@ -47,12 +47,13 @@ A fixed procedure, not an open-ended agent loop (adopted from the Aria Labs and 
 1. **Cache lookup.** Key = SHA-256 of `{endpoint, normalized request body, market}`. A hit returns the stored response with its original `receivedAt` and costs no request. TTL 6 hours.
 2. **Stage `candidates` (1 request).** `exa.answer(question, { outputSchema })` with schema `{ comparison: string, candidates: [{ name, brand, modelIdentifiers[] }] (max 3) }` and the market's `userLocation`. Spike A2 confirmed this returns cited comparison text plus candidates in one $0.005 call.
    `userLocation` on `/answer` is unverified (spike A2 omitted it). If the API rejects or ignores it, `ExaSdkPort` omits it and appends "Market: United States | Singapore | Japan" to the question text instead; the live smoke records which path works. (EV-008 run 1 used `userLocation` successfully.)
-   **(v1.1)** Each candidate item in the `outputSchema` gains two properties, and `required` becomes `["name", "brand", "modelIdentifiers", "keySpecs", "reason"]` (spike V1, V8):
+   **(v1.1)** The binding `outputSchema` is `request.body.outputSchema` of the frozen fixture `evals/fixtures/exa-live/V9-answer-us-tight-identifiers.json` (EV-017 deep-equals it). Compared with the MVP schema, each candidate item gains two properties, the `modelIdentifiers` description is tightened (spike V8 returned feature names such as "Easy-Switch"; V9 returned only "MX Vertical"), and `required` becomes `["name", "brand", "modelIdentifiers", "keySpecs", "reason"]`:
    ```json
+   "modelIdentifiers": { "type": "array", "items": { "type": "string" }, "description": "Manufacturer model names or model numbers only (for example WH-1000XM5 or MX Master 3S). No features, specifications, colours, connectivity, or generation labels." },
    "keySpecs": { "type": "array", "maxItems": 5, "items": { "type": "string" }, "description": "Up to 5 short key specifications, each under 60 characters." },
    "reason": { "type": "string", "description": "One or two sentences on why this product fits the question, with numbered citation markers like [1]. Do not mention prices or currency amounts." }
    ```
-   Everything else in the request is unchanged. The parser treats both fields as optional, because cached MVP answers and stored history lack them.
+   Everything else in the request is unchanged. The parser treats `keySpecs` and `reason` as optional, because cached MVP answers and stored history lack them.
 3. **Stage `offers` (1 request per candidate).** Search candidates 1 and 2. Search candidate 3 only if candidates 1 and 2 together yielded zero merchant offers and a budget token remains. Request: `exa.search("<brand> <name> price <market name> buy", { type: "auto", numResults: 8, userLocation, contents: { highlights: true, summary: { query, schema: OfferSummarySchema } } })`, where the market name is `United States`, `Singapore`, or `Japan` **(v1.1, D-033; the MVP query was `"<brand> <name> buy"`, which returned US stores for SG questions, spike V-F1/V-F2)**. `OfferSummarySchema` is the spike's schema: `isProductListing`, `productName`, `merchant`, `price`, `currency`, `availability`. About $0.015 per call. The cache key includes the query, so v1.1 never reuses an MVP offer search.
 4. **Stage `validate` (no request).** `src/core` classifies every result as a merchant offer, labeled evidence, or rejected (rules below), then ranks offers. **(v1.1)** It also selects each product's image candidates (rules I1 and I2) and registers their URLs with the image proxy, and normalizes `keySpecs` and resolves `reason` (Product content).
 5. **Stage `compare` (no request).** Resolves the comparison's `[n]` markers against the answer's citations.
@@ -106,16 +107,18 @@ Defined in `evals/cases/citations.json` `rule`. Markers resolve 1-based into the
 Defined in `evals/cases/product-content.json` `rules` (EV-012):
 
 - `normalizeKeySpecs(value)`: trim each string; drop empty strings and strings longer than 80 characters; drop exact duplicates, keeping the first; keep at most 5 in Exa's order. A missing or non-array value gives `[]`.
-- `resolveReason(reason, citationUrls)`: a non-empty string is resolved with `resolveCitations` against the same citations as the comparison (EV-004 rule, unchanged); a missing, non-string, or whitespace-only reason gives `null`.
-- Card prices come only from merchant offers. Kensaku does not edit Exa's reason text; the schema asks Exa not to mention prices (spike V8 complied; risk R-20).
+- `resolveReason(reason, citationUrls)`: a non-empty string is resolved with `resolveCitations` against the same citations as the comparison (EV-004 rule, unchanged). A missing, non-string, or whitespace-only reason gives `null`. So does a reason containing `{` or `}`: spike V9 returned a reason ending in leaked structured output (`…[4].}},{brand:{citations:[4],confidence:`).
+- Card prices come only from merchant offers. Kensaku does not edit Exa's reason text. The schema asks Exa not to mention prices; V8 complied, but V10 still quoted "39,980 yen" (risk R-20).
+- The card reads key specs and the reason only from the normalized `data-products` entry fields, never from the raw `Candidate` fields.
 
 ## Product images (v1.1)
 
 The rules are frozen in `evals/cases/image-selection.json` `rules` (EV-013). Summary:
 
-- **I1, URL eligibility (no network).** At most 2048 characters; parses; `http` or `https`; no username or password; the last path segment, percent-decoded and lowercased, does not end in `.svg` and contains none of `logo`, `social`, `share`, `placeholder`, `missing`, `noimage`, `no-image`, `no_image`, `sprite`, `banner`, `campaign`, `brandimage`, `uedata`, `pixel`, `spacer`, `favicon`, `1x1`. Tokens apply to the file name only, because real product photos live under paths such as Courts' `/default/` (spike V-F9).
+- **I1, URL eligibility (no network).** At most 2048 characters; parses; `http` or `https`; no username or password; the file name (text after the last `/` of the path, percent-decoded or as written if decoding fails, lowercased), does not end in `.svg` and contains none of `logo`, `social`, `share`, `placeholder`, `missing`, `noimage`, `no-image`, `no_image`, `sprite`, `banner`, `campaign`, `brandimage`, `uedata`, `pixel`, `spacer`, `favicon`, `1x1`. Tokens apply to the file name only, because real product photos live under paths such as Courts' `/default/` (spike V-F9).
 - **I2, eligible pages and order.** Per product, in Exa result order across that product's searches: tier 1 is merchant offers in the selected market's currency; tier 2 is pages on a manufacturer host (host labels include the brand, normalized, at least 3 characters) classified as a merchant offer, not-a-listing, or merchant-no-price; tier 3 is any other merchant offer. Aggregator, editorial, marketplace, search-or-category, merchant-mismatch, and rejected hits never supply images. Drop repeated image URLs; keep at most 4.
-- **I3, bytes verdict (after fetching).** At most 5 MiB; magic bytes identify JPEG, PNG, WebP, or AVIF (AVIF size from the `ispe` box); both dimensions known; shorter side at least 200 px; width/height from 0.5 to 2.0 inclusive.
+- **I3, bytes verdict (after fetching).** At most 5 MiB; magic bytes identify JPEG, PNG, WebP, or AVIF (AVIF size from the `ispe` box); both dimensions known; shorter side at least 200 px; width/height from 0.5 to 1.8 inclusive. The 1.8 limit excludes the 1.91:1 social-card format: in the probe, every image at that ratio was a logo card, an editorial photo, or a press shot (Logitech, The Verge, note.com), and every correct product photo was 1.71 or narrower.
+- Verdict precedence is written in the case file's rules. The first failing check is reported, in this order: I1 invalid-url, bad-scheme, credentials, svg, deny-pattern; I3 too-large, unsupported-type, no-dimensions, too-small, aspect.
 
 Each candidate sent to the browser is `{ id, sourceHost, sourceTitle }`. Here `id` is the lowercase hex SHA-256 of the image URL, `sourceHost` is the page's hostname without a leading `www.`, and `sourceTitle` is the page's product name as Exa reported it (`summary.productName`, else the result title, cut to 120 characters). The image URL itself never reaches the browser.
 
@@ -123,13 +126,24 @@ The client renders the first candidate in an AspectRatio box with a Skeleton unt
 
 ## Image proxy (v1.1)
 
-`src/server/images.ts`, mounted at `GET /api/image/:id` behind the same Host/Origin guard as the rest of the API (D-029).
+`src/server/images.ts` (helpers may live under `src/server/images/`), mounted at `GET /api/image/:id` behind the same Host/Origin guard as the rest of the API (D-029). JM-103 builds it; JM-104 calls `registerImageCandidates` from the pipeline.
 
-- **Registry.** During a run, `registerImageCandidates` writes `.cache/images/<id>.json` with `{ url, pageUrl, registeredAt }` and keeps any existing verdict. `GET /api/image/:id` with an id that is not 64 lowercase hex characters, or has no registry entry, returns 404 without any outbound request. So the proxy is not an open fetcher: it only fetches URLs that came from Exa results in a run on this machine.
-- **Cache.** If the entry has an `ok` verdict younger than 7 days and `<id>.bin` exists, the bytes are served from disk. A rejection verdict younger than 24 hours returns its status (422 for rule I3 failures, 502 for upstream failures) without refetching. Otherwise the image is fetched again.
-- **Fetch.** `ImageFetchPort.fetch(url, signal)`: `NetworkImageFetch` in live mode, `FixtureImageFetch` in fixture mode, which serves bytes from `tests/fixtures/images/` by a mapping in the fixture scenario, so CI makes no internet request. `NetworkImageFetch` resolves the hostname once per hop with `dns.lookup({ all: true })`. It refuses the request when any resolved address is not public unicast: IPv4 0/8, 10/8, 100.64/10, 127/8, 169.254/16, 172.16/12, 192.0.0/24, 192.168/16, 198.18/15, 224/4 and up; IPv6 ::, ::1, fc00::/7, fe80::/10, ff00::/8, and IPv4-mapped forms of the IPv4 ranges. It then connects to the checked address with the original Host and SNI, so DNS cannot change between check and connect. Redirects are followed manually, at most 3, each re-checked. Requests send `Accept: image/avif,image/webp,image/png,image/jpeg`, a fixed generic User-Agent, and no cookies, credentials, or Referer. The whole fetch times out after 8 s and stops reading after 5 MiB.
+- **Cross-site requests.** Browsers send no `Origin` on an `<img>` GET, so the Host/Origin guard alone cannot stop another site from embedding `/api/image/<id>` (independent review finding 6). The route therefore returns 403 when a `Sec-Fetch-Site` header is present and is not `same-origin`, and every response carries `Cross-Origin-Resource-Policy: same-origin`.
+- **Registry.** During a run, `registerImageCandidates` writes `.cache/images/<id>.json` with `{ url, pageUrl, registeredAt }`, updates `registeredAt` if the entry exists, and keeps any verdict. `GET /api/image/:id` with an id that is not 64 lowercase hex characters, or has no registry entry, returns 404 without any outbound request. So the proxy is not an open fetcher: it only fetches URLs that came from Exa results in a run on this machine.
+- **Cache lifecycle (single rule).**
+  - Accepted bytes (`<id>.bin`, verdict `ok`) are served from disk for 7 days after they were fetched. After that they are refetched on the next request, as long as the registry entry exists.
+  - Rule I3 rejections are cached for 24 hours (422). Upstream failures (blocked address, upstream status, timeout, too large, too many redirects) are cached for 10 minutes (502).
+  - At server start and after each registration, entries whose `registeredAt` is more than 30 days old are deleted with their bytes. If the bytes total more than 500 MB, the oldest-fetched bytes are deleted until the total is under the cap (their entries stay and refetch on demand).
+  - A card restored from history after its entry was pruned gets 404 and shows the fallback.
+- **Fetch.** `ImageFetchPort.fetch(url, signal)`: `NetworkImageFetch` in live mode, `FixtureImageFetch` in fixture mode. `FixtureImageFetch` serves bytes from `tests/fixtures/images/` by a mapping in the fixture scenario, so CI makes no internet request.
+  - `NetworkImageFetch` uses `node:http` and `node:https` (global `fetch` cannot pin an address). It accepts only `http` and `https` URLs on port 80 or 443 (default or explicit).
+  - For each hop it resolves the hostname once with `dns.lookup({ all: true })`; a host that is an IP literal is used as is. It refuses the request unless every resolved address is allowed:
+    - IPv4 must be public unicast. Not 0/8, 10/8, 100.64/10, 127/8, 169.254/16, 172.16/12, 192.0.0/24, 192.0.2/24, 192.168/16, 198.18/15, 198.51.100/24, 203.0.113/24, or 224/4 and above.
+    - IPv6 must be inside 2000::/3 and outside 2001::/32 (Teredo), 2001:db8::/32, and 2002::/16 (6to4). This also excludes ::1, ::, IPv4-mapped and IPv4-compatible forms, NAT64 64:ff9b::/96, fc00::/7, fe80::/10, fec0::/10, and ff00::/8.
+  - It then connects through a `lookup` override that returns only the checked address, with the original Host header and TLS SNI, so DNS cannot change between check and connect.
+  - Redirects are followed manually, at most 3, and each hop is re-checked. Requests send `Accept: image/avif,image/webp,image/png,image/jpeg`, a fixed generic User-Agent, and no cookies, credentials, or Referer. The whole fetch times out after 8 s and stops reading after 5 MiB.
 - **Validation.** Rule I3 on the bytes. The response's own Content-Type is not trusted.
-- **Response.** Status 200 with `Content-Type` from the sniffed type, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'`, `Cache-Control: private, max-age=604800`, and no upstream headers. Errors are 404 (unknown id), 422 (rule I3), and 502 (blocked address, upstream status, timeout, too large, or too many redirects); the body is a short JSON reason with no upstream content.
+- **Response.** Status 200 with `Content-Type` from the sniffed type, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'`, `Cross-Origin-Resource-Policy: same-origin`, `Cache-Control: private, max-age=604800`, and no upstream headers. Errors are 403 (cross-site or guard), 404 (unknown id), 422 (rule I3), and 502 (blocked address or port, upstream status, timeout, too large, or too many redirects). The error body is a short JSON reason with no upstream content.
 - **Concurrency.** At most 4 upstream fetches at once, and one in-flight fetch per id (later requests await it). The proxy never takes an Exa budget token or writes the Exa ledger.
 - **Logging.** One JSON line per fetch: id, host, verdict, bytes, and duration. Never the full URL query string.
 
@@ -153,8 +167,10 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 ## Product cards (v1.1)
 
 - Layout: the main column widens from `max-w-3xl` to `max-w-6xl`. The products section is a CSS grid with one column below 768 px and two from 768 px. A single product spans one column.
+- The image is full-bleed: the AspectRatio box sits outside CardContent's padding and spans the card's full width.
+- To reach the REQ-012 sizes, JM-105 may override container width and padding only through `className` props of the unmodified components, for example `MessageContent` `max-w-full` and `ConversationContent` `px-2` on small screens. The review measured about 301 px of image width at 375 px with the MVP's padding; REQ-012's floor is 300 px.
 - `ProductCard.tsx` composes official components only: `card` (Card, CardHeader, CardTitle, CardContent, CardFooter), `aspect-ratio` (ratio 4/3), `skeleton`, `item` (one Item per merchant offer), `badge` (availability), `collapsible` (Other markets, Research details), `button`, and the AI Elements `inline-citation` for the reason. The comparison above the cards keeps AI Elements `message`, `inline-citation`, and `sources`, and progress keeps `task` and `shimmer`. The AI Elements `image` component is not used: it renders base64 images generated by a model (`Experimental_GeneratedImage`), which v1.1 forbids.
-- Price summary: from the offers in the market's currency only, "From <lowest amount> <code> · <n> <market name> offer(s)". Otherwise "No <market name> offers found".
+- Price summary: from the offers in the market's currency only, "From <lowest listed price> <code> · <n> <market name> offer(s)". The lowest listed price includes out-of-stock offers, whose availability badge stays visible in the list. Otherwise "No <market name> offers found".
 - Other markets: offer groups whose currency is not the market's, in `rankOffers` order, inside a Collapsible titled "Other markets (may not ship to <market name>) · <n>", closed by default.
 - Research details: evidence items with their labels, and the rejected count, inside a Collapsible closed by default.
 - Prices: `formatPrice` keeps the MVP format, amount plus ISO code (for example `289.00 SGD`). No symbol is shown.
@@ -170,7 +186,7 @@ File layout (binding; `evals/harness.mjs` uses these paths to decide readiness):
 - **(v1.1)** `src/core/images.ts` (`imageUrlVerdict`, `rankImageCandidates`, `imageBytesVerdict`, `sniffImage`), `src/core/content.ts` (`normalizeKeySpecs`, `resolveReason`); `src/server/images.ts` (registry, `ImageFetchPort`, `NetworkImageFetch`, `FixtureImageFetch`, address policy, route); `src/web/app/theme.ts`, `src/web/app/ThemeToggle.tsx`, `src/web/app/ProductCard.tsx`; `public/theme-init.js`; `tests/fixtures/images/` (synthetic, labeled fixture images).
 - **(v1.1)** Evaluation tests: `tests/e2e/ev-010-theme.spec.ts`, `tests/evals/ev-011-page-classification.test.ts`, `ev-012-product-content.test.ts`, `ev-013-image-selection.test.ts`, `ev-014-image-proxy.test.ts`, `tests/e2e/ev-015-product-cards.spec.ts`, `scripts/live-acceptance-v1-1.ts` (EV-016), `tests/evals/ev-017-request-contract.test.ts`.
 
-Module contracts that JM-002, JM-003, and JM-004 implement against (names are binding; internal helpers are free):
+Module contracts that JM-002, JM-003, and JM-004 implemented in the MVP (historical task names; the names below stay binding, and internal helpers are free). The "(v1.1) additions" block further down replaces the MVP declarations of `EvidenceCategory`, `Candidate`, and `SearchHit` where they differ:
 
 ```ts
 // src/core/types.ts
@@ -258,7 +274,7 @@ Run lock: the server runs one research run at a time. A second concurrent `POST 
 
 Run states: `running → completed | failed | cancelled`. A run that fails after the candidates stage ends `failed` with `partial: true`, and the products it already validated stay visible and labeled partial.
 
-History (D-016): the client stores `{ version: 1, messages, savedAt }` in `localStorage["kensaku.history.v1"]` after each completed or failed run, validated with zod on load. Invalid or newer-version data is discarded with a visible notice. "Clear history" opens an `alert-dialog` and removes the key. The server stores no conversation. **(v1.1)** The version stays 1, because the new `data-products` fields are optional (D-040). A restored card asks `/api/image/:id` for its candidates. If the image cache entry has expired or been deleted, the proxy answers 404 and the card shows the fallback.
+History (D-016): the client stores `{ version: 1, messages, savedAt }` in `localStorage["kensaku.history.v1"]` after each completed or failed run, validated with zod on load. Invalid or newer-version data is discarded with a visible notice. "Clear history" opens an `alert-dialog` and removes the key. The server stores no conversation. **(v1.1)** The version stays 1, because the new `data-products` fields are optional (D-040). A restored card asks `/api/image/:id` for its candidates. While the registry entry exists (30 days from its last registration), the proxy serves cached bytes or refetches them. After the entry is pruned or `.cache/images/` is deleted, it answers 404 and the card shows the fallback. Compatibility is forward-only: an MVP build would discard a v1.1 history that contains the new evidence categories.
 
 ## Spend guard and usage ledger
 
@@ -280,9 +296,9 @@ History (D-016): the client stores `{ version: 1, messages, savedAt }` in `local
 | vitest / @playwright/test / @axe-core/playwright | 5.1.1 / 1.65.1 / 4.14.0 | npm |
 | zod / typescript | 4.6.7 / 7.0.2 | npm |
 
-**(v1.1)** No new runtime package is planned: image sniffing, the address policy, and the theme are small hand-written modules. JM-104 adds the shadcn registry items `card`, `aspect-ratio`, `skeleton`, and `item` with the pinned shadcn CLI 4.23.0. All four are listed in the `@shadcn` registry (checked with the shadcn MCP on 2026-11-21). If one pulls a new Radix package, JM-104 owns the `package.json` and lockfile change. The exa-js SDK passes the result `image` field through. The spike called the REST API directly, so JM-103's live smoke confirms this through `ExaSdkPort` (risk R-22).
+**(v1.1)** No new runtime package is planned: image sniffing, the address policy, and the theme are small hand-written modules. JM-105 adds the shadcn registry items `card`, `aspect-ratio`, `skeleton`, and `item` with the pinned shadcn CLI 4.23.0. All four are listed in the `@shadcn` registry (checked with the shadcn MCP on 2026-11-21). If one pulls a new Radix package, JM-105 owns the `package.json` and lockfile change. The exa-js SDK passes the result `image` field through. The spike called the REST API directly, so JM-104's live smoke confirms this through `ExaSdkPort` (risk R-22).
 
-JM-001 pins exact versions in `package.json` and commits `pnpm-lock.yaml`. If a version above fails to install or build together, JM-001 may choose the nearest working release and must record it in its evidence; this is not a plan change unless an API used by this architecture disappears.
+(MVP, historical) JM-001 pinned exact versions in `package.json` and committed `pnpm-lock.yaml`. If a version above failed to install or build together, JM-001 could choose the nearest working release and must record it in its evidence; this is not a plan change unless an API used by this architecture disappears.
 
 ## Operations
 
@@ -316,16 +332,16 @@ JM-001 pins exact versions in `package.json` and commits `pnpm-lock.yaml`. If a 
 
 ## Vertical slice (v1.1)
 
-The v1.1 slice (JM-101, then JM-103) proves the riskiest new path through real boundaries before any card polish:
+The v1.1 slice (JM-101 core rules, then JM-103 image proxy, then JM-104 pipeline and minimal UI) proves the riskiest new path through real boundaries before any card polish:
 
 browser → `/api/chat` → pipeline with the market-aware query and extended `/answer` schema → live Exa → `src/core` v1.1 classification, image rules, and content → `data-products` with image candidates → `<img src="/api/image/:id">` → image proxy → a real merchant image host → rule I3 → the bytes shown in the product section.
 
 Acceptance:
 
 - The fixture end-to-end test shows an image loaded through the proxy, with zero requests to non-local origins.
-- A live smoke of at most 10 Exa requests shows SGD offers for Q3 and Q4, USD offers for Q1, and at least one image loaded through the proxy. The logs are committed.
+- A live smoke of Q3 and Q4, at most 10 Exa requests, shows at least one SGD offer for each and at least one image loaded through the proxy. The logs are committed. US behaviour is covered by EV-016 (spike V4 showed no US regression).
 
-The theme (JM-102) is independent and runs in parallel with JM-101. The full card design (JM-104) starts only after the slice and the theme are merged.
+The theme (JM-102) is independent and may run beside any one slice task, because their write scopes are disjoint. The full card design (JM-105) starts only after the slice and the theme are merged.
 
 ## Vertical slice (MVP, completed)
 

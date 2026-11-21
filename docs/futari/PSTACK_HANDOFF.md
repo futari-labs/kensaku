@@ -40,7 +40,7 @@ Prerequisites observed:
 1. Start with `/futari:execute` from a checkout of `dev` that contains the v1.1 approval commit (after the owner merges the contract PR).
 2. Run `node .futari/plan-gate.mjs verify` before dispatching any task and before each consequential mutation.
 3. Invoke the real pstack skill and load `.agents/playbooks/futari-approved-plan.md`.
-4. Start JM-101 and JM-102 in parallel. After JM-101 merges, run JM-103 (vertical slice gate, including the live smoke). After JM-102 and JM-103 both merge, run JM-104, then JM-105.
+4. Start JM-101 and JM-102 in parallel. After JM-101 merges, run JM-103 (image proxy), then JM-104 (vertical slice gate, including the live smoke). JM-102 may overlap any one of these. After JM-102 and JM-104 are both merged, run JM-105, then JM-106.
 5. Every worker brief carries:
    - the plan ID `kensaku-v1-1`, the task ID, and the REQ and EV IDs;
    - the allowed paths, dependencies, acceptance criteria, and verification commands;
@@ -67,13 +67,13 @@ Prerequisites observed:
   GitHub enforces none of this on the current private Free-plan repository (R-13, R-14), so every worker brief must state these rules verbatim.
 - Parallelism 2; repair limit 3 per task.
 - Merging into `dev` is process-gated: confirm that the `CI` and `Futari contract` runs succeeded on the PR head SHA and that the branch is current with `dev`, then merge. Confirm CI on the new `dev` head before dependent work.
-- Live Exa (D-034): the JM-103 smoke (≤ 10 requests) and EV-016 (≤ 40 requests per run, ≤ 3 runs). Total ≤ 130 requests and ≤ $1.50 reported cost from free credits; additional spend $0. Stop on exhausted credits or a 402.
+- Live Exa (D-034): the JM-104 smoke (Q3 and Q4, ≤ 10 requests) and EV-016 (≤ 40 requests per run, ≤ 3 runs). The plan-wide total of ≤ 130 requests and ≤ $1.50 reported cost governs, from free credits; additional spend $0. Stop on exhausted credits or a 402. Never run the MVP `pnpm live:acceptance`.
 
 ## Contract publication (before execution)
 
-The v1.1 contract changes protected files and replaces the approval, so its PR fails `Futari contract` by design (R-25). After the owner selects "Approve plan" on the card:
+The v1.1 contract changes protected files and replaces the approval, so its PR fails `Futari contract` by design (R-25). The reviewed commit archives the MVP approval and removes the live one. The approval card states explicitly that approving replaces the `kensaku-mvp-v1` baseline, so that selection is the owner's decision to replace it (D-027, independent review finding 12). After the owner selects "Approve plan" on that card:
 
-1. Bootstrap records the approval on branch `v1-1-plan` with `node .futari/plan-gate.mjs approve --by "<git user.name>"`. `approve` succeeds without `--replace` because the reviewed commit removed the MVP approval (D-027). Bootstrap commits only `.futari/approval.json` and runs `verify`.
+1. Bootstrap records the approval on branch `v1-1-plan` with `node .futari/plan-gate.mjs approve --by "<git user.name>"`. This needs no `--replace`, because no live approval exists in the reviewed commit. Bootstrap commits only `.futari/approval.json` and runs `verify`.
 2. With the owner's authorization, bootstrap pushes `v1-1-plan` and opens a PR into `dev`. CI must be green.
 3. The owner merges that PR personally with a merge commit (not squash or rebase), so `approval.planCommit` stays reachable from `dev`. Agents do not merge it.
 

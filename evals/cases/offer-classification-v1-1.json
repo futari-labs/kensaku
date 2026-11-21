@@ -851,6 +851,470 @@
         "category": "search-or-category"
       },
       "rationale": "Synthetic: a percent-encoded path still has the '/s' segment of an Amazon search page."
+    },
+    {
+      "id": "Z17",
+      "synthetic": {
+        "url": "https://www.aboutamazon.com/devices/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host aboutamazon.com (no editorial path segment)."
+    },
+    {
+      "id": "Z18",
+      "synthetic": {
+        "url": "https://www.aboutamazon.jp/devices/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host aboutamazon.jp (no editorial path segment)."
+    },
+    {
+      "id": "Z19",
+      "synthetic": {
+        "url": "https://www.androidcentral.com/accessories/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host androidcentral.com."
+    },
+    {
+      "id": "Z20",
+      "synthetic": {
+        "url": "https://note.com/someone/n/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host note.com."
+    },
+    {
+      "id": "Z21",
+      "synthetic": {
+        "url": "https://www.hardwarezone.com.sg/tech/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host hardwarezone.com.sg."
+    },
+    {
+      "id": "Z22",
+      "synthetic": {
+        "url": "https://search.example-shop.com/p/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: a hostname whose first label is 'search' is a search host even without a search path segment."
+    },
+    {
+      "id": "Z23",
+      "synthetic": {
+        "url": "https://www.example-shop.com/categories/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: the single path segment 'categories' decides the category."
+    },
+    {
+      "id": "Z24",
+      "synthetic": {
+        "url": "https://www.example-shop.com/bestsellers/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: the single path segment 'bestsellers' decides the category."
+    },
+    {
+      "id": "Z25",
+      "synthetic": {
+        "url": "https://www.example-shop.com/productlist/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: the single path segment 'productlist' decides the category."
+    },
+    {
+      "id": "Z26",
+      "synthetic": {
+        "url": "https://www.example-shop.com/blog/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'blog' decides the category."
+    },
+    {
+      "id": "Z38",
+      "synthetic": {
+        "url": "https://www.example-shop.com/blogs/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'blogs' decides the category."
+    },
+    {
+      "id": "Z27",
+      "synthetic": {
+        "url": "https://www.example-shop.com/review/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'review' decides the category."
+    },
+    {
+      "id": "Z28",
+      "synthetic": {
+        "url": "https://www.example-shop.com/reviews/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'reviews' decides the category."
+    },
+    {
+      "id": "Z29",
+      "synthetic": {
+        "url": "https://www.example-shop.com/article/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'article' decides the category."
+    },
+    {
+      "id": "Z30",
+      "synthetic": {
+        "url": "https://www.example-shop.com/articles/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'articles' decides the category."
+    },
+    {
+      "id": "Z31",
+      "synthetic": {
+        "url": "https://www.example-shop.com/news/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'news' decides the category."
+    },
+    {
+      "id": "Z32",
+      "synthetic": {
+        "url": "https://www.carousell.com/p/sony-wh-1000xm5-123/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Carousell",
+          "price": 250,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "marketplace"
+      },
+      "rationale": "Synthetic: carousell.com is a second-hand marketplace."
+    },
+    {
+      "id": "Z33",
+      "synthetic": {
+        "url": "https://auctions.yahoo.co.jp/jp/auction/x123456789",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "ヤフオク",
+          "price": 30000,
+          "currency": "JPY"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "marketplace"
+      },
+      "rationale": "Synthetic: auctions.yahoo.co.jp is a second-hand marketplace."
+    },
+    {
+      "id": "Z34",
+      "synthetic": {
+        "url": "https://www.yodobashi.com/product/100000001007208014/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Yodobashi",
+          "price": 49500,
+          "currency": "￥"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 49500
+      },
+      "rationale": "Synthetic: '￥' (full-width) maps to JPY with an integer amount."
+    },
+    {
+      "id": "Z35",
+      "synthetic": {
+        "url": "https://www.yodobashi.com/product/100000001007208015/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Yodobashi",
+          "price": 49500,
+          "currency": "JP¥"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 49500
+      },
+      "rationale": "Synthetic: 'JP¥' maps to JPY."
+    },
+    {
+      "id": "Z36",
+      "synthetic": {
+        "url": "https://www.example-shop.com/%73earch/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: segments are percent-decoded before matching ('%73earch' is 'search')."
+    },
+    {
+      "id": "Z37",
+      "synthetic": {
+        "url": "https://www.example-shop.com/Search/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: segments are lowercased before matching."
     }
   ]
 }

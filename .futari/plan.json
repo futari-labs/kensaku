@@ -3,7 +3,7 @@
   "planId": "kensaku-v1-1",
   "projectName": "Kensaku",
   "repository": "futari-labs/kensaku",
-  "completionCondition": "JM-101 to JM-105 are merged into dev through one PR each with the CI and Futari contract checks green on each PR head and CI green on dev after each merge; on the final dev head CI passes EV-001 to EV-007 and EV-009 to EV-015 plus typecheck, lint, build, node evals/harness.mjs --strict, scripts/check-components.mjs and the Futari contract check; EV-016 passes locally under the thresholds in evals/cases/live-acceptance-v1-1.json with every run log and the owner's offer and image audits committed under .futari/evidence/live/; and the owner records v1.1 product acceptance in docs/futari/PROGRESS.md. Promotion to main and deployment are excluded.",
+  "completionCondition": "JM-101 to JM-106 are merged into dev through one PR each with the CI and Futari contract checks green on each PR head and CI green on dev after each merge; on the final dev head CI passes EV-001 to EV-007, EV-009 to EV-015 and EV-017 plus typecheck, lint, build, node evals/harness.mjs, scripts/check-components.mjs and the Futari contract check, and node evals/harness.mjs --strict exits 0 locally at that head; EV-016 passes locally under the thresholds in evals/cases/live-acceptance-v1-1.json with every run log and the owner's offer and image audits committed under .futari/evidence/live/; and the owner records v1.1 product acceptance in docs/futari/PROGRESS.md. Promotion to main and deployment are excluded.",
   "maxParallelTasks": 2,
   "maxRepairAttemptsPerTask": 3,
   "liveEvaluationBudget": {
@@ -81,13 +81,16 @@
     "evals/fixtures/exa-live/V8-answer-us-no-price-reason.json",
     "evals/fixtures/exa-live/R1-Q5-offers-xm5.json",
     "evals/fixtures/exa-live/R1-Q6-offers-paperwhite.json",
+    "evals/fixtures/exa-live/V9-answer-us-tight-identifiers.json",
+    "evals/fixtures/exa-live/V10-answer-jp-tight-identifiers.json",
+    "evals/fixtures/history/mvp-history-xm5-sg.json",
     "spikes/exa-v1-1/spike.mjs",
     "spikes/exa-v1-1/image-probe.mjs"
   ],
   "requirements": [
     {
       "id": "REQ-001",
-      "description": "Ask and stream (MVP, unchanged): the owner submits a shopping question and sees ordered research progress until exactly one terminal state.",
+      "description": "Ask and stream: the owner submits a shopping question and sees ordered research progress until exactly one terminal state.",
       "acceptanceCriteria": [
         "POST /api/chat streams data-progress parts in the order candidates, offers, validate, compare.",
         "Each run ends in exactly one of completed, failed, or cancelled.",
@@ -96,83 +99,90 @@
     },
     {
       "id": "REQ-002",
-      "description": "Cited comparison (MVP, unchanged): a completed run shows a comparison of 1-3 candidates whose citation markers resolve to source URLs returned by Exa in this run.",
+      "description": "Cited comparison: a completed run shows a comparison of 1-3 candidates whose citation markers resolve to Exa citations from the same run.",
       "acceptanceCriteria": [
-        "Markers resolve under the rule in evals/cases/citations.json; out-of-range markers are removed and counted.",
-        "Paragraphs without a resolved marker are visibly flagged uncited.",
-        "Rendered source links are exactly the resolved citation URLs of this run."
+        "Every rendered source link is a citation URL returned by Exa in this run.",
+        "Out-of-range markers are removed and counted; paragraphs with no resolved marker are visibly flagged uncited.",
+        "All cases in evals/cases/citations.json and evals/cases/citations-spaced.json produce their expected results, including markers written with spaces such as [2, 5, 6] (CR-001)."
       ]
     },
     {
       "id": "REQ-003",
-      "description": "Authentic, relevant merchant offers (MVP): every displayed offer comes from a direct merchant product page returned by Exa in this run and matches the candidate; everything else is labeled evidence or rejected. The v1.1 additions are REQ-016.",
+      "description": "Authentic, relevant merchant offers: only direct, validated merchant product pages for the candidate model are offers; other pages are labeled evidence or rejected; prices are never invented or edited.",
       "acceptanceCriteria": [
-        "Offers carry merchant host and name, positive price, ISO currency in USD/SGD/JPY, canonical http(s) URL from this run, availability, source exa, and retrieval time.",
-        "Aggregator, editorial, non-listing, price-less, and merchant-mismatch pages appear only as labeled evidence; irrelevant products, unsupported currencies, and URLs not from the run never appear as offers.",
-        "Kensaku never invents or edits a price; EV-001 and EV-002 pass on the frozen MVP cases with the two supersessions recorded in evals/cases/offer-classification-v1-1.json."
+        "Every displayed offer has merchant host, positive price, supported ISO currency, canonical http(s) URL from this run, availability enum value, source exa, and retrievedAt.",
+        "Aggregator, editorial, non-listing, price-less, and merchant-mismatch pages appear only in a separately labeled evidence section.",
+        "Irrelevant products, unsupported currencies, URLs not from the run, and non-http URLs never appear as offers.",
+        "All 54 cases in evals/cases/offer-classification.json produce their labeled outcome, category, and offer fields, except that L29 and Y03 produce the superseding labels recorded in evals/cases/offer-classification-v1-1.json (D-031, D-032).",
+        "(v1.1) Marketplace and search-or-category pages also appear only as labeled evidence (REQ-016)."
       ]
     },
     {
       "id": "REQ-004",
-      "description": "Currency-safe ranking (MVP, unchanged): offers group by currency with the selected market's currency first and are never compared across currencies.",
+      "description": "Currency-safe ranking: offers group by USD, SGD, JPY with the selected market's currency first, sort deterministically within a group, and are never compared across currencies.",
       "acceptanceCriteria": [
-        "rankOffers produces the groups and order in evals/cases/ranking-currency.json.",
-        "Within a group: availability rank, amount ascending, merchant host, canonical URL; duplicate canonical URLs collapse to the first received.",
-        "No arithmetic or comparison crosses currency groups."
+        "All cases in evals/cases/ranking-currency.json produce the expected groups and order.",
+        "A seeded property test over 1,000 generated offer lists shows no mixed-currency group and no lost or duplicated offers beyond the canonical-URL collapse."
       ]
     },
     {
       "id": "REQ-005",
-      "description": "Failure recovery (MVP, unchanged): Exa errors and cancellation end the run with a typed, user-visible reason, partial results are labeled, and the app stays usable.",
+      "description": "Failure recovery: Exa errors and cancellation end the run with a typed, visible reason, partial results are labeled, and live mode never falls back to fixtures.",
       "acceptanceCriteria": [
-        "401, 402 or exhausted credits, 429, 5xx, and timeout map to their data-error kinds with partial set correctly.",
-        "Cancel aborts the in-flight Exa call; the client shows the cancelled state.",
-        "Live mode never falls back to fixture data."
+        "401, 402 or credit errors, 429, 5xx, timeout, no candidates, and no offers each yield the specified data-error kind or empty state; a client cancel aborts the Exa call, ends the stream, and shows the client-side cancelled state.",
+        "A failure after the candidates stage sets partial true and keeps already validated products visible.",
+        "The next question works after any failure."
       ]
     },
     {
       "id": "REQ-006",
-      "description": "Spend guard and cache (MVP, unchanged): at most 5 Exa requests per question, 3 or fewer for a normal question, 6-hour cache, monthly limits, exhausted-credit stop. Image fetching makes no Exa request.",
+      "description": "Spend guard and cache: at most 5 Exa requests per question by construction, at most 3 for a normal question, 6-hour cache, monthly limits, and stop on exhausted credits.",
       "acceptanceCriteria": [
-        "RequestBudget(5) makes a sixth Exa call impossible; a normal question uses at most 3 requests.",
-        "A repeated question within 6 hours uses 0 requests and keeps its original retrieval time.",
-        "Monthly request and cost limits and the exhausted-credit signal stop live calls before they are made; image fetches never take a budget token or touch the Exa ledger."
+        "No sequence of candidates, retries, or errors makes a sixth Exa call in one run.",
+        "A repeated question within the TTL makes no Exa call and shows the original retrievedAt.",
+        "Monthly request and cost limits block calls before they are made; a 402 or credit error blocks later calls until reset.",
+        "Each response's costDollars.total is added to the ledger and shown in the run's usage.",
+        "(v1.1) Image fetching never takes a RequestBudget token, never calls Exa, and never writes the Exa ledger."
       ]
     },
     {
       "id": "REQ-007",
-      "description": "Local and key safety (MVP, extended): the server listens only on 127.0.0.1, rejects foreign Host and Origin headers, keeps EXA_API_KEY server-side, and in v1.1 sends a Content-Security-Policy that limits the page to its own origin.",
+      "description": "Local and key safety: the server listens only on 127.0.0.1, rejects foreign Host or Origin, and the Exa key never leaves the server process.",
       "acceptanceCriteria": [
-        "The listening address is 127.0.0.1; foreign Host or Origin get 403, including on /api/image/:id.",
-        "The key is absent from the build, browser storage, logs, the Exa cache, the image cache, fixtures, and API responses.",
-        "Responses that serve the web app carry the Content-Security-Policy in ARCHITECTURE 'Content-Security-Policy', so the browser can load scripts, styles, images, fonts and API calls only from 127.0.0.1."
+        "The listen address is hard-coded to 127.0.0.1; requests with a foreign Host or cross-origin Origin get 403.",
+        "A test key string is absent from a production build, server logs, .cache/ (including .cache/images/), evals/fixtures/, API responses, and browser storage.",
+        "(v1.1) Every server response except /api/image/:id carries the Content-Security-Policy in docs/futari/ARCHITECTURE.md 'Content-Security-Policy', so the browser loads scripts, styles, images, fonts and API calls only from 127.0.0.1; the Host/Origin guard also covers /api/image/:id."
       ]
     },
     {
       "id": "REQ-008",
-      "description": "Live acceptance (amended for v1.1): before v1.1 is declared complete, the 8-query live suite in evals/cases/live-acceptance-v1-1.json meets its thresholds within the live budget.",
+      "description": "Live acceptance (v1.1, replaces the MVP's 6-query suite, D-034): the 8-query live suite in evals/cases/live-acceptance-v1-1.json meets its thresholds within the live usage limits before v1.1 is declared complete.",
       "acceptanceCriteria": [
-        "pnpm live:acceptance:v1-1 drives the built app in Chromium over Q1-Q8 with fresh Exa and image caches and commits every run log.",
-        "All thresholds in evals/cases/live-acceptance-v1-1.json are met under its runRules, including the owner's offer and image audits.",
-        "Total live use during v1.1 execution stays within 130 Exa requests and $1.50 of reported cost from free credits, with $0 additional spend."
+        "At least 6 of 8 queries show at least one merchant offer, and at least 3 of the 4 SG queries show an SGD offer in a card's main list.",
+        "At least 12 offers are displayed; 100% pass revalidation against the recorded Exa responses; owner audit failures are at most floor(10% of displayed offers); no search or category page and no fabricated offer is displayed.",
+        "At least 8 images are displayed; at least 70% of offer-bearing cards (and at least 6) show a loaded image; 100% of displayed images pass revalidation; owner image audit failures are at most max(1, floor(10% of displayed images)).",
+        "No browser request leaves 127.0.0.1 and no unexpected error run occurs; at most 5 requests per query, 40 per suite run, $0.50 per suite run, 3 suite runs, and the plan-wide cap of 130 requests and $1.50 of reported cost governs."
       ]
     },
     {
       "id": "REQ-009",
-      "description": "Persistent local history (MVP, extended): the conversation survives reloads through versioned, validated localStorage, and history saved by the MVP still renders as v1.1 product cards.",
+      "description": "Persistent local history: the conversation survives reloads through versioned, validated localStorage and can be cleared with confirmation; no secret is stored in the browser.",
       "acceptanceCriteria": [
-        "Reload restores the conversation; Clear history with confirmation removes kensaku.history.v1.",
-        "Invalid or newer-version data is discarded with a notice; no secret is stored in the browser.",
-        "A history entry saved by the MVP (no images, key specs, or reasons) renders as cards with the image fallback and without spec or reason sections."
+        "After a reload the full conversation, including results, is restored.",
+        "Clear history asks for confirmation, then empties the thread and removes kensaku.history.v1.",
+        "Invalid stored data is discarded with a visible notice.",
+        "(v1.1) The frozen MVP history payload evals/fixtures/history/mvp-history-xm5-sg.json, loaded unchanged, renders as v1.1 product cards with the image fallback and without key-spec or reason sections."
       ]
     },
     {
       "id": "REQ-010",
-      "description": "Frontend quality and components (amended for v1.1): the interface uses unmodified official shadcn/ui and AI Elements components installed from their registries, meets the accessibility and layout checks in EV-007, EV-010 and EV-015 in both themes, and passes the owner's visual review.",
+      "description": "Frontend quality and components: the UI uses unmodified official AI Elements and shadcn/ui components, has a persistent market selector, and meets accessibility, layout, and owner visual review. (v1.1: in both themes, with the image-first cards.)",
       "acceptanceCriteria": [
-        "Every file under src/web/components/ui/ and src/web/components/ai-elements/ matches components.lock.json, and no new design system or hand-edited component is introduced.",
-        "axe reports zero serious or critical violations in the dark and light themes on the empty, completed, and error states.",
-        "The owner's visual review of the v1.1 cards on desktop and mobile widths is recorded as accepted."
+        "scripts/check-components.mjs confirms every installed component file matches components.lock.json and components.json lists the @ai-elements registry.",
+        "axe reports zero serious or critical violations on empty, running, completed, and error states; the journey works by keyboard alone. (v1.1) This holds in the dark and the light theme.",
+        "At 375 px width there is no horizontal page scroll.",
+        "The owner records visual review of the v1.1 cards on desktop and mobile widths in both themes in .futari/evidence/JM-105.md.",
+        "(v1.1) No new design system or hand-edited component is introduced, and the CSS variables in src/web/index.css are unchanged."
       ]
     },
     {
@@ -190,8 +200,8 @@
       "description": "Image-first product cards: each recommended product gets its own generously sized card with a large image, name, price summary, key specifications, recommendation reason, and merchant offers, with research details available but collapsed.",
       "acceptanceCriteria": [
         "At 1280 px viewport width product cards sit two per row, each at least 480 px wide; at 375 px they sit one per row with no horizontal page scroll.",
-        "Each card's image area spans the card's full width at a 4:3 aspect ratio (at least 360 px tall at 1280 px and at least 250 px tall at 375 px) above the text.",
-        "A card shows, in order: product name (candidate brand and name), image with caption, price summary from offers in the market's currency only, up to 5 key specifications, the cited recommendation reason, the merchant offer list, an 'Other markets' disclosure when other-currency offers exist, and a 'Research details' disclosure with evidence and rejected counts.",
+        "Each card's image is full-bleed: it spans the card's full width (no inner padding) at a 4:3 aspect ratio above the text; at 1280 px it is at least 360 px tall, and at 375 px it is at least 300 px wide (so at least 225 px tall).",
+        "A card shows, in order: product name (candidate brand and name), image with caption, price summary ('From <lowest listed price> <code>') from offers in the market's currency only, up to 5 key specifications, the cited recommendation reason, the merchant offer list, an 'Other markets' disclosure when other-currency offers exist, and a 'Research details' disclosure with evidence and rejected counts; the card reads key specs and the reason only from the normalized data-products entry fields, never from the raw candidate.",
         "The product heading names the product, never a merchant; each offer row names its merchant host, merchant name, price with ISO currency code, availability, retrieval time, and a 'View offer' link, so a product with several merchants reads as one product with several offers.",
         "Reason citations render with the AI Elements inline-citation component and resolve under the EV-004 rule; the comparison text and its Sources stay above the cards."
       ]
@@ -200,7 +210,7 @@
       "id": "REQ-013",
       "description": "Real product images: images come only from the product pages of this run's merchant offers or from the manufacturer's page, under rules I1-I3, with loading states, attribution, and a graceful fallback; nothing is generated or invented.",
       "acceptanceCriteria": [
-        "The pipeline selects up to 4 image candidates per product with rules I1 and I2 in evals/cases/image-selection.json; no image ever comes from aggregator, editorial, marketplace, search-or-category, merchant-mismatch, or rejected pages.",
+        "The pipeline selects up to 4 image candidates per product with rules I1 and I2 in evals/cases/image-selection.json, and the proxy accepts bytes only under rule I3; no image ever comes from aggregator, editorial, marketplace, search-or-category, merchant-mismatch, or rejected pages.",
         "The card shows a skeleton while an image loads, tries candidates in order, and shows a 'No verified product image' fallback (no broken-image icon) when none loads.",
         "The caption names the source page's host and its product title as Exa reported it (so a colour variant is named), and the image's alt text is '<brand> <name>, image from <host>'.",
         "No image is generated, edited, or taken from a source outside this run's Exa results."
@@ -210,10 +220,10 @@
       "id": "REQ-014",
       "description": "Image proxy safety and cache: the server fetches and serves only image URLs registered by a research run, blocks private networks, validates bytes, and caches bytes and metadata on disk.",
       "acceptanceCriteria": [
-        "GET /api/image/:id serves only ids registered by a run (SHA-256 of the image URL); unknown ids get 404 without any outbound request.",
-        "Every connection, including each of at most 3 redirects, goes to a public unicast address resolved once per hop; loopback, private, link-local, CGNAT, multicast, unspecified, and IPv6 unique-local or mapped-private addresses are refused.",
+        "GET /api/image/:id serves only ids registered by a run (SHA-256 of the image URL); unknown or malformed ids get 404 without any outbound request; requests whose Sec-Fetch-Site header is present and not same-origin get 403, and every response carries Cross-Origin-Resource-Policy: same-origin.",
+        "Only http and https URLs on ports 80 or 443 are fetched; every connection, including each of at most 3 redirects, goes to an address that was resolved once for that hop and checked: IPv4 must be public unicast and IPv6 must be in 2000::/3 outside 2001::/32, 2001:db8::/32 and 2002::/16; URL hosts that are IP literals are checked the same way. The connection is made with node:http or node:https to the checked address.",
         "Fetches send no cookies, credentials, or Referer, time out after 8 s, stop at 5 MiB, and accept only bytes passing rule I3; responses use the sniffed image type, X-Content-Type-Options: nosniff, and Content-Security-Policy: default-src 'none'.",
-        "Accepted bytes and metadata are cached under .cache/images/ for 7 days and served again without a new fetch; rejected results are cached for 24 hours; image fetching never uses Exa or the Exa budget."
+        "Accepted bytes are reused for 7 days and then refetched while the registry entry exists; registry entries are pruned 30 days after their last registration, and bytes are evicted oldest-first above 500 MB in total; rule I3 rejections are cached for 24 hours and upstream failures for 10 minutes; image fetching never uses Exa or the Exa budget."
       ]
     },
     {
@@ -231,7 +241,7 @@
       "description": "Non-merchant pages and currency symbols (CR-002 and v1.1 additions): search, category, editorial, and second-hand marketplace pages never appear as merchant offers, and unambiguous currency symbols are recognized.",
       "acceptanceCriteria": [
         "Classification applies the rule additions 4, 5, 5a, 5b, 5c and 7 recorded in evals/cases/offer-classification-v1-1.json ruleAdditions and docs/futari/ARCHITECTURE.md.",
-        "EV-011 passes all 57 cases in evals/cases/offer-classification-v1-1.json, including the run 1 Rakuten search page (Q5-O1, case N33).",
+        "EV-011 passes all 79 cases in evals/cases/offer-classification-v1-1.json, including the run 1 Rakuten search page (Q5-O1, case N33).",
         "EV-001 applies the L29 and Y03 supersessions and passes the remaining MVP cases with their original labels."
       ]
     }
@@ -243,9 +253,9 @@
         "REQ-003",
         "REQ-016"
       ],
-      "description": "Merchant authenticity: classification of the 54 frozen MVP cases, with the L29 and Y03 supersessions from evals/cases/offer-classification-v1-1.json applied.",
+      "description": "Merchant authenticity: classify all frozen cases (40 live Exa results, 14 synthetic) as merchant offer, labeled evidence, or rejected.",
       "kind": "deterministic",
-      "passRule": "Every MVP case's outcome and category equal its label, or its superseding label for L29 and Y03; offer fields equal the labels; the test asserts 54 evaluated cases and that exactly the two superseded ids were replaced; node evals/harness.mjs --strict exits 0.",
+      "passRule": "54/54 cases in evals/cases/offer-classification.json match the labeled outcome and category, and for offers the labeled currency, amount, canonicalUrl and availability where given; the test asserts the evaluated case count equals the file's case count. (v1.1) L29 and Y03 are compared with their superseding labels from evals/cases/offer-classification-v1-1.json, the test asserts that exactly those two ids were replaced, and node evals/harness.mjs --strict exits 0.",
       "command": "pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts && node evals/harness.mjs --strict"
     },
     {
@@ -253,9 +263,9 @@
       "requirementIds": [
         "REQ-003"
       ],
-      "description": "Product relevance (MVP, unchanged).",
+      "description": "Product relevance: identity matching rejects wrong and near-miss products and accepts every labeled right product.",
       "kind": "deterministic",
-      "passRule": "100% of cases: irrelevant-product exactly when labeled.",
+      "passRule": "100% of cases in evals/cases/offer-classification.json are classified irrelevant-product exactly when labeled so.",
       "command": "pnpm vitest run tests/evals/ev-002-product-relevance.test.ts"
     },
     {
@@ -263,9 +273,9 @@
       "requirementIds": [
         "REQ-004"
       ],
-      "description": "Currency and ranking (MVP, unchanged).",
+      "description": "Currency grouping, market ordering, and deterministic ranking.",
       "kind": "deterministic",
-      "passRule": "All 4 cases match and the 1,000-list property test passes.",
+      "passRule": "All 4 cases in evals/cases/ranking-currency.json match exactly, and the seeded 1,000-list property test finds no mixed-currency group and no lost or duplicated offers.",
       "command": "pnpm vitest run tests/evals/ev-003-ranking-currency.test.ts"
     },
     {
@@ -273,9 +283,9 @@
       "requirementIds": [
         "REQ-002"
       ],
-      "description": "Citations (MVP, unchanged): both frozen citation case files plus fixture pipeline runs.",
+      "description": "Citation resolution and URL provenance for comparisons and offers.",
       "kind": "deterministic",
-      "passRule": "All 6 + 2 cases match; in fixture pipeline runs every rendered source URL is a citation of that run and every offer URL is a search result URL of that run.",
+      "passRule": "All 6 cases in evals/cases/citations.json and all 2 cases in evals/cases/citations-spaced.json match (the test asserts each file's evaluated case count equals its case count, and node evals/harness.mjs --strict exits 0); in fixture pipeline runs every rendered source URL is in the run's citations and every offer URL is in the run's search results.",
       "command": "pnpm vitest run tests/evals/ev-004-citations.test.ts"
     },
     {
@@ -283,9 +293,9 @@
       "requirementIds": [
         "REQ-006"
       ],
-      "description": "Spend guard and cache (MVP, unchanged; v1.1 adds that image fetches use no budget token).",
+      "description": "Spend guard at two levels: unit (RequestBudget, cache, ledger limits, exhausted-credit stop; JM-003) and run (pipeline call counts, cached repeats, single-run lock; JM-004).",
       "kind": "deterministic",
-      "passRule": "All MVP assertions pass; a fixture run that loads every product image leaves RequestBudget.used and the monthly ledger exactly as a run without images.",
+      "passRule": "Unit: a sixth token is refused, cache hits use no token and keep retrievedAt, limits block before calling, and a 402 or credit error blocks later calls. Run: every scripted scenario stays within 5 calls, a normal question uses at most 3, a cached repeat uses 0 with the original retrievedAt, and a concurrent second run gets 409. (v1.1) A fixture run that loads every product image through /api/image/:id leaves RequestBudget.used and the monthly ledger identical to the same run without image loads.",
       "command": "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts"
     },
     {
@@ -294,9 +304,9 @@
         "REQ-001",
         "REQ-005"
       ],
-      "description": "Streaming and failure states (MVP, unchanged).",
+      "description": "UI message stream shape and failure states through the Hono app with scripted Exa behaviour.",
       "kind": "deterministic",
-      "passRule": "All MVP scenarios pass, including lock release after every scenario.",
+      "passRule": "For success, no candidates, no offers, 401, 402, 429, 500, and timeout scenarios, the stream has ordered progress parts, exactly one terminal state, the expected data-error kind and partial flag, and no fixture data in live mode; for a client abort, the Exa call is aborted, no parts follow, and a cancelled log line is written; after every scenario the run lock is released and the next request succeeds.",
       "command": "pnpm vitest run tests/evals/ev-006-stream-failures.test.ts"
     },
     {
@@ -309,19 +319,19 @@
         "REQ-009",
         "REQ-010"
       ],
-      "description": "Frontend quality (MVP checks 1-8, amended in v1.1 for cards: 'offer table' reads 'offer list in the product card', and check 6 is replaced by EV-015's layout checks), plus component integrity.",
+      "description": "Frontend quality: Playwright journey, states, history, market, accessibility, layout, absence of the key from browser storage, and component integrity, plus owner visual review. (v1.1: amended for the product cards and the dark default, D-038.)",
       "kind": "deterministic plus human review",
-      "passRule": "All Playwright checks in docs/futari/EVALUATION_PLAN.md 'Frontend quality' pass, scripts/check-components.mjs exits 0, and the owner's visual review of v1.1 is recorded as accepted in .futari/evidence/JM-104.md.",
-      "command": "pnpm exec playwright test tests/e2e/ev-007-frontend.spec.ts && node scripts/check-components.mjs"
+      "passRule": "All Playwright checks listed in docs/futari/EVALUATION_PLAN.md section 'Frontend quality (EV-007, amended)' pass, scripts/check-components.mjs exits 0, and the owner's visual review of v1.1 is recorded as accepted in .futari/evidence/JM-105.md.",
+      "command": "pnpm test:e2e && node scripts/check-components.mjs"
     },
     {
       "id": "EV-009",
       "requirementIds": [
         "REQ-007"
       ],
-      "description": "Local and key safety (MVP, extended to the image cache and the Content-Security-Policy).",
+      "description": "Loopback binding, Host and Origin guards, and absence of the key from every artifact.",
       "kind": "deterministic",
-      "passRule": "MVP assertions pass; the key is also absent from .cache/images/ after a fixture run; GET / on the started server returns the exact Content-Security-Policy in ARCHITECTURE; /api/image/:id with a foreign Host gets 403.",
+      "passRule": "The running server listens on 127.0.0.1, foreign Host and Origin get 403, and a test key string is absent from a production build the test makes itself, from server logs of a fixture run, .cache/, evals/fixtures/, and API responses. (v1.1) The key is also absent from .cache/images/ after a fixture run that loads images; GET / returns exactly the Content-Security-Policy in ARCHITECTURE; GET /api/image/:id with a foreign Host gets 403.",
       "command": "pnpm vitest run tests/evals/ev-009-key-safety.test.ts"
     },
     {
@@ -341,9 +351,9 @@
         "REQ-016",
         "REQ-003"
       ],
-      "description": "Non-merchant pages and currency symbols: classifyHit on the 57 frozen v1.1 cases.",
+      "description": "Non-merchant pages and currency symbols: classifyHit on the 79 frozen v1.1 cases (41 live, 38 synthetic).",
       "kind": "deterministic",
-      "passRule": "57/57 cases: outcome and category equal the label; for offers, currency and amount equal the label; the test loads evals/cases/offer-classification-v1-1.json unchanged and asserts the evaluated case count equals the file's case count.",
+      "passRule": "79/79 cases: outcome and category equal the label; for offers, currency and amount equal the label; the test loads evals/cases/offer-classification-v1-1.json unchanged and asserts the evaluated case count equals the file's case count.",
       "command": "pnpm vitest run tests/evals/ev-011-page-classification.test.ts"
     },
     {
@@ -353,7 +363,7 @@
       ],
       "description": "Product card content: key specifications and cited reasons parsed from the extended /answer response, with backward compatibility for responses and history without them.",
       "kind": "deterministic",
-      "passRule": "For every candidate in evals/cases/product-content.json, keySpecs equal the expected list and the reason's renderedText, sources, unresolvedMarkers and uncitedParagraphs count equal the expected values (null for P03); the test asserts the case count.",
+      "passRule": "For every candidate in evals/cases/product-content.json (6 answers, 14 candidates, including the synthetic P06), keySpecs equal the expected list and the reason's renderedText, sources, unresolvedMarkers and uncitedParagraphs count equal the expected values, or the reason is null where labeled; the test asserts the case and candidate counts.",
       "command": "pnpm vitest run tests/evals/ev-012-product-content.test.ts"
     },
     {
@@ -363,7 +373,7 @@
       ],
       "description": "Product image selection: rules I1 (URL eligibility), I2 (eligible pages and order) and I3 (bytes verdict) on the frozen cases.",
       "kind": "deterministic",
-      "passRule": "All 57 URL cases, 7 selection cases (exact ordered imageUrl and pageUrl lists) and 51 bytes cases equal their labels; I2 cases classify hits with classifyHit from the real fixtures; the test asserts each section's case count.",
+      "passRule": "All 80 URL cases, 10 selection cases (exact ordered imageUrl and pageUrl lists; fixture cases classify hits with classifyHit from the real fixtures, synthetic cases from their inline hits) and 58 bytes cases equal their labels; the test asserts each section's case count.",
       "command": "pnpm vitest run tests/evals/ev-013-image-selection.test.ts"
     },
     {
@@ -412,7 +422,7 @@
       ],
       "description": "Request contract: the exact /answer request (outputSchema with keySpecs and reason) and offer search request built for each market.",
       "kind": "deterministic",
-      "passRule": "For US, SG and JP, buildSearchRequest returns the query '<brand> <name> price <United States|Singapore|Japan> buy' with userLocation equal to the market and the MVP contents unchanged, and buildAnswerRequest returns the outputSchema in ARCHITECTURE 'Research pipeline' exactly (deep equality); the cache key changes when the query template changes.",
+      "passRule": "buildAnswerRequest's outputSchema deep-equals request.body.outputSchema of the frozen fixture evals/fixtures/exa-live/V9-answer-us-tight-identifiers.json; buildSearchRequest for V2's and V3's candidates returns exactly their frozen request.body.query and userLocation with the MVP contents unchanged, and for a US and a JP candidate returns '<brand> <name> price United States buy' and '<brand> <name> price Japan buy'; the cache key differs from the key of the MVP query for the same candidate.",
       "command": "pnpm vitest run tests/evals/ev-017-request-contract.test.ts"
     }
   ],
@@ -423,35 +433,39 @@
       "milestone": "vertical-slice",
       "requirementIds": [
         "REQ-003",
+        "REQ-004",
         "REQ-016",
         "REQ-013",
-        "REQ-012",
-        "REQ-004"
+        "REQ-012"
       ],
       "evalIds": [
         "EV-001",
         "EV-002",
+        "EV-003",
         "EV-011",
         "EV-012",
-        "EV-013",
-        "EV-003"
+        "EV-013"
       ],
       "dependsOn": [],
       "allowedPaths": [
         "src/core/",
         "src/web/app/format.ts",
+        "src/web/app/schemas.ts",
         "tests/core/",
+        "tests/research/live-smoke-revalidation.test.ts",
+        "tests/research/revalidate.ts",
         "tests/evals/ev-001-merchant-authenticity.test.ts",
         "tests/evals/ev-011-page-classification.test.ts",
         "tests/evals/ev-012-product-content.test.ts",
         "tests/evals/ev-013-image-selection.test.ts"
       ],
       "acceptanceCriteria": [
-        "src/core/offers.ts and src/core/hosts.ts implement rule additions 4, 5, 5a, 5b, 5c and 7 exactly as written in docs/futari/ARCHITECTURE.md 'Offer classification'; src/core/types.ts adds the evidence categories marketplace and search-or-category and the optional Candidate fields keySpecs and reason as specified in ARCHITECTURE 'Interfaces and data'.",
-        "src/core/images.ts exports imageUrlVerdict, rankImageCandidates and imageBytesVerdict implementing rules I1, I2 and I3; src/core/content.ts exports normalizeKeySpecs and resolveReason; all are pure and exported from src/core/index.ts.",
-        "tests/evals/ev-001-merchant-authenticity.test.ts loads evals/cases/offer-classification.json and the supersedes block of evals/cases/offer-classification-v1-1.json unchanged and applies only L29 and Y03; EV-001, EV-002, EV-011, EV-012 and EV-013 pass; node evals/harness.mjs --strict exits 0.",
-        "src/web/app/format.ts gains labels 'Second-hand marketplace' and 'Search or category page' for the new evidence categories so the app typechecks; no other web file changes.",
-        "package.json and pnpm-lock.yaml are unchanged (this task runs in parallel with JM-102)."
+        "src/core/offers.ts and src/core/hosts.ts implement rule additions 4, 5, 5a, 5b, 5c and 7 exactly as written in docs/futari/ARCHITECTURE.md 'Offer classification'; src/core/types.ts makes the v1.1 type changes in ARCHITECTURE 'Interfaces and data' (evidence categories marketplace and search-or-category, Candidate keySpecs and reason, SearchHit image, the image and content types).",
+        "src/core/images.ts exports imageUrlVerdict, rankImageCandidates, sniffImage and imageBytesVerdict implementing rules I1, I2 and I3 including their verdict precedence; src/core/content.ts exports normalizeKeySpecs and resolveReason including the malformed-reason rule; all are pure and exported from src/core/index.ts.",
+        "tests/evals/ev-001-merchant-authenticity.test.ts loads evals/cases/offer-classification.json and the supersedes block of evals/cases/offer-classification-v1-1.json unchanged and replaces only L29 and Y03; EV-001, EV-002, EV-003, EV-011, EV-012 and EV-013 pass; node evals/harness.mjs --strict exits 0.",
+        "MVP live logs are history (EVALUATION_PLAN 'Historical live logs'): tests/research/live-smoke-revalidation.test.ts asserts that every offer displayed in the committed MVP logs still reclassifies identically under the v1.1 rules except exactly Q5-O1 (search.rakuten.co.jp), which must now be evidence search-or-category.",
+        "src/web/app/format.ts gains the labels 'Second-hand marketplace' and 'Search or category page' and src/web/app/schemas.ts accepts the two new evidence categories, so the app typechecks and validates; no other web file changes.",
+        "package.json and pnpm-lock.yaml are unchanged (this task may run in parallel with JM-102)."
       ],
       "verificationCommands": [
         "pnpm typecheck",
@@ -481,14 +495,13 @@
         "src/web/app/ThemeToggle.tsx",
         "src/web/app/App.tsx",
         "src/web/main.tsx",
-        "tests/e2e/ev-010-theme.spec.ts",
-        "tests/e2e/ev-007-frontend.spec.ts"
+        "tests/e2e/ev-010-theme.spec.ts"
       ],
       "acceptanceCriteria": [
-        "public/theme-init.js is a classic, synchronous script loaded from index.html's head before the module bundle; it reads kensaku.theme.v1 inside try/catch and sets the dark class and color-scheme on the html element ('dark' unless the stored value is exactly 'light').",
-        "src/web/app/theme.ts owns the storage key, parsing, and applying the theme; src/web/app/ThemeToggle.tsx renders the existing shadcn Button (variant ghost, size icon) with lucide Sun/Moon icons, an accessible name that states the action, and a tooltip; App.tsx places it in the header next to Clear history.",
-        "No component under src/web/components/ is added or edited, no CSS variable is added or changed in src/web/index.css, and package.json and pnpm-lock.yaml are unchanged.",
-        "EV-010 passes, and EV-007 still passes (its axe checks now run in the default dark theme)."
+        "public/theme-init.js is a classic, synchronous script loaded from index.html's head before the module bundle; it reads kensaku.theme.v1 inside try/catch and sets the dark class and color-scheme on the html element ('dark' unless the stored value is exactly 'light'); it starts with a '/* global document, localStorage */' comment so the existing ESLint config accepts it.",
+        "src/web/app/theme.ts owns the storage key, parsing, and applying the theme; src/web/app/ThemeToggle.tsx renders the existing shadcn Button (variant ghost, size icon) with lucide Sun/Moon icons, an accessible name that states the action, and the existing Tooltip; App.tsx places it in the header next to Clear history and changes nothing else.",
+        "No file under src/web/components/ is added or edited, src/web/index.css is unchanged, and package.json and pnpm-lock.yaml are unchanged.",
+        "EV-010 passes, and the unchanged EV-007 spec still passes (its axe checks now run in the default dark theme)."
       ],
       "verificationCommands": [
         "pnpm typecheck",
@@ -500,30 +513,66 @@
     },
     {
       "id": "JM-103",
-      "title": "Vertical slice: market-aware offers, card content, image candidates, and the image proxy through to a minimal card",
+      "title": "Image proxy: registry, address policy, rule I3, and disk cache",
+      "milestone": "vertical-slice",
+      "requirementIds": [
+        "REQ-014",
+        "REQ-007"
+      ],
+      "evalIds": [
+        "EV-014"
+      ],
+      "dependsOn": [
+        "JM-101"
+      ],
+      "allowedPaths": [
+        "src/server/images.ts",
+        "src/server/images/",
+        "src/server/app.ts",
+        "tests/evals/ev-014-image-proxy.test.ts",
+        "tests/server/images/",
+        "tests/fixtures/images/"
+      ],
+      "acceptanceCriteria": [
+        "src/server/images.ts (and helpers under src/server/images/) implements registerImageCandidates, the registry and cache under .cache/images/, ImageFetchPort with NetworkImageFetch (node:http/node:https with a lookup override that connects to the checked address) and FixtureImageFetch (bytes from tests/fixtures/images/), the address and port policy, rule I3 via sniffImage and imageBytesVerdict from src/core, and GET /api/image/:id, exactly as in ARCHITECTURE 'Image proxy'.",
+        "src/server/app.ts only mounts the route behind the existing Host/Origin guard; tests/fixtures/images/ holds synthetic, labeled images of known type and size.",
+        "EV-014 passes, including its connector-level test against a local server reached by address with a .invalid hostname.",
+        "No Exa module is imported by the proxy; package.json and pnpm-lock.yaml are unchanged."
+      ],
+      "verificationCommands": [
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm vitest run tests/evals/ev-014-image-proxy.test.ts",
+        "pnpm test",
+        "node evals/harness.mjs --strict"
+      ]
+    },
+    {
+      "id": "JM-104",
+      "title": "Vertical slice: market-aware offers, card content, image candidates, CSP, and a minimal image through the proxy",
       "milestone": "vertical-slice",
       "requirementIds": [
         "REQ-015",
         "REQ-013",
-        "REQ-014",
         "REQ-012",
         "REQ-006",
         "REQ-007",
         "REQ-001",
-        "REQ-005"
+        "REQ-005",
+        "REQ-002"
       ],
       "evalIds": [
-        "EV-014",
-        "EV-013",
+        "EV-017",
         "EV-012",
+        "EV-013",
+        "EV-004",
         "EV-005",
         "EV-006",
-        "EV-009",
-        "EV-004",
-        "EV-017"
+        "EV-007",
+        "EV-009"
       ],
       "dependsOn": [
-        "JM-101"
+        "JM-103"
       ],
       "allowedPaths": [
         "src/exa/",
@@ -534,6 +583,7 @@
         "src/web/app/schemas.ts",
         "src/web/app/messages.ts",
         "src/web/app/format.ts",
+        "scripts/live-acceptance.ts",
         "tests/exa/",
         "tests/research/",
         "tests/server/",
@@ -543,35 +593,35 @@
         "tests/evals/ev-005-spend-guard.test.ts",
         "tests/evals/ev-006-stream-failures.test.ts",
         "tests/evals/ev-009-key-safety.test.ts",
-        "tests/evals/ev-014-image-proxy.test.ts",
         "tests/evals/ev-017-request-contract.test.ts",
         "tests/fixtures/",
         "tests/e2e/slice.spec.ts",
+        "tests/e2e/ev-007-frontend.spec.ts",
         "vitest.config.ts",
         "package.json",
         "pnpm-lock.yaml",
         ".futari/evidence/live/"
       ],
       "acceptanceCriteria": [
-        "src/exa/requests.ts builds offer searches as '<brand> <name> price <market name> buy' and the /answer outputSchema adds keySpecs and reason exactly as in ARCHITECTURE 'Research pipeline'; src/exa/parse.ts keeps both fields (optional) and tolerates their absence.",
-        "The pipeline attaches to each data-products entry the fields keySpecs, reason (resolved citations) and imageCandidates [{ id, sourceHost, sourceTitle }] from rankImageCandidates, and registers each candidate's image URL in the image registry; the data-products schema change is backward compatible with MVP history.",
-        "src/server/images.ts implements GET /api/image/:id with the registry, ImageFetchPort (network in live mode, fixture bytes from tests/fixtures/images/ in fixture mode), the address policy, rule I3 and the disk cache, as specified in ARCHITECTURE 'Image proxy'; the server sends the Content-Security-Policy in ARCHITECTURE on web app responses.",
-        "src/web/app/Products.tsx shows, inside the existing product section, the first loadable image via /api/image/:id with its caption, the key specifications, and the reason; full card design is JM-104's.",
-        "EV-004, EV-005, EV-006, EV-009, EV-012, EV-013, EV-014 and EV-017 pass; the fixture end-to-end test tests/e2e/slice.spec.ts shows an image loaded through the proxy and makes no request to a non-local origin.",
-        "Live smoke (at most 10 Exa requests): Q3 and Q4 from evals/cases/live-acceptance-v1-1.json each show at least one SGD merchant offer, Q1 shows at least one USD offer, and at least one product image loads through the proxy; run logs are committed under .futari/evidence/live/ at or before the Tested-Commit."
+        "src/exa/requests.ts builds offer searches as '<brand> <name> price <market name> buy' and the /answer outputSchema exactly as frozen in V9's request (EV-017); src/exa/parse.ts keeps keySpecs, reason and the search result image (optional) and tolerates their absence.",
+        "The pipeline attaches to each data-products entry keySpecs (normalizeKeySpecs), reason (resolveReason) and imageCandidates [{ id, sourceHost, sourceTitle }] from rankImageCandidates, and registers each candidate with registerImageCandidates; the data-products schema stays backward compatible with the frozen MVP history payload.",
+        "Every server response except /api/image/:id carries the Content-Security-Policy in ARCHITECTURE.",
+        "src/web/app/Products.tsx shows, inside the existing product section, the first loadable image via /api/image/:id with its caption, the key specifications, and the reason; the full card is JM-105's.",
+        "EV-004, EV-005, EV-006, EV-007, EV-009, EV-012, EV-013 and EV-017 pass; the fixture test tests/e2e/slice.spec.ts shows an image loaded through the proxy and records no request to a non-local origin.",
+        "Live smoke (EVALUATION_PLAN 'Slice smoke'): Q3 and Q4 from evals/cases/live-acceptance-v1-1.json, at most 10 Exa requests in total; each shows at least one SGD merchant offer and at least one product image loads through the proxy; the run logs are committed under .futari/evidence/live/ at or before the Tested-Commit. A miss is FAIL and stops the task for the owner (no rerun within this plan's budget); an Exa outage is BLOCKED."
       ],
       "verificationCommands": [
         "pnpm typecheck",
         "pnpm lint",
-        "pnpm vitest run tests/evals/ev-004-citations.test.ts tests/evals/ev-005-spend-guard.test.ts tests/evals/ev-006-stream-failures.test.ts tests/evals/ev-009-key-safety.test.ts tests/evals/ev-012-product-content.test.ts tests/evals/ev-013-image-selection.test.ts tests/evals/ev-014-image-proxy.test.ts tests/evals/ev-017-request-contract.test.ts",
+        "pnpm vitest run tests/evals/ev-004-citations.test.ts tests/evals/ev-005-spend-guard.test.ts tests/evals/ev-006-stream-failures.test.ts tests/evals/ev-009-key-safety.test.ts tests/evals/ev-012-product-content.test.ts tests/evals/ev-013-image-selection.test.ts tests/evals/ev-017-request-contract.test.ts",
         "pnpm test",
         "pnpm build",
-        "pnpm exec playwright test tests/e2e/slice.spec.ts",
+        "pnpm exec playwright test tests/e2e/slice.spec.ts tests/e2e/ev-007-frontend.spec.ts",
         "node evals/harness.mjs --strict"
       ]
     },
     {
-      "id": "JM-104",
+      "id": "JM-105",
       "title": "Image-first product cards, Other markets, research details, and responsive layout",
       "milestone": "experience",
       "requirementIds": [
@@ -593,13 +643,12 @@
       ],
       "dependsOn": [
         "JM-102",
-        "JM-103"
+        "JM-104"
       ],
       "allowedPaths": [
         "src/web/",
         "components.json",
         "components.lock.json",
-        "scripts/check-components.mjs",
         "package.json",
         "pnpm-lock.yaml",
         "tests/e2e/",
@@ -607,10 +656,10 @@
         "playwright.config.ts"
       ],
       "acceptanceCriteria": [
-        "The shadcn CLI installs card, aspect-ratio, skeleton, and item from @shadcn unmodified (plus accordion only if collapsible cannot meet a check), and components.lock.json records their SHA-256 in the same commit; no AI Elements or shadcn file is edited by hand.",
-        "src/web/app/ProductCard.tsx composes the card in REQ-012's order from Card, AspectRatio, Skeleton, Item, Badge, Collapsible, Button and the AI Elements inline-citation; product cards replace the offer tables; the result container widens so two cards fit per row at 1280 px.",
-        "Other markets and Research details are Collapsible disclosures with buttons whose aria-expanded state is correct; the market's currency drives the main list per REQ-015.",
-        "EV-015, EV-007 (amended) and EV-010 pass; the owner's visual review on desktop and mobile widths in both themes is recorded in .futari/evidence/JM-104.md."
+        "The shadcn CLI installs card, aspect-ratio, skeleton and item from @shadcn unmodified, and components.lock.json records their SHA-256 in the same commit; no AI Elements or shadcn file is edited by hand, and the CSS variables in src/web/index.css are unchanged (the reviewer checks both in the diff).",
+        "src/web/app/ProductCard.tsx composes the card in REQ-012's order from Card, AspectRatio, Skeleton, Item, Badge, Collapsible, Button and the AI Elements inline-citation; product cards replace the offer tables; the layout widens to max-w-6xl and may override container widths and padding only through className props (for example on MessageContent and ConversationContent) so two cards fit per row at 1280 px and the image meets REQ-012 at 375 px.",
+        "Other markets and Research details are Collapsible disclosures with correct aria-expanded state; the market's currency drives the main list per REQ-015; the card reads key specs and the reason only from the data-products entry fields.",
+        "EV-015, EV-007 (amended) and EV-010 pass, including the frozen MVP history payload; the owner's visual review on desktop and mobile widths in both themes is recorded in .futari/evidence/JM-105.md."
       ],
       "verificationCommands": [
         "pnpm typecheck",
@@ -623,7 +672,7 @@
       ]
     },
     {
-      "id": "JM-105",
+      "id": "JM-106",
       "title": "Live acceptance v1.1, owner audits, and final integration on dev",
       "milestone": "acceptance",
       "requirementIds": [
@@ -639,10 +688,11 @@
         "EV-015"
       ],
       "dependsOn": [
-        "JM-104"
+        "JM-105"
       ],
       "allowedPaths": [
         "scripts/live-acceptance-v1-1.ts",
+        "scripts/live-acceptance.ts",
         "scripts/live/",
         "src/research/",
         "src/exa/",
@@ -661,8 +711,8 @@
         ".futari/evidence/live/"
       ],
       "acceptanceCriteria": [
-        "pnpm live:acceptance:v1-1 builds the app, starts it in live mode with empty Exa and image caches, drives Q1-Q8 in Chromium through the UI, enforces the budget in evals/cases/live-acceptance-v1-1.json, and writes a run log with every Exa request, displayed offer, displayed image (candidate list, chosen image, proxy verdicts), browser request origins, and reported cost; every run log is committed at or before the Tested-Commit.",
-        "The run log is written before post-processing so a crash cannot drop a paid query, and the script exits non-zero when a threshold fails.",
+        "pnpm live:acceptance:v1-1 builds the app, starts it in live mode with empty Exa and image caches, drives Q1-Q8 in Chromium through the UI, enforces the per-query, per-run and plan-wide budgets in evals/cases/live-acceptance-v1-1.json, and writes a run log with every Exa request, displayed offer, displayed image (candidate list, chosen image, proxy verdicts), browser request origins, and reported cost; every run log is committed at or before the Tested-Commit.",
+        "The run log is written before post-processing so a crash cannot drop a paid query, and the script exits non-zero when a threshold fails; the MVP package.json script live:acceptance is removed.",
         "EV-016 thresholds are met under its runRules, including the owner's audit of every displayed offer and image recorded in .futari/evidence/live/.",
         "All deterministic suites still pass after any fix made here; README.md documents the theme, cards, images and proxy, the market-aware search, and the limits."
       ],
@@ -679,7 +729,8 @@
   ],
   "verticalSliceTaskIds": [
     "JM-101",
-    "JM-103"
+    "JM-103",
+    "JM-104"
   ],
   "blockingQuestions": []
 }

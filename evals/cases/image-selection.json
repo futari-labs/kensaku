@@ -2,9 +2,9 @@
   "_about": "EV-013 cases for plan kensaku-v1-1 (product image selection). urlCases test rule I1 (URL eligibility, no network); selectionCases test rule I2 (which product pages may supply an image, and in what order) on real Exa responses; bytesCases test rule I3 (what the image proxy accepts after fetching) on the type and dimensions measured by spikes/exa-v1-1/image-probe.mjs on 2026-11-21, plus synthetic edge cases. Image bytes are not committed.",
   "labelStatus": "Assistant-proposed labels computed by a reference implementation of the written rules in docs/futari/ARCHITECTURE.md 'Product images' (independent of src/), checked by hand. They become gold labels only when the owner approves plan kensaku-v1-1. Whether an image shows the right product is not decidable by these rules; EV-016's owner image audit measures it.",
   "rules": {
-    "I1": "An image URL is eligible only if it is at most 2048 characters, parses, uses http or https, has no username or password, and its last path segment (percent-decoded, lowercased) neither ends in '.svg' nor contains any of: logo, social, share, placeholder, missing, noimage, no-image, no_image, sprite, banner, campaign, brandimage, uedata, pixel, spacer, favicon, 1x1.",
+    "I1": "An image URL is eligible only if it is at most 2048 characters, parses, uses http or https, has no username or password, and its file name (the text after the last '/' of the URL path, percent-decoded, or as written if decoding fails, then lowercased; empty after a trailing slash) neither ends in '.svg' nor contains any of: logo, social, share, placeholder, missing, noimage, no-image, no_image, sprite, banner, campaign, brandimage, uedata, pixel, spacer, favicon, 1x1. Verdicts are checked in this order and the first failure is reported: invalid-url (over 2048 characters or unparseable), bad-scheme, credentials, svg, deny-pattern; otherwise ok.",
     "I2": "For one product, consider that product's search hits in Exa result order. A hit can supply its image only if the image URL passes I1 and the hit is (tier 1) a merchant offer in the selected market's currency, else (tier 2) on a manufacturer host and classified as a merchant offer or as evidence not-a-listing or merchant-no-price, else (tier 3) any other merchant offer. A manufacturer host is one whose labels (hostname split on '.' and '-') include the candidate brand normalized with NFKC, lowercased, and stripped of non-letters and non-digits, when that brand has at least 3 characters. Aggregator, editorial, marketplace, search-or-category, merchant-mismatch and rejected hits never supply images. Order: tier 1, then 2, then 3, each in Exa order; drop repeated image URLs; keep at most 4.",
-    "I3": "After fetching (see ARCHITECTURE 'Image proxy'), the bytes are accepted only if they are at most 5 MiB, their magic bytes identify JPEG, PNG, WebP or AVIF, both pixel dimensions are known, the shorter side is at least 200 px, and width/height is between 0.5 and 2.0 inclusive."
+    "I3": "After fetching (see ARCHITECTURE 'Image proxy'), the bytes are accepted only if they are at most 5 MiB (5,242,880 bytes), their magic bytes identify JPEG, PNG, WebP or AVIF, both pixel dimensions are known, the shorter side is at least 200 px, and width/height is between 0.5 and 1.8 inclusive (1.8 excludes the 1.91:1 social-card format; every correct product image in the probe was 1.71 or narrower). Verdicts are checked in this order and the first failure is reported: too-large, unsupported-type, no-dimensions, too-small, aspect; otherwise ok."
   },
   "urlCases": [
     {
@@ -395,16 +395,177 @@
     {
       "id": "U56",
       "synthetic": true,
-      "imageUrl": "https://cdn.example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg",
+      "imageUrl": "not a url",
       "expected": "invalid-url",
-      "note": "URLs longer than 2048 characters are rejected"
+      "note": "unparseable"
     },
     {
       "id": "U57",
       "synthetic": true,
-      "imageUrl": "not a url",
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-logo-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'logo' inside the file name"
+    },
+    {
+      "id": "U58",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-social-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'social' inside the file name"
+    },
+    {
+      "id": "U59",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-share-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'share' inside the file name"
+    },
+    {
+      "id": "U60",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-placeholder-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'placeholder' inside the file name"
+    },
+    {
+      "id": "U61",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-missing-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'missing' inside the file name"
+    },
+    {
+      "id": "U62",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-noimage-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'noimage' inside the file name"
+    },
+    {
+      "id": "U63",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-no-image-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'no-image' inside the file name"
+    },
+    {
+      "id": "U64",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-no_image-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'no_image' inside the file name"
+    },
+    {
+      "id": "U65",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-sprite-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'sprite' inside the file name"
+    },
+    {
+      "id": "U66",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-banner-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'banner' inside the file name"
+    },
+    {
+      "id": "U67",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-campaign-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'campaign' inside the file name"
+    },
+    {
+      "id": "U68",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-brandimage-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'brandimage' inside the file name"
+    },
+    {
+      "id": "U69",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-uedata-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'uedata' inside the file name"
+    },
+    {
+      "id": "U70",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-pixel-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'pixel' inside the file name"
+    },
+    {
+      "id": "U71",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-spacer-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'spacer' inside the file name"
+    },
+    {
+      "id": "U72",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-favicon-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token 'favicon' inside the file name"
+    },
+    {
+      "id": "U73",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/wh1000xm5-1x1-v2.jpg",
+      "expected": "deny-pattern",
+      "note": "deny token '1x1' inside the file name"
+    },
+    {
+      "id": "U74",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/logo/campaign/banner/wh-1000xm5.jpg",
+      "expected": "ok",
+      "note": "deny tokens in directory segments do not count; only the file name is checked"
+    },
+    {
+      "id": "U75",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/%6Cogo.png",
+      "expected": "deny-pattern",
+      "note": "the file name is percent-decoded ('%6Cogo' is 'logo')"
+    },
+    {
+      "id": "U76",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/%E0%A4%A.jpg",
+      "expected": "ok",
+      "note": "a file name that fails percent-decoding is matched as written (lowercased)"
+    },
+    {
+      "id": "U77",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/images/logo/",
+      "expected": "ok",
+      "note": "a trailing slash gives an empty file name, which matches nothing"
+    },
+    {
+      "id": "U78",
+      "synthetic": true,
+      "imageUrl": "http://cdn.example.com/products/wh-1000xm5.jpg",
+      "expected": "ok",
+      "note": "plain http is eligible (the server fetches it; the browser never does)"
+    },
+    {
+      "id": "U79",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg",
+      "expected": "ok",
+      "note": "exactly 2048 characters is allowed"
+    },
+    {
+      "id": "U80",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg",
       "expected": "invalid-url",
-      "note": "unparseable"
+      "note": "2049 characters is rejected"
     }
   ],
   "selectionCases": [
@@ -538,6 +699,192 @@
       "candidate": "PAPERWHITE",
       "market": "JP",
       "expected": []
+    },
+    {
+      "id": "I08",
+      "fixture": "V6-search-sg-candidate-1",
+      "candidate": "XM5",
+      "market": "SG",
+      "expected": [
+        {
+          "imageUrl": "http://online.challenger.sg/cdn/shop/files/4548736132603_MeCzoRiO2u6do3E89JcCKhIyCW9aEBOEu9AhjW4r.jpg?v=1754983817",
+          "pageUrl": "https://online.challenger.sg/products/sony-wh-1000xm5-wireless-noise-cancelling-headphones-black"
+        },
+        {
+          "imageUrl": "https://www.courts.com.sg/on/demandware.static/-/Sites-courts-m-catalog-sg/default/dwcb88e492/images/hires/media/catalog/product/i/p/ip176694_00.jpg",
+          "pageUrl": "https://www.courts.com.sg/sony-wireless-noise-cancellation-headphones-black-wh-1000xm5%2Fbme-IP176694.html"
+        },
+        {
+          "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/108/Sony_WH-1000XM5_Wireless_Noise_Cancelling_Headphones_-_Midnight_Blue_(Main).jpg?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress",
+          "pageUrl": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/sony-wh-1000xm5-lme-wireless-noise-cancelling-headphones-midnight-blue.html"
+        },
+        {
+          "imageUrl": "http://www.stereo.com.sg/cdn/shop/files/1_wh-1000xm5_standard_black-mid.jpg?v=1726745173",
+          "pageUrl": "https://www.stereo.com.sg/products/sony-wh1000xm5"
+        }
+      ]
+    },
+    {
+      "id": "I09",
+      "synthetic": {
+        "hits": [
+          {
+            "url": "https://www.adorama.com/sony-wh-1000xm5/p/a",
+            "title": null,
+            "image": "https://img.example.com/a.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Adorama",
+              "price": 278,
+              "currency": "USD"
+            }
+          },
+          {
+            "url": "https://www.sony.com.sg/electronics/headband/wh-1000xm5",
+            "title": null,
+            "image": "https://img.example.com/b.jpg",
+            "summary": {
+              "isProductListing": false,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Sony"
+            }
+          },
+          {
+            "url": "https://www.courts.com.sg/sony-wh-1000xm5",
+            "title": null,
+            "image": "https://img.example.com/c.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Courts",
+              "price": 289,
+              "currency": "SGD"
+            }
+          },
+          {
+            "url": "https://online.challenger.sg/products/sony-wh-1000xm5",
+            "title": null,
+            "image": "https://img.example.com/c.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Challenger",
+              "price": 309,
+              "currency": "SGD"
+            }
+          },
+          {
+            "url": "https://www.harveynorman.com.sg/sony-wh-1000xm5.html",
+            "title": null,
+            "image": "https://img.example.com/d.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Harvey Norman",
+              "price": 298,
+              "currency": "SGD"
+            }
+          },
+          {
+            "url": "https://www.stereo.com.sg/products/sony-wh-1000xm5",
+            "title": null,
+            "image": "https://img.example.com/e.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Stereo",
+              "price": 309,
+              "currency": "SGD"
+            }
+          },
+          {
+            "url": "https://www.theverge.com/sony-wh-1000xm5-deal",
+            "title": null,
+            "image": "https://img.example.com/f.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "The Verge",
+              "price": 278,
+              "currency": "USD"
+            }
+          }
+        ]
+      },
+      "note": "duplicate image URL dropped; tiers 1, 2, 3 in order; capped at 4 (the tier 3 image is cut)",
+      "candidate": "XM5",
+      "market": "SG",
+      "expected": [
+        {
+          "imageUrl": "https://img.example.com/c.jpg",
+          "pageUrl": "https://www.courts.com.sg/sony-wh-1000xm5"
+        },
+        {
+          "imageUrl": "https://img.example.com/d.jpg",
+          "pageUrl": "https://www.harveynorman.com.sg/sony-wh-1000xm5.html"
+        },
+        {
+          "imageUrl": "https://img.example.com/e.jpg",
+          "pageUrl": "https://www.stereo.com.sg/products/sony-wh-1000xm5"
+        },
+        {
+          "imageUrl": "https://img.example.com/b.jpg",
+          "pageUrl": "https://www.sony.com.sg/electronics/headband/wh-1000xm5"
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "synthetic": {
+        "hits": [
+          {
+            "url": "https://www.adorama.com/sony-wh-1000xm5/p/a",
+            "title": null,
+            "image": "https://img.example.com/a.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Adorama",
+              "price": 278,
+              "currency": "USD"
+            }
+          },
+          {
+            "url": "https://www.sony.jp/headphone/products/WH-1000XM5/",
+            "title": null,
+            "image": "https://img.example.com/b.jpg",
+            "summary": {
+              "isProductListing": true,
+              "productName": "Sony WH-1000XM5",
+              "availability": "in_stock",
+              "merchant": "Sony",
+              "currency": "JPY"
+            }
+          }
+        ]
+      },
+      "note": "no market-currency offer: the manufacturer page (tier 2, merchant-no-price) comes before a USD offer (tier 3)",
+      "candidate": "XM5",
+      "market": "JP",
+      "expected": [
+        {
+          "imageUrl": "https://img.example.com/b.jpg",
+          "pageUrl": "https://www.sony.jp/headphone/products/WH-1000XM5/"
+        },
+        {
+          "imageUrl": "https://img.example.com/a.jpg",
+          "pageUrl": "https://www.adorama.com/sony-wh-1000xm5/p/a"
+        }
+      ]
     }
   ],
   "bytesCases": [
@@ -593,7 +940,7 @@
       "width": 596,
       "height": 312,
       "bytes": 38170,
-      "expected": "ok"
+      "expected": "aspect"
     },
     {
       "id": "B07",
@@ -665,7 +1012,7 @@
       "width": 1200,
       "height": 624,
       "bytes": 56728,
-      "expected": "ok"
+      "expected": "aspect"
     },
     {
       "id": "B15",
@@ -719,7 +1066,7 @@
       "width": 600,
       "height": 315,
       "bytes": 5108,
-      "expected": "ok"
+      "expected": "aspect"
     },
     {
       "id": "B21",
@@ -728,7 +1075,7 @@
       "width": 1200,
       "height": 600,
       "bytes": 145028,
-      "expected": "ok"
+      "expected": "aspect"
     },
     {
       "id": "B22",
@@ -755,7 +1102,7 @@
       "width": 1280,
       "height": 670,
       "bytes": 95114,
-      "expected": "ok"
+      "expected": "aspect"
     },
     {
       "id": "B25",
@@ -836,7 +1183,7 @@
       "width": 1200,
       "height": 630,
       "bytes": 2596,
-      "expected": "ok"
+      "expected": "aspect"
     },
     {
       "id": "B34",
@@ -845,7 +1192,7 @@
       "width": 1200,
       "height": 630,
       "bytes": 3016,
-      "expected": "ok"
+      "expected": "aspect"
     },
     {
       "id": "B35",
@@ -999,12 +1346,82 @@
     {
       "id": "B51",
       "synthetic": true,
-      "note": "aspect just over 2.0",
+      "note": "aspect exactly 1.8 is allowed",
       "type": "webp",
-      "width": 801,
+      "width": 720,
+      "height": 400,
+      "bytes": 9000,
+      "expected": "ok"
+    },
+    {
+      "id": "B52",
+      "synthetic": true,
+      "note": "aspect just over 1.8",
+      "type": "webp",
+      "width": 721,
       "height": 400,
       "bytes": 9000,
       "expected": "aspect"
+    },
+    {
+      "id": "B53",
+      "synthetic": true,
+      "note": "the 1.91:1 social-card size (Logitech's logo card, spike V-F10) is rejected",
+      "type": "png",
+      "width": 1200,
+      "height": 630,
+      "bytes": 2596,
+      "expected": "aspect"
+    },
+    {
+      "id": "B54",
+      "synthetic": true,
+      "note": "a JPEG whose dimensions cannot be read",
+      "type": "jpeg",
+      "width": 0,
+      "height": 0,
+      "bytes": 20000,
+      "expected": "no-dimensions"
+    },
+    {
+      "id": "B55",
+      "synthetic": true,
+      "note": "exactly 5 MiB is allowed",
+      "type": "jpeg",
+      "width": 800,
+      "height": 800,
+      "bytes": 5242880,
+      "expected": "ok"
+    },
+    {
+      "id": "B56",
+      "synthetic": true,
+      "note": "one byte over 5 MiB",
+      "type": "jpeg",
+      "width": 800,
+      "height": 800,
+      "bytes": 5242881,
+      "expected": "too-large"
+    },
+    {
+      "id": "B57",
+      "synthetic": true,
+      "note": "precedence: unsupported-type is reported before too-small",
+      "type": "gif",
+      "width": 150,
+      "height": 400,
+      "bytes": 900,
+      "expected": "unsupported-type"
+    },
+    {
+      "id": "B58",
+      "synthetic": true,
+      "note": "precedence: too-small is reported before aspect",
+      "type": "png",
+      "width": 150,
+      "height": 1000,
+      "bytes": 9000,
+      "expected": "too-small"
     }
   ]
 }

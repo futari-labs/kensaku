@@ -14,12 +14,14 @@
     "maxRequestsPerQuery": 5,
     "maxRequestsPerSuiteRun": 40,
     "maxSuiteRuns": 3,
-    "maxReportedCostDollarsPerSuiteRun": 0.5
+    "maxReportedCostDollarsPerSuiteRun": 0.5,
+    "planTotal": "The plan-wide cap governs over the per-run caps: across the JM-104 smoke and every EV-016 run, at most 130 Exa requests and $1.50 of reported cost. The suite reads the committed run logs and the smoke log before starting and refuses to start a query whose worst case (5 requests) would exceed the remaining requests, or once the remaining reported-cost allowance is below $0.05."
   },
   "runRules": [
     "Each suite run starts with an empty Exa cache and an empty image cache, so every run makes fresh Exa calls and fresh image fetches.",
     "Every suite run's log is committed under .futari/evidence/live/, including failed and blocked runs.",
-    "A second or third run is allowed only after a recorded fix (commit SHA and reason in .futari/evidence/JM-105.md) or after a run recorded as BLOCKED by an Exa outage. The verdict comes from the last run; best-of-N selection is not allowed.",
+    "A second or third run is allowed only after a recorded fix (commit SHA and reason in .futari/evidence/JM-106.md) or after a run recorded as BLOCKED by an Exa outage. The verdict comes from the last run; best-of-N selection is not allowed.",
+    "The MVP command pnpm live:acceptance (EV-008) is history and must not be run during v1.1 execution; JM-106 removes its package.json script.",
     "Revalidation is a self-consistency check: each displayed offer is reclassified from the recorded Exa response and must equal what the UI showed, and each displayed image is re-derived from the recorded Exa response (rules I1 and I2) and the recorded fetch result (rule I3). It detects display or pipeline mutation, not extraction errors; the owner audit covers those.",
     "The suite drives the built app in a real browser (Playwright, Chromium) so that image loading and network requests are observed as a user would see them."
   ],
@@ -27,12 +29,14 @@
     "queriesWithAtLeastOneMerchantOffer": { "min": 6, "of": 8 },
     "singaporeQueriesWithAnSgdOfferInTheMainList": { "min": 3, "of": 4, "queries": ["Q3", "Q4", "Q7", "Q8"] },
     "displayedOffersPassingRevalidation": "100%",
-    "displayedOffersPassingOwnerAudit": "at least 90% of all displayed offers across the run (main and Other markets lists), each audited by the owner as the right product on a direct merchant page",
+    "displayedOffers": { "min": 12 },
+    "displayedOffersPassingOwnerAudit": "at least 90% of all displayed offers across the run (main and Other markets lists), each audited by the owner as the right product on a direct merchant page; failures allowed = floor(10% of displayed offers)",
     "searchOrCategoryPagesDisplayedAsOffers": 0,
     "fabricatedOffers": 0,
-    "productsWithAnOfferShowingAProductImage": "at least 70% of product cards that list at least one merchant offer show a loaded product image (not the fallback)",
+    "productsWithAnOfferShowingAProductImage": "at least 70% of product cards that list at least one merchant offer show a loaded product image (not the fallback), and at least 6 such cards show one",
+    "displayedImages": { "min": 8 },
     "displayedImagesPassingRevalidation": "100%",
-    "displayedImagesPassingOwnerAudit": "at least 90% of displayed images, each audited by the owner with the image rubric",
+    "displayedImagesPassingOwnerAudit": "each displayed image is audited by the owner with the image rubric; failures allowed = max(1, floor(10% of displayed images))",
     "browserRequestsToNonLocalOrigins": 0,
     "unexpectedErrorRuns": 0
   },
