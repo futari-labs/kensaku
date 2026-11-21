@@ -10,6 +10,7 @@ import { Products } from "./Products";
 import { ErrorNotice, Progress, UsageFooter } from "./RunStatus";
 import { announcementOf, textOf } from "./messages";
 import type { ClientRunState, RunView } from "./messages";
+import { ThemeToggle } from "./ThemeToggle";
 import { useResearchChat } from "./useResearchChat";
 
 const SUGGESTIONS = [
@@ -63,7 +64,10 @@ export function App() {
           <h1 className="text-2xl font-semibold">Kensaku</h1>
           <p className="text-sm text-muted-foreground">Local shopping research: a cited comparison and merchant offers, with prices as last observed.</p>
         </div>
-        <ClearHistory disabled={running || !chat.hasMessages} onConfirm={chat.clear} />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <ClearHistory disabled={running || !chat.hasMessages} onConfirm={chat.clear} />
+        </div>
       </header>
       {mode === "fixture" && (
         <Alert data-testid="fixture-banner">
