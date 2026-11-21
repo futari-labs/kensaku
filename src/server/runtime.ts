@@ -1,6 +1,7 @@
 import { appendFileSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { DiskCache } from "../exa/cache";
 import { systemClock } from "../exa/clock";
 import { ExaFailure } from "../exa/errors";
@@ -11,9 +12,11 @@ import type { ExaPort } from "../exa/port";
 import { ExaSdkPort } from "../exa/sdk-port";
 import type { AppDeps, LogLine } from "./app";
 import { appConfigOf } from "./config";
+import { FixtureImageFetch, ImageProxy, NetworkImageFetch } from "./images";
 import type { ServerConfig } from "./config";
 
 export const DEFAULT_FIXTURE_SCENARIO = "xm5-us";
+const FIXTURE_IMAGE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../tests/fixtures/images");
 
 const unconfiguredPort: ExaPort = {
   answerCandidates: () => Promise.reject(new ExaFailure("auth", "EXA_API_KEY is not set; add it to .env.local or EXA_ENV_FILE.")),
@@ -47,13 +50,22 @@ export function createRuntime(config: ServerConfig): AppDeps {
   const ledger = new UsageLedger({ dir: join(storage, "ledger"), ...config.limits });
   const onWarning = (note: string) => log({ event: "warning", note });
 
+  const imageDir = join(storage, "images");
+
   if (config.mode === "fixture") {
+    // Each scenario run adds the fixture file its image URLs map to; earlier scenarios' mappings stay.
+    const fetcher = new FixtureImageFetch(FIXTURE_IMAGE_DIR);
     return {
       config: appConfigOf(config),
       ledger,
       clock,
       log,
-      portFor: (scenario) => FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock, answerMarketMode: config.answerMarketMode, onWarning }),
+      images: new ImageProxy({ port: fetcher, clock, log, dir: imageDir }),
+      portFor: (scenario) => {
+        const exa = FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock, answerMarketMode: config.answerMarketMode, onWarning });
+        fetcher.add(exa.scenario.images);
+        return exa;
+      },
     };
   }
 
@@ -67,5 +79,6 @@ export function createRuntime(config: ServerConfig): AppDeps {
         ...(config.exchangeLog && { onExchange: exchangeRecorder(config.exchangeLog) }),
       })
     : unconfiguredPort;
-  return { config: appConfigOf(config), ledger, clock, log, portFor: () => port };
+  const images = new ImageProxy({ port: new NetworkImageFetch(), clock, log, dir: imageDir });
+  return { config: appConfigOf(config), ledger, clock, log, images, portFor: () => port };
 }

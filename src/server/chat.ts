@@ -48,10 +48,15 @@ export function toChunks(event: RunEvent, month: () => MonthUsage): Chunk[] {
     }
     case "comparison":
       return [
-        { type: "text-start", id: "comparison" },
-        { type: "text-delta", id: "comparison", delta: event.text },
-        { type: "text-end", id: "comparison" },
+        ...(event.text === null
+          ? []
+          : [
+              { type: "text-start", id: "comparison" },
+              { type: "text-delta", id: "comparison", delta: event.text },
+              { type: "text-end", id: "comparison" },
+            ] satisfies Chunk[]),
         ...event.sources.map((s): Chunk => ({ type: "source-url", sourceId: s.sourceId, url: s.url })),
+        ...(event.truncated ? [{ type: "data-comparison", id: "comparison", data: { truncated: true } } satisfies Chunk] : []),
       ];
     case "products":
       return [{ type: "data-products", id: "products", data: event.products }];

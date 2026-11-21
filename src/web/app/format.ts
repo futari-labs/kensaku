@@ -31,3 +31,6 @@ export const EVIDENCE_LABEL: Record<EvidenceCategory, string> = {
   marketplace: "Second-hand marketplace",
   "search-or-category": "Search or category page",
 };
+
+/** Shown beside Exa text that was cut at leaked structured output, and in place of a comparison with nothing readable left (D-042). */
+export const MALFORMED_NOTE = "Exa's answer ended in malformed output, which is not shown.";

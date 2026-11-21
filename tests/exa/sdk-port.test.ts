@@ -47,8 +47,38 @@ describe("ExaSdkPort", () => {
     expect(r.hits).toHaveLength(5);
     expect(r.hits[0]?.summary).toMatchObject({ isProductListing: true, currency: "SGD" });
     expect(r.hits.every((h) => h.retrievedAt === r.retrievedAt && h.exaRequestId === r.exaRequestId)).toBe(true);
-    expect(calls[0]?.query).toBe("Sony WH-1000XM5 buy");
+    expect(calls[0]?.query).toBe("Sony WH-1000XM5 price Singapore buy");
     expect(calls[0]?.options).toMatchObject({ type: "auto", numResults: 8, userLocation: "SG" });
+  });
+
+  it("keeps each search result's image, and tolerates its absence or a wrong type", async () => {
+    const { port } = livePort([frozen("V2-search-sg-xm5").response, frozen("S8-market-sg").response]);
+    const withImages = await port.searchOffers(candidate, "SG", new RequestBudget(5), signal);
+    const raw = frozen("V2-search-sg-xm5").response as { results: { url: string; image?: string }[] };
+    expect(withImages.hits.map((h) => h.image)).toEqual(raw.results.map((r) => r.image));
+    expect(withImages.hits.every((h) => typeof h.image === "string")).toBe(true);
+
+    const body = { requestId: "r", results: [{ url: "https://a.example/x", title: null, image: 42 }, { url: "https://a.example/y", title: null, image: null }, { url: "https://a.example/z" }] };
+    const odd = await livePort([body]).port.searchOffers(candidate, "SG", new RequestBudget(5), signal);
+    expect(odd.hits.map((h) => h.url)).toEqual(["https://a.example/x", "https://a.example/y", "https://a.example/z"]);
+    expect(odd.hits.every((h) => !("image" in h))).toBe(true);
+  });
+
+  it("keeps keySpecs and reason from a v1.1 answer, and tolerates an MVP answer without them or with wrong types", async () => {
+    const v9 = frozen("V9-answer-us-tight-identifiers").response as { answer: { candidates: Candidate[] } };
+    const { port } = livePort([v9]);
+    const first = (await port.answerCandidates("q", "US", new RequestBudget(5), signal)).candidates[0]!;
+    expect(first.keySpecs).toHaveLength(5);
+    expect(first.reason).toContain("[4]");
+
+    const mvp = await livePort([frozen("A2-answer-schema").response]).port.answerCandidates("q", "US", new RequestBudget(5), signal);
+    expect(mvp.candidates.every((c) => c.keySpecs === undefined && c.reason === undefined)).toBe(true);
+
+    const wrong = { requestId: "r", answer: { comparison: "c", candidates: [{ name: "n", brand: "b", modelIdentifiers: ["x"], keySpecs: "fast", reason: 7 }] }, citations: [], costDollars: { total: 0.005 } };
+    const dropped = (await livePort([wrong]).port.answerCandidates("q", "US", new RequestBudget(5), signal)).candidates[0]!;
+    expect(dropped).toMatchObject({ name: "n" });
+    expect(dropped.keySpecs).toBeUndefined();
+    expect(dropped.reason).toBeUndefined();
   });
 
   it("turns an unparseable summary into null and rejects a malformed body as upstream", async () => {
