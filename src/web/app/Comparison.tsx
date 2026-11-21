@@ -1,14 +1,9 @@
 import { Fragment } from "react";
 import { segmentMarkers, splitParagraphs } from "../../core";
 import type { SourceRef } from "../../research/events";
+import { Popover } from "radix-ui";
 import { Badge } from "@/web/components/ui/badge";
-import {
-  InlineCitation,
-  InlineCitationCard,
-  InlineCitationCardBody,
-  InlineCitationCardTrigger,
-  InlineCitationSource,
-} from "@/web/components/ai-elements/inline-citation";
+import { InlineCitation, InlineCitationSource } from "@/web/components/ai-elements/inline-citation";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/web/components/ai-elements/sources";
 import { hostOf } from "./format";
 
@@ -21,6 +16,44 @@ function urlsFor(numbers: number[], sources: SourceRef[]): string[] {
   return urls;
 }
 
+/**
+ * An inline citation is a button that opens its sources as links. The generated hover card opens on
+ * hover or focus only and its content is out of the tab order, so this composes the generated
+ * citation pieces around a click-to-open popover that the keyboard can reach and operate.
+ */
+function Citation({ urls }: { urls: string[] }) {
+  const hosts = urls.map(hostOf);
+  return (
+    <InlineCitation>
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <Badge asChild variant="secondary" className="ml-1 cursor-pointer rounded-full">
+            <button type="button" data-testid="inline-citation">
+              <span className="sr-only">Citation: </span>
+              {hosts[0]}
+              {urls.length > 1 && ` +${urls.length - 1}`}
+            </button>
+          </Badge>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content
+            sideOffset={4}
+            data-testid="citation-card"
+            aria-label={`Sources: ${hosts.join(", ")}`}
+            className="z-50 w-80 max-w-[calc(100vw-2rem)] space-y-3 rounded-lg bg-popover p-4 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden"
+          >
+            {urls.map((url) => (
+              <a key={url} href={url} target="_blank" rel="noreferrer" data-testid="citation-link" className="block rounded-sm underline-offset-2 hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                <InlineCitationSource title={hostOf(url)} url={url} />
+              </a>
+            ))}
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    </InlineCitation>
+  );
+}
+
 function Paragraph({ text, sources }: { text: string; sources: SourceRef[] }) {
   const segments = segmentMarkers(text);
   const cited = segments.some((seg) => typeof seg !== "string");
@@ -30,20 +63,7 @@ function Paragraph({ text, sources }: { text: string; sources: SourceRef[] }) {
         if (typeof seg === "string") return <Fragment key={i}>{seg}</Fragment>;
         const urls = urlsFor(seg.citation, sources);
         if (urls.length === 0) return <Fragment key={i}>[{seg.citation.join(",")}]</Fragment>;
-        return (
-          <InlineCitation key={i}>
-            <InlineCitationCard>
-              <InlineCitationCardTrigger sources={urls} data-testid="inline-citation" />
-              <InlineCitationCardBody>
-                <div className="space-y-3 p-4">
-                  {urls.map((url) => (
-                    <InlineCitationSource key={url} title={hostOf(url)} url={url} />
-                  ))}
-                </div>
-              </InlineCitationCardBody>
-            </InlineCitationCard>
-          </InlineCitation>
-        );
+        return <Citation key={i} urls={urls} />;
       })}
       {!cited && (
         <Badge variant="outline" className="ml-2" data-testid="uncited-flag">

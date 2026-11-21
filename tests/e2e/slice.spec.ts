@@ -37,8 +37,8 @@ test("fixture run: progress, cited comparison, offer table, and separate evidenc
   const hrefs = await page.getByTestId("source-link").evaluateAll((links) => links.map((a) => (a as HTMLAnchorElement).href));
   expect(hrefs.length).toBeGreaterThan(0);
   for (const href of hrefs) expect(citationUrls).toContain(href);
-  await page.getByTestId("inline-citation").first().hover();
-  await expect(page.getByText(/^https?:\/\//).first()).toBeVisible();
+  await page.getByTestId("inline-citation").first().click();
+  await expect(page.getByTestId("citation-link").first()).toBeVisible();
 
   // Offers: merchant host, price with currency code, availability, retrieved time, link.
   await expect(page.getByTestId("last-observed-notice")).toContainText("last observed");
@@ -93,6 +93,7 @@ test("a failed run shows its specific error, and a partial failure says so", asy
   await expect(page.getByTestId("run-error")).toHaveAttribute("data-kind", "credits_exhausted");
   await expect(page.getByTestId("run-error")).toContainText("credits are exhausted");
 
+  await page.evaluate(() => localStorage.clear());
   await page.goto("/?scenario=error-offers");
   await ask(page, Q1);
   await expect(page.getByTestId("run-error")).toContainText("results below are partial");
