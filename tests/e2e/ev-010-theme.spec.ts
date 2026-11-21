@@ -88,30 +88,35 @@ test.describe("2. no flash, before the bundle", () => {
 });
 
 test.describe("3. no flash, through load", () => {
-  // The observer starts before any page script. Its first entry is the class before theme-init.js, so it is skipped; every later change is checked.
+  // The observer starts before any page script. Its first entry is the class before theme-init.js, so it is skipped, but only if it happened while the head was still parsing (no body yet); every later change is checked.
   const record = (page: Page) =>
     page.addInitScript(() => {
-      const w = window as unknown as { __before: boolean[] };
+      const w = window as unknown as { __before: { dark: boolean; parsingHead: boolean }[] };
       w.__before = [];
+      const parsingHead = () => document.body === null;
       // document.documentElement may not exist yet when this runs, so observe the document. Each record keeps the class list as it was before that change.
       new MutationObserver((records) => {
-        for (const r of records) if (r.target === document.documentElement) w.__before.push((r.oldValue ?? "").split(/\s+/).includes("dark"));
+        // Callbacks run as a microtask after the mutation; no parser work runs in between, so the body check still describes the mutation.
+        for (const r of records) if (r.target === document.documentElement) w.__before.push({ dark: (r.oldValue ?? "").split(/\s+/).includes("dark"), parsingHead: parsingHead() });
       }).observe(document, { attributes: true, attributeFilter: ["class"], attributeOldValue: true, subtree: true });
     });
   // Every state <html> held from the end of the first change (theme-init.js) on: the old value of each later change, then the current one.
   const history = (page: Page) =>
     page.evaluate(() => {
-      const before = (window as unknown as { __before: boolean[] }).__before;
-      return [...before.slice(1), document.documentElement.classList.contains("dark")];
+      const before = (window as unknown as { __before: { dark: boolean; parsingHead: boolean }[] }).__before;
+      return {
+        firstDuringHead: before[0]?.parsingHead ?? true,
+        states: [...before.slice(1).map((b) => b.dark), document.documentElement.classList.contains("dark")],
+      };
     });
 
   test("empty storage: never without dark", async ({ page }) => {
     await record(page);
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { name: "Ask a shopping question" })).toBeVisible();
     const seen = await history(page);
-    expect(seen.every(Boolean)).toBe(true);
+    expect(seen.firstDuringHead).toBe(true);
+    expect(seen.states.every(Boolean)).toBe(true);
     expect(await isDark(page)).toBe(true);
   });
 
@@ -119,9 +124,10 @@ test.describe("3. no flash, through load", () => {
     await presetLight(page);
     await record(page);
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { name: "Ask a shopping question" })).toBeVisible();
-    expect((await history(page)).some(Boolean)).toBe(false);
+    const seen = await history(page);
+    expect(seen.firstDuringHead).toBe(true);
+    expect(seen.states.some(Boolean)).toBe(false);
     expect(await isDark(page)).toBe(false);
   });
 });
@@ -170,6 +176,9 @@ test.describe("6. fallbacks", () => {
   test("throwing localStorage renders dark, still toggles, and logs no uncaught error", async ({ page }) => {
     const uncaught: string[] = [];
     page.on("pageerror", (e) => uncaught.push(e.message));
+    page.on("console", (m) => {
+      if (m.type() === "error") uncaught.push(m.text());
+    });
     await page.addInitScript(() => {
       const fail = () => {
         throw new DOMException("denied", "SecurityError");

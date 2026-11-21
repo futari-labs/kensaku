@@ -2,13 +2,9 @@ export type Theme = "dark" | "light";
 
 export const THEME_KEY = "kensaku.theme.v1";
 
-/** Dark unless the stored value is exactly "light". Any other value, or no storage, is dark. */
+/** The theme public/theme-init.js applied before first paint; that script is the only parser of stored values. Its storage key must match THEME_KEY. */
 export function readTheme(): Theme {
-  try {
-    return localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
-  } catch {
-    return "dark";
-  }
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
 export function applyTheme(theme: Theme): void {

@@ -1,5 +1,5 @@
 /* global document */
-// Classic blocking script: sets the theme before first paint. Keep the key and rule in step with src/web/app/theme.ts.
+// Classic blocking script: sets the theme before first paint. The storage key must match THEME_KEY in src/web/app/theme.ts.
 (function () {
   var light = false;
   try {
