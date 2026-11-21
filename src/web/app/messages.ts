@@ -1,10 +1,17 @@
 import type { UIMessage } from "ai";
+import { MARKET_CURRENCY } from "../../core/currency";
+import type { Currency, Market } from "../../core/types";
+import { MARKETS } from "./markets";
 import { STAGES } from "../../research/events";
 import type { ApiErrorKind, ErrorData, KensakuDataParts, ProductResult, ProgressData, RunState, SourceRef, Stage, UsageData } from "../../research/events";
 
 /** What the web app shows for a failed run: a run's own error kinds plus the 4xx kinds of `POST /api/chat`, which it records itself. */
 export type FailureData = Omit<ErrorData, "kind"> & { kind: ApiErrorKind };
-export type ChatMessage = UIMessage<unknown, Omit<KensakuDataParts, "error"> & { error: FailureData }>;
+/** The market a question was asked in; its card keeps saying that market after the selection changes. */
+export interface MessageMetadata {
+  market?: Market;
+}
+export type ChatMessage = UIMessage<MessageMetadata, Omit<KensakuDataParts, "error"> & { error: FailureData }>;
 
 export interface RunView {
   progress: ProgressData[];
@@ -18,7 +25,7 @@ export interface RunView {
 }
 
 /** Collects what an assistant message's parts say about its run. */
-export function viewOf(message: ChatMessage | undefined): RunView {
+export function viewOf(message: Pick<ChatMessage, "parts"> | undefined): RunView {
   const view: RunView = { progress: [], text: undefined, comparisonTruncated: false, sources: [], products: undefined, usage: undefined, error: undefined };
   for (const part of message?.parts ?? []) {
     switch (part.type) {
@@ -69,9 +76,25 @@ export function runStateOf(
   return "cancelled";
 }
 
+/**
+ * The market a turn was for: the question's metadata, else (history from before v1.1) the market whose currency leads most
+ * offer lists in the run (a tie goes to the first product's). `rankOffers` (src/core/rank.ts) puts the market's currency first in
+ * every product's groups, so each product that has offers votes for it. Undefined when the run has no offers, where no card needs it.
+ */
+function marketOf(question: ChatMessage, products: ProductResult[] | undefined): Market | undefined {
+  if (question.metadata?.market) return question.metadata.market;
+  const leading = (products ?? []).flatMap((p) => (p.offerGroups[0] ? [p.offerGroups[0].currency] : []));
+  const votes = (c: Currency) => leading.filter((l) => l === c).length;
+  // The strict `>` keeps the earlier currency on a tie, and `leading` is in product order.
+  const currency = leading.reduce<Currency | undefined>((best, c) => (best === undefined || votes(c) > votes(best) ? c : best), undefined);
+  return MARKETS.find((m) => MARKET_CURRENCY[m] === currency);
+}
+
 /** One question and the run that answers it; a question cancelled before the reply began has an empty view. */
 export interface Turn {
   question: ChatMessage;
+  /** See `marketOf`. */
+  market: Market | undefined;
   view: RunView;
   state: ClientRunState;
 }
@@ -89,7 +112,7 @@ export function turnsOf(messages: ChatMessage[], now: { running: boolean; reques
   return pairs.map(({ question, answer }, i) => {
     const newest = i === pairs.length - 1;
     const view = viewOf(answer);
-    return { question, view, state: runStateOf(view, { streaming: newest && now.running, requestFailed: newest && now.requestFailed }) };
+    return { question, market: marketOf(question, view.products), view, state: runStateOf(view, { streaming: newest && now.running, requestFailed: newest && now.requestFailed }) };
   });
 }
 

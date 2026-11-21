@@ -82,7 +82,7 @@ export function useResearchChat() {
   const ready = mode !== "unknown";
   const ask = (text: string) => {
     if (running || !ready || text.trim() === "") return;
-    void sendMessage({ text });
+    void sendMessage({ text, metadata: { market: marketRef.current } });
   };
 
   return {

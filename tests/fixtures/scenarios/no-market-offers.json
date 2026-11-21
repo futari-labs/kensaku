@@ -1,0 +1,60 @@
+{
+  "name": "no-market-offers",
+  "description": "SG market, the xm5-us-cards run: its offers are all USD, so the main list holds no Singapore offers and the USD offers sit under Other markets. Choose market SG when asking.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC 2-candidate answer with key specifications and reasons (unrelated products, for card layout only) composed with the real A1 comparison and citations; not a live Exa response",
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": [
+          {
+            "name": "WH-1000XM5 Wireless Noise Cancelling Headphones",
+            "brand": "Sony",
+            "modelIdentifiers": [
+              "WH-1000XM5"
+            ],
+            "keySpecs": [
+              "Active noise cancelling with 8 microphones",
+              "Up to 30 hours of battery life",
+              "Bluetooth 5.2 with multipoint",
+              "Weighs about 250 g"
+            ],
+            "reason": "Strong noise cancelling and long battery life suit frequent travel [1][2]."
+          },
+          {
+            "name": "MX Master 3S",
+            "brand": "Logitech",
+            "modelIdentifiers": [
+              "MX Master 3S"
+            ],
+            "keySpecs": [
+              "8K DPI optical sensor",
+              "Quiet clicks",
+              "USB-C quick charging"
+            ],
+            "reason": "A comfortable shaped mouse with quiet clicks for long work days [4]."
+          }
+        ]
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/V4-search-us-xm5-control.json"
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/S2-mouse.json"
+      }
+    }
+  ],
+  "images": {
+    "https://d1ncau8tqf99kp.cloudfront.net/converted/103375_original_local_1200x1050_v3_converted.webp": "fail-1x1.gif",
+    "https://i5.walmartimages.com/seo/Sony-WH-1000XM5-The-Best-Wireless-Noise-Canceling-Headphones-Black_7384c879-1d54-47e8-9876-1d7adadcf0a5.542c245c25d295b30fa5820eacea4450.jpeg": "ok-400x300.jpg",
+    "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png": "ok-400x300.webp",
+    "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/common/og-generic/og-image-electrico.png": "ok-400x300.png"
+  }
+}

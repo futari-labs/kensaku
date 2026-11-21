@@ -1,3 +1,4 @@
+import type { Market } from "../../core/types";
 import { Alert, AlertDescription, AlertTitle } from "@/web/components/ui/alert";
 import { Button } from "@/web/components/ui/button";
 import { Conversation, ConversationContent, ConversationEmptyState } from "@/web/components/ai-elements/conversation";
@@ -35,14 +36,14 @@ function RunFooter({ view, state, fixture }: { view: RunView; state: ClientRunSt
   }
 }
 
-function AssistantRun({ view, state, fixture }: { view: RunView; state: ClientRunState; fixture: boolean }) {
+function AssistantRun({ view, state, fixture, market }: { view: RunView; state: ClientRunState; fixture: boolean; market: Market | undefined }) {
   return (
-    <div className="min-w-0 max-w-full space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-8">
       {(view.progress.length > 0 || state === "running") && <Progress progress={view.progress} />}
       {/* Above the results it qualifies: "the results below are partial". */}
       {view.error && <ErrorNotice error={view.error} />}
-      {view.text !== undefined && <Comparison text={view.text} sources={view.sources} />}
-      {view.products !== undefined && <Products products={view.products} />}
+      {(view.text !== undefined || view.comparisonTruncated) && <Comparison text={view.text} truncated={view.comparisonTruncated} sources={view.sources} />}
+      {view.products !== undefined && <Products products={view.products} market={market} />}
       <RunFooter view={view} state={state} fixture={fixture} />
     </div>
   );
@@ -58,7 +59,7 @@ export function App() {
   const { mode, ready, running, turns, ask } = chat;
 
   return (
-    <main className="mx-auto flex h-dvh max-w-3xl flex-col gap-3 p-3 sm:p-4">
+    <main className="mx-auto flex h-dvh max-w-6xl flex-col gap-3 p-3 sm:p-4">
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Kensaku</h1>
@@ -90,7 +91,7 @@ export function App() {
         {announcementOf(turns.at(-1))}
       </div>
       <Conversation className="min-h-0 flex-1">
-        <ConversationContent>
+        <ConversationContent className="px-2 sm:px-4">
           {turns.length === 0 ? (
             <ConversationEmptyState title="Ask a shopping question" description="Kensaku compares a few products and finds direct merchant offers.">
               <div className="space-y-3 text-center">
@@ -104,16 +105,16 @@ export function App() {
               </div>
             </ConversationEmptyState>
           ) : (
-            turns.map(({ question, view, state }) => (
+            turns.map(({ question, market, view, state }) => (
               <div key={question.id} className="flex min-w-0 flex-col gap-8" data-testid="turn" data-state={state}>
                 <Message from="user">
                   <MessageContent>
                     <p>{textOf(question)}</p>
                   </MessageContent>
                 </Message>
-                <Message from="assistant">
-                  <MessageContent>
-                    <AssistantRun view={view} state={state} fixture={mode === "fixture"} />
+                <Message from="assistant" className="max-w-full">
+                  <MessageContent className="w-full">
+                    <AssistantRun view={view} state={state} fixture={mode === "fixture"} market={market} />
                   </MessageContent>
                 </Message>
               </div>
