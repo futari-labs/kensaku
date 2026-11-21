@@ -1,8 +1,8 @@
 import { useId, useState } from "react";
 import { ChevronDownIcon, ImageOffIcon } from "lucide-react";
 import { segmentMarkers } from "../../core";
-import type { CitedSource } from "../../core";
-import type { Evidence, ImageCandidate, Market, Offer, OfferGroup } from "../../core/types";
+import { MARKET_CURRENCY } from "../../core/currency";
+import type { Evidence, ImageCandidate, Market, Offer } from "../../core/types";
 import type { ProductResult } from "../../research/events";
 import { AspectRatio } from "@/web/components/ui/aspect-ratio";
 import { Badge } from "@/web/components/ui/badge";
@@ -12,10 +12,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/web/compo
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemHeader, ItemTitle } from "@/web/components/ui/item";
 import { Skeleton } from "@/web/components/ui/skeleton";
 import { cn } from "@/web/lib/utils";
-import { CitedSegments } from "./Citation";
-import { MalformedNote } from "./Comparison";
+import { CitedSegments, MalformedNote } from "./Citation";
 import { AVAILABILITY_LABEL, EVIDENCE_LABEL, formatPrice, formatTime } from "./format";
-import { MARKET_INFO } from "./markets";
+import { MARKET_NAME } from "./markets";
+import { offerView } from "./offers";
+import type { OfferView } from "./offers";
 
 const IMAGE_RATIO = 4 / 3;
 
@@ -82,22 +83,24 @@ function OfferItem({ offer }: { offer: Offer }) {
   );
 }
 
-const OfferList = ({ offers, label }: { offers: Offer[]; label: string }) => (
-  <ItemGroup aria-label={label}>
-    {offers.map((offer) => (
-      <OfferItem key={offer.canonicalUrl} offer={offer} />
-    ))}
-  </ItemGroup>
-);
+function OfferList({ offers, label }: { offers: Offer[]; label: string }) {
+  return (
+    <ItemGroup aria-label={label}>
+      {offers.map((offer) => (
+        <OfferItem key={offer.canonicalUrl} offer={offer} />
+      ))}
+    </ItemGroup>
+  );
+}
 
 /** A disclosure that is closed until the reader opens it; the trigger carries `aria-expanded`. */
 function Disclosure({ title, testId, children }: { title: string; testId: string; children: React.ReactNode }) {
   return (
     <Collapsible data-testid={testId} className="space-y-3">
       <CollapsibleTrigger asChild>
-        <Button type="button" variant="outline" className="h-auto min-h-9 w-full justify-between py-2 whitespace-normal [&[aria-expanded=true]>svg]:rotate-180">
+        <Button type="button" variant="outline" className="group h-auto min-h-9 w-full justify-between py-2 whitespace-normal">
           <span className="text-left">{title}</span>
-          <ChevronDownIcon aria-hidden="true" className="transition-transform" />
+          <ChevronDownIcon aria-hidden="true" className="transition-transform group-data-[state=open]:rotate-180" />
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-3">{children}</CollapsibleContent>
@@ -109,20 +112,25 @@ function ResearchDetails({ evidence, rejected }: { evidence: Evidence[]; rejecte
   return (
     <Disclosure title="Research details" testId="research-details">
       <div className="space-y-3 text-sm" data-testid="evidence">
-        {evidence.length > 0 && <h4 className="font-semibold">Research evidence (not merchant offers)</h4>}
-        <ul className="space-y-3">
-          {evidence.map((item) => (
-            <li key={item.url} data-testid="evidence-item">
-              <a className="break-words underline underline-offset-2" href={item.url} target="_blank" rel="noopener noreferrer">
-                {item.title ?? item.url}
-              </a>
-              <div className="text-xs text-muted-foreground">
-                {EVIDENCE_LABEL[item.category]}
-                {item.reportedPrice ? ` · ${item.reportedPrice.amount} ${item.reportedPrice.currency} reported by ${item.host}; not a merchant offer` : ` · ${item.host}; not a merchant offer`}
-              </div>
-            </li>
-          ))}
-        </ul>
+        {evidence.length > 0 && (
+          <>
+            <h4 className="font-semibold">Research evidence (not merchant offers)</h4>
+            <ul className="space-y-3">
+              {evidence.map((item) => (
+                <li key={item.url} data-testid="evidence-item">
+                  <a className="break-words underline underline-offset-2" href={item.url} target="_blank" rel="noopener noreferrer">
+                    {item.title ?? item.url}
+                  </a>
+                  <div className="text-xs text-muted-foreground">
+                    {EVIDENCE_LABEL[item.category]}
+                    {item.reportedPrice ? ` · ${item.reportedPrice.amount} ${item.reportedPrice.currency} reported by ${item.host}; not a merchant offer` : ` · ${item.host}; not a merchant offer`}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {/* EV-015 check 7 asks for the rejected count, so it shows even at zero. */}
         <p className="text-xs text-muted-foreground">
           {rejected} search result{rejected === 1 ? " was" : "s were"} rejected as not matching this product.
         </p>
@@ -131,46 +139,70 @@ function ResearchDetails({ evidence, rejected }: { evidence: Evidence[]; rejecte
   );
 }
 
-/** Which number each marker stands for, resolved to this reason's sources (the comparison's marker numbers, kept by `resolveReason`). */
-const reasonUrlsFor = (cited: CitedSource[]) => (numbers: number[]) => {
-  const urls: string[] = [];
-  for (const n of numbers) {
-    const source = cited.find((s) => s.numbers.includes(n));
-    if (source && !urls.includes(source.url)) urls.push(source.url);
+/** The one place the card branches on its offers: the summary line under the image and the offer lists below the reason. */
+function offerSections(view: OfferView): { summary: React.ReactNode; listing: React.ReactNode } {
+  switch (view.kind) {
+    case "notSearched":
+      return { summary: null, listing: <p className="text-sm text-muted-foreground">{view.message}</p> };
+    case "none":
+      return {
+        summary: null,
+        listing: (
+          <p className="text-sm" data-testid="no-offers">
+            No direct merchant offers with a listed price were found.
+          </p>
+        ),
+      };
+    case "offers": {
+      const { market, local, lowest, other, otherCount } = view;
+      const name = MARKET_NAME[market];
+      return {
+        summary:
+          lowest === undefined ? (
+            <p className="text-base font-medium text-muted-foreground" data-testid="price-summary">
+              No {name} offers found
+            </p>
+          ) : (
+            <p className="text-base" data-testid="price-summary">
+              <span className="text-xl font-semibold tabular-nums">From {formatPrice(lowest, MARKET_CURRENCY[market])}</span>
+              <span className="text-muted-foreground">
+                {" · "}
+                {local.length} {name} {local.length === 1 ? "offer" : "offers"}
+              </span>
+            </p>
+          ),
+        listing: (
+          <>
+            {local.length > 0 && (
+              <section aria-label={`${name} offers`} data-testid="offers">
+                <OfferList offers={local} label={`${name} offers`} />
+              </section>
+            )}
+            {otherCount > 0 && (
+              <Disclosure title={`Other markets (may not ship to ${name}) · ${otherCount}`} testId="other-markets">
+                {other.map((group) => (
+                  <div key={group.currency} className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Prices in {group.currency}</p>
+                    <OfferList offers={group.offers} label={`Offers in ${group.currency}`} />
+                  </div>
+                ))}
+              </Disclosure>
+            )}
+          </>
+        ),
+      };
+    }
   }
-  return urls;
-};
-
-/** The market the run was for. History from before v1.1 did not record it, and the market's currency leads its offer groups. */
-const marketOf = (groups: OfferGroup[], recorded: Market | undefined): Market | undefined =>
-  recorded ?? (Object.keys(MARKET_INFO) as Market[]).find((m) => MARKET_INFO[m].currency === groups[0]?.currency);
-
-function PriceSummary({ offers, market }: { offers: Offer[]; market: Market }) {
-  const { name, currency } = MARKET_INFO[market];
-  if (offers.length === 0) return <p className="text-base font-medium text-muted-foreground" data-testid="price-summary">No {name} offers found</p>;
-  // The lowest listed price counts out-of-stock offers too; their badge stays visible in the list.
-  const lowest = Math.min(...offers.map((o) => o.price.amount));
-  return (
-    <p className="text-base" data-testid="price-summary">
-      <span className="text-xl font-semibold tabular-nums">From {formatPrice(lowest, currency)}</span>
-      <span className="text-muted-foreground">
-        {" · "}
-        {offers.length} {name} {offers.length === 1 ? "offer" : "offers"}
-      </span>
-    </p>
-  );
 }
 
+/** `market` is the market the run was for, settled once per turn (`turnsOf`). */
 export function ProductCard({ product, market }: { product: ProductResult; market: Market | undefined }) {
-  const { candidate, offerGroups, evidence, rejectedCounts, notSearched, keySpecs, reason, imageCandidates } = product;
+  const { candidate, evidence, rejectedCounts, keySpecs, reason, imageCandidates } = product;
   const title = `${candidate.brand} ${candidate.name}`;
   const headingId = useId();
-  const rejected = Object.values(rejectedCounts).reduce((a, b) => a + b, 0);
-  const resolved = marketOf(offerGroups, market);
-  const local = resolved ? (offerGroups.find((g) => g.currency === MARKET_INFO[resolved].currency)?.offers ?? []) : [];
-  const other = offerGroups.filter((g) => !resolved || g.currency !== MARKET_INFO[resolved].currency);
-  const otherCount = other.reduce((n, g) => n + g.offers.length, 0);
   const reasonId = useId();
+  const rejected = Object.values(rejectedCounts).reduce((a, b) => a + b, 0);
+  const { summary, listing } = offerSections(offerView(product, market));
 
   return (
     <Card role="article" aria-labelledby={headingId} data-testid="product" className="gap-5 pt-5 pb-6 [--card-spacing:--spacing(5)]">
@@ -181,7 +213,7 @@ export function ProductCard({ product, market }: { product: ProductResult; marke
       </CardHeader>
       <ProductImage label={title} candidates={imageCandidates ?? []} />
       <CardContent className="space-y-6">
-        {notSearched === undefined && resolved && offerGroups.length > 0 && <PriceSummary offers={local} market={resolved} />}
+        {summary}
         {keySpecs !== undefined && keySpecs.length > 0 && (
           <ul className="list-disc space-y-1.5 pl-5 text-sm marker:text-muted-foreground" aria-label="Key specifications" data-testid="key-specs">
             {keySpecs.map((spec) => (
@@ -195,32 +227,12 @@ export function ProductCard({ product, market }: { product: ProductResult; marke
               Why it fits
             </h4>
             <p className="text-sm leading-relaxed">
-              <CitedSegments segments={segmentMarkers(reason.renderedText)} urlsFor={reasonUrlsFor(reason.citedSources)} />
+              <CitedSegments segments={segmentMarkers(reason.renderedText)} sources={reason.citedSources} />
             </p>
             {reason.truncated && <MalformedNote />}
           </section>
         )}
-        {notSearched !== undefined && <p className="text-sm text-muted-foreground">{notSearched}</p>}
-        {notSearched === undefined && offerGroups.length === 0 && (
-          <p className="text-sm" data-testid="no-offers">
-            No direct merchant offers with a listed price were found.
-          </p>
-        )}
-        {local.length > 0 && resolved && (
-          <section aria-label={`${MARKET_INFO[resolved].name} offers`} data-testid="offers">
-            <OfferList offers={local} label={`${MARKET_INFO[resolved].name} offers`} />
-          </section>
-        )}
-        {otherCount > 0 && resolved && (
-          <Disclosure title={`Other markets (may not ship to ${MARKET_INFO[resolved].name}) · ${otherCount}`} testId="other-markets">
-            {other.map((group) => (
-              <div key={group.currency} className="space-y-2">
-                <p className="text-xs text-muted-foreground">Prices in {group.currency}</p>
-                <OfferList offers={group.offers} label={`Offers in ${group.currency}`} />
-              </div>
-            ))}
-          </Disclosure>
-        )}
+        {listing}
         <ResearchDetails evidence={evidence} rejected={rejected} />
       </CardContent>
     </Card>

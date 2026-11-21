@@ -10,8 +10,12 @@ import { Q1 } from "../fixtures/questions";
 const root = join(import.meta.dirname, "../..");
 const read = (path: string) => JSON.parse(readFileSync(join(root, path), "utf8"));
 const frozenHistory = read("evals/fixtures/history/mvp-history-xm5-sg.json") as { key: string; value: string };
-const content = read("evals/cases/product-content.json") as { comparisonCases: { id: string; expected: { renderedText: string; sources: string[] } }[] };
+const content = read("evals/cases/product-content.json") as {
+  comparisonCases: { id: string; expected: { renderedText: string; sources: string[] } }[];
+  cases: { id: string; candidates: { expected: { reason: { renderedText: string; sources: string[] } } }[] }[];
+};
 const K01 = content.comparisonCases.find((c) => c.id === "K01")!;
+const P04 = content.cases.find((c) => c.id === "P04")!.candidates[0]!.expected.reason;
 
 const HISTORY_KEY = "kensaku.history.v1";
 const MARKET_KEY = "kensaku.market.v1";
@@ -215,8 +219,16 @@ test("5. the browser contacts only 127.0.0.1, and the page carries the ARCHITECT
   page.on("request", (r) => urls.push(r.url()));
   const response = await page.goto("/");
   expect(response!.headers()["content-security-policy"]).toBe(CSP);
-  for (const scenario of ["xm5-sg-cards", "no-images", "comparison-truncated"]) {
-    await run(page, scenario, { market: scenario === "comparison-truncated" ? "US" : "SG" });
+  // "During every scenario": each scenario the cards use, in a market that suits it.
+  const scenarios = [
+    ["xm5-sg-cards", "SG"],
+    ["xm5-us-cards", "US"],
+    ["no-images", "SG"],
+    ["no-market-offers", "SG"],
+    ["comparison-truncated", "US"],
+  ] as const;
+  for (const [scenario, market] of scenarios) {
+    await run(page, scenario, { market });
     await page.getByRole("button", { name: /Research details/ }).first().click();
   }
   expect(urls.length).toBeGreaterThan(10);
@@ -334,8 +346,10 @@ test.describe("9. accessibility", () => {
     }
   }
 
-  test("every disclosure and link is reachable by keyboard; image alt text follows REQ-013", async ({ page }) => {
+  test("every card disclosure, evidence link, offer link and reason citation is reachable and operable by keyboard; image alt text follows REQ-013", async ({ page }) => {
     await run(page, "xm5-sg-cards");
+    const products = await storedProducts(page);
+    const focused = page.locator(":focus");
     const reach = async (selector: string) => {
       for (let i = 0; i < 200; i++) {
         await page.keyboard.press("Tab");
@@ -344,13 +358,30 @@ test.describe("9. accessibility", () => {
       throw new Error(`Tab never reached ${selector}`);
     };
     await question(page).focus();
-    await reach('[data-slot="collapsible-trigger"]');
+
+    // Document order within the first card: reason citation, offer link, then its disclosures. Focus is only ever moved by Tab after this point.
+    await reach('[data-testid="product"] [data-testid="reason"] [data-testid="inline-citation"]');
     await page.keyboard.press("Enter");
-    await expect(page.locator('[data-slot="collapsible-trigger"][aria-expanded="true"]').first()).toBeVisible();
-    await question(page).focus();
-    await page.keyboard.press("Shift+Tab");
-    await reach('[data-testid="offer-row"] a');
-    const products = await storedProducts(page);
+    await expect(page.getByTestId("citation-card")).toBeVisible();
+    await expect(page.getByTestId("citation-link").first()).toHaveAttribute("href", /^https:\/\//);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("citation-card")).toHaveCount(0);
+    await reach('[data-testid="product"] [data-testid="offer-row"] a');
+
+    for (const [i, product] of products.entries()) {
+      const disclosures = [...(product.offerGroups.some((g) => g.currency !== "SGD") ? ["Other markets"] : []), "Research details"];
+      for (const name of disclosures) {
+        await reach('[data-testid="product"] [data-slot="collapsible-trigger"]');
+        await expect(focused).toContainText(name);
+        await expect(focused).toHaveAttribute("aria-expanded", "false");
+        await page.keyboard.press("Enter");
+        await expect(focused).toHaveAttribute("aria-expanded", "true");
+        if (name === "Research details" && product.evidence.length > 0) {
+          await reach('[data-testid="evidence-item"] a');
+          await expect(cards(page).nth(i).getByTestId("evidence-item").first().locator("a")).toBeFocused();
+        }
+      }
+    }
     for (const [i, product] of products.entries()) {
       await expect(cards(page).nth(i).locator("img")).toHaveAttribute("alt", new RegExp(`^${product.candidate.brand} ${product.candidate.name}, image from .+$`));
     }
@@ -371,6 +402,16 @@ test.describe("10. the malformed-answer note (REQ-002, D-042)", () => {
     expect(shown.join("\n\n")).toBe(K01.expected.renderedText.replace(/\[\d+(?:,\d+)*\]/g, ""));
     expect(K01.expected.renderedText.endsWith("[4,8].")).toBe(true);
     expect(await section.getByTestId("inline-citation").count()).toBe((K01.expected.renderedText.match(/\[\d+(?:,\d+)*\]/g) ?? []).length);
+    // Every comparison citation opens only K01's sources.
+    const citations = section.getByTestId("inline-citation");
+    for (let i = 0; i < (await citations.count()); i++) {
+      await citations.nth(i).click();
+      const hrefs = await page.getByTestId("citation-link").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
+      expect(hrefs.length).toBeGreaterThan(0);
+      for (const href of hrefs) expect(K01.expected.sources, href).toContain(href);
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("citation-card")).toHaveCount(0);
+    }
     await section.getByRole("button", { name: /Used 2 sources/ }).click();
     const sources = await section.getByTestId("source-link").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
     expect(sources.sort()).toEqual([...K01.expected.sources].sort());
@@ -378,16 +419,24 @@ test.describe("10. the malformed-answer note (REQ-002, D-042)", () => {
 
     const reason = cards(page).first().getByTestId("reason");
     await expect(reason.getByTestId("malformed-note")).toHaveText(NOTE);
-    expect(await reason.getByTestId("inline-citation").count()).toBeGreaterThan(0);
+    // The reason is cut where the leaked structure began (product-content.json P04): its text is P04's rendered text, with the citation shown.
+    const reasonText = await reason.locator("p").first().evaluate((p) => {
+      const clone = p.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('[data-testid="inline-citation"]').forEach((c) => c.remove());
+      return clone.textContent ?? "";
+    });
+    expect(reasonText).toBe(P04.renderedText.replace(/\[\d+(?:,\d+)*\]/g, ""));
+    expect(await reason.getByTestId("inline-citation").count()).toBe((P04.renderedText.match(/\[\d+(?:,\d+)*\]/g) ?? []).length);
+    await reason.getByTestId("inline-citation").first().click();
+    await expect(page.getByTestId("citation-link")).toHaveAttribute("href", P04.sources[0]!);
+    await page.keyboard.press("Escape");
     await expect(page.locator("body")).not.toContainText(/[{}]/);
   });
 
   test("comparison-dropped (SYNTHETIC stream): no comparison text, the note in its place, and the cards still render", async ({ page }) => {
     // SYNTHETIC: a stubbed UI stream, not a server reply. It holds the parts the server emits when nothing readable remains of the comparison (JM-104).
-    const products = (await (async () => {
-      await run(page, "xm5-sg-cards");
-      return storedProducts(page);
-    })()) satisfies ProductResult[];
+    await run(page, "xm5-sg-cards");
+    const products = await storedProducts(page);
     await page.evaluate(() => localStorage.removeItem("kensaku.history.v1"));
     const progress = ["candidates", "offers", "validate", "compare"].flatMap((stage) => [
       { type: "data-progress", id: stage, data: { stage, status: "running" } },
