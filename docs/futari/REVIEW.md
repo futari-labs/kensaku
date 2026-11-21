@@ -113,3 +113,25 @@ Verification after the resolutions, on the working tree:
 - my reference implementation: 54/54 MVP labels, v1.1 79/79;
 - the reviewer's `mutate.mjs` and `imgmut.mjs`: no surviving mutation;
 - existing `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm test:e2e` were green on `910ed96`, and product code is unchanged since then.
+
+### Re-review of `ec779c7`
+
+The same reviewer re-reviewed the corrected revision `ec779c7e5b1581d8df3d3e78bc053c0248920711`, with the same read-only rules.
+
+What it verified:
+- All 22 earlier findings resolved, with evidence for each.
+- Labels by its updated implementation: MVP 54/54; v1.1 79/79; image 80/10/58; content 14/14.
+- Mutations: 39 of 39 classification mutations and all image mutations detected, including new ones for the last-non-empty segment, an exclusive 2048 limit, a dropped no-dimensions check, and aspect caps of 1.75, 1.79, and 2.0.
+- Q5-O1 is still the only historical offer that changes under v1.1. No case was removed. The only label flips were the seven 2.0-to-1.8 aspect cases.
+- MVP texts are carried verbatim. Nothing was weakened.
+
+Verdict: **CHANGES REQUIRED, narrowly** (no blocking findings).
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| N1 | SHOULD-FIX | V9's comparison, from the fixture that defines the binding schema, also ends in leaked structure, and the malformed rule covered reasons only. | A scan of all 16 real comparisons found a second case: the accepted MVP run's Q4, displayed unedited (frozen as `R1-Q4-answer-bambino`). The owner chose "Cut and flag" on an AskUserQuestion card (D-042): text is cut before the first brace, citations are resolved on the kept text, and a note is shown, or the note alone when nothing readable remains. Frozen in EV-012 `comparisonCases` K01-K06 and the reason cases (P04 is now cut, not hidden; P06 adds a nothing-readable reason). EV-016 requires 0 displayed braces. REQ-002 amended. R-26 and V-F15 added. Labels come from a reference implementation of the citation rule that reproduces all 8 EV-004 cases. |
+| N2 | SHOULD-FIX | The image minimums contradicted each other (8 images versus 6 cards). | One floor of 6 images in the JSON, REQ-008, and EVALUATION_PLAN, alongside the 70% rate. |
+| N3 | SHOULD-FIX | The keySpecs cap of 5 was never exercised. | P06 candidate 0 now has six valid specs (expected list unchanged), and a new candidate has non-string items. |
+| N4 | NIT | EV-014 check 6 could not run through the address policy. | Seam named: the exported `connectPinned(url, address)` below the policy; check 6 calls it, while checks 2 and 3 go through the policy. JM-103's criteria name it. |
+| N5 | NIT | EV-007 staging in JM-104; the running state was not in EV-010's both-theme axe check. | JM-104: the EV-007 spec passes in its MVP form, with card amendments in JM-105. EV-010 check 7 adds the running state. |
+| N6 | NIT | D-041 credited the 1.8 aspect limit to the reviewer; the probe script still showed 2.0. | D-041 now says it is the author's decision on probe evidence V-F14. The probe script has a comment saying the frozen rule is authoritative. |

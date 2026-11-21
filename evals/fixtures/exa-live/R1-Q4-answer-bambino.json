@@ -1,0 +1,130 @@
+{
+  "_label": "LIVE EXA RESPONSE copied byte-for-byte from the EV-008 run 1 log (.futari/evidence/live/ev-008-run-1-20261121T005520Z.json, queries[3].exaExchanges[0]) for plan kensaku-v1-1. Real data, not a gold label.",
+  "id": "R1-Q4-answer-bambino",
+  "source": {
+    "log": ".futari/evidence/live/ev-008-run-1-20261121T005520Z.json",
+    "queryId": "Q4",
+    "exchangeIndex": 0,
+    "gitSha": "7bfa54f124ae7d5c94f4074c0de30e0f08ec8c12"
+  },
+  "request": {
+    "endpoint": "/answer",
+    "body": {
+      "query": "Breville Bambino Plus espresso machine in Singapore",
+      "text": false,
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "comparison": {
+            "type": "string",
+            "description": "Short comparison with numbered citation markers like [1]."
+          },
+          "candidates": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "brand": {
+                  "type": "string"
+                },
+                "modelIdentifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Model numbers or distinctive tokens."
+                }
+              },
+              "required": [
+                "name",
+                "brand",
+                "modelIdentifiers"
+              ]
+            }
+          }
+        },
+        "required": [
+          "comparison",
+          "candidates"
+        ]
+      },
+      "userLocation": "SG"
+    }
+  },
+  "requestedAt": "2026-11-21T00:55:37.200Z",
+  "receivedAt": "2026-11-21T00:55:37.200Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "399ec2f7a5b47746c2686ebc0db86ed4",
+    "answer": {
+      "candidates": [
+        {
+          "brand": "Breville",
+          "modelIdentifiers": [
+            "BES500",
+            "BES500BSS"
+          ],
+          "name": "Bambino Plus"
+        }
+      ],
+      "comparison": "The Breville Bambino Plus (model BES500) is available in Singapore from various retailers such as Breville's official Singapore site, Harvey Norman, and other online marketplaces [1][2][3][4]. It is typically priced at S$698 at major local retailers, though prices and availability can vary across different platforms [1][2][3][8].}}} ,top_results:[1,2,3,4,8]} {content:{candidates:[{brand:{citations:[1,2,3,4],confidence:"
+    },
+    "citations": [
+      {
+        "id": "https://breville.sg/product/the-bambino-plus",
+        "title": "the Bambino® Plus",
+        "url": "https://breville.sg/product/the-bambino-plus",
+        "image": "https://breville.sg/wp-content/uploads/2025/02/BES500SST4JAN1.jpg"
+      },
+      {
+        "id": "https://www.harveynorman.com.sg/home-appliances/small-kitchen-appliances-en/coffee-machines-en/breville-the-bambino-plus-stainless-steel-bes500bss.html",
+        "title": "Breville The Bambino® Plus - Stainless Steel (BES500BSS) | Harvey Norman Singapore | Harvey Norman Singapore",
+        "url": "https://www.harveynorman.com.sg/home-appliances/small-kitchen-appliances-en/coffee-machines-en/breville-the-bambino-plus-stainless-steel-bes500bss.html",
+        "image": "https://hnsgsfp.imgix.net/4/images/detailed/148/Slide1_og9c-yw.JPG?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress"
+      },
+      {
+        "id": "https://etsound.com.sg/products/breville-bes500-bambino%c2%ae-plus-espresso-maker",
+        "title": "Breville BES500 Bambino® Plus Espresso Maker – ET SOUND ENTERPRISE PTE LTD",
+        "url": "https://etsound.com.sg/products/breville-bes500-bambino%c2%ae-plus-espresso-maker",
+        "image": "http://etsound.com.sg/cdn/shop/files/BothColor_457c3448-22e7-4fc5-bd2b-26670078e89b.jpg?crop=center&height=1200&v=1728566928&width=1200"
+      },
+      {
+        "id": "https://www.lazada.sg/products/breville-bes500-bambino-plus-espresso-maker-i3202382826.html",
+        "title": "Breville BES500 Bambino® Plus Espresso Maker | Lazada Singapore",
+        "url": "https://www.lazada.sg/products/breville-bes500-bambino-plus-espresso-maker-i3202382826.html",
+        "image": "https://img.lazcdn.com/g/ff/kf/S4d28803cb63148ecad5852d91c73106cL.jpg_720x720q80.jpg_.webp"
+      },
+      {
+        "id": "https://sg.priceme.com/Breville-the-Bambino-Plus-BES500/p-903366340.aspx",
+        "title": "Breville the Bambino Plus BES500 SG Prices - PriceMe",
+        "url": "https://sg.priceme.com/Breville-the-Bambino-Plus-BES500/p-903366340.aspx",
+        "image": "https://s3.pricemestatic.com/Images/RetailerProductImages/StRetailer830/0057016152_l.png"
+      },
+      {
+        "id": "https://www.carousell.sg/p/breville-bambino-plus-1460484488/",
+        "title": "Breville Bambino Plus, TV & Home Appliances, Kitchen Appliances, Coffee Machines & Makers on Carousell",
+        "url": "https://www.carousell.sg/p/breville-bambino-plus-1460484488/",
+        "image": "https://media.karousell.com/media/photos/products/2026/9/8/breville_bambino_plus_1788884841_8c8e1cef.jpg"
+      },
+      {
+        "id": "https://reebelo.sg/collections/breville-bambino-plus-espresso-machine",
+        "title": "Refurbished Breville Bambino Plus Espresso Machine | Reebelo",
+        "url": "https://reebelo.sg/collections/breville-bambino-plus-espresso-machine",
+        "image": "https://cdn.reebelo.com/pim/products/P-BREVILLEBAMBINOPLUSESPRESSOMACHINE/RED-image-0.jpg"
+      },
+      {
+        "id": "https://www.carousell.sg/p/breville-bambino-plus-non-plus-1460710696/",
+        "title": "Breville Bambino Plus / Non-plus, TV & Home Appliances, Kitchen Appliances, Coffee Machines & Makers on Carousell",
+        "url": "https://www.carousell.sg/p/breville-bambino-plus-non-plus-1460710696/",
+        "image": "https://media.karousell.com/media/photos/products/2026/9/9/breville_bambino_plus_1788993782_7f53b629.jpg"
+      }
+    ],
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}

@@ -18,7 +18,8 @@ Phase: **v1.1 planning** (plan `kensaku-v1-1`, unapproved). The MVP plan `kensak
 
   A reference implementation of the written rules reproduces all 54 MVP labels, and the v1.1 rules change only L29 and Y03, recorded as supersessions. No single-rule mutation survives.
 - `node evals/harness.mjs`: HARNESS OK (exit 0); `--strict` fails until JM-101 by design.
-- Next step: re-review of the corrected revision, then the approval card. Nothing executes before an `Approve plan` selection.
+- Re-review of `ec779c7`: CHANGES REQUIRED narrowly (N1-N6), all 22 earlier findings confirmed resolved. N1 (leaked JSON in Exa answer text, also present in the accepted MVP run) was decided by the owner as "Cut and flag" (D-042). N1-N6 resolved (REVIEW.md).
+- Next step: the reviewer confirms the N1-N6 resolutions, then the approval card. Nothing executes before an `Approve plan` selection.
 
 ## Execution session 2026-11-21
 

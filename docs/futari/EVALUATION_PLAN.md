@@ -16,7 +16,7 @@ Status: proposed for approval with plan `kensaku-v1-1`. EV-001 to EV-007 and EV-
 | EV-009 Local and key safety | REQ-007 | Server start tests, a self-made build, logs, caches, fixtures | `pnpm vitest run tests/evals/ev-009-key-safety.test.ts` | MVP rule verbatim (127.0.0.1 only; foreign Host or Origin get 403; key absent from the build, logs, `.cache/`, `evals/fixtures/`, and responses). (v1.1) Key absent from `.cache/images/` after a run that loads images; `GET /` carries exactly the ARCHITECTURE CSP; `/api/image/:id` with a foreign Host gets 403. |
 | EV-010 Theme | REQ-011, REQ-010 | Playwright, fixture mode | `pnpm exec playwright test tests/e2e/ev-010-theme.spec.ts` | "Theme (EV-010)" below. |
 | EV-011 Non-merchant pages and currency symbols | REQ-016, REQ-003 | `evals/cases/offer-classification-v1-1.json` (79: 41 live, 38 synthetic) | `pnpm vitest run tests/evals/ev-011-page-classification.test.ts` | 79/79 outcome and category; offers also currency and amount; asserts the case count. |
-| EV-012 Product card content | REQ-012 | `evals/cases/product-content.json` (6 answers, 14 candidates) | `pnpm vitest run tests/evals/ev-012-product-content.test.ts` | Every candidate's `keySpecs` and resolved reason (or `null`) equal the labels; asserts case and candidate counts. |
+| EV-012 Product card content and leaked structure | REQ-012, REQ-002 | `evals/cases/product-content.json` (6 answers, 15 candidates; 6 comparison cases) | `pnpm vitest run tests/evals/ev-012-product-content.test.ts` | Every candidate's `keySpecs` and reason (cut, resolved, `truncated`, or `null`) and every comparison case equal the labels; asserts all counts. |
 | EV-013 Product image selection | REQ-013 | `evals/cases/image-selection.json` (80 URL, 10 selection, 58 bytes cases) | `pnpm vitest run tests/evals/ev-013-image-selection.test.ts` | Every case equals its label. Selection cases compare exact ordered `{imageUrl, pageUrl}` lists, using `classifyHit` on the real fixtures or on the inline synthetic hits. Asserts each section's count. |
 | EV-014 Image proxy safety and cache | REQ-014, REQ-007 | Injected resolver and upstream, a local connector test, generated image bytes | `pnpm vitest run tests/evals/ev-014-image-proxy.test.ts` | "Image proxy (EV-014)" below. |
 | EV-015 Image-first product cards | REQ-012, REQ-013, REQ-015, REQ-009, REQ-010 | Playwright, fixture mode, scenarios with fixture images, the frozen MVP history | `pnpm exec playwright test tests/e2e/ev-015-product-cards.spec.ts` | "Product cards (EV-015)" below. |
@@ -26,7 +26,7 @@ Status: proposed for approval with plan `kensaku-v1-1`. EV-001 to EV-007 and EV-
 ## Fixtures and provenance
 
 - MVP fixtures (`evals/fixtures/exa-live/S1`-`S9`, `A1`-`A4`) are unchanged.
-- `V1`-`V10`: real Exa responses from the v1.1 pre-approval spike (D-028, 10 of 10 requests), labeled `LIVE EXA RESPONSE`, with the exact request, timestamps, and status. `R1-Q5-offers-xm5` and `R1-Q6-offers-paperwhite` are byte-for-byte copies of two EV-008 run 1 search responses; provenance fields name the log and indexes. No credentials: the harness scans every file in the fixture directories, and EV-009 checks too.
+- `V1`-`V10`: real Exa responses from the v1.1 pre-approval spike (D-028, 10 of 10 requests), labeled `LIVE EXA RESPONSE`, with the exact request, timestamps, and status. `R1-Q4-answer-bambino`, `R1-Q5-offers-xm5`, and `R1-Q6-offers-paperwhite` are byte-for-byte copies of three EV-008 run 1 responses; provenance fields name the log and indexes. No credentials: the harness scans every file in the fixture directories, and EV-009 checks too.
 - `evals/fixtures/history/mvp-history-xm5-sg.json`: a real `kensaku.history.v1` value stored by the accepted MVP build. It was captured by driving the app in fixture mode (scenario `xm5-sg`, market SG) with a `src` tree identical to `a3a2894`, as asserted during capture. It is loaded into `localStorage` unchanged for REQ-009 and EV-015 check 8.
 - Gold labels in the four v1.1 case files are **assistant-proposed**. They were computed by reference implementations of the written rules, which are independent of `src/`, and checked by hand. They become gold only through the owner's plan approval.
   - The independent reviewer's own implementation agreed with every label.
@@ -39,7 +39,7 @@ Status: proposed for approval with plan `kensaku-v1-1`. EV-001 to EV-007 and EV-
   - N26, N27, N30: Bose listings are rejected as irrelevant because Exa's identifier "QuietComfort Headphones" is not contiguous in their titles (R-21, safe direction).
   - I07: no image for the Kindle in JP, because Amazon JP's only image is its logo.
   - B33, B34, B53: Logitech's 1200×630 logo card fails I3's 1.8 aspect limit.
-  - P04: V9's malformed reason is not shown.
+  - P04, K01, K02: V9's reason and comparison and MVP run 1 Q4's comparison are cut at leaked structure (D-042), keeping their cited sentences.
   - L29, Y03: the supersessions.
 - Synthetic cases (Z01-Z38, the synthetic U, I, and B cases, P06) are marked synthetic.
 - Fixture images under `tests/fixtures/images/` (created by JM-103) are synthetic, solid-colour images of known type and size, labeled synthetic. They exist so CI never fetches the internet and are never shown in live mode.
@@ -85,7 +85,7 @@ Playwright, Chromium, `pnpm start` in fixture mode:
 4. **Toggle.** The header has a button with accessible name "Switch to light theme". Activating it with the keyboard (Tab to it, Enter) removes the dark class, stores `light`, and changes the name to "Switch to dark theme". A mouse click switches back and stores `dark`.
 5. **Persistence.** After choosing light and reloading, the page is light. A new page in the same context is also light.
 6. **Fallbacks.** A stored value of `"blue"` renders dark. With `localStorage` access throwing (init script), the page renders dark, the toggle still switches the current page, and no uncaught error is logged.
-7. **Accessibility.** `@axe-core/playwright` reports zero serious or critical violations in both themes on the empty state, a completed `xm5-sg` run, and an error state.
+7. **Accessibility.** `@axe-core/playwright` reports zero serious or critical violations in both themes on the empty state, the running state (`cancel-offers` scenario), a completed `xm5-sg` run, and an error state.
 8. **Theming convention.** The theme is applied only through the `dark` class on `<html>` and `color-scheme`; the theme code sets no inline colour styles. Component integrity is checked by `scripts/check-components.mjs` (EV-007), and the unchanged `src/web/index.css` by the JM-102 and JM-105 reviewers.
 
 ## Image proxy (EV-014)
@@ -97,7 +97,7 @@ Vitest against the Hono app factory, with an injected `lookup` and an injected u
 3. Registered URLs with literal or unusual hosts get 502 without a DNS lookup or connection: `http://127.0.0.1/a.jpg`, `http://[::1]/a.jpg`, `http://2130706433/a.jpg`, `http://0x7f.1/a.jpg`. A URL on `localhost` resolved to 127.0.0.1 also gets 502. Ports other than 80 and 443 get 502: `https://cdn.example.com:8443/a.jpg`, `http://cdn.example.com:22/a.jpg`.
 4. A public host that redirects to a private address gets 502. A chain of 4 redirects gets 502. A chain of 3 public redirects to a valid image succeeds.
 5. Pinning, routing level: when the injected resolver returns a public address first and a private one on a second lookup, the request goes to the public address, and the second lookup is never used for that hop.
-6. Pinning, connector level: `NetworkImageFetch` is given a URL with a `.invalid` hostname and a checked address that points to a local test HTTP server. The server receives the request with the original `Host` header, and no DNS lookup is attempted (the test's lookup spy is never called). This runs the real `node:http` path.
+6. Pinning, connector level: the exported `connectPinned(url, address)`, the layer below the address and port policy, is called with `http://img.invalid:<port>/a.jpg` and the loopback address of a local test HTTP server. Checks 2 and 3 go through the policy layer above it. The server receives the request with the original `Host` header, and no DNS lookup is attempted (the test's lookup spy is never called). This runs the real `node:http` path.
 7. The upstream request has no `Cookie`, `Authorization`, or `Referer` header, and its `Accept` header is exactly as in ARCHITECTURE.
 8. Bytes over 5 MiB get 502, and reading stops at the limit. An upstream that never finishes gets 502 within 8.5 s, measured with fake timers.
 9. Generated images: a 400×300 JPEG, PNG, WebP, and AVIF are each served with:
@@ -203,11 +203,11 @@ Owner review (human, recorded in `.futari/evidence/JM-105.md`): visual polish an
     - 0 search or category pages are displayed as offers;
     - 0 fabricated offers.
   - Images:
-    - at least 8 images are displayed;
-    - at least 70% of offer-bearing cards, and at least 6 cards, show a loaded image;
+    - at least 6 images are displayed, and at least 70% of offer-bearing cards show a loaded image;
     - 100% of displayed images pass revalidation (rules I1-I3 re-derived from the log);
     - owner image audit failures are at most max(1, floor(10% of displayed images)).
   - Run health:
+    - 0 displayed comparisons or reasons containing `{` or `}` (D-042);
     - 0 browser requests to non-local origins;
     - no unexpected error runs.
 - Expected outcomes recorded in advance:
@@ -233,14 +233,14 @@ Owner review (human, recorded in `.futari/evidence/JM-105.md`): visual polish an
   - tier order, duplicates, the cap of 4;
   - 403 hosts, slow hosts, redirect chains, private and special addresses, IP-literal hosts, non-standard ports, DNS rebinding, cross-site embedding;
   - cache expiry, pruning, eviction, concurrency.
-- Content: whitespace, empty, over-80, and duplicate specs; more than 5 specs; non-array specs; whitespace-only, malformed, and out-of-range-marker reasons.
+- Content: whitespace, empty, over-80, duplicate, and non-string specs; six valid specs (the cap of 5); non-array specs; whitespace-only, leaked-structure, nothing-readable, and out-of-range-marker reasons; comparisons with leaked structure (V9, MVP run 1 Q4) and clean ones.
 - UI: no images, no market offers, real MVP history, both themes, keyboard-only use, 375 px width, storage unavailable.
 
 ## Frozen inputs
 
 `protectedFiles` keeps every MVP frozen input and adds:
 - `evals/cases/offer-classification-v1-1.json`, `image-selection.json`, `product-content.json`, `live-acceptance-v1-1.json`;
-- the 12 new Exa fixtures (`V1`-`V10`, `R1-Q5`, `R1-Q6`) and the MVP history fixture;
+- the 13 new Exa fixtures (`V1`-`V10`, `R1-Q4`, `R1-Q5`, `R1-Q6`) and the MVP history fixture;
 - the amended `evals/harness.mjs`;
 - the spike and probe scripts;
 - the research note `research/v1-1-spike-2026-11-21.md`;

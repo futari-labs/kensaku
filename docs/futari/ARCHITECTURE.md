@@ -107,7 +107,13 @@ Defined in `evals/cases/citations.json` `rule`. Markers resolve 1-based into the
 Defined in `evals/cases/product-content.json` `rules` (EV-012):
 
 - `normalizeKeySpecs(value)`: trim each string; drop empty strings and strings longer than 80 characters; drop exact duplicates, keeping the first; keep at most 5 in Exa's order. A missing or non-array value gives `[]`.
-- `resolveReason(reason, citationUrls)`: a non-empty string is resolved with `resolveCitations` against the same citations as the comparison (EV-004 rule, unchanged). A missing, non-string, or whitespace-only reason gives `null`. So does a reason containing `{` or `}`: spike V9 returned a reason ending in leaked structured output (`…[4].}},{brand:{citations:[4],confidence:`).
+- `resolveReason(reason, citationUrls)`: a non-empty string is resolved with `resolveCitations` against the same citations as the comparison (EV-004 rule, unchanged). A missing, non-string, or whitespace-only reason gives `null`.
+- `cutLeakedStructure(text)` (D-042, owner decision): Exa sometimes appends leaked structured output to good text. Examples: spike V9's reason and comparison, and the accepted MVP run's Q4 comparison, which the MVP displayed unedited (`…[1][2][3][8].}}} ,top_results:[1,2,3,4,8]} {content:{candidates:…`).
+  - If the text contains `{` or `}`, keep only the text before the first such character, remove trailing whitespace, and mark it `truncated`.
+  - If no Unicode letter remains, return `null`.
+  - The cut applies to the comparison (in the pipeline, before `resolveCitations`) and to each reason (inside `resolveReason`).
+  - The UI shows "Exa's answer ended in malformed output, which is not shown." beside truncated text, or in place of a null section.
+  - None of the frozen EV-004 texts contains a brace, so EV-004 is unaffected. 2 of the 16 real comparisons in the fixtures and logs are affected (EV-012 `comparisonCases`).
 - Card prices come only from merchant offers. Kensaku does not edit Exa's reason text. The schema asks Exa not to mention prices; V8 complied, but V10 still quoted "39,980 yen" (risk R-20).
 - The card reads key specs and the reason only from the normalized `data-products` entry fields, never from the raw `Candidate` fields.
 
@@ -234,7 +240,8 @@ function rankImageCandidates(hits: { hit: SearchHit; result: Offer | Evidence | 
 function sniffImage(bytes: Uint8Array): SniffedImage;
 function imageBytesVerdict(image: SniffedImage, byteLength: number): ImageBytesVerdict; // rule I3
 function normalizeKeySpecs(value: unknown): string[];
-function resolveReason(reason: unknown, citationUrls: string[]): ResolvedCitations | null;
+function cutLeakedStructure(text: string): { text: string; truncated: boolean } | null;   // D-042
+function resolveReason(reason: unknown, citationUrls: string[]): (ResolvedCitations & { truncated: boolean }) | null;
 
 // src/exa/port.ts
 interface AnswerResult { comparison: string; candidates: Candidate[]; citationUrls: string[];

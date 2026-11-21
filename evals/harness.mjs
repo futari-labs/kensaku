@@ -137,6 +137,17 @@ for (const c of pc.cases) {
   }
 }
 
+for (const k of pc.comparisonCases ?? []) {
+  const f = fixture(k.fixture);
+  check(f?._label?.startsWith("LIVE EXA RESPONSE") && f?.response?.citations?.length > 0, `${k.id}: fixture ${k.fixture} missing, unlabeled, or without citations`);
+  const urls = (f?.response?.citations ?? []).map((x) => x.url);
+  if (k.expected) {
+    check(!/[{}]/.test(k.expected.renderedText), `${k.id}: rendered comparison still contains leaked structure`);
+    for (const u of k.expected.sources) check(urls.includes(u), `${k.id}: source ${u} is not a citation of ${k.fixture}`);
+  }
+}
+check((pc.comparisonCases ?? []).some((k) => k.expected?.truncated), "product-content: needs at least one truncated comparison case");
+
 // EV-013 cases (product images)
 const im = read("evals/cases/image-selection.json");
 const URL_VERDICTS = ["ok", "invalid-url", "bad-scheme", "credentials", "svg", "deny-pattern"];

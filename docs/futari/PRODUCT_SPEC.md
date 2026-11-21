@@ -20,7 +20,7 @@ First valuable outcome for v1.1: asking "Sony WH-1000XM5 price in Singapore" sho
 
 Included in v1.1:
 
-- Everything the MVP does stays (REQ-001 to REQ-010). REQ-003, REQ-006, REQ-007, REQ-008, REQ-009, and REQ-010 are amended as listed under Requirements.
+- Everything the MVP does stays (REQ-001 to REQ-010). REQ-002, REQ-003, REQ-006, REQ-007, REQ-008, REQ-009, and REQ-010 are amended as listed under Requirements.
 - Theme: dark by default for first-time visitors; header toggle; preference persisted; no theme flash; shadcn/ui class-based theming with the existing CSS variables (REQ-011, D-036).
 - Image-first product cards: two per row on desktop, one on mobile; large 4:3 image; name, price summary, key specifications, cited reason, merchant offers, collapsed "Other markets" and "Research details" (REQ-012, D-030, D-038).
 - Real product images from this run's merchant offer pages or the manufacturer's page, through a local image proxy with a disk cache; loading skeleton, attribution caption, and fallback (REQ-013, REQ-014, D-029).
@@ -55,6 +55,7 @@ States:
 - No market-currency offers: "No Singapore offers found" (or United States, Japan) in the main list; other markets stay collapsed; evidence stays in Research details.
 - No offers at all: the MVP text "No direct merchant offers with a listed price were found", with the card still showing name, image if any, specs, and reason.
 - MVP history: entries saved before v1.1 render as cards without images, specs, or reasons.
+- Malformed answer text: when Exa appends leaked structured output to the comparison or a reason (about 1 run in 8), Kensaku shows the text before it, with its citations, and the note "Exa's answer ended in malformed output, which is not shown." (D-042).
 - Errors, partial results, cancel, and the 409 notice: unchanged from the MVP.
 - Accessibility: everything keyboard-operable; disclosures expose `aria-expanded`; the toggle names the action; zero serious or critical axe violations in both themes.
 
@@ -62,6 +63,7 @@ States:
 
 REQ-001 to REQ-010 carry over from the MVP. Changes:
 
+- **REQ-002** adds the leaked-structure cut for the comparison (D-042).
 - **REQ-003** keeps the MVP rules; the v1.1 additions are REQ-016, and the MVP cases L29 and Y03 are superseded (D-031, D-032).
 - **REQ-006** adds that image fetching never uses Exa or the request budget.
 - **REQ-007** adds a Content-Security-Policy and applies the Host/Origin guard to `/api/image/:id`.

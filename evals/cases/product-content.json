@@ -1,10 +1,12 @@
 {
-  "_about": "EV-012 cases for plan kensaku-v1-1 (product card content from the extended /answer schema). P01 and P02 are real /answer responses from the kensaku-v1-1 spike (V1: SG, schema with keySpecs and reason; V8: US, the reason description also says 'Do not mention prices or currency amounts'). P03 is the MVP spike's A2 response, which predates keySpecs and reason, so it pins backward compatibility with cached answers and stored history.",
-  "labelStatus": "Assistant-proposed expected values derived by hand from the frozen citation rule (evals/cases/citations.json 'rule') and the keySpecs rule below. They become gold only when the owner approves plan kensaku-v1-1.",
+  "_about": "EV-012 cases for plan kensaku-v1-1 (product card content and leaked-structure handling). P01, P02, P04, P05 are real /answer responses from the kensaku-v1-1 spike (V1, V8, V9, V10). P03 is the MVP spike's A2 response, which predates keySpecs and reason (backward compatibility). P06 is synthetic. K01-K06 apply the leaked-structure rule to comparison texts: K01 (spike V9) and K02 (EV-008 run 1 Q4, displayed unedited by the MVP) end in leaked structured output; K03-K06 are clean.",
+  "labelStatus": "Assistant-proposed expected values computed by a reference implementation of the frozen citation rule (self-checked on all 8 EV-004 cases) and the written rules below, and cross-checked against hand-derived citation sets. They become gold only when the owner approves plan kensaku-v1-1.",
   "rules": {
-    "keySpecs": "Trim each string; drop empty strings and strings longer than 80 characters; drop exact duplicates keeping the first; keep at most 5, in Exa's order. A missing or non-array keySpecs yields [].",
-    "reason": "A string reason is rendered with resolveCitations(reason, citationUrls) using the same citations as the comparison (the EV-004 rule, unchanged). A missing, non-string, or whitespace-only reason, or a reason containing '{' or '}' (leaked structured output, spike V9), yields no reason section (null).",
-    "noPriceInCard": "Card prices come only from merchant offers. The reason text is research text and is shown as written by Exa; the /answer schema asks Exa not to mention prices (V8 shows it complying), but Kensaku does not edit the text."
+    "keySpecs": "Keep only string items; trim each; drop empty strings and strings longer than 80 characters; drop exact duplicates keeping the first; keep at most 5, in Exa's order. A missing or non-array keySpecs yields [].",
+    "leakedStructure": "Applies to the comparison and to each reason (owner decision D-042). If the text contains '{' or '}', keep only the text before the first such character with trailing whitespace removed, and mark it truncated; the UI shows the note \"Exa's answer ended in malformed output, which is not shown.\" If the kept text has no Unicode letter, the section is not rendered (null) and the note is shown in its place.",
+    "reason": "A string reason that is not whitespace-only is cut by leakedStructure and then rendered with resolveCitations(text, citationUrls) using the comparison's citations (EV-004 rule, unchanged). Missing, non-string, whitespace-only, or nothing-readable reasons yield null.",
+    "comparison": "The comparison is cut by leakedStructure before resolveCitations; the EV-004 cases are unaffected because none of their texts contains '{' or '}'.",
+    "noPriceInCard": "Card prices come only from merchant offers. Apart from the leaked-structure cut, Kensaku does not edit Exa's text; the /answer schema asks Exa not to mention prices (V8 complied, V10 did not)."
   },
   "cases": [
     {
@@ -28,7 +30,8 @@
                 "https://www.straitstimes.com/life/best-noise-cancelling-headphones-singapore"
               ],
               "unresolvedMarkers": 0,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         },
@@ -49,7 +52,8 @@
                 "https://www.straitstimes.com/life/best-noise-cancelling-headphones-singapore"
               ],
               "unresolvedMarkers": 0,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         },
@@ -70,7 +74,8 @@
                 "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/wireless-headphones-en/sony-wf-1000xm5bce-wireless-noise-cancelling-headphones-black.html"
               ],
               "unresolvedMarkers": 0,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         }
@@ -99,7 +104,8 @@
                 "https://www.wired.com/gallery/best-ergonomic-mouse/"
               ],
               "unresolvedMarkers": 0,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         },
@@ -123,7 +129,8 @@
                 "https://www.techgearlab.com/topics/small-and-home-office/best-mouse"
               ],
               "unresolvedMarkers": 0,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         },
@@ -146,7 +153,8 @@
                 "https://www.wired.com/gallery/best-ergonomic-mouse/"
               ],
               "unresolvedMarkers": 0,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         }
@@ -201,7 +209,15 @@
               "Approximately 4 months battery life",
               "USB-C charging"
             ],
-            "reason": null
+            "reason": {
+              "renderedText": "This vertical mouse is specifically recommended for reducing wrist strain during long programming sessions, featuring a natural handshake posture and a price point well under the budget limit [4].",
+              "sources": [
+                "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0,
+              "truncated": true
+            }
           }
         }
       ]
@@ -230,7 +246,8 @@
                 "https://note.com/solo_dev_jp/n/n93d3ccd267df"
               ],
               "unresolvedMarkers": 0,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         }
@@ -259,7 +276,8 @@
               "LDAC",
               "USB-C",
               "Multipoint",
-              "Foldable"
+              "Foldable",
+              "Touch controls"
             ],
             "reason": "Great for travel [2] and calls [9]."
           },
@@ -279,10 +297,23 @@
               "Momentum 4"
             ],
             "reason": "Fits long flights [1].}},{brand:"
+          },
+          {
+            "name": "Space One",
+            "brand": "JBL",
+            "modelIdentifiers": [
+              "Space One"
+            ],
+            "keySpecs": [
+              42,
+              "ANC",
+              null
+            ],
+            "reason": "}},{brand:{citations:[1]}"
           }
         ]
       },
-      "note": "Synthetic: keySpecs trimming, empty and over-80 removal, de-duplication and the cap of 5; non-array keySpecs; whitespace-only reason; an out-of-range marker removed with the space before it; a malformed reason.",
+      "note": "Synthetic: keySpecs trimming, empty and over-80 removal, de-duplication, the cap of 5 with six valid specs, non-string items; non-array keySpecs; whitespace-only reason; an out-of-range marker removed with the space before it; a reason cut at leaked structure; a reason with nothing readable before the structure.",
       "candidates": [
         {
           "candidateIndex": 0,
@@ -302,7 +333,8 @@
                 "https://example.com/review-b"
               ],
               "unresolvedMarkers": 1,
-              "uncitedParagraphs": 0
+              "uncitedParagraphs": 0,
+              "truncated": false
             }
           }
         },
@@ -321,10 +353,123 @@
           "brand": "Sennheiser",
           "expected": {
             "keySpecs": [],
+            "reason": {
+              "renderedText": "Fits long flights [1].",
+              "sources": [
+                "https://example.com/review-a"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0,
+              "truncated": true
+            }
+          }
+        },
+        {
+          "candidateIndex": 3,
+          "name": "Space One",
+          "brand": "JBL",
+          "expected": {
+            "keySpecs": [
+              "ANC"
+            ],
             "reason": null
           }
         }
       ]
+    }
+  ],
+  "comparisonCases": [
+    {
+      "id": "K01",
+      "fixture": "V9-answer-us-tight-identifiers",
+      "expected": {
+        "renderedText": "For programmers seeking ergonomics under the budget, the Logitech MX Vertical is ideal for those with large hands to reduce strain [4], while the Logitech Lift provides a similar vertical design optimized for small to medium hands at a lower cost [4,8]. Both utilize the comfortable 57-degree handshake angle [4,8].",
+        "sources": [
+          "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/",
+          "https://www.thepcjournal.com/guides/best-mouse-for-work"
+        ],
+        "unresolvedMarkers": 0,
+        "uncitedParagraphs": 0,
+        "truncated": true
+      }
+    },
+    {
+      "id": "K02",
+      "fixture": "R1-Q4-answer-bambino",
+      "expected": {
+        "renderedText": "The Breville Bambino Plus (model BES500) is available in Singapore from various retailers such as Breville's official Singapore site, Harvey Norman, and other online marketplaces [1][2][3][4]. It is typically priced at S$698 at major local retailers, though prices and availability can vary across different platforms [1][2][3][8].",
+        "sources": [
+          "https://breville.sg/product/the-bambino-plus",
+          "https://www.harveynorman.com.sg/home-appliances/small-kitchen-appliances-en/coffee-machines-en/breville-the-bambino-plus-stainless-steel-bes500bss.html",
+          "https://etsound.com.sg/products/breville-bes500-bambino%c2%ae-plus-espresso-maker",
+          "https://www.lazada.sg/products/breville-bes500-bambino-plus-espresso-maker-i3202382826.html",
+          "https://www.carousell.sg/p/breville-bambino-plus-non-plus-1460710696/"
+        ],
+        "unresolvedMarkers": 0,
+        "uncitedParagraphs": 0,
+        "truncated": true
+      }
+    },
+    {
+      "id": "K03",
+      "fixture": "V1-answer-sg-extended",
+      "expected": {
+        "renderedText": "While premium options like the Sony WH-1000XM5 and Bose QuietComfort provide top-tier performance under S$400 [1], older flagship models like the Sony WH-1000XM4 offer excellent value and high user ratings at a significantly lower price point [5].",
+        "sources": [
+          "https://www.straitstimes.com/life/best-noise-cancelling-headphones-singapore",
+          "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/wireless-headphones-en/sony-wf-1000xm5bce-wireless-noise-cancelling-headphones-black.html"
+        ],
+        "unresolvedMarkers": 0,
+        "uncitedParagraphs": 0,
+        "truncated": false
+      }
+    },
+    {
+      "id": "K04",
+      "fixture": "V8-answer-us-no-price-reason",
+      "expected": {
+        "renderedText": "For programming comfort under $120, the WIRED-tested Logitech MX Master 4 is the best all-round ergonomic wireless pick, while the Logitech MX Vertical is the top vertical option for reducing wrist strain and the MX Ergo S is a good space-saving trackball alternative for small desks.[1][5][3]",
+        "sources": [
+          "https://www.wired.com/gallery/best-ergonomic-mouse/",
+          "https://argusic.com/hardware/mouse",
+          "https://computingforgeeks.com/best-mouse-keyboard-for-programming/"
+        ],
+        "unresolvedMarkers": 0,
+        "uncitedParagraphs": 0,
+        "truncated": false
+      }
+    },
+    {
+      "id": "K05",
+      "fixture": "V10-answer-jp-tight-identifiers",
+      "expected": {
+        "renderedText": "While the Kindle Paperwhite (2024 model) originally launched at 27,980 yen [5][6], its price has increased to 39,980 yen as of November 2026, matching the price of the latest released generation [3][7].",
+        "sources": [
+          "https://appllio.com/amazon-kindle-reader-select-guide",
+          "https://search.rakuten.co.jp/search/mall/kindle+paperwhite+%E6%9C%AC%E4%BD%93/560313/",
+          "https://ouchigadget.com/kindle-tanmatsu-sale/",
+          "https://note.com/solo_dev_jp/n/n93d3ccd267df"
+        ],
+        "unresolvedMarkers": 0,
+        "uncitedParagraphs": 0,
+        "truncated": false
+      }
+    },
+    {
+      "id": "K06",
+      "fixture": "A1-answer",
+      "expected": {
+        "renderedText": "Sony WH-1000XM5 and Bose QuietComfort Ultra are both excellent for noise cancelling, but Bose usually has the edge on low-frequency cabin/engine rumble while Sony can be better at handling mid/treble sounds like chatter [1][2]. Comfort is a slight Bose advantage for long flights (softer clamping/plusher fit) [3][2]. Battery favors Sony: SoundGuys measured 31h53m (ANC on) vs Bose 27h37m; other sources rate Sony up to ~30h vs Bose ~24h (less with Immersive Audio) [3][4]. Typical price: MSRP Bose $429 vs Sony $399, with frequent discounts—Sony commonly around $300, Bose around ~$330 (as of the cited reporting) [1].",
+        "sources": [
+          "https://www.whathifi.com/advice/bose-quietcomfort-ultra-headphones-vs-sony-wh-1000xm5",
+          "https://kitauthority.com/travel/sony-xm5-vs-bose-quietcomfort-ultra",
+          "https://www.soundguys.com/bose-quietcomfort-ultra-headphones-vs-sony-wh-1000xm5-104454/",
+          "https://www.bestproducts.com/tech/gadgets/a60294935/bose-vs-sony-headphones/"
+        ],
+        "unresolvedMarkers": 0,
+        "uncitedParagraphs": 0,
+        "truncated": false
+      }
     }
   ]
 }

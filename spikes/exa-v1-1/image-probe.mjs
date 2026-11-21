@@ -24,6 +24,8 @@ if (saveDir) mkdirSync(saveDir, { recursive: true });
 const DENY = /(?:logo|social|share|placeholder|missing|no[-_]?image|sprite|banner|campaign|brandimage|uedata|pixel|spacer|favicon|1x1)/;
 const MIN_SIDE = 200;
 const MIN_ASPECT = 0.5;
+// As first run on 2026-11-21. The frozen rule I3 later tightened this to 1.8 (research note V-F14);
+// see evals/cases/image-selection.json `rules`, which is authoritative.
 const MAX_ASPECT = 2.0;
 
 function urlVerdict(raw) {

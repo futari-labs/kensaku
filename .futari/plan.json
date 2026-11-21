@@ -83,6 +83,7 @@
     "evals/fixtures/exa-live/R1-Q6-offers-paperwhite.json",
     "evals/fixtures/exa-live/V9-answer-us-tight-identifiers.json",
     "evals/fixtures/exa-live/V10-answer-jp-tight-identifiers.json",
+    "evals/fixtures/exa-live/R1-Q4-answer-bambino.json",
     "evals/fixtures/history/mvp-history-xm5-sg.json",
     "spikes/exa-v1-1/spike.mjs",
     "spikes/exa-v1-1/image-probe.mjs"
@@ -103,7 +104,8 @@
       "acceptanceCriteria": [
         "Every rendered source link is a citation URL returned by Exa in this run.",
         "Out-of-range markers are removed and counted; paragraphs with no resolved marker are visibly flagged uncited.",
-        "All cases in evals/cases/citations.json and evals/cases/citations-spaced.json produce their expected results, including markers written with spaces such as [2, 5, 6] (CR-001)."
+        "All cases in evals/cases/citations.json and evals/cases/citations-spaced.json produce their expected results, including markers written with spaces such as [2, 5, 6] (CR-001).",
+        "(v1.1) Comparison text containing '{' or '}' is cut before the first such character and its citations resolved on the kept text; the UI notes \"Exa's answer ended in malformed output, which is not shown.\"; if no letter remains, the comparison is replaced by that note (D-042, EV-012 comparison cases)."
       ]
     },
     {
@@ -160,8 +162,8 @@
       "acceptanceCriteria": [
         "At least 6 of 8 queries show at least one merchant offer, and at least 3 of the 4 SG queries show an SGD offer in a card's main list.",
         "At least 12 offers are displayed; 100% pass revalidation against the recorded Exa responses; owner audit failures are at most floor(10% of displayed offers); no search or category page and no fabricated offer is displayed.",
-        "At least 8 images are displayed; at least 70% of offer-bearing cards (and at least 6) show a loaded image; 100% of displayed images pass revalidation; owner image audit failures are at most max(1, floor(10% of displayed images)).",
-        "No browser request leaves 127.0.0.1 and no unexpected error run occurs; at most 5 requests per query, 40 per suite run, $0.50 per suite run, 3 suite runs, and the plan-wide cap of 130 requests and $1.50 of reported cost governs."
+        "At least 6 images are displayed and at least 70% of offer-bearing cards show a loaded image; 100% of displayed images pass revalidation; owner image audit failures are at most max(1, floor(10% of displayed images)).",
+        "No displayed comparison or reason contains '{' or '}'; no browser request leaves 127.0.0.1 and no unexpected error run occurs; at most 5 requests per query, 40 per suite run, $0.50 per suite run, 3 suite runs, and the plan-wide cap of 130 requests and $1.50 of reported cost governs."
       ]
     },
     {
@@ -203,7 +205,7 @@
         "Each card's image is full-bleed: it spans the card's full width (no inner padding) at a 4:3 aspect ratio above the text; at 1280 px it is at least 360 px tall, and at 375 px it is at least 300 px wide (so at least 225 px tall).",
         "A card shows, in order: product name (candidate brand and name), image with caption, price summary ('From <lowest listed price> <code>') from offers in the market's currency only, up to 5 key specifications, the cited recommendation reason, the merchant offer list, an 'Other markets' disclosure when other-currency offers exist, and a 'Research details' disclosure with evidence and rejected counts; the card reads key specs and the reason only from the normalized data-products entry fields, never from the raw candidate.",
         "The product heading names the product, never a merchant; each offer row names its merchant host, merchant name, price with ISO currency code, availability, retrieval time, and a 'View offer' link, so a product with several merchants reads as one product with several offers.",
-        "Reason citations render with the AI Elements inline-citation component and resolve under the EV-004 rule; the comparison text and its Sources stay above the cards."
+        "Reason citations render with the AI Elements inline-citation component and resolve under the EV-004 rule after the leaked-structure cut (D-042); the comparison text and its Sources stay above the cards."
       ]
     },
     {
@@ -359,11 +361,12 @@
     {
       "id": "EV-012",
       "requirementIds": [
-        "REQ-012"
+        "REQ-012",
+        "REQ-002"
       ],
-      "description": "Product card content: key specifications and cited reasons parsed from the extended /answer response, with backward compatibility for responses and history without them.",
+      "description": "Product card content and leaked structured output: key specifications and cited reasons parsed from the extended /answer response (with backward compatibility), and the D-042 cut applied to reasons and comparisons.",
       "kind": "deterministic",
-      "passRule": "For every candidate in evals/cases/product-content.json (6 answers, 14 candidates, including the synthetic P06), keySpecs equal the expected list and the reason's renderedText, sources, unresolvedMarkers and uncitedParagraphs count equal the expected values, or the reason is null where labeled; the test asserts the case and candidate counts.",
+      "passRule": "For every candidate in evals/cases/product-content.json cases (6 answers, 15 candidates), keySpecs equal the expected list and the reason equals the expected renderedText, sources, unresolvedMarkers, uncitedParagraphs and truncated values, or is null where labeled; for every comparisonCases entry (6, two of them truncated), the comparison after the cut and resolveCitations equals the expected values; the test asserts all counts.",
       "command": "pnpm vitest run tests/evals/ev-012-product-content.test.ts"
     },
     {
@@ -461,7 +464,7 @@
       ],
       "acceptanceCriteria": [
         "src/core/offers.ts and src/core/hosts.ts implement rule additions 4, 5, 5a, 5b, 5c and 7 exactly as written in docs/futari/ARCHITECTURE.md 'Offer classification'; src/core/types.ts makes the v1.1 type changes in ARCHITECTURE 'Interfaces and data' (evidence categories marketplace and search-or-category, Candidate keySpecs and reason, SearchHit image, the image and content types).",
-        "src/core/images.ts exports imageUrlVerdict, rankImageCandidates, sniffImage and imageBytesVerdict implementing rules I1, I2 and I3 including their verdict precedence; src/core/content.ts exports normalizeKeySpecs and resolveReason including the malformed-reason rule; all are pure and exported from src/core/index.ts.",
+        "src/core/images.ts exports imageUrlVerdict, rankImageCandidates, sniffImage and imageBytesVerdict implementing rules I1, I2 and I3 including their verdict precedence; src/core/content.ts exports normalizeKeySpecs, cutLeakedStructure and resolveReason implementing the rules in evals/cases/product-content.json; all are pure and exported from src/core/index.ts.",
         "tests/evals/ev-001-merchant-authenticity.test.ts loads evals/cases/offer-classification.json and the supersedes block of evals/cases/offer-classification-v1-1.json unchanged and replaces only L29 and Y03; EV-001, EV-002, EV-003, EV-011, EV-012 and EV-013 pass; node evals/harness.mjs --strict exits 0.",
         "MVP live logs are history (EVALUATION_PLAN 'Historical live logs'): tests/research/live-smoke-revalidation.test.ts asserts that every offer displayed in the committed MVP logs still reclassifies identically under the v1.1 rules except exactly Q5-O1 (search.rakuten.co.jp), which must now be evidence search-or-category.",
         "src/web/app/format.ts gains the labels 'Second-hand marketplace' and 'Search or category page' and src/web/app/schemas.ts accepts the two new evidence categories, so the app typechecks and validates; no other web file changes.",
@@ -534,9 +537,9 @@
         "tests/fixtures/images/"
       ],
       "acceptanceCriteria": [
-        "src/server/images.ts (and helpers under src/server/images/) implements registerImageCandidates, the registry and cache under .cache/images/, ImageFetchPort with NetworkImageFetch (node:http/node:https with a lookup override that connects to the checked address) and FixtureImageFetch (bytes from tests/fixtures/images/), the address and port policy, rule I3 via sniffImage and imageBytesVerdict from src/core, and GET /api/image/:id, exactly as in ARCHITECTURE 'Image proxy'.",
+        "src/server/images.ts (and helpers under src/server/images/) implements registerImageCandidates, the registry and cache under .cache/images/, ImageFetchPort with NetworkImageFetch (address and port policy above an exported connectPinned(url, address) that uses node:http/node:https with a lookup override returning only the given address) and FixtureImageFetch (bytes from tests/fixtures/images/), the address and port policy, rule I3 via sniffImage and imageBytesVerdict from src/core, and GET /api/image/:id, exactly as in ARCHITECTURE 'Image proxy'.",
         "src/server/app.ts only mounts the route behind the existing Host/Origin guard; tests/fixtures/images/ holds synthetic, labeled images of known type and size.",
-        "EV-014 passes, including its connector-level test against a local server reached by address with a .invalid hostname.",
+        "EV-014 passes, including check 6, which calls connectPinned directly with an http://img.invalid:<port>/ URL and the loopback address of a local test server (below the policy layer), while checks 2 and 3 go through the policy layer.",
         "No Exa module is imported by the proxy; package.json and pnpm-lock.yaml are unchanged."
       ],
       "verificationCommands": [
@@ -604,10 +607,10 @@
       ],
       "acceptanceCriteria": [
         "src/exa/requests.ts builds offer searches as '<brand> <name> price <market name> buy' and the /answer outputSchema exactly as frozen in V9's request (EV-017); src/exa/parse.ts keeps keySpecs, reason and the search result image (optional) and tolerates their absence.",
-        "The pipeline attaches to each data-products entry keySpecs (normalizeKeySpecs), reason (resolveReason) and imageCandidates [{ id, sourceHost, sourceTitle }] from rankImageCandidates, and registers each candidate with registerImageCandidates; the data-products schema stays backward compatible with the frozen MVP history payload.",
+        "The pipeline cuts the comparison with cutLeakedStructure before resolveCitations and marks it truncated (D-042); it attaches to each data-products entry keySpecs (normalizeKeySpecs), reason (resolveReason) and imageCandidates [{ id, sourceHost, sourceTitle }] from rankImageCandidates, and registers each candidate with registerImageCandidates; the data-products schema stays backward compatible with the frozen MVP history payload.",
         "Every server response except /api/image/:id carries the Content-Security-Policy in ARCHITECTURE.",
-        "src/web/app/Products.tsx shows, inside the existing product section, the first loadable image via /api/image/:id with its caption, the key specifications, and the reason; the full card is JM-105's.",
-        "EV-004, EV-005, EV-006, EV-007, EV-009, EV-012, EV-013 and EV-017 pass; the fixture test tests/e2e/slice.spec.ts shows an image loaded through the proxy and records no request to a non-local origin.",
+        "src/web/app/Products.tsx shows, inside the existing product section, the first loadable image via /api/image/:id with its caption, the key specifications, and the reason; the comparison shows the malformed-output note when truncated; the full card is JM-105's.",
+        "EV-004, EV-005, EV-006, EV-009, EV-012, EV-013 and EV-017 pass, and the EV-007 spec passes in its MVP form (its card amendments land in JM-105); the fixture test tests/e2e/slice.spec.ts shows an image loaded through the proxy and records no request to a non-local origin.",
         "Live smoke (EVALUATION_PLAN 'Slice smoke'): Q3 and Q4 from evals/cases/live-acceptance-v1-1.json, at most 10 Exa requests in total; each shows at least one SGD merchant offer and at least one product image loads through the proxy; the run logs are committed under .futari/evidence/live/ at or before the Tested-Commit. A miss is FAIL and stops the task for the owner (no rerun within this plan's budget); an Exa outage is BLOCKED."
       ],
       "verificationCommands": [
