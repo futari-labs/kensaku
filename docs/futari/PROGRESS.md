@@ -1,6 +1,6 @@
 # FutariLabs progress
 
-Phase: **v1.1 planning** (plan `kensaku-v1-1`, unapproved). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).
+Phase: **v1.1 approved, awaiting publication to `dev`** (plan `kensaku-v1-1`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).
 
 ## v1.1 planning session 2026-11-21
 
@@ -20,7 +20,9 @@ Phase: **v1.1 planning** (plan `kensaku-v1-1`, unapproved). The MVP plan `kensak
 - `node evals/harness.mjs`: HARNESS OK (exit 0); `--strict` fails until JM-101 by design.
 - Re-review of `ec779c7`: CHANGES REQUIRED narrowly (N1-N6), all 22 earlier findings confirmed resolved. N1 (leaked JSON in Exa answer text, also present in the accepted MVP run) was decided by the owner as "Cut and flag" (D-042). N1-N6 resolved (REVIEW.md).
 - Final confirmation of `fd34674`: READY (advisory). Nits M1 and M2 resolved in the approval commit.
-- Next step: the approval card. Nothing executes before an `Approve plan` selection.
+- Approval: the owner (d3F0g) selected "Approve plan" on the native card for `kensaku-v1-1` at `c356f9af2e9eb372f23712c6fa699ccf0967e011`. The card stated that approving replaces the `kensaku-mvp-v1` baseline. Recorded in `8186754` (`.futari/approval.json` only); `plan-gate verify`: PASS, snapshot `a6abc4f89279ae69760bfbf24d1ba59b10401de3ede849f5cccaba0c1d0ed6a9`.
+- Publication: with the owner's authorization, `v1-1-plan` was pushed and PR #15 opened into `dev`. `CI` passed. `Futari contract` fails by design at the `Futari-Task` marker, as CR-001 PR #12 did (R-25).
+- Next step: the owner merges PR #15 personally with a merge commit. Then run `/futari:execute` from `dev`; it starts with JM-101 and JM-102.
 
 ## Execution session 2026-11-21
 
