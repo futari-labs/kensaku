@@ -125,7 +125,7 @@ Playwright, Chromium, `pnpm start` in fixture mode. Scenarios (JM-104 adds the f
 - `no-images`: every candidate fails.
 - `no-market-offers`: SG market, USD offers only.
 - (CR-003) `comparison-truncated`: the comparison is the frozen V9 answer's comparison, which ends in leaked structure.
-- (CR-003) `comparison-dropped`: no frozen answer cuts to a null comparison, so this scenario does not use `FixtureExaPort`. The spec stubs `POST /api/chat` with a Playwright route that returns a UI message stream, as the EV-007 spec already does. The stream holds exactly the parts JM-104's server emits when nothing readable remains: progress parts, a `data-comparison` part `{ truncated: true }` with no text part, and the `xm5-sg-cards` products. The parts are labeled synthetic in the spec. The server side of that contract is tested in JM-104.
+- (CR-003) `comparison-dropped`: no frozen answer cuts to a null comparison, so this scenario does not use `FixtureExaPort`. The spec stubs `POST /api/chat` with a Playwright route that returns a UI message stream, as the EV-007 spec already does. The stream holds the parts JM-104's server emits when nothing readable remains: `start`, progress parts, a `data-comparison` part `{ truncated: true }` with no text part, the `xm5-sg-cards` products, `data-usage`, and `finish`. The parts are labeled synthetic in the spec. The server side of that contract is tested in JM-104.
 
 1. **Layout.**
    - At 1280×800 the first two cards share a top edge (±2 px), and each is at least 480 px wide. The image box is full-bleed (its width equals the card's border-box width minus the card's border, ±2 px), 4:3 (±1 px), and at least 360 px tall.

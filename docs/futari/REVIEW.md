@@ -167,3 +167,5 @@ Independent reviewer: a fresh opus subagent with no implementation authority. It
 | 4 | NIT | JM-104's evidence still says the coordinator decides. | After approval, JM-104's evidence and PR cite CR-003 and D-043 (operational files, outside this revision). |
 
 Reviewer-confirmed facts: only EV-015 (REQ-002 and its description), JM-104 criterion 3, and a new JM-105 criterion changed in `plan.json`. No threshold, budget, permission, path, or protected-file change. The note text is byte-identical in all places. `comparison-truncated` is feasible from V9 and cuts to K01. `plan-gate check` passes.
+
+Delta re-review of `2df5496` by a fresh opus reviewer, read-only: **READY**. All four findings were resolved or correctly deferred. It confirmed the stubbed stream against JM-104's `toChunks` and pipeline on `86ac7ab`, the plan.json structural diff (only the stated changes), K01 alignment, and gate and harness passes. One new nit ("exactly the parts" omitted `start`, `data-usage`, `finish`) was fixed in the approval commit by listing them. That wording is the only change after the READY verdict.
