@@ -3,8 +3,8 @@
   "labelStatus": "Assistant-proposed expected values computed by a reference implementation of the frozen citation rule (self-checked on all 8 EV-004 cases) and the written rules below, and cross-checked against hand-derived citation sets. They become gold only when the owner approves plan kensaku-v1-1.",
   "rules": {
     "keySpecs": "Keep only string items; trim each; drop empty strings and strings longer than 80 characters; drop exact duplicates keeping the first; keep at most 5, in Exa's order. A missing or non-array keySpecs yields [].",
-    "leakedStructure": "Applies to the comparison and to each reason (owner decision D-042). If the text contains '{' or '}', keep only the text before the first such character with trailing whitespace removed, and mark it truncated; the UI shows the note \"Exa's answer ended in malformed output, which is not shown.\" If the kept text has no Unicode letter, the section is not rendered (null) and the note is shown in its place.",
-    "reason": "A string reason that is not whitespace-only is cut by leakedStructure and then rendered with resolveCitations(text, citationUrls) using the comparison's citations (EV-004 rule, unchanged). Missing, non-string, whitespace-only, or nothing-readable reasons yield null.",
+    "leakedStructure": "Applies to the comparison and to each reason (owner decision D-042). If the text contains '{' or '}', keep only the text before the first such character with trailing whitespace removed, and mark it truncated; the UI shows the note \"Exa's answer ended in malformed output, which is not shown.\" beside every truncated text. If the kept text has no Unicode letter: for the comparison, the note is shown in place of the comparison; for a reason, the reason is omitted (null) with no note, exactly like a missing reason.",
+    "reason": "A string reason that is not whitespace-only is cut by leakedStructure and then rendered with resolveCitations(text, citationUrls) using the comparison's citations (EV-004 rule, unchanged). Missing, non-string, whitespace-only, or nothing-readable reasons yield null, and a null reason renders no reason section and no note.",
     "comparison": "The comparison is cut by leakedStructure before resolveCitations; the EV-004 cases are unaffected because none of their texts contains '{' or '}'.",
     "noPriceInCard": "Card prices come only from merchant offers. Apart from the leaked-structure cut, Kensaku does not edit Exa's text; the /answer schema asks Exa not to mention prices (V8 complied, V10 did not)."
   },
@@ -310,10 +310,26 @@
               null
             ],
             "reason": "}},{brand:{citations:[1]}"
+          },
+          {
+            "name": "Px7 S2e",
+            "brand": "Bowers & Wilkins",
+            "modelIdentifiers": [
+              "Px7 S2e"
+            ],
+            "reason": "Good fit [1]. \n{brand:x}"
+          },
+          {
+            "name": "Major V",
+            "brand": "Marshall",
+            "modelIdentifiers": [
+              "Major V"
+            ],
+            "reason": "Quiet cabin [3] {extra} trailing}"
           }
         ]
       },
-      "note": "Synthetic: keySpecs trimming, empty and over-80 removal, de-duplication, the cap of 5 with six valid specs, non-string items; non-array keySpecs; whitespace-only reason; an out-of-range marker removed with the space before it; a reason cut at leaked structure; a reason with nothing readable before the structure.",
+      "note": "Synthetic: keySpecs trimming, empty and over-80 removal, de-duplication, the cap of 5 with six valid specs, non-string items; non-array keySpecs; whitespace-only reason; an out-of-range marker removed with the space before it; a reason cut at leaked structure; a reason with nothing readable before the structure (omitted silently); trailing whitespace and a newline removed before the cut point; a '{' that comes before any '}'.",
       "candidates": [
         {
           "candidateIndex": 0,
@@ -373,6 +389,40 @@
               "ANC"
             ],
             "reason": null
+          }
+        },
+        {
+          "candidateIndex": 4,
+          "name": "Px7 S2e",
+          "brand": "Bowers & Wilkins",
+          "expected": {
+            "keySpecs": [],
+            "reason": {
+              "renderedText": "Good fit [1].",
+              "sources": [
+                "https://example.com/review-a"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0,
+              "truncated": true
+            }
+          }
+        },
+        {
+          "candidateIndex": 5,
+          "name": "Major V",
+          "brand": "Marshall",
+          "expected": {
+            "keySpecs": [],
+            "reason": {
+              "renderedText": "Quiet cabin [3]",
+              "sources": [
+                "https://example.com/review-c"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0,
+              "truncated": true
+            }
           }
         }
       ]

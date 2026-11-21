@@ -135,3 +135,20 @@ Verdict: **CHANGES REQUIRED, narrowly** (no blocking findings).
 | N4 | NIT | EV-014 check 6 could not run through the address policy. | Seam named: the exported `connectPinned(url, address)` below the policy; check 6 calls it, while checks 2 and 3 go through the policy. JM-103's criteria name it. |
 | N5 | NIT | EV-007 staging in JM-104; the running state was not in EV-010's both-theme axe check. | JM-104: the EV-007 spec passes in its MVP form, with card amendments in JM-105. EV-010 check 7 adds the running state. |
 | N6 | NIT | D-041 credited the 1.8 aspect limit to the reviewer; the probe script still showed 2.0. | D-041 now says it is the author's decision on probe evidence V-F14. The probe script has a comment saying the frozen rule is authoritative. |
+
+### Final confirmation of `fd34674`
+
+The same reviewer checked commit `fd346749ce0d9c4ae4ab340a6384673de2693cbf`. Its verdict was **READY** (advisory). It verified N1-N6 by script:
+- its own citation implementation reproduced 8/8 EV-004 cases, then content labels 15/15 and comparison cases 6/6;
+- R1-Q4 deep-equals the run 1 log;
+- braces appear only in V9 and run 1 Q4;
+- all earlier label sets and mutation checks still hold.
+
+Two non-blocking nits were resolved before the approval commit:
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| M1 | NIT | A null reason was ambiguous about whether the note appears. | Rule text: the note appears beside every truncated text and in place of a null comparison. A null reason, whether missing, whitespace-only, or with nothing readable, renders no section and no note. ARCHITECTURE matches. |
+| M2 | NIT | No case discriminated the trailing-whitespace trim or a `{` that comes first. | P06 gained `"Good fit [1]. \n{brand:x}"` (expected `"Good fit [1]."`) and `"Quiet cabin [3] {extra} trailing}"` (expected `"Quiet cabin [3]"`). 17 candidates. |
+
+The M1/M2 change touches only `product-content.json` (two synthetic candidates and the rule wording), counts, and the matching prose. All other files are byte-identical to the READY commit `fd34674`.

@@ -366,7 +366,7 @@
       ],
       "description": "Product card content and leaked structured output: key specifications and cited reasons parsed from the extended /answer response (with backward compatibility), and the D-042 cut applied to reasons and comparisons.",
       "kind": "deterministic",
-      "passRule": "For every candidate in evals/cases/product-content.json cases (6 answers, 15 candidates), keySpecs equal the expected list and the reason equals the expected renderedText, sources, unresolvedMarkers, uncitedParagraphs and truncated values, or is null where labeled; for every comparisonCases entry (6, two of them truncated), the comparison after the cut and resolveCitations equals the expected values; the test asserts all counts.",
+      "passRule": "For every candidate in evals/cases/product-content.json cases (6 answers, 17 candidates), keySpecs equal the expected list and the reason equals the expected renderedText, sources, unresolvedMarkers, uncitedParagraphs and truncated values, or is null where labeled; for every comparisonCases entry (6, two of them truncated), the comparison after the cut and resolveCitations equals the expected values; the test asserts all counts.",
       "command": "pnpm vitest run tests/evals/ev-012-product-content.test.ts"
     },
     {
