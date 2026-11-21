@@ -5,6 +5,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { analyzeQuery, analyze } from "../../scripts/live/analyze";
+import { decodeChatBody } from "../../scripts/live/browser";
+import { parseSse } from "../server/sse";
 import { renderAuditSheet } from "../../scripts/live/audit";
 import { committedUsage, mayStartQuery, planCapsOf, serverLimits, usageOfExchanges } from "../../scripts/live/budget";
 import type { Budget } from "../../scripts/live/budget";
@@ -159,6 +161,29 @@ describe.skipIf(!existsSync(smokeFile))("revalidation of a recorded query (JM-10
     expect(analyzeQuery(record).imageListProblems.length).toBeGreaterThan(0);
   });
 
+  it("accepts a registry entry whose page URL differs because two cards share one image URL", () => {
+    const record = clone();
+    record.images[0]!.candidates[0]!.pageUrl = "https://other-card.example/page";
+    expect(analyzeQuery(record).imageListProblems).toEqual([]);
+    record.images[0]!.candidates[0]!.imageUrl = "https://elsewhere.example/x.jpg";
+    expect(analyzeQuery(record).imageListProblems.length).toBeGreaterThan(0);
+  });
+
+  it("renders non-ASCII product text from a decoded stream without mojibake", async () => {
+    const record = clone();
+    const stream = Buffer.from(`data: ${JSON.stringify({ brand: "Bambino®", name: "ベビーカー – 20" })}\n\n`, "utf8");
+    const text = (await decodeChatBody({ body: async () => stream })).slice("data: ".length).trim();
+    const { brand, name } = JSON.parse(text) as { brand: string; name: string };
+    record.displayed.products![0]!.candidate.brand = brand;
+    record.displayed.products![0]!.candidate.name = name;
+    const sheet = renderAuditSheet(
+      { runNumber: 1, logFile: "x.json", gitSha: "abc", imageDir: "/tmp/i", shotDir: "/tmp/s", auditRubric: [], imageAuditRubric: [] },
+      [analyze(record)],
+    );
+    expect(sheet).toContain("Bambino® ベビーカー – 20");
+    expect(sheet).not.toContain("Â");
+  });
+
   it("flags a displayed image the proxy's own answer fails under rule I3", () => {
     const record = clone();
     const probe = record.images[0]!.candidates.find((c) => c.id === record.images[0]!.loadedId)!;
@@ -194,6 +219,19 @@ describe.skipIf(!existsSync(smokeFile))("revalidation of a recorded query (JM-10
     expect(offerRow).toMatch(/\| main list \| {2}\| {2}\| pass \(/);
     const imageRow = sheet.split("\n").find((l) => l.startsWith("| Q3-I1 |"))!;
     expect(imageRow).toMatch(/\| pass \| {2}\|$/);
+  });
+});
+
+describe("captured chat stream", () => {
+  const source = { type: "data-products", data: { title: "Bambino® – ベビーカー 20 – 30°C", note: "café" } };
+  const bytes = Buffer.from(`data: ${JSON.stringify(source)}\n\ndata: [DONE]\n\n`, "utf8");
+
+  it("decodes the body as UTF-8, equal to the source", async () => {
+    const fake = { body: async () => bytes, text: async () => bytes.toString("latin1") };
+    const text = await decodeChatBody(fake);
+    expect(text).toContain("Bambino®");
+    expect(text).not.toContain("Â");
+    expect(parseSse(text)).toEqual([source]);
   });
 });
 
@@ -234,8 +272,9 @@ describe("thresholds", () => {
   });
 });
 
-describe.skipIf(!existsSync(DIR) || !readdirSync(DIR).some((f) => /^ev-016-run-\d+-.*\.json$/.test(f)))("committed EV-016 run logs", () => {
-  const runs = existsSync(DIR) ? readdirSync(DIR).filter((f) => /^ev-016-run-\d+-.*\.json$/.test(f)) : [];
+describe.skipIf(!existsSync(DIR) || !readdirSync(DIR).some((f) => /^ev-016-run-\d+-.*\.json$/.test(f) && Number(/run-(\d+)/.exec(f)![1]) >= 2))("committed EV-016 run logs (run 2 on)", () => {
+  // Run 1 was analyzed by the suite before the recorded fix (UTF-8 decoding, image-URL registry check) and stays committed unchanged.
+  const runs = existsSync(DIR) ? readdirSync(DIR).filter((f) => /^ev-016-run-\d+-.*\.json$/.test(f) && Number(/run-(\d+)/.exec(f)![1]) >= 2) : [];
   it.each(runs)("%s: the derived fields equal a fresh analysis of the raw record", (file) => {
     const run = JSON.parse(readFileSync(join(DIR, file), "utf8")) as { queries: (QueryRecord & { analysis: unknown })[] };
     for (const { analysis, ...raw } of run.queries) expect(JSON.parse(JSON.stringify(analyzeQuery(raw as QueryRecord)))).toEqual(analysis);

@@ -28,6 +28,11 @@ export interface Capture {
   screenshot: Buffer;
 }
 
+/** The stream's bytes decoded as UTF-8; `Response.text()` can fall back to a legacy charset and turn `®` into `Â®`. */
+export async function decodeChatBody(response: { body(): Promise<Buffer> }): Promise<string> {
+  return (await response.body()).toString("utf8");
+}
+
 /**
  * Runs in the page: reads the rendered cards into plain data (the shape of `UiSnapshot` without `turnState`). It is source text,
  * not a function, because tsx's esbuild wraps named functions in a helper that does not exist in the page.
@@ -132,7 +137,7 @@ export async function captureQuery(browser: Browser, baseUrl: string, market: Ma
     return {
       turnState,
       chatStatus: chat?.status() ?? null,
-      chatBody: chat ? await chat.text().catch(() => "") : "",
+      chatBody: chat ? await decodeChatBody(chat).catch(() => "") : "",
       imageReplies: replies,
       origins: [...origins].sort(),
       requestCount,

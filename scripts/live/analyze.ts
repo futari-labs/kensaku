@@ -95,7 +95,8 @@ function derivedListProblems(product: ProductResult, searches: Search[], used: S
     const got = shown[i];
     if (got && (got.id !== want.id || got.sourceHost !== want.host || got.sourceTitle !== want.title)) problems.push(`${title}: candidate ${i + 1} differs from the re-derived one`);
     const probe = probes?.candidates[i];
-    if (probe && (probe.imageUrl !== want.imageUrl || probe.pageUrl !== want.pageUrl)) problems.push(`${title}: candidate ${i + 1} registry entry differs from the recorded Exa result`);
+    // Keyed by image URL: when two cards share one, the registry keeps the last registration, so only the image URL is comparable.
+    if (probe && probe.imageUrl !== want.imageUrl) problems.push(`${title}: candidate ${i + 1} registry entry differs from the recorded Exa result`);
   });
   return problems;
 }
