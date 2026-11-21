@@ -2,20 +2,20 @@
   "schemaVersion": 1,
   "planId": "kensaku-v1-1",
   "approvedBy": "d3F0g",
-  "approvedAt": "2026-11-21T03:54:53.821Z",
-  "planCommit": "c356f9af2e9eb372f23712c6fa699ccf0967e011",
+  "approvedAt": "2026-11-21T06:32:01.063Z",
+  "planCommit": "47f813dc40f92fe41bbcdde8c83c2286c237f46a",
   "files": {
     ".agents/playbooks/futari-approved-plan.md": "fb60fdf2d84d0a366c3ae7e545858ae848488293b1bde757a12c177c20c37097",
     ".claude/pstack-models.md": "8c721bc471784a162796dc595e7477283ab4d1c4cdd2531b06cacd639ff2f485",
     ".futari/ci-check.mjs": "f7b7fb667c4bc16a87dd5063af209c3007568f434e1ff9b7c0505144182e8ae1",
     ".futari/plan-gate.mjs": "de57bc8841e88870dc5a1cd6cd9c69ba0d5720a229ab42f08c51bf193c1ca157",
-    ".futari/plan.json": "120152784a49ce8ac9be8ffdc1974a30ee084010e3d8d0b03b299e55c6fde3ed",
+    ".futari/plan.json": "1d1b8c15fc087f95ffc52aa1893623a3b6d0d83b454878d45feca9417d0a84f4",
     ".github/workflows/futari-contract.yml": "b26140f951f637f1b36bf24935fef325cd50bd2378cd3e3279653e4637e30de5",
     "CLAUDE.md": "9ef721fffe2bbf9f055583869b0d480e7ac799342b0cf5de73b82e1f1e629791",
     "docs/futari/ARCHITECTURE.md": "6c1c0c0fbc512cb3754dea971c88ae09ef9b73d1ab7eadd7abb70b8330b76d18",
-    "docs/futari/DECISIONS.md": "db84b7d803b95e2620bfffa64c3f75ca7e22d5b17c6d5bc100377e57f8899b16",
-    "docs/futari/EVALUATION_PLAN.md": "5ce52b63360d93e33728d9b7c5875191a0466e0586ed424ca52080a9bfeda128",
-    "docs/futari/EXECUTION_PLAN.md": "09605cf46785baea8076e1918c8f706195a247b427dcc78ab83c1464e19219b1",
+    "docs/futari/DECISIONS.md": "065a373ee1ace2f49fe539ad2c0059c0c4fdcd51814426ef0519c09a1e6c7ae3",
+    "docs/futari/EVALUATION_PLAN.md": "eec076d088aeef9f13b3ddf887af102878020f0e5b6f4ea08c56572a19cabe97",
+    "docs/futari/EXECUTION_PLAN.md": "d15b4fe974ebc1db1b90afeb16d4eabafa5d21e5f346e52e9dd3ae977c2944f2",
     "docs/futari/PRODUCT_SPEC.md": "c4129cb4b7a10d5cd21b66e4337ffa3dd9ca7fab0b6162a206d9ef3f82c59b71",
     "docs/futari/PSTACK_HANDOFF.md": "fa591aef490281de5929300036950a595a802713cf3ec1d26f65c019e5036a2e",
     "docs/futari/RISKS.md": "8eeb0fe43e12fe12f4d7937cd698177461a40a4c8d9a87548a9164ce011c7de8",
@@ -69,5 +69,5 @@
     "spikes/exa-v1-1/image-probe.mjs": "df49f5bcec6a47cbd0bd592a7f82a83f186b48bc0f00fde09f7995ee953e88bd",
     "spikes/exa-v1-1/spike.mjs": "173e9e1139dc664957951006d90c0102d8936240431afabbf6bedfc059384257"
   },
-  "snapshotSha256": "a6abc4f89279ae69760bfbf24d1ba59b10401de3ede849f5cccaba0c1d0ed6a9"
+  "snapshotSha256": "f8ff98c5809ae36e99322d2ce9963e0f332cfb5b41d1f3b3fba57f93b78775f7"
 }

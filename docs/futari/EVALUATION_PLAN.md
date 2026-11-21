@@ -19,7 +19,7 @@ Status: proposed for approval with plan `kensaku-v1-1`. EV-001 to EV-007 and EV-
 | EV-012 Product card content and leaked structure | REQ-012, REQ-002 | `evals/cases/product-content.json` (6 answers, 17 candidates; 6 comparison cases) | `pnpm vitest run tests/evals/ev-012-product-content.test.ts` | Every candidate's `keySpecs` and reason (cut, resolved, `truncated`, or `null`) and every comparison case equal the labels; asserts all counts. |
 | EV-013 Product image selection | REQ-013 | `evals/cases/image-selection.json` (80 URL, 10 selection, 58 bytes cases) | `pnpm vitest run tests/evals/ev-013-image-selection.test.ts` | Every case equals its label. Selection cases compare exact ordered `{imageUrl, pageUrl}` lists, using `classifyHit` on the real fixtures or on the inline synthetic hits. Asserts each section's count. |
 | EV-014 Image proxy safety and cache | REQ-014, REQ-007 | Injected resolver and upstream, a local connector test, generated image bytes | `pnpm vitest run tests/evals/ev-014-image-proxy.test.ts` | "Image proxy (EV-014)" below. |
-| EV-015 Image-first product cards | REQ-012, REQ-013, REQ-015, REQ-009, REQ-010 | Playwright, fixture mode, scenarios with fixture images, the frozen MVP history | `pnpm exec playwright test tests/e2e/ev-015-product-cards.spec.ts` | "Product cards (EV-015)" below. |
+| EV-015 Image-first product cards | REQ-012, REQ-013, REQ-015, REQ-009, REQ-010, REQ-002 | Playwright, fixture mode, scenarios with fixture images, the frozen MVP history | `pnpm exec playwright test tests/e2e/ev-015-product-cards.spec.ts` | "Product cards (EV-015)" below. |
 | EV-016 Live acceptance v1.1 | REQ-008, REQ-013, REQ-015, REQ-016 | `evals/cases/live-acceptance-v1-1.json` (8 queries) | `pnpm live:acceptance:v1-1` | "Live acceptance (EV-016)" below. |
 | EV-017 Request contract | REQ-015, REQ-012 | Frozen requests in V9, V2, V3 | `pnpm vitest run tests/evals/ev-017-request-contract.test.ts` | The `/answer` `outputSchema` deep-equals V9's frozen `request.body.outputSchema`. The offer requests for V2's and V3's candidates equal their frozen `query` and `userLocation`, with the MVP contents unchanged. A US and a JP candidate get `"… price United States buy"` and `"… price Japan buy"`. The cache key differs from the MVP query's key. |
 
@@ -119,11 +119,13 @@ Vitest against the Hono app factory, with an injected `lookup` and an injected u
 
 ## Product cards (EV-015)
 
-Playwright, Chromium, `pnpm start` in fixture mode. Scenarios (JM-104 adds the first two, JM-105 the rest):
+Playwright, Chromium, `pnpm start` in fixture mode. Scenarios (JM-104 adds the first two, JM-105 the rest, including the two CR-003 scenarios):
 - `xm5-sg-cards`: SG market, 2 candidates; SGD offers plus one USD offer; image candidates mapped to fixture images, one of which fails rule I3.
 - `xm5-us-cards`.
 - `no-images`: every candidate fails.
 - `no-market-offers`: SG market, USD offers only.
+- (CR-003) `comparison-truncated`: the comparison is the frozen V9 answer's comparison, which ends in leaked structure.
+- (CR-003) `comparison-dropped`: no frozen answer cuts to a null comparison, so this scenario does not use `FixtureExaPort`. The spec stubs `POST /api/chat` with a Playwright route that returns a UI message stream, as the EV-007 spec already does. The stream holds the parts JM-104's server emits when nothing readable remains: `start`, progress parts, a `data-comparison` part `{ truncated: true }` with no text part, the `xm5-sg-cards` products, `data-usage`, and `finish`. The parts are labeled synthetic in the spec. The server side of that contract is tested in JM-104.
 
 1. **Layout.**
    - At 1280×800 the first two cards share a top edge (±2 px), and each is at least 480 px wide. The image box is full-bleed (its width equals the card's border-box width minus the card's border, ±2 px), 4:3 (±1 px), and at least 360 px tall.
@@ -155,6 +157,15 @@ Playwright, Chromium, `pnpm start` in fixture mode. Scenarios (JM-104 adds the f
 
    A v1.1 run survives a reload with the same cards and image candidates.
 9. **Accessibility.** Zero serious or critical axe violations in dark and light on `xm5-sg-cards` and `no-images`. Every disclosure and link is reachable and operable by keyboard. Image alt text follows REQ-013.
+10. **Malformed-answer note** (REQ-002, D-042; added by CR-003, D-043).
+    - In `comparison-truncated`, within the comparison section:
+      - the rendered text equals `evals/cases/product-content.json` K01 `expected.renderedText` (ending `…[4,8].`), with K01's 2 sources as its inline citations;
+      - beside it is the exact note "Exa's answer ended in malformed output, which is not shown.".
+
+      The product card's reason (V9's reason is also cut) shows its cut text with the same note. No `{` or `}` appears anywhere on the page.
+    - In `comparison-dropped`, the comparison section shows no comparison text and shows the note in its place. The product cards still render.
+    - In `xm5-sg-cards`, no note is shown.
+    - The note is axe-clean in both themes.
 
 ## Frontend quality (EV-007, amended)
 

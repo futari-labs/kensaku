@@ -152,3 +152,20 @@ Two non-blocking nits were resolved before the approval commit:
 | M2 | NIT | No case discriminated the trailing-whitespace trim or a `{` that comes first. | P06 gained `"Good fit [1]. \n{brand:x}"` (expected `"Good fit [1]."`) and `"Quiet cabin [3] {extra} trailing}"` (expected `"Quiet cabin [3]"`). 17 candidates. |
 
 The M1/M2 change touches only `product-content.json` (two synthetic candidates and the rule wording), counts, and the matching prose. All other files are byte-identical to the READY commit `fd34674`.
+
+## Plan revision CR-003 (malformed-answer note moves to JM-105)
+
+Trigger: JM-104's criterion "the comparison shows the malformed-output note when truncated" required `src/web/app/Comparison.tsx` or `App.tsx`, which are outside JM-104's approved paths (JM-104 review). The owner selected "Move note to JM-105" on 2026-11-21 (AskUserQuestion). Decision D-043.
+
+Independent reviewer: a fresh opus subagent with no implementation authority. It reviewed commit `94f2c7d` read-only and ran `plan-gate check` and the harness in a throwaway worktree. Verdict: **CHANGES REQUIRED**, 1 must-fix, 1 should-fix, 2 nits.
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| 1 | MUST-FIX | `comparison-dropped` could not be built within JM-105's paths. `FixtureExaPort` takes comparisons only from frozen files, and no frozen answer cuts to a null comparison. | The scenario is defined as a stubbed `POST /api/chat` UI stream in the spec (as the EV-007 spec already does). It carries exactly JM-104's server parts for a dropped comparison (`data-comparison {truncated: true}`, no text part), so it lives in `tests/e2e/` within JM-105's paths. The server side is tested in JM-104. No scope change. |
+| 2 | SHOULD-FIX | `comparison-truncated` shows two notes (V9's reason is also cut), and nothing required the card to keep the reason note. | Check 10 scopes the comparison assertion to the comparison section and requires the card's reason to show its cut text with the note. The JM-105 criterion names the reason note. |
+| 3 | NIT | "Cut text with inline citations" was looser than the frozen label. | Check 10 asserts K01's `expected.renderedText` and its 2 sources. |
+| 4 | NIT | JM-104's evidence still says the coordinator decides. | After approval, JM-104's evidence and PR cite CR-003 and D-043 (operational files, outside this revision). |
+
+Reviewer-confirmed facts: only EV-015 (REQ-002 and its description), JM-104 criterion 3, and a new JM-105 criterion changed in `plan.json`. No threshold, budget, permission, path, or protected-file change. The note text is byte-identical in all places. `comparison-truncated` is feasible from V9 and cuts to K01. `plan-gate check` passes.
+
+Delta re-review of `2df5496` by a fresh opus reviewer, read-only: **READY**. All four findings were resolved or correctly deferred. It confirmed the stubbed stream against JM-104's `toChunks` and pipeline on `86ac7ab`, the plan.json structural diff (only the stated changes), K01 alignment, and gate and harness passes. One new nit ("exactly the parts" omitted `start`, `data-usage`, `finish`) was fixed in the approval commit by listing them. That wording is the only change after the READY verdict.
