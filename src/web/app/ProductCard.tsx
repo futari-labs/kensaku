@@ -13,7 +13,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemHeader,
 import { Skeleton } from "@/web/components/ui/skeleton";
 import { cn } from "@/web/lib/utils";
 import { CitedSegments, MalformedNote } from "./Citation";
-import { AVAILABILITY_LABEL, EVIDENCE_LABEL, formatPrice, formatTime } from "./format";
+import { AVAILABILITY_LABEL, EVIDENCE_LABEL, formatPrice, formatTime, productTitle } from "./format";
 import { MARKET_NAME } from "./markets";
 import { offerView } from "./offers";
 import type { OfferView } from "./offers";
@@ -198,7 +198,7 @@ function offerSections(view: OfferView): { summary: React.ReactNode; listing: Re
 /** `market` is the market the run was for, settled once per turn (`turnsOf`). */
 export function ProductCard({ product, market }: { product: ProductResult; market: Market | undefined }) {
   const { candidate, evidence, rejectedCounts, keySpecs, reason, imageCandidates } = product;
-  const title = `${candidate.brand} ${candidate.name}`;
+  const title = productTitle(candidate);
   const headingId = useId();
   const reasonId = useId();
   const rejected = Object.values(rejectedCounts).reduce((a, b) => a + b, 0);

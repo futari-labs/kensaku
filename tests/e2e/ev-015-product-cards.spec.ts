@@ -5,6 +5,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import type { ProductResult } from "../../src/research/events";
+import { productTitle } from "../../src/web/app/format";
 import { Q1 } from "../fixtures/questions";
 
 const root = join(import.meta.dirname, "../..");
@@ -144,7 +145,7 @@ test("3. the heading is the product, never a merchant; each offer shows host, na
   for (const [i, product] of products.entries()) {
     const card = cards(page).nth(i);
     const heading = card.getByRole("heading", { level: 3 });
-    await expect(heading).toHaveText(`${product.candidate.brand} ${product.candidate.name}`);
+    await expect(heading).toHaveText(productTitle(product.candidate));
     const hosts = product.offerGroups.flatMap((g) => g.offers.map((o) => o.merchantHost));
     const headingText = (await heading.textContent())!;
     for (const host of hosts) expect(headingText).not.toContain(host);
@@ -188,7 +189,7 @@ test.describe("4. images", () => {
       const shown = candidates[1]!;
       const image = cards(page).nth(i).locator("img");
       await expect(image).toHaveAttribute("src", `/api/image/${shown.id}`);
-      await expect(image).toHaveAttribute("alt", `${product.candidate.brand} ${product.candidate.name}, image from ${shown.sourceHost}`);
+      await expect(image).toHaveAttribute("alt", `${productTitle(product.candidate)}, image from ${shown.sourceHost}`);
       await expect(cards(page).nth(i).getByTestId("image-caption")).toHaveText(`Image: ${shown.sourceHost} · ${shown.sourceTitle}`);
       await expect(cards(page).nth(i).getByTestId("image-skeleton")).toHaveCount(0);
       expect(await image.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
@@ -383,7 +384,8 @@ test.describe("9. accessibility", () => {
       }
     }
     for (const [i, product] of products.entries()) {
-      await expect(cards(page).nth(i).locator("img")).toHaveAttribute("alt", new RegExp(`^${product.candidate.brand} ${product.candidate.name}, image from .+$`));
+      const alt = (await cards(page).nth(i).locator("img").getAttribute("alt"))!;
+      expect(alt.startsWith(`${productTitle(product.candidate)}, image from `), alt).toBe(true);
     }
   });
 });
@@ -391,6 +393,8 @@ test.describe("9. accessibility", () => {
 test.describe("10. the malformed-answer note (REQ-002, D-042)", () => {
   test("comparison-truncated: the K01 text with its citations and the note beside it; the card reason is cut with the note too; no brace on the page", async ({ page }) => {
     await run(page, "comparison-truncated", { market: "US" });
+    // The candidate's name already starts with its brand, so the heading names the brand once (EV-015 check 3).
+    await expect(cards(page).first().getByRole("heading", { level: 3 })).toHaveText("Logitech MX Vertical");
     const section = page.getByRole("region", { name: "Comparison" });
     const shown = await section.getByTestId("comparison-paragraph").evaluateAll((ps) =>
       ps.map((p) => {
@@ -402,13 +406,15 @@ test.describe("10. the malformed-answer note (REQ-002, D-042)", () => {
     expect(shown.join("\n\n")).toBe(K01.expected.renderedText.replace(/\[\d+(?:,\d+)*\]/g, ""));
     expect(K01.expected.renderedText.endsWith("[4,8].")).toBe(true);
     expect(await section.getByTestId("inline-citation").count()).toBe((K01.expected.renderedText.match(/\[\d+(?:,\d+)*\]/g) ?? []).length);
-    // Every comparison citation opens only K01's sources.
+    // Each marker opens exactly its own K01 sources: [4] the first, [4,8] both.
     const citations = section.getByTestId("inline-citation");
+    const markers = K01.expected.renderedText.match(/\[\d+(?:,\d+)*\]/g) ?? [];
+    const [first, second] = K01.expected.sources;
+    const expectedHrefs: Record<string, string[]> = { "[4]": [first!], "[4,8]": [first!, second!] };
     for (let i = 0; i < (await citations.count()); i++) {
       await citations.nth(i).click();
       const hrefs = await page.getByTestId("citation-link").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
-      expect(hrefs.length).toBeGreaterThan(0);
-      for (const href of hrefs) expect(K01.expected.sources, href).toContain(href);
+      expect(hrefs.sort(), markers[i]).toEqual([...expectedHrefs[markers[i]!]!].sort());
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("citation-card")).toHaveCount(0);
     }

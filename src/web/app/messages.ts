@@ -1,6 +1,6 @@
 import type { UIMessage } from "ai";
 import { MARKET_CURRENCY } from "../../core/currency";
-import type { Market } from "../../core/types";
+import type { Currency, Market } from "../../core/types";
 import { MARKETS } from "./markets";
 import { STAGES } from "../../research/events";
 import type { ApiErrorKind, ErrorData, KensakuDataParts, ProductResult, ProgressData, RunState, SourceRef, Stage, UsageData } from "../../research/events";
@@ -77,13 +77,16 @@ export function runStateOf(
 }
 
 /**
- * The market a turn was for: the question's metadata, else (history from before v1.1) the market whose currency leads the first
- * offer list in the run. `rankOffers` (src/core/rank.ts) puts the market's currency first in every product's groups, so the first
- * product that has offers settles it. Undefined when the run has no offers, where no card needs it.
+ * The market a turn was for: the question's metadata, else (history from before v1.1) the market whose currency leads most
+ * offer lists in the run (a tie goes to the first product's). `rankOffers` (src/core/rank.ts) puts the market's currency first in
+ * every product's groups, so each product that has offers votes for it. Undefined when the run has no offers, where no card needs it.
  */
 function marketOf(question: ChatMessage, products: ProductResult[] | undefined): Market | undefined {
   if (question.metadata?.market) return question.metadata.market;
-  const currency = products?.find((p) => p.offerGroups.length > 0)?.offerGroups[0]?.currency;
+  const leading = (products ?? []).flatMap((p) => (p.offerGroups[0] ? [p.offerGroups[0].currency] : []));
+  const votes = (c: Currency) => leading.filter((l) => l === c).length;
+  // The strict `>` keeps the earlier currency on a tie, and `leading` is in product order.
+  const currency = leading.reduce<Currency | undefined>((best, c) => (best === undefined || votes(c) > votes(best) ? c : best), undefined);
   return MARKETS.find((m) => MARKET_CURRENCY[m] === currency);
 }
 
