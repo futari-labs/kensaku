@@ -38,9 +38,9 @@ Phase: **v1.1 execution** (plan `kensaku-v1-1`, approved; contract on `dev` at `
 
 | Task | Issue | Branch | PR | Tested revision | Status | Evidence / next action |
 | --- | --- | --- | --- | --- | --- | --- |
-| JM-101 | [#16](https://github.com/futari-labs/kensaku/issues/16) | `jm-101-core-rules` | [#22](https://github.com/futari-labs/kensaku/pull/22) | `8e28262` (integration merge; code reviewed at `b39e4f8`) | VERIFIED (delta review APPROVE); merging | `.futari/evidence/JM-101.md` |
+| JM-101 | [#16](https://github.com/futari-labs/kensaku/issues/16) | `jm-101-core-rules` | [#22](https://github.com/futari-labs/kensaku/pull/22) | `8e28262` (code reviewed at `b39e4f8`) | merged (`59ada31`), dev push CI green | `.futari/evidence/JM-101.md` |
 | JM-102 | [#17](https://github.com/futari-labs/kensaku/issues/17) | `jm-102-theme` | [#23](https://github.com/futari-labs/kensaku/pull/23) | `a4a62bc` | merged (`5eb034c`) | `.futari/evidence/JM-102.md` |
-| JM-103 | [#18](https://github.com/futari-labs/kensaku/issues/18) | | | | pending JM-101 merge | |
+| JM-103 | [#18](https://github.com/futari-labs/kensaku/issues/18) | `jm-103-image-proxy` | [#24](https://github.com/futari-labs/kensaku/pull/24) | `055f91c` | VERIFIED (delta review APPROVE); merging | `.futari/evidence/JM-103.md` |
 | JM-104 | [#19](https://github.com/futari-labs/kensaku/issues/19) | | | | pending JM-103 | |
 | JM-105 | [#20](https://github.com/futari-labs/kensaku/issues/20) | | | | pending JM-102, JM-104 | |
 | JM-106 | [#21](https://github.com/futari-labs/kensaku/issues/21) | | | | pending JM-105 | |
