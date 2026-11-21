@@ -1,6 +1,6 @@
 # FutariLabs progress
 
-Phase: execution of approved plan `kensaku-mvp-v1` (approval commit `3fe529f`, snapshot `77dafb5d205516cc5843651290b6881c79449a97c82e7a82470bc2afb39fbecc` at `eed64a9`).
+Phase: execution complete pending the final `dev` CI run. Plan `kensaku-mvp-v1`, revision CR-001 (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`; original approval `3fe529f`, snapshot `77dafb5d…` at `eed64a9`).
 
 ## Execution session 2026-11-21
 
@@ -34,7 +34,7 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 | JM-003 | [#3](https://github.com/futari-labs/kensaku/issues/3) | `jm-003-exa-adapter` | [#9](https://github.com/futari-labs/kensaku/pull/9) | `c8491d3` | merged (`be91f1d`), dev push CI green (run 44800483182) | `.futari/evidence/JM-003.md` |
 | JM-004 | [#4](https://github.com/futari-labs/kensaku/issues/4) | `jm-004-vertical-slice` | [#10](https://github.com/futari-labs/kensaku/pull/10) | `7b8bdec` | merged (`ed37686`), dev push CI green (run 44807130246); vertical slice milestone passed | `.futari/evidence/JM-004.md`; live smoke logs in `.futari/evidence/live/` |
 | JM-005 | [#5](https://github.com/futari-labs/kensaku/issues/5) | `jm-005-frontend` | [#11](https://github.com/futari-labs/kensaku/pull/11) | `d8b30e2` | merged (`90a0218`), dev push CI green (run 44843154968) | `.futari/evidence/JM-005.md`; owner visual review accepted 2026-11-21 |
-| JM-006 | [#6](https://github.com/futari-labs/kensaku/issues/6) | - | - | - | pending | carry: move `classifyAll` out of the Exa try in `src/research/pipeline.ts`; reuse `tests/research/live-run.ts`; live budget remaining 115 requests / $1.945 of the approved 120 / $2.00; owner audit flags from JM-004 (Instacart marketplace offer, refurbished MX Vertical); CR-001 decision |
+| JM-006 | [#6](https://github.com/futari-labs/kensaku/issues/6) | `jm-006-live-acceptance` | [#13](https://github.com/futari-labs/kensaku/pull/13) | `4f297bb` | verified, merging | `.futari/evidence/JM-006.md`; thermos APPROVE at 7bfa54f; EV-008 run 1 (14 requests, $0.15) passed; owner audit 15/16 |
 
 ## Change requests
 
@@ -43,9 +43,41 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 - Observation: in the JM-004 live smoke, Exa's `/answer` wrote markers such as `[2, 5, 6]` in Q2. The frozen rule in `evals/cases/citations.json` (`'[' n (',' n)* ']'`, protected) does not match them, so the Q2 comparison resolved 0 of 8 citations and every paragraph was flagged uncited. Q1 used `[4,5]` and resolved normally. Evidence: `.futari/evidence/live/jm-004-smoke-Q2.json`.
 - Impact: REQ-002 ("cited comparison") is met by the code as approved but fails for real answers that use spaces; owner product acceptance at JM-006 would likely reject it. EV-008 thresholds do not measure citations, so EV-008 can pass while this gap remains.
 - Recommendation: amend the rule to `'[' n (\s* ',' \s* n)* ']'` (optional whitespace around commas, and optionally inside the brackets), add one live-derived citation case for the Q2 text, and let JM-006 (which may change `src/core/`) implement it. This changes a protected evaluation input, so it requires a reviewed plan revision and a fresh owner approval through `/futari:bootstrap`; no agent edits the frozen case file.
-- Status: 2026-11-21 the owner selected "Revise plan (Recommended)". `/futari:bootstrap` prepared the revision on branch `cr-001-citation-spaces` (D-026, R-15, REVIEW.md "Plan revision CR-001"; independent review READY). Pending: owner approval card for the revised baseline, then the owner merges the revision PR into `dev` with a merge commit. JM-006 resumes after that.
+- Status: resolved. Revision approved on the plan-review card (approval at plan commit `2866477`, snapshot `c4bce636…`), merged into `dev` by the owner with a merge commit (PR #12, `034f4fe`), implemented in JM-006 (EV-004 8/8, `harness --strict` 0). Live run 1 resolved citations in all six answers.
+
+### CR-002: search-results pages reported as product listings (proposed post-MVP revision)
+
+- Observation: EV-008 run 1 displayed Q5-O1, a Rakuten Ichiba search-results page (`search.rakuten.co.jp/search/mall/...`), as a merchant offer. Exa reported `isProductListing: true`; the approved aggregator list has `product.rakuten.co.jp` only. The owner audit failed it (Direct merchant); the run still passed at 15/16.
+- Recommendation: a reviewed revision adding search-results URL handling (for example `search.rakuten.co.jp` on the aggregator list and a path rule for `/search`), with frozen cases from the run-1 log.
+- Status: owner chose "Follow-up after MVP" (2026-11-21). Not part of `kensaku-mvp-v1`.
+
+### Deferred follow-ups (non-blocking review findings)
+
+- Live suite (`scripts/live-acceptance.ts`, `tests/research/`): include candidate problems in the log's threshold summary; write the raw log before post-processing so a crash cannot drop a paid query; model stop reasons as a typed value shared with the smoke; iterate the spec once; move the shared live modules out of `tests/` into `scripts/live/` and rename `Smoke*`; count failed attempts in run totals; derive the run number from a durable counter; exit non-zero on a failed threshold; remove the temp server directory.
+- Citations (`src/core/citations.ts`): fix the stale `segmentMarkers` comment; a paragraph made only of dropped markers shifts UI paragraph indexes; `[[9]1]` renders `[1]` while counted uncited (both pre-existing).
+- Web (`src/web/app/messages.ts`): drop the `runStateOf` `cancelled` option once `tests/server/stream-contract.test.ts` may change; citation popover tab order returns to the end of the body; fixture footers show the monthly figure until `/api/health` answers.
+- Risks: R-15 (other citation marker forms, likely full-width brackets on Japanese answers); the Singapore query Q3 showed only USD offers from US sites.
 
 ## Milestone verification
+
+- MVP (JM-005, JM-006): PASSED 2026-11-21 pending the final `dev` CI run after PR #13. EV-008 run 1 at code `7bfa54f`: 4/6 queries with a merchant offer, 16/16 revalidated, owner audit 15/16 (93.75%), 0 fabricated, 0 unexpected errors, 14 requests, $0.15. Live spend across the plan: 19 requests, $0.205 of 120 / $2.00.
+
+## Final acceptance
+
+| Requirement | Tasks | Evaluations | Evidence | Result |
+| --- | --- | --- | --- | --- |
+| REQ-001 Ask and stream | JM-004, JM-005 | EV-006, EV-007 | `.futari/evidence/JM-004.md`, `JM-005.md` | pass |
+| REQ-002 Cited comparison | JM-002, JM-004, JM-006 | EV-004 (8 cases), EV-007 | `JM-002.md`, `JM-006.md`; live run 1 citations | pass |
+| REQ-003 Merchant offers | JM-002, JM-004 | EV-001, EV-002 (54/54); EV-008 audit | `JM-002.md`, `live/ev-008-run-1-audit.md` | pass (Q5-O1 extraction miss, CR-002) |
+| REQ-004 Currency ranking | JM-002 | EV-003 | `JM-002.md` | pass |
+| REQ-005 Failure recovery | JM-004 | EV-006 | `JM-004.md` | pass |
+| REQ-006 Spend guard and cache | JM-003, JM-004 | EV-005 | `JM-003.md`, `JM-004.md` | pass |
+| REQ-007 Local and key safety | JM-004, JM-005 | EV-009, EV-007 | `JM-004.md`, `JM-005.md` | pass |
+| REQ-008 Live acceptance | JM-006 | EV-008 | `JM-006.md`, `live/ev-008-run-1-*.json` | pass |
+| REQ-009 Persistent history | JM-005 | EV-007 | `JM-005.md` | pass |
+| REQ-010 Frontend quality | JM-001, JM-005 | EV-007, owner visual review | `JM-001.md`, `JM-005.md` | pass |
+
+**Owner product acceptance:** accepted by the owner (d3F0g) on 2026-11-21 through the native AskUserQuestion card. Question: "do you accept the MVP?" after the requirement-to-evidence table and known limits (CR-002, R-15, SG query showing USD offers). Selection: "Accept MVP". Promotion to `main` and deployment remain the owner's and are outside this plan.
 
 - Vertical slice (JM-001..JM-004): PASSED 2026-11-21. All four merged with CI and Futari contract green on each PR head and on `dev` after each merge; JM-004 live smoke Q1 2 revalidated merchant offers, Q2 offers for 2 candidates (citations unresolved, CR-001); 5 live requests, $0.055; zero-cost browser check of the live path by the JM-004 reviewer.
 - Process note: editing a PR body re-triggers `Futari contract`; finish body edits before the final check watch (PR #10 merged while a re-triggered run was pending; it then passed on the same head).
