@@ -98,6 +98,17 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 - Recommendation: a reviewed revision adding search-results URL handling (for example `search.rakuten.co.jp` on the aggregator list and a path rule for `/search`), with frozen cases from the run-1 log.
 - Status: owner chose "Follow-up after MVP" (2026-11-21). Not part of `kensaku-mvp-v1`. Included in proposed plan `kensaku-v1-1` as rule 5b (D-031, REQ-016, EV-011 case N33).
 
+### CR-003: malformed-answer note moves from JM-104 to JM-105 (plan revision of `kensaku-v1-1`)
+
+- Observation: JM-104's criterion "the comparison shows the malformed-output note when truncated" needs `src/web/app/Comparison.tsx` or `App.tsx`, which are outside JM-104's approved paths. The worker plumbed and tested the truncated flag to the page (`data-comparison`, `RunView.comparisonTruncated`) without rendering a note. Both JM-104 reviewers confirmed this; the code-quality reviewer flagged it as user-visible.
+- Owner decision (AskUserQuestion, 2026-11-21): "Move note to JM-105". D-043.
+- Revision:
+  - JM-104 criterion 3 now ends at carrying the flag to the client.
+  - JM-105 gains the note criterion.
+  - EV-015 gains REQ-002, two scenarios, and check 10.
+  - No other change.
+- Status: under independent review; it needs the owner's plan-revision approval card. JM-104 merges only after the revised contract is on `dev`.
+
 ### Deferred follow-ups (non-blocking review findings)
 
 - Live suite (`scripts/live-acceptance.ts`, `tests/research/`): include candidate problems in the log's threshold summary; write the raw log before post-processing so a crash cannot drop a paid query; model stop reasons as a typed value shared with the smoke; iterate the spec once; move the shared live modules out of `tests/` into `scripts/live/` and rename `Smoke*`; count failed attempts in run totals; derive the run number from a durable counter; exit non-zero on a failed threshold; remove the temp server directory.

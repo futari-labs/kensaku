@@ -397,9 +397,10 @@
         "REQ-013",
         "REQ-015",
         "REQ-009",
-        "REQ-010"
+        "REQ-010",
+        "REQ-002"
       ],
-      "description": "Image-first product cards: layout, content, images, markets, research disclosure, history compatibility, accessibility in both themes, and zero non-local browser requests (Playwright against pnpm start in fixture mode).",
+      "description": "Image-first product cards: layout, content, images, markets, research disclosure, history compatibility, the malformed-answer note, accessibility in both themes, and zero non-local browser requests (Playwright against pnpm start in fixture mode).",
       "kind": "deterministic",
       "passRule": "Every check in docs/futari/EVALUATION_PLAN.md 'Product cards (EV-015)' passes in Chromium.",
       "command": "pnpm exec playwright test tests/e2e/ev-015-product-cards.spec.ts"
@@ -609,7 +610,7 @@
         "src/exa/requests.ts builds offer searches as '<brand> <name> price <market name> buy' and the /answer outputSchema exactly as frozen in V9's request (EV-017); src/exa/parse.ts keeps keySpecs, reason and the search result image (optional) and tolerates their absence.",
         "The pipeline cuts the comparison with cutLeakedStructure before resolveCitations and marks it truncated (D-042); it attaches to each data-products entry keySpecs (normalizeKeySpecs), reason (resolveReason) and imageCandidates [{ id, sourceHost, sourceTitle }] from rankImageCandidates, and registers each candidate with registerImageCandidates; the data-products schema stays backward compatible with the frozen MVP history payload.",
         "Every server response except /api/image/:id carries the Content-Security-Policy in ARCHITECTURE.",
-        "src/web/app/Products.tsx shows, inside the existing product section, the first loadable image via /api/image/:id with its caption, the key specifications, and the reason; the comparison shows the malformed-output note when truncated; the full card is JM-105's.",
+        "src/web/app/Products.tsx shows, inside the existing product section, the first loadable image via /api/image/:id with its caption, the key specifications, and the reason; the comparison's truncated flag reaches the client (a data-comparison stream part and RunView.comparisonTruncated, also when no readable comparison text remains) so that JM-105 can render the malformed-output note (CR-003, D-043); the full card is JM-105's.",
         "EV-004, EV-005, EV-006, EV-009, EV-012, EV-013 and EV-017 pass, and the EV-007 spec passes in its MVP form (its card amendments land in JM-105); the fixture test tests/e2e/slice.spec.ts shows an image loaded through the proxy and records no request to a non-local origin.",
         "Live smoke (EVALUATION_PLAN 'Slice smoke'): Q3 and Q4 from evals/cases/live-acceptance-v1-1.json, at most 10 Exa requests in total; each shows at least one SGD merchant offer and at least one product image loads through the proxy; the run logs are committed under .futari/evidence/live/ at or before the Tested-Commit. A miss is FAIL and stops the task for the owner (no rerun within this plan's budget); an Exa outage is BLOCKED."
       ],
@@ -662,6 +663,7 @@
         "The shadcn CLI installs card, aspect-ratio, skeleton and item from @shadcn unmodified, and components.lock.json records their SHA-256 in the same commit; no AI Elements or shadcn file is edited by hand, and the CSS variables in src/web/index.css are unchanged (the reviewer checks both in the diff).",
         "src/web/app/ProductCard.tsx composes the card in REQ-012's order from Card, AspectRatio, Skeleton, Item, Badge, Collapsible, Button and the AI Elements inline-citation; product cards replace the offer tables; the layout widens to max-w-6xl and may override container widths and padding only through className props (for example on MessageContent and ConversationContent) so two cards fit per row at 1280 px and the image meets REQ-012 at 375 px.",
         "Other markets and Research details are Collapsible disclosures with correct aria-expanded state; the market's currency drives the main list per REQ-015; the card reads key specs and the reason only from the data-products entry fields.",
+        "src/web/app/Comparison.tsx (with App.tsx as needed) renders the note \"Exa's answer ended in malformed output, which is not shown.\" beside a truncated comparison, and in place of the comparison when no readable text remains, from RunView.comparisonTruncated (D-042; moved from JM-104 by CR-003, D-043); EV-015 check 10 passes.",
         "EV-015, EV-007 (amended) and EV-010 pass, including the frozen MVP history payload; the owner's visual review on desktop and mobile widths in both themes is recorded in .futari/evidence/JM-105.md."
       ],
       "verificationCommands": [
