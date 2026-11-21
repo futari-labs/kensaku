@@ -1,6 +1,6 @@
 # FutariLabs progress
 
-Phase: **v1.1 approved, awaiting publication to `dev`** (plan `kensaku-v1-1`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).
+Phase: **v1.1 execution** (plan `kensaku-v1-1`, approved; contract on `dev` at `c0597c8`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).
 
 ## v1.1 planning session 2026-11-21
 
@@ -23,6 +23,31 @@ Phase: **v1.1 approved, awaiting publication to `dev`** (plan `kensaku-v1-1`). T
 - Approval: the owner (d3F0g) selected "Approve plan" on the native card for `kensaku-v1-1` at `c356f9af2e9eb372f23712c6fa699ccf0967e011`. The card stated that approving replaces the `kensaku-mvp-v1` baseline. Recorded in `8186754` (`.futari/approval.json` only); `plan-gate verify`: PASS, snapshot `a6abc4f89279ae69760bfbf24d1ba59b10401de3ede849f5cccaba0c1d0ed6a9`.
 - Publication: with the owner's authorization, `v1-1-plan` was pushed and PR #15 opened into `dev`. `CI` passed. `Futari contract` fails by design at the `Futari-Task` marker, as CR-001 PR #12 did (R-25).
 - Next step: the owner merges PR #15 personally with a merge commit. Then run `/futari:execute` from `dev`; it starts with JM-101 and JM-102.
+
+## v1.1 execution session 2026-11-21
+
+- Started with `/futari:execute` (futari 1.0.2) after the owner merged contract PR #15 into `dev` with a merge commit (`c0597c8`). `node .futari/plan-gate.mjs verify`: PASS (snapshot `a6abc4f8…` at `c356f9a`); `planCommit` is reachable from `dev`.
+- pstack `pstack@pstack-claude` 0.9.145. `check-playbooks.mjs`: "Every project playbook matches this pstack's playbooks." Invoked `pstack:poteto-mode` with the Skill tool and loaded `.agents/playbooks/futari-approved-plan.md` (standalone).
+- Models per `.claude/pstack-models.md`: implementation workers `sonnet` (`pstack:poteto-agent`, each in its own worktree from `dev`); independent reviews `opus` (thermos pair, then a fresh delta reviewer).
+- Issues #16-#21 created for JM-101..JM-106 with exact `Futari-Plan`/`Futari-Task` markers (a search found no existing v1.1 issue).
+- Process notes:
+  - Playwright binds port 8787 with no server reuse, so parallel workers wait for the port before e2e.
+  - `Verdict: NOT VERIFIED` fails the contract check as an invalid marker (MVP observation, unchanged).
+
+### v1.1 execution ledger
+
+| Task | Issue | Branch | PR | Tested revision | Status | Evidence / next action |
+| --- | --- | --- | --- | --- | --- | --- |
+| JM-101 | [#16](https://github.com/futari-labs/kensaku/issues/16) | `jm-101-core-rules` | [#22](https://github.com/futari-labs/kensaku/pull/22) | `b39e4f8` | review round 1 fixed; delta re-review running | `.futari/evidence/JM-101.md` |
+| JM-102 | [#17](https://github.com/futari-labs/kensaku/issues/17) | `jm-102-theme` | [#23](https://github.com/futari-labs/kensaku/pull/23) | `a4a62bc` | VERIFIED (delta review APPROVE); merging | `.futari/evidence/JM-102.md` |
+| JM-103 | [#18](https://github.com/futari-labs/kensaku/issues/18) | | | | pending JM-101 merge | |
+| JM-104 | [#19](https://github.com/futari-labs/kensaku/issues/19) | | | | pending JM-103 | |
+| JM-105 | [#20](https://github.com/futari-labs/kensaku/issues/20) | | | | pending JM-102, JM-104 | |
+| JM-106 | [#21](https://github.com/futari-labs/kensaku/issues/21) | | | | pending JM-105 | |
+
+Logged interpretations (non-material, reviewer-confirmed):
+- JM-102 `public/theme-init.js` starts with `/* global document */`. The criterion's literal `/* global document, localStorage */` fails lint (no-redeclare).
+- After the single-parser review fix, theme-init.js is the only storage parser, and theme.ts owns the key and applying the theme.
 
 ## Execution session 2026-11-21
 
