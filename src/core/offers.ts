@@ -1,4 +1,11 @@
-import { AGGREGATOR_HOSTS, EDITORIAL_HOSTS, matchesHostList } from "./hosts";
+import {
+  AGGREGATOR_HOSTS,
+  EDITORIAL_HOSTS,
+  MARKETPLACE_HOSTS,
+  isEditorialPath,
+  isSearchOrCategoryPage,
+  matchesHostList,
+} from "./hosts";
 import { hasValidPrice, isAvailability, isSupportedCurrency } from "./currency";
 import { identityTextOf, matchesIdentity, tokenize } from "./identity";
 import { canonicalizeUrl, merchantHostOf } from "./url";
@@ -17,9 +24,21 @@ const MERCHANT_STOPWORDS = new Set(
   "com co net jp sg us www store shop online official singapore japan usa inc ltd the".split(" "),
 );
 
+// Unambiguous currency symbols (D-032). A bare "$" is deliberately absent.
+const CURRENCY_SYMBOLS: Readonly<Record<string, string>> = {
+  "S$": "SGD",
+  "SG$": "SGD",
+  "US$": "USD",
+  "¥": "JPY",
+  "￥": "JPY",
+  "円": "JPY",
+  "JP¥": "JPY",
+};
+
 function normalizeCurrency(currency: unknown): string | null {
   if (typeof currency !== "string") return null;
-  const code = currency.trim().toUpperCase();
+  const trimmed = currency.trim();
+  const code = Object.hasOwn(CURRENCY_SYMBOLS, trimmed) ? CURRENCY_SYMBOLS[trimmed]! : trimmed.toUpperCase();
   return /^[A-Z]{3}$/.test(code) ? code : null;
 }
 
@@ -73,6 +92,9 @@ export function classifyHit(
 
   if (matchesHostList(url, AGGREGATOR_HOSTS)) return evidence("aggregator");
   if (matchesHostList(url, EDITORIAL_HOSTS)) return evidence("editorial");
+  if (matchesHostList(url, MARKETPLACE_HOSTS)) return evidence("marketplace");
+  if (isSearchOrCategoryPage(url)) return evidence("search-or-category");
+  if (isEditorialPath(url)) return evidence("editorial");
   if (summary?.isProductListing !== true) return evidence("not-a-listing");
   if (currency === null || !hasValidPrice(summary.price, currency)) return evidence("merchant-no-price");
   if (!isSupportedCurrency(currency)) return rejected("unsupported-currency");

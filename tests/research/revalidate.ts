@@ -2,7 +2,7 @@
 // response with `classifyHit` and must equal what was displayed. This is a self-consistency check (it
 // detects display or pipeline mutation, not extraction errors; the owner audit covers those).
 import { canonicalizeUrl, classifyHit } from "../../src/core";
-import type { Candidate, Offer } from "../../src/core/types";
+import type { Candidate, Evidence, Offer, Rejected } from "../../src/core/types";
 import { parseAnswerResponse, parseSearchResponse } from "../../src/exa/parse";
 
 export interface Product {
@@ -23,6 +23,8 @@ export interface OfferCheck {
   reproduced: boolean;
   /** The displayed URL is one of this run's recorded search results. */
   fromRun: boolean;
+  /** What the recorded hit for the displayed URL classifies as under the current rules. */
+  now?: Offer | Evidence | Rejected;
   problem?: string;
 }
 
@@ -58,7 +60,9 @@ export function revalidateRun(run: RecordedRun): Revalidation {
       .map((hit) => classifyHit({ ...hit, retrievedAt: offer.retrievedAt }, candidate, runUrls))
       .filter((r): r is Offer => r.kind === "merchant-offer");
     const reproduced = again.some((o) => JSON.stringify(o) === JSON.stringify(offer));
-    return { offer, candidate, reproduced, fromRun, ...(!reproduced && { problem: `${offer.canonicalUrl}: reclassification differs from what was displayed` }) };
+    const hit = search.hits.find((h) => canonicalizeUrl(h.url) === offer.canonicalUrl);
+    const now = hit && classifyHit({ ...hit, retrievedAt: offer.retrievedAt }, candidate, runUrls);
+    return { offer, candidate, reproduced, fromRun, ...(now && { now }), ...(!reproduced && { problem: `${offer.canonicalUrl}: reclassification differs from what was displayed` }) };
   });
   return { offers, candidateProblems };
 }
