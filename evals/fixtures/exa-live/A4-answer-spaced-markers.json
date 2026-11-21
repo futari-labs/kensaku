@@ -1,0 +1,144 @@
+{
+  "_label": "LIVE EXA RESPONSE recorded by the JM-004 live smoke (Q2, US, 2026-11-20; .futari/evidence/live/jm-004-smoke-Q2.json, exaExchanges[0]). Real data, not a gold label. Added for CR-001 (citation markers with spaces). `response` and `request` are copied unchanged; `request` is the flat request body (A2 wraps it as {endpoint, body}); the log has one timestamp, used for both requestedAt and receivedAt; httpStatus is the run-level status from the log.",
+  "id": "A4-answer-spaced-markers",
+  "request": {
+    "query": "Best ergonomic wireless mouse for programming under $120",
+    "text": false,
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "comparison": {
+          "type": "string",
+          "description": "Short comparison with numbered citation markers like [1]."
+        },
+        "candidates": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "brand": {
+                "type": "string"
+              },
+              "modelIdentifiers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Model numbers or distinctive tokens."
+              }
+            },
+            "required": [
+              "name",
+              "brand",
+              "modelIdentifiers"
+            ]
+          }
+        }
+      },
+      "required": [
+        "comparison",
+        "candidates"
+      ]
+    },
+    "userLocation": "US"
+  },
+  "requestedAt": "2026-11-20T19:32:04.370Z",
+  "receivedAt": "2026-11-20T19:32:04.370Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "d5772522f1ae44af0e499318010713fd",
+    "answer": {
+      "comparison": "The Logitech MX Master 3S is widely considered the top productivity choice for its comfort, programmable buttons, and dual scroll wheels [2, 5, 6]. For those seeking relief from wrist strain, the Logitech MX Vertical offers a neutral handshake position [2, 3]. Alternatively, the Razer Pro Click V2 provides an ergonomic shape with gaming-grade sensor performance [1, 5]. All these options are generally available for $120 or less [1, 3, 5, 6].",
+      "candidates": [
+        {
+          "brand": "Logitech",
+          "modelIdentifiers": [
+            "MX Master 3S"
+          ],
+          "name": "MX Master 3S"
+        },
+        {
+          "name": "MX Vertical",
+          "modelIdentifiers": [
+            "MX Vertical"
+          ],
+          "brand": "Logitech"
+        },
+        {
+          "modelIdentifiers": [
+            "Pro Click V2"
+          ],
+          "brand": "Razer",
+          "name": "Pro Click V2"
+        }
+      ]
+    },
+    "citations": [
+      {
+        "id": "https://www.wired.com/gallery/best-ergonomic-mouse/",
+        "title": "5 Best Ergonomic Mice (2025), Tested and Reviewed | WIRED",
+        "url": "https://www.wired.com/gallery/best-ergonomic-mouse/",
+        "publishedDate": "2025-05-16T11:30:00.000Z",
+        "author": "Henri Robbins",
+        "image": "https://media.wired.com/photos/68a3725c4c06b0189ee3f1f3/191:100/w_1280,c_limit/The%20Best%20Ergonomic%20Mouse%20to%20Keep%20Wrist%20Strain%20at%20Bay.png"
+      },
+      {
+        "id": "https://www.techgearlab.com/topics/small-and-home-office/best-mouse",
+        "title": "The Best Mouse | Lab Tested & Ranked",
+        "url": "https://www.techgearlab.com/topics/small-and-home-office/best-mouse",
+        "publishedDate": "2025-08-18T15:00:00.000Z",
+        "author": "Austin Palmer",
+        "image": "https://techgearlab.b-cdn.net/photos/38/43/505824_29780_XXL.jpg"
+      },
+      {
+        "id": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/",
+        "title": "Best ergonomic vertical and trackball mice for developers who type all day | Botmonster Tech",
+        "url": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/",
+        "publishedDate": "2026-05-14T09:54:44.000Z",
+        "author": "Botmonster",
+        "image": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/best-ergonomic-vertical-trackball-mice-developers_hu_c61a02086eb4b5c8.webp"
+      },
+      {
+        "id": "https://techpulsesite.com/best-ergonomic-mice-for-developers-2026-logitech-mx-vs-razer-vs-vertic/",
+        "title": "Best Ergonomic Mice for Developers 2026: Logitech MX vs Razer vs Vertical Mice – TechPulse",
+        "url": "https://techpulsesite.com/best-ergonomic-mice-for-developers-2026-logitech-mx-vs-razer-vs-vertic/",
+        "publishedDate": "2026-07-10T08:05:00.000Z",
+        "author": "MD Rafikul Islam",
+        "image": "https://techpulsesite.com/wp-content/uploads/2026/07/best-ergonomic-mice-for-developers-2026-logitech-mx-vs-razer-1200x500.jpg"
+      },
+      {
+        "id": "https://www.techgearlab.com/reviews/small-and-home-office/wireless-mouse/logitech-mx-master-3s",
+        "title": "Logitech MX Master 3S Review | Tested & Rated",
+        "url": "https://www.techgearlab.com/reviews/small-and-home-office/wireless-mouse/logitech-mx-master-3s",
+        "publishedDate": "2025-08-18T00:00:00.000Z",
+        "image": "https://techgearlab.b-cdn.net/photos/39/69/518474_16912_XXL.jpg"
+      },
+      {
+        "id": "https://argusic.com/hardware/mouse",
+        "title": "Best mice for programming: ergonomic and wireless | Argusic",
+        "url": "https://argusic.com/hardware/mouse",
+        "image": "https://argusic.com/hardware/mouse/opengraph-image/card?8a0c26f621b01bac"
+      },
+      {
+        "id": "https://www.microcenter.com/site/mc-news/article/best-productivity-mice-buying-guide.aspx",
+        "title": "The Best Productivity Mice You Can Buy",
+        "url": "https://www.microcenter.com/site/mc-news/article/best-productivity-mice-buying-guide.aspx"
+      },
+      {
+        "id": "https://www.tomshardware.com/best-picks/best-wireless-mouse",
+        "title": "Best Wireless Mouse 2026: Productivity, Portability, and Comfort | Tom's Hardware",
+        "url": "https://www.tomshardware.com/best-picks/best-wireless-mouse",
+        "publishedDate": "2023-11-07T19:47:06.000Z",
+        "author": "Sarah Jacobsson Purewal",
+        "image": "https://cdn.mos.cms.futurecdn.net/63QVV3MEpWXGvUF5mru6Hf-2560-80.jpg"
+      }
+    ],
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}

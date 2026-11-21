@@ -8,6 +8,7 @@
 // It does not run product tests and never reports a product PASS.
 //
 // Usage: node evals/harness.mjs            (exit 1 only if cases/fixtures are invalid)
+//        node evals/harness.mjs --strict   (also exit 1 while EV-004 does not load the CR-001 spaced cases)
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +16,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => JSON.parse(readFileSync(join(root, p), "utf8"));
 const errors = [];
+const STRICT = process.argv.includes("--strict");
 const check = (cond, msg) => { if (!cond) errors.push(msg); };
 
 const OUTCOMES = {
@@ -73,6 +75,12 @@ for (const c of cc.cases) {
   if (c.fixture) check(fixture(c.fixture)?.response?.citations?.length > 0, `${c.id}: fixture ${c.fixture} has no citations`);
   else check(typeof c.synthetic?.text === "string" && Array.isArray(c.synthetic?.citations), `${c.id}: synthetic text/citations required`);
 }
+// EV-004 spaced-marker cases (CR-001, D-026)
+const sc = read("evals/cases/citations-spaced.json");
+for (const c of sc.cases) {
+  if (c.fixture) check(fixture(c.fixture)?.response?.citations?.length > 0, `${c.id}: fixture ${c.fixture} has no citations`);
+  else check(typeof c.synthetic?.text === "string" && Array.isArray(c.synthetic?.citations), `${c.id}: synthetic text/citations required`);
+}
 
 // EV-008 query set
 const la = read("evals/cases/live-acceptance.json");
@@ -100,7 +108,7 @@ const evals = [
   ["EV-009", "Local and key safety", "tests/evals/ev-009-key-safety.test.ts", "src/server/index.ts"],
 ];
 
-console.log(errors.length ? `HARNESS INVALID (${errors.length} problems)` : `HARNESS OK: ${oc.cases.length} classification cases (${live} live), ${rc.cases.length} ranking cases, ${cc.cases.length} citation cases, ${la.queries.length} live queries.`);
+console.log(errors.length ? `HARNESS INVALID (${errors.length} problems)` : `HARNESS OK: ${oc.cases.length} classification cases (${live} live), ${rc.cases.length} ranking cases, ${cc.cases.length} citation cases (+${sc.cases.length} spaced), ${la.queries.length} live queries.`);
 for (const e of errors) console.log(`  - ${e}`);
 for (const [id, name, test, product, caseFile] of evals) {
   let state;
@@ -109,6 +117,11 @@ for (const [id, name, test, product, caseFile] of evals) {
   else if (caseFile && !readFileSync(join(root, test), "utf8").includes(caseFile)) {
     state = `INVALID TEST (${test} does not load frozen evals/cases/${caseFile})`;
     errors.push(`${id}: ${test} must load evals/cases/${caseFile}`);
+  } else if (id === "EV-004" && !readFileSync(join(root, test), "utf8").includes("citations-spaced.json")) {
+    if (STRICT) {
+      state = `INVALID TEST (${test} does not load frozen evals/cases/citations-spaced.json; CR-001)`;
+      errors.push(`${id}: ${test} must load evals/cases/citations-spaced.json (CR-001)`);
+    } else state = `READY (CR-001 spaced cases pending JM-006: ${test} does not load evals/cases/citations-spaced.json yet)`;
   } else state = `READY (run the command listed for ${id} in .futari/plan.json)`;
   console.log(`${id} ${name}: ${state}`);
 }
