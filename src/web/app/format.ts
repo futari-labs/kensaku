@@ -28,4 +28,6 @@ export const EVIDENCE_LABEL: Record<EvidenceCategory, string> = {
   "not-a-listing": "Not a product listing",
   "merchant-no-price": "Merchant page without a valid price",
   "merchant-mismatch": "Merchant name does not match the site",
+  marketplace: "Second-hand marketplace",
+  "search-or-category": "Search or category page",
 };

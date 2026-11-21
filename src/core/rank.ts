@@ -1,7 +1,6 @@
-import { CURRENCIES } from "./currency";
+import { CURRENCIES, MARKET_CURRENCY } from "./currency";
 import type { Availability, Currency, Market, Offer, OfferGroup } from "./types";
 
-const MARKET_CURRENCY: Record<Market, Currency> = { US: "USD", SG: "SGD", JP: "JPY" };
 const AVAILABILITY_RANK: Record<Availability, number> = { in_stock: 0, preorder: 1, unknown: 2, out_of_stock: 3 };
 
 function compareCodePoints(a: string, b: string): number {

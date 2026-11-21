@@ -2,7 +2,7 @@
 // response with `classifyHit` and must equal what was displayed. This is a self-consistency check (it
 // detects display or pipeline mutation, not extraction errors; the owner audit covers those).
 import { canonicalizeUrl, classifyHit } from "../../src/core";
-import type { Candidate, Offer } from "../../src/core/types";
+import type { Candidate, Evidence, Offer, Rejected } from "../../src/core/types";
 import { parseAnswerResponse, parseSearchResponse } from "../../src/exa/parse";
 
 export interface Product {
@@ -23,6 +23,8 @@ export interface OfferCheck {
   reproduced: boolean;
   /** The displayed URL is one of this run's recorded search results. */
   fromRun: boolean;
+  /** What the recorded hit for the displayed URL classifies as under the current rules. */
+  now?: Offer | Evidence | Rejected;
   problem?: string;
 }
 
@@ -54,11 +56,10 @@ export function revalidateRun(run: RecordedRun): Revalidation {
     if (!search) {
       return { offer, candidate, reproduced: false, fromRun, problem: `${offer.canonicalUrl}: no recorded search response with request ${offer.exaRequestId}` };
     }
-    const again = search.hits
-      .map((hit) => classifyHit({ ...hit, retrievedAt: offer.retrievedAt }, candidate, runUrls))
-      .filter((r): r is Offer => r.kind === "merchant-offer");
-    const reproduced = again.some((o) => JSON.stringify(o) === JSON.stringify(offer));
-    return { offer, candidate, reproduced, fromRun, ...(!reproduced && { problem: `${offer.canonicalUrl}: reclassification differs from what was displayed` }) };
+    const classified = search.hits.map((hit) => ({ hit, result: classifyHit({ ...hit, retrievedAt: offer.retrievedAt }, candidate, runUrls) }));
+    const reproduced = classified.some(({ result }) => result.kind === "merchant-offer" && JSON.stringify(result) === JSON.stringify(offer));
+    const now = classified.find(({ hit }) => canonicalizeUrl(hit.url) === offer.canonicalUrl)?.result;
+    return { offer, candidate, reproduced, fromRun, ...(now && { now }), ...(!reproduced && { problem: `${offer.canonicalUrl}: reclassification differs from what was displayed` }) };
   });
   return { offers, candidateProblems };
 }

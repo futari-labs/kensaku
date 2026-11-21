@@ -7,7 +7,7 @@ import type { ChatMessage, FailureData } from "./messages";
 // `core` exports these unions as types only. Each list is checked against its union, in both directions, where it is declared.
 const CURRENCIES = ["USD", "SGD", "JPY"] as const satisfies readonly Currency[];
 const AVAILABILITIES = ["in_stock", "out_of_stock", "preorder", "unknown"] as const satisfies readonly Availability[];
-const EVIDENCE_CATEGORIES = ["aggregator", "editorial", "not-a-listing", "merchant-no-price", "merchant-mismatch"] as const satisfies readonly EvidenceCategory[];
+const EVIDENCE_CATEGORIES = ["aggregator", "editorial", "not-a-listing", "merchant-no-price", "merchant-mismatch", "marketplace", "search-or-category"] as const satisfies readonly EvidenceCategory[];
 const REJECT_CATEGORIES = ["irrelevant-product", "unsupported-currency", "url-not-from-run", "invalid-url"] as const satisfies readonly RejectCategory[];
 const everyValueListed: [Exclude<Currency, (typeof CURRENCIES)[number]>, Exclude<Availability, (typeof AVAILABILITIES)[number]>, Exclude<EvidenceCategory, (typeof EVIDENCE_CATEGORIES)[number]>, Exclude<RejectCategory, (typeof REJECT_CATEGORIES)[number]>] extends [never, never, never, never] ? true : never = true;
 void everyValueListed;
