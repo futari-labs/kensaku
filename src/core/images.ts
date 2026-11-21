@@ -1,4 +1,6 @@
-import { identityTextOf } from "./identity";
+import { MARKET_CURRENCY } from "./currency";
+import { decodeOrRaw, hostLabels } from "./hosts";
+import { identityTextOf, tokenize } from "./identity";
 import type {
   Candidate,
   Evidence,
@@ -37,33 +39,25 @@ export function imageUrlVerdict(url: string): ImageUrlVerdict {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "bad-scheme";
   if (parsed.username !== "" || parsed.password !== "") return "credentials";
   const written = parsed.pathname.slice(parsed.pathname.lastIndexOf("/") + 1);
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(written);
-  } catch {
-    decoded = written;
-  }
-  const fileName = decoded.toLowerCase();
+  const fileName = decodeOrRaw(written).toLowerCase();
   if (fileName.endsWith(".svg")) return "svg";
   return DENY_TOKENS.some((token) => fileName.includes(token)) ? "deny-pattern" : "ok";
 }
 
-const MARKET_CURRENCY = { US: "USD", SG: "SGD", JP: "JPY" } as const satisfies Record<Market, string>;
-
 function isManufacturerHost(hostname: string, brand: string): boolean {
-  const normalized = brand.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
-  return normalized.length >= 3 && hostname.split(/[.-]/).includes(normalized);
+  const normalized = tokenize(brand).join("");
+  return normalized.length >= 3 && hostLabels(hostname).includes(normalized);
 }
 
-type Classified = { hit: SearchHit; result: Offer | Evidence | Rejected };
+export type Classified = { hit: SearchHit; result: Offer | Evidence | Rejected };
 
-function tierOf({ hit, result }: Classified, brand: string, market: Market): 1 | 2 | 3 | null {
+function tierOf({ result }: Classified, brand: string, market: Market): 1 | 2 | 3 | null {
   if (result.kind === "merchant-offer") {
     if (result.price.currency === MARKET_CURRENCY[market]) return 1;
-    return isManufacturerHost(new URL(hit.url).hostname, brand) ? 2 : 3;
+    return isManufacturerHost(result.merchantHost, brand) ? 2 : 3;
   }
   const ownPage = result.kind === "evidence" && (result.category === "not-a-listing" || result.category === "merchant-no-price");
-  return ownPage && isManufacturerHost(new URL(hit.url).hostname, brand) ? 2 : null;
+  return ownPage && isManufacturerHost(result.host, brand) ? 2 : null;
 }
 
 /** Rule I2: the product's image sources in tier order (market offers, manufacturer pages, other offers), at most 4. */
@@ -74,7 +68,7 @@ export function rankImageCandidates(classified: Classified[], candidate: Candida
     if (typeof hit.image !== "string" || imageUrlVerdict(hit.image) !== "ok") continue;
     const tier = tierOf(entry, candidate.brand, market);
     if (tier === null) continue;
-    tiers[tier - 1]!.push({ imageUrl: hit.image, pageUrl: hit.url, sourceTitle: identityTextOf(hit).slice(0, MAX_TITLE_LENGTH) });
+    tiers[tier - 1]!.push({ imageUrl: hit.image, pageUrl: hit.url, sourceTitle: [...identityTextOf(hit)].slice(0, MAX_TITLE_LENGTH).join("") });
   }
   const seen = new Set<string>();
   return tiers
@@ -83,14 +77,14 @@ export function rankImageCandidates(classified: Classified[], candidate: Candida
     .slice(0, MAX_CANDIDATES);
 }
 
-const UNKNOWN: SniffedImage = { type: "unknown", width: 0, height: 0 };
+const unsized = (type: SniffedImage["type"]): SniffedImage => ({ type, width: 0, height: 0 });
 const startsWith = (bytes: Uint8Array, at: number, text: string) => [...text].every((ch, i) => bytes[at + i] === ch.charCodeAt(0));
 
 function jpeg(bytes: Uint8Array): SniffedImage {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let at = 2;
   while (at + 4 <= bytes.length) {
-    if (bytes[at] !== 0xff) return { type: "jpeg", width: 0, height: 0 };
+    if (bytes[at] !== 0xff) return unsized("jpeg");
     const marker = bytes[at + 1]!;
     if (marker === 0xff) {
       at++;
@@ -104,11 +98,10 @@ function jpeg(bytes: Uint8Array): SniffedImage {
     }
     at += 2 + view.getUint16(at + 2);
   }
-  return { type: "jpeg", width: 0, height: 0 };
+  return unsized("jpeg");
 }
 
 function webp(bytes: Uint8Array): SniffedImage {
-  const none: SniffedImage = { type: "webp", width: 0, height: 0 };
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const u24 = (at: number) => bytes[at]! | (bytes[at + 1]! << 8) | (bytes[at + 2]! << 16);
   if (startsWith(bytes, 12, "VP8X") && bytes.length >= 30) return { type: "webp", width: u24(24) + 1, height: u24(27) + 1 };
@@ -117,41 +110,45 @@ function webp(bytes: Uint8Array): SniffedImage {
     return { type: "webp", width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
   }
   if (startsWith(bytes, 12, "VP8 ") && bytes.length >= 30) return { type: "webp", width: view.getUint16(26, true) & 0x3fff, height: view.getUint16(28, true) & 0x3fff };
-  return none;
+  return unsized("webp");
 }
 
-/** Finds the first `ispe` box inside meta > iprp > ipco. Box sizes of 0 (to end) and 1 (64-bit) are handled; malformed sizes stop the walk. */
+type Box = { body: number; end: number };
+
+/** The first box of `type` among the siblings in [start, end). Sizes of 0 (to end) and 1 (64-bit) are handled; a malformed size ends the walk. */
+function findBox(bytes: Uint8Array, view: DataView, start: number, end: number, type: string): Box | null {
+  let at = start;
+  while (at + 8 <= end) {
+    let size = view.getUint32(at);
+    let header = 8;
+    if (size === 1) {
+      if (at + 16 > end) return null;
+      size = Number(view.getBigUint64(at + 8));
+      header = 16;
+    } else if (size === 0) size = end - at;
+    if (size < header || at + size > end) return null;
+    if (startsWith(bytes, at + 4, type)) return { body: at + header, end: at + size };
+    at += size;
+  }
+  return null;
+}
+
+// The spec path to the image size: meta (a full box, 4 bytes of version and flags) > iprp > ipco > ispe. One fixed container per level.
+const AVIF_PATH = [["meta", 4], ["iprp", 0], ["ipco", 0]] as const;
+
 function avif(bytes: Uint8Array): SniffedImage {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const containers: Record<string, number> = { meta: 4, iprp: 0, ipco: 0 };
-
-  const find = (start: number, end: number): SniffedImage | null => {
-    let at = start;
-    while (at + 8 <= end) {
-      let size = view.getUint32(at);
-      let header = 8;
-      if (size === 1) {
-        if (at + 16 > end) return null;
-        size = Number(view.getBigUint64(at + 8));
-        header = 16;
-      } else if (size === 0) size = end - at;
-      if (size < header || at + size > end) return null;
-      const type = String.fromCharCode(...bytes.subarray(at + 4, at + 8));
-      const body = at + header;
-      if (type === "ispe" && body + 12 <= at + size) {
-        return { type: "avif", width: view.getUint32(body + 4), height: view.getUint32(body + 8) };
-      }
-      const skip = containers[type];
-      if (skip !== undefined) {
-        const inner = find(body + skip, at + size);
-        if (inner) return inner;
-      }
-      at += size;
-    }
-    return null;
-  };
-
-  return find(0, bytes.length) ?? { type: "avif", width: 0, height: 0 };
+  let start = 0;
+  let end = bytes.length;
+  for (const [type, skip] of AVIF_PATH) {
+    const container = findBox(bytes, view, start, end, type);
+    if (!container) return unsized("avif");
+    start = container.body + skip;
+    end = container.end;
+  }
+  const ispe = findBox(bytes, view, start, end, "ispe");
+  if (!ispe || ispe.body + 12 > ispe.end) return unsized("avif");
+  return { type: "avif", width: view.getUint32(ispe.body + 4), height: view.getUint32(ispe.body + 8) };
 }
 
 function isAvif(bytes: Uint8Array): boolean {
@@ -168,14 +165,14 @@ export function sniffImage(bytes: Uint8Array): SniffedImage {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return jpeg(bytes);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (bytes.length >= 8 && bytes[0] === 0x89 && startsWith(bytes, 1, "PNG")) {
-    return bytes.length >= 24 ? { type: "png", width: view.getUint32(16), height: view.getUint32(20) } : { type: "png", width: 0, height: 0 };
+    return bytes.length >= 24 ? { type: "png", width: view.getUint32(16), height: view.getUint32(20) } : unsized("png");
   }
   if (bytes.length >= 12 && startsWith(bytes, 0, "RIFF") && startsWith(bytes, 8, "WEBP")) return webp(bytes);
   if (bytes.length >= 6 && startsWith(bytes, 0, "GIF8")) {
-    return bytes.length >= 10 ? { type: "gif", width: view.getUint16(6, true), height: view.getUint16(8, true) } : { type: "gif", width: 0, height: 0 };
+    return bytes.length >= 10 ? { type: "gif", width: view.getUint16(6, true), height: view.getUint16(8, true) } : unsized("gif");
   }
   if (isAvif(bytes)) return avif(bytes);
-  return UNKNOWN;
+  return unsized("unknown");
 }
 
 /** Rule I3: whether fetched bytes may be served. The first failing check is reported. */

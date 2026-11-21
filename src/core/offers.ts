@@ -3,6 +3,7 @@ import {
   EDITORIAL_HOSTS,
   MARKETPLACE_HOSTS,
   isEditorialPath,
+  hostLabels,
   isSearchOrCategoryPage,
   matchesHostList,
 } from "./hosts";
@@ -53,7 +54,7 @@ function merchantMatchesHost(merchant: string, hostname: string): boolean {
   const tokens = tokenize(merchant).filter((token) => token.length >= 3 && !MERCHANT_STOPWORDS.has(token));
   const asciiTokens = tokens.filter((token) => /^[a-z0-9]+$/.test(token));
   if (asciiTokens.length === 0) return true;
-  const labels = hostname.split(/[.-]/);
+  const labels = hostLabels(hostname);
   return asciiTokens.some((token) => labels.some((label) => label.includes(token)));
 }
 

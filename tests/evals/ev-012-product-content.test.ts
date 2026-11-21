@@ -54,8 +54,9 @@ const candidateCases = file.cases.flatMap((c) => c.candidates.map((cand) => [`${
 describe("EV-012 product content", () => {
   it("evaluates every case in the frozen file", () => {
     expect(file.cases.length).toBe(6);
+    expect(candidateCases.length).toBe(17);
     expect(file.comparisonCases.length).toBe(6);
-    expect(candidateCases.length).toBe(file.cases.reduce((n, c) => n + c.candidates.length, 0));
+    expect(file.comparisonCases.filter((c) => c.expected.truncated === true).length).toBe(2);
   });
 
   it.each(candidateCases)("%s keySpecs and reason match", (_id, c, cand) => {

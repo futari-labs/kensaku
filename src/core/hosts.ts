@@ -49,18 +49,26 @@ export const MARKETPLACE_HOSTS: readonly HostEntry[] = [
 const SEARCH_SEGMENTS = new Set(["search", "s", "category", "categories", "bestsellers", "productlist"]);
 const EDITORIAL_SEGMENTS = new Set(["news", "blog", "blogs", "review", "reviews", "article", "articles"]);
 
+/** Percent-decodes the text, or returns it as written when decoding fails. */
+export function decodeOrRaw(text: string): string {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return text;
+  }
+}
+
+/** The hostname split into labels on "." and "-". */
+export function hostLabels(hostname: string): string[] {
+  return hostname.split(/[.-]/);
+}
+
 /** The URL path split on "/", empty segments dropped, each percent-decoded (as written if decoding fails) and lowercased. */
 export function pathSegments(url: URL): string[] {
   return url.pathname
     .split("/")
     .filter((segment) => segment !== "")
-    .map((segment) => {
-      try {
-        return decodeURIComponent(segment).toLowerCase();
-      } catch {
-        return segment.toLowerCase();
-      }
-    });
+    .map((segment) => decodeOrRaw(segment).toLowerCase());
 }
 
 /** Rule 5b: a search host label, a search or category path segment, or a collection page that never reaches a product. */
@@ -68,7 +76,7 @@ export function isSearchOrCategoryPage(url: URL): boolean {
   if (url.hostname.split(".")[0] === "search") return true;
   const segments = pathSegments(url);
   if (segments.some((segment) => SEARCH_SEGMENTS.has(segment))) return true;
-  const collections = segments.indexOf("collections");
+  const collections = segments.lastIndexOf("collections");
   return collections !== -1 && !segments.slice(collections + 1).includes("products");
 }
 

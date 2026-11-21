@@ -1,7 +1,9 @@
-import type { Availability, Currency } from "./types";
+import type { Availability, Currency, Market } from "./types";
 
 /** Supported currencies in fallback display order, with the decimal places a valid price may carry. */
 export const MINOR_DIGITS = { USD: 2, SGD: 2, JPY: 0 } as const satisfies Record<Currency, number>;
+
+export const MARKET_CURRENCY: Record<Market, Currency> = { US: "USD", SG: "SGD", JP: "JPY" };
 
 export const CURRENCIES = Object.keys(MINOR_DIGITS) as Currency[];
 

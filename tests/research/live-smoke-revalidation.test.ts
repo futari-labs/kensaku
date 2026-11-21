@@ -37,7 +37,9 @@ describe.skipIf(suiteFiles.length === 0)("EV-008 suite run logs (committed)", ()
   // changes class, Q5-O1 in run 1 (a Rakuten search page, rule 5b), and nothing else does.
   it.each(suiteFiles)("%s: every displayed offer is reproduced, except Q5-O1 of run 1", (file) => {
     const run = JSON.parse(readFileSync(join(DIR, file), "utf8")) as { queries: RecordedRun[] };
-    const changed = run.queries.flatMap((query) => revalidateRun(query).offers.filter((o) => !o.reproduced).map((o) => ({ queryId: query.queryId, ...o })));
+    const revalidated = run.queries.map((query) => ({ query, ...revalidateRun(query) }));
+    for (const { candidateProblems } of revalidated) expect(candidateProblems).toEqual([]);
+    const changed = revalidated.flatMap(({ query, offers }) => offers.filter((o) => !o.reproduced).map((o) => ({ queryId: query.queryId, ...o })));
     if (!file.startsWith("ev-008-run-1-")) {
       expect(changed).toEqual([]);
       return;

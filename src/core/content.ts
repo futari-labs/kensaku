@@ -4,14 +4,14 @@ import type { ResolvedCitations } from "./types";
 const MAX_KEY_SPECS = 5;
 const MAX_SPEC_LENGTH = 80;
 
-/** Trimmed non-empty strings of at most 80 characters, first occurrence of each, at most 5, in Exa's order. */
+/** Trimmed non-empty strings of at most 80 code points, first occurrence of each, at most 5, in Exa's order. */
 export function normalizeKeySpecs(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const specs = new Set<string>();
   for (const item of value) {
     if (typeof item !== "string") continue;
     const spec = item.trim();
-    if (spec !== "" && spec.length <= MAX_SPEC_LENGTH) specs.add(spec);
+    if (spec !== "" && [...spec].length <= MAX_SPEC_LENGTH) specs.add(spec);
     if (specs.size === MAX_KEY_SPECS) break;
   }
   return [...specs];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyHit, imageBytesVerdict, imageUrlVerdict, rankImageCandidates } from "../../src/core";
-import type { Candidate, Market, OfferSummary, SearchHit } from "../../src/core";
+import type { Candidate, ImageBytesVerdict, ImageUrlVerdict, Market, OfferSummary, SearchHit, SniffedImage } from "../../src/core";
 import { loadLiveFixture, readJson, type ClassificationFile } from "../core/fixtures";
 
 // Frozen gold cases: evals/cases/image-selection.json (read-only, every case evaluated).
@@ -11,7 +11,7 @@ interface SyntheticHit {
   summary: OfferSummary | null;
 }
 interface ImageFile {
-  urlCases: { id: string; imageUrl: string; expected: string }[];
+  urlCases: { id: string; imageUrl: string; expected: ImageUrlVerdict }[];
   selectionCases: {
     id: string;
     fixture?: string;
@@ -20,7 +20,7 @@ interface ImageFile {
     market: Market;
     expected: { imageUrl: string; pageUrl: string }[];
   }[];
-  bytesCases: { id: string; type: "jpeg" | "png" | "webp" | "avif" | "gif" | "unknown"; width: number; height: number; bytes: number; expected: string }[];
+  bytesCases: { id: string; type: SniffedImage["type"]; width: number; height: number; bytes: number; expected: ImageBytesVerdict }[];
 }
 const file = readJson<ImageFile>("evals/cases/image-selection.json");
 const mvp = readJson<ClassificationFile>("evals/cases/offer-classification.json");

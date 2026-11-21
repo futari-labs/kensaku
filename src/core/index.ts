@@ -5,5 +5,6 @@ export { canonicalizeUrl } from "./url";
 export { rankOffers } from "./rank";
 export { resolveCitations, segmentMarkers, splitParagraphs } from "./citations";
 export type { CitedSource, CitedText, MarkerSegment } from "./citations";
+export type { Classified } from "./images";
 export { imageUrlVerdict, rankImageCandidates, sniffImage, imageBytesVerdict } from "./images";
 export { normalizeKeySpecs, cutLeakedStructure, resolveReason } from "./content";

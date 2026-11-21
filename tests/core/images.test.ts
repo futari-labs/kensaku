@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { imageBytesVerdict, imageUrlVerdict, sniffImage } from "../../src/core";
+import { imageBytesVerdict, imageUrlVerdict, rankImageCandidates, sniffImage } from "../../src/core";
+import type { Candidate, SearchHit } from "../../src/core";
 
 const ascii = (text: string) => [...text].map((ch) => ch.charCodeAt(0));
 const u32 = (n: number) => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
@@ -54,9 +55,26 @@ describe("sniffImage", () => {
   });
 
   it("survives truncated input of every format", () => {
-    for (const head of [[0xff, 0xd8, 0xff], [0x89, ...ascii("PNG")], ascii("RIFF"), ascii("GIF8"), [0, 0, 0, 0x20, ...ascii("ftypavif")]]) {
-      expect(() => sniffImage(new Uint8Array(head))).not.toThrow();
+    const heads: [number[], string][] = [
+      [[0xff, 0xd8, 0xff], "jpeg"],
+      [[0x89, ...ascii("PNG")], "unknown"],
+      [ascii("RIFF"), "unknown"],
+      [ascii("GIF8"), "unknown"],
+      [[0, 0, 0, 0x20, ...ascii("ftypavif")], "unknown"],
+    ];
+    for (const [head, type] of heads) {
+      expect(sniffImage(new Uint8Array(head))).toEqual({ type, width: 0, height: 0 });
     }
+  });
+
+  it("returns for deeply nested boxes without recursing", () => {
+    const depth = 20_000;
+    const leaf = box("free", [0]);
+    // box k of `depth` nested iprp boxes holds box k+1; headers are written outermost first, so the build is linear.
+    const nested = Array.from({ length: depth }, (_, k) => [...u32(8 * (depth - k) + leaf.length), ...ascii("iprp")]).flat();
+    const avif = [...box("ftyp", ascii("avif"), u32(0), ascii("avif")), ...box("meta", [0, 0, 0, 0], [...nested, ...leaf])];
+    expect(avif.length).toBeGreaterThan(160_000);
+    expect(sniffImage(new Uint8Array(avif))).toEqual({ type: "avif", width: 0, height: 0 });
   });
 });
 
@@ -81,5 +99,19 @@ describe("image verdict precedence", () => {
     expect(imageBytesVerdict({ type: "png", width: 1801, height: 1000 }, 43)).toBe("aspect");
     expect(imageBytesVerdict({ type: "png", width: 200, height: 400 }, 43)).toBe("ok");
     expect(imageBytesVerdict({ type: "png", width: 200, height: 401 }, 43)).toBe("aspect");
+  });
+});
+
+describe("rankImageCandidates source titles", () => {
+  it("cuts the title at 120 code points", () => {
+    const candidate: Candidate = { name: "n", brand: "Sony", modelIdentifiers: ["WH-1000XM5"] };
+    const hit: SearchHit = { url: "https://shop.example/p", title: "😀".repeat(130), image: "https://img.example/a.jpg", summary: null, exaRequestId: "t", retrievedAt: "2026-11-21T00:00:00.000Z" };
+    const offer = {
+      kind: "merchant-offer" as const, merchantHost: "shop.example", merchantName: "Shop", canonicalUrl: hit.url,
+      price: { amount: 1, currency: "USD" as const }, availability: "in_stock" as const, source: "exa" as const,
+      retrievedAt: hit.retrievedAt, exaRequestId: "t", productName: "",
+    };
+    const [source] = rankImageCandidates([{ hit, result: offer }], candidate, "US");
+    expect([...source!.sourceTitle]).toHaveLength(120);
   });
 });
