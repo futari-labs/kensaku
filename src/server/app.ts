@@ -101,7 +101,9 @@ export function createApp(deps: AppDeps): Hono {
       },
       onError: () => "Unexpected server error.",
     });
-    return createUIMessageStreamResponse({ stream });
+    // The SDK encodes the stream as UTF-8 but sends `text/event-stream` without a charset, which Chromium's
+    // network layer (and so Playwright's `response.body()`) decodes as windows-1252.
+    return createUIMessageStreamResponse({ stream, headers: { "content-type": "text/event-stream; charset=utf-8" } });
   });
 
   if (images) app.get("/api/image/:id", (c) => images.serve(c.req.param("id"), c.req.header("sec-fetch-site")));

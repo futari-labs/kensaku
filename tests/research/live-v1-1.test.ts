@@ -5,8 +5,6 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { analyzeQuery, analyze } from "../../scripts/live/analyze";
-import { decodeChatBody } from "../../scripts/live/browser";
-import { parseSse } from "../server/sse";
 import { renderAuditSheet } from "../../scripts/live/audit";
 import { committedUsage, mayStartQuery, planCapsOf, serverLimits, usageOfExchanges } from "../../scripts/live/budget";
 import type { Budget } from "../../scripts/live/budget";
@@ -169,13 +167,10 @@ describe.skipIf(!existsSync(smokeFile))("revalidation of a recorded query (JM-10
     expect(analyzeQuery(record).imageListProblems.length).toBeGreaterThan(0);
   });
 
-  it("renders non-ASCII product text from a decoded stream without mojibake", async () => {
+  it("renders non-ASCII product text without mojibake", () => {
     const record = clone();
-    const stream = Buffer.from(`data: ${JSON.stringify({ brand: "Bambino®", name: "ベビーカー – 20" })}\n\n`, "utf8");
-    const text = (await decodeChatBody({ body: async () => stream })).slice("data: ".length).trim();
-    const { brand, name } = JSON.parse(text) as { brand: string; name: string };
-    record.displayed.products![0]!.candidate.brand = brand;
-    record.displayed.products![0]!.candidate.name = name;
+    record.displayed.products![0]!.candidate.brand = "Bambino®";
+    record.displayed.products![0]!.candidate.name = "ベビーカー – 20";
     const sheet = renderAuditSheet(
       { runNumber: 1, logFile: "x.json", gitSha: "abc", imageDir: "/tmp/i", shotDir: "/tmp/s", auditRubric: [], imageAuditRubric: [] },
       [analyze(record)],
@@ -219,19 +214,6 @@ describe.skipIf(!existsSync(smokeFile))("revalidation of a recorded query (JM-10
     expect(offerRow).toMatch(/\| main list \| {2}\| {2}\| pass \(/);
     const imageRow = sheet.split("\n").find((l) => l.startsWith("| Q3-I1 |"))!;
     expect(imageRow).toMatch(/\| pass \| {2}\|$/);
-  });
-});
-
-describe("captured chat stream", () => {
-  const source = { type: "data-products", data: { title: "Bambino® – ベビーカー 20 – 30°C", note: "café" } };
-  const bytes = Buffer.from(`data: ${JSON.stringify(source)}\n\ndata: [DONE]\n\n`, "utf8");
-
-  it("decodes the body as UTF-8, equal to the source", async () => {
-    const fake = { body: async () => bytes, text: async () => bytes.toString("latin1") };
-    const text = await decodeChatBody(fake);
-    expect(text).toContain("Bambino®");
-    expect(text).not.toContain("Â");
-    expect(parseSse(text)).toEqual([source]);
   });
 });
 
