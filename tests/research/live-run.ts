@@ -1,6 +1,6 @@
-// The live runner as a module: the JM-004 smoke (live-smoke.ts) and the EV-008 suite
-// (scripts/live-acceptance.ts) both use it. It runs the real server against live Exa and posts
-// live-acceptance queries to POST /api/chat. Importing this file starts nothing.
+// The live runner as a module: the JM-004 smoke (live-smoke.ts), the JM-104 slice smoke and the EV-016 suite
+// (scripts/live-acceptance-v1-1.ts) use it. It runs the real server against live Exa; `executeQuery` posts a
+// query to POST /api/chat, the EV-016 suite drives the page instead. Importing this file starts nothing.
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -116,15 +116,21 @@ export async function startSmokeServer(envFile: string, options: SessionOptions 
 }
 
 /** One line of the server's exchange log: the request body and response of one Exa call (no key, no header). */
-interface Exchange {
+export interface Exchange {
   ts: string;
   endpoint: string;
   request: unknown;
   response: unknown;
 }
 
-const readExchanges = (path: string): Exchange[] =>
+export const readExchanges = (path: string): Exchange[] =>
   existsSync(path) ? readFileSync(path, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as Exchange) : [];
+
+/** An exchange with the Exa request id and the reported cost lifted out of the response. */
+export const withBilling = (e: Exchange) => {
+  const response = e.response as { requestId?: string; costDollars?: { total?: number } };
+  return { ...e, requestId: response.requestId ?? null, costDollars: response.costDollars?.total ?? null };
+};
 
 /** Runs one query through the server (POST /api/chat) and returns what it did. Writes nothing. */
 export async function executeQuery({ server, keyPrefix, answerMarketMode, exchangesPath }: SmokeSession, query: LiveQuery) {
@@ -142,10 +148,7 @@ export async function executeQuery({ server, keyPrefix, answerMarketMode, exchan
   const error = ofType(chunks, "data-error")[0]?.data;
   const usage = ofType(chunks, "data-usage")[0]?.data;
   const text = ofType(chunks, "text-delta")[0]?.delta;
-  const exchanges = readExchanges(exchangesPath).slice(exchangesBefore).map((e) => {
-    const response = e.response as { requestId?: string; costDollars?: { total?: number } };
-    return { ...e, requestId: response.requestId ?? null, costDollars: response.costDollars?.total ?? null };
-  });
+  const exchanges = readExchanges(exchangesPath).slice(exchangesBefore).map(withBilling);
   const lines = server.lines.slice(logStart);
   const calls = lines.filter((l) => l.event === "exa_call");
   const log = {

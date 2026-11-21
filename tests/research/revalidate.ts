@@ -45,7 +45,9 @@ export function revalidateRun(run: RecordedRun): Revalidation {
 
   const candidateProblems: string[] = [];
   for (const product of run.displayed.products ?? []) {
-    if (!answers.some((a) => a.candidates.some((c) => JSON.stringify(c) === JSON.stringify(product.candidate)))) {
+    // v1.1 cards carry the identity only (name, brand, modelIdentifiers); the answer's candidate also holds keySpecs and reason.
+    const identity = ({ name, brand, modelIdentifiers }: Candidate) => JSON.stringify({ name, brand, modelIdentifiers });
+    if (!answers.some((a) => a.candidates.some((c) => identity(c) === identity(product.candidate)))) {
       candidateProblems.push(`${product.candidate.brand} ${product.candidate.name}: candidate is not in the recorded answer`);
     }
   }
