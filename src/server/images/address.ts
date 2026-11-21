@@ -14,7 +14,7 @@ const BLOCKED_V4: ReadonlyArray<readonly [number, number]> = [
   [0xc6120000, 15],
   [0xc6336400, 24],
   [0xcb007100, 24],
-  [0xe0000000, 4],
+  [0xe0000000, 3],
 ];
 
 function parseV4(text: string): number | null {
