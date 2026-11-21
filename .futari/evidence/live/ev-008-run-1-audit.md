@@ -13,24 +13,31 @@ Threshold: at least 90% of all displayed offers pass all three checks. Only the 
 
 | ID | Query | Candidate | Merchant host | Price | Availability | URL | Page title (Exa) | Right product | Direct merchant | Price display |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Q1-O1 | Q1 | Sony WH-1000XM5 Premium Wireless Noise Cancelling Headphones | instacart.com | 169.99 USD | in_stock | https://www.instacart.com/store/products/27435482-sony-wh-1000xm5-wireless-noise-canceling-over-the-ear-headphones-black-each | Sony WH-1000XM5 Wireless Noise-Canceling Over-the-Ear Headphones - Black | pending owner | pending owner | pass |
-| Q1-O2 | Q1 | Sony WH-1000XM5 Premium Wireless Noise Cancelling Headphones | electronics.sony.com | 198 USD | in_stock | https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-s | WH-1000XM5 Premium Wireless Noise Cancelling Headphones \| Silver | pending owner | pending owner | pass |
-| Q1-O3 | Q1 | Sony WH-1000XM5 Premium Wireless Noise Cancelling Headphones | adorama.com | 278 USD | in_stock | https://www.adorama.com/sony-wh-1000xm5-wireless-noise-cancelling-headphones/p/sowh1xm5b | Sony WH-1000XM5 Wireless Closed-Back Over-Ear Noise Cancelling Headphones, Black WH1000XM5/B | pending owner | pending owner | pass |
-| Q2-O1 | Q2 | Logitech Logitech MX Vertical | amazon.com | 90.05 USD | in_stock | https://www.amazon.com/Logitech-Mouse-MX-Vertical-910-005448/dp/B07FNHV4MW | Logitech Mouse MX Vertical, 910-005448 | pending owner | pending owner | pass |
-| Q2-O2 | Q2 | Logitech Logitech MX Vertical | logitech.com | 99.99 USD | in_stock | https://www.logitech.com/en-us/shop/p/mx-vertical-ergonomic-mouse | Logitech MX Vertical Ergonomic Wireless Mouse | pending owner | pending owner | pass |
-| Q2-O3 | Q2 | Logitech Logitech MX Vertical | adorama.com | 100.49 USD | in_stock | https://www.adorama.com/logitech-mx-vertical-advanced-ergonomic-wireless-mouse/p/logmxvaem | Logitech MX Vertical Advanced Ergonomic Mouse 910-005447 | pending owner | pending owner | pass |
-| Q3-O1 | Q3 | Sony WH-1000XM5 Wireless Noise Cancelling Headphones | instacart.com | 169.99 USD | in_stock | https://www.instacart.com/store/products/27435482-sony-wh-1000xm5-wireless-noise-canceling-over-the-ear-headphones-black-each | Sony WH-1000XM5 Wireless Noise-Canceling Over-the-Ear Headphones - Black | pending owner | pending owner | pass |
-| Q3-O2 | Q3 | Sony WH-1000XM5 Wireless Noise Cancelling Headphones | electronics.sony.com | 198 USD | in_stock | https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-l | WH-1000XM5 Premium Wireless Noise Cancelling Headphones \| Midnight Blue | pending owner | pending owner | pass |
-| Q3-O3 | Q3 | Sony WH-1000XM5 Wireless Noise Cancelling Headphones | rakuten.com | 229.99 USD | in_stock | https://www.rakuten.com/products/sony-wh-1000xm5-premium-wireless/00027242923232_upc | Sony - WH-1000XM5 Wireless Noise Cancelling Over-the-Ear Headphones - Black | pending owner | pending owner | pass |
-| Q5-O1 | Q5 | ソニー (Sony) WH-1000XM5 | search.rakuten.co.jp | 33726 JPY | in_stock | https://search.rakuten.co.jp/search/mall/%E3%82%BD%E3%83%8B%E3%83%BC+wh-1000xm5/ | SONY WH-1000XM5 WH-1000XM5 SM プラチナシルバー | pending owner | pending owner | pass |
-| Q5-O2 | Q5 | ソニー (Sony) WH-1000XM5 | edion.com | 51000 JPY | in_stock | https://www.edion.com/detail.html?p_cd=00071159386 | SONY WH-1000XM5 B ワイヤレスノイズキャンセリングステレオヘッドセット ブラック | pending owner | pending owner | pass |
-| Q5-O3 | Q5 | ソニー (Sony) WH-1000XM5 | store.shopping.yahoo.co.jp | 54780 JPY | in_stock | https://store.shopping.yahoo.co.jp/e-earphone/4548736132566.html | SONY WH-1000XM5 BM ブラック ソニー ワイヤレスヘッドホン ノイズキャンセリング Bluetooth ブルートゥース ヘッドフォン WH1000XM5BM | pending owner | pending owner | pass |
-| Q5-O4 | Q5 | ソニー (Sony) WH-1000XM5 | fujiya-avic.co.jp | 56100 JPY | in_stock | https://www.fujiya-avic.co.jp/shop/g/g200000062737/ | SONY WH-1000XM5 BM ブラック 新品 | pending owner | pending owner | pass |
-| Q5-O5 | Q5 | ソニー (Sony) WH-1000XM5 | sony.jp | 56100 JPY | in_stock | https://www.sony.jp/headphone/products/WH-1000XM5/ | WH-1000XM5 | pending owner | pending owner | pass |
-| Q5-O6 | Q5 | ソニー (Sony) WH-1000XM6 | e-earphone.jp | 59400 JPY | in_stock | https://www.e-earphone.jp/products/586956 | SONY WH-1000XM6 | pending owner | pending owner | pass |
-| Q5-O7 | Q5 | ソニー (Sony) WH-1000XM6 | sony.jp | 59400 JPY | in_stock | https://www.sony.jp/headphone/products/WH-1000XM6/ | WH-1000XM6 | pending owner | pending owner | pass |
+| Q1-O1 | Q1 | Sony WH-1000XM5 Premium Wireless Noise Cancelling Headphones | instacart.com | 169.99 USD | in_stock | https://www.instacart.com/store/products/27435482-sony-wh-1000xm5-wireless-noise-canceling-over-the-ear-headphones-black-each | Sony WH-1000XM5 Wireless Noise-Canceling Over-the-Ear Headphones - Black | pass | pass | pass |
+| Q1-O2 | Q1 | Sony WH-1000XM5 Premium Wireless Noise Cancelling Headphones | electronics.sony.com | 198 USD | in_stock | https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-s | WH-1000XM5 Premium Wireless Noise Cancelling Headphones \| Silver | pass | pass | pass |
+| Q1-O3 | Q1 | Sony WH-1000XM5 Premium Wireless Noise Cancelling Headphones | adorama.com | 278 USD | in_stock | https://www.adorama.com/sony-wh-1000xm5-wireless-noise-cancelling-headphones/p/sowh1xm5b | Sony WH-1000XM5 Wireless Closed-Back Over-Ear Noise Cancelling Headphones, Black WH1000XM5/B | pass | pass | pass |
+| Q2-O1 | Q2 | Logitech Logitech MX Vertical | amazon.com | 90.05 USD | in_stock | https://www.amazon.com/Logitech-Mouse-MX-Vertical-910-005448/dp/B07FNHV4MW | Logitech Mouse MX Vertical, 910-005448 | pass | pass | pass |
+| Q2-O2 | Q2 | Logitech Logitech MX Vertical | logitech.com | 99.99 USD | in_stock | https://www.logitech.com/en-us/shop/p/mx-vertical-ergonomic-mouse | Logitech MX Vertical Ergonomic Wireless Mouse | pass | pass | pass |
+| Q2-O3 | Q2 | Logitech Logitech MX Vertical | adorama.com | 100.49 USD | in_stock | https://www.adorama.com/logitech-mx-vertical-advanced-ergonomic-wireless-mouse/p/logmxvaem | Logitech MX Vertical Advanced Ergonomic Mouse 910-005447 | pass | pass | pass |
+| Q3-O1 | Q3 | Sony WH-1000XM5 Wireless Noise Cancelling Headphones | instacart.com | 169.99 USD | in_stock | https://www.instacart.com/store/products/27435482-sony-wh-1000xm5-wireless-noise-canceling-over-the-ear-headphones-black-each | Sony WH-1000XM5 Wireless Noise-Canceling Over-the-Ear Headphones - Black | pass | pass | pass |
+| Q3-O2 | Q3 | Sony WH-1000XM5 Wireless Noise Cancelling Headphones | electronics.sony.com | 198 USD | in_stock | https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-l | WH-1000XM5 Premium Wireless Noise Cancelling Headphones \| Midnight Blue | pass | pass | pass |
+| Q3-O3 | Q3 | Sony WH-1000XM5 Wireless Noise Cancelling Headphones | rakuten.com | 229.99 USD | in_stock | https://www.rakuten.com/products/sony-wh-1000xm5-premium-wireless/00027242923232_upc | Sony - WH-1000XM5 Wireless Noise Cancelling Over-the-Ear Headphones - Black | pass | pass | pass |
+| Q5-O1 | Q5 | ソニー (Sony) WH-1000XM5 | search.rakuten.co.jp | 33726 JPY | in_stock | https://search.rakuten.co.jp/search/mall/%E3%82%BD%E3%83%8B%E3%83%BC+wh-1000xm5/ | SONY WH-1000XM5 WH-1000XM5 SM プラチナシルバー | not judged separately (offer fails Direct merchant) | FAIL: search-results page (search.rakuten.co.jp/search/...), not a merchant product page | pass |
+| Q5-O2 | Q5 | ソニー (Sony) WH-1000XM5 | edion.com | 51000 JPY | in_stock | https://www.edion.com/detail.html?p_cd=00071159386 | SONY WH-1000XM5 B ワイヤレスノイズキャンセリングステレオヘッドセット ブラック | pass | pass | pass |
+| Q5-O3 | Q5 | ソニー (Sony) WH-1000XM5 | store.shopping.yahoo.co.jp | 54780 JPY | in_stock | https://store.shopping.yahoo.co.jp/e-earphone/4548736132566.html | SONY WH-1000XM5 BM ブラック ソニー ワイヤレスヘッドホン ノイズキャンセリング Bluetooth ブルートゥース ヘッドフォン WH1000XM5BM | pass | pass | pass |
+| Q5-O4 | Q5 | ソニー (Sony) WH-1000XM5 | fujiya-avic.co.jp | 56100 JPY | in_stock | https://www.fujiya-avic.co.jp/shop/g/g200000062737/ | SONY WH-1000XM5 BM ブラック 新品 | pass | pass | pass |
+| Q5-O5 | Q5 | ソニー (Sony) WH-1000XM5 | sony.jp | 56100 JPY | in_stock | https://www.sony.jp/headphone/products/WH-1000XM5/ | WH-1000XM5 | pass | pass | pass |
+| Q5-O6 | Q5 | ソニー (Sony) WH-1000XM6 | e-earphone.jp | 59400 JPY | in_stock | https://www.e-earphone.jp/products/586956 | SONY WH-1000XM6 | pass | pass | pass |
+| Q5-O7 | Q5 | ソニー (Sony) WH-1000XM6 | sony.jp | 59400 JPY | in_stock | https://www.sony.jp/headphone/products/WH-1000XM6/ | WH-1000XM6 | pass | pass | pass |
 
 Total displayed offers: 16.
+
+## Owner audit result
+
+Recorded by the coordinator from the owner's (d3F0g) selection on the native AskUserQuestion card, 2026-11-21. Question: "which fail 'Right product' or 'Direct merchant'?" after reviewing all 16 offers on the private audit page https://claude.ai/artifact/JaqF61QtMzar97A62YsFYu. Selection: "Only Q5-O1 fails" ("The Rakuten search-results page fails Direct merchant; the other 15 pass both checks").
+
+- Offers passing all three checks: 15 of 16 = 93.75%. Threshold: at least 90%. **Pass.**
+- Q5-O1 fails Direct merchant. Under the approved classification rules it is a merchant offer (Exa reported `isProductListing: true`; `search.rakuten.co.jp` is not on the approved aggregator list), so this is an extraction miss caught by the audit, not a pipeline defect. Follow-up CR-002 (post-MVP plan revision) is recorded in `docs/futari/PROGRESS.md`.
 
 ## Queries
 
