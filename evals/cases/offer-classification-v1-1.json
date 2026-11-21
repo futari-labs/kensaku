@@ -1,0 +1,1320 @@
+{
+  "_about": "EV-011 cases for plan kensaku-v1-1: v1.1 classification additions (CR-002 search and category pages, editorial paths and hosts, second-hand marketplaces, SG aggregators, unambiguous currency symbols). Live cases reference real Exa responses: V2/V3/V5/V7 from the kensaku-v1-1 pre-approval spike (2026-11-21) and R1-Q5/R1-Q6 copied byte-for-byte from the EV-008 run 1 log. Synthetic cases (Z01-Z16) are labeled synthetic.",
+  "labelStatus": "Assistant-proposed labels computed by a reference implementation of the written rules in docs/futari/ARCHITECTURE.md 'Offer classification' (independent of src/core), reviewed case by case. They become gold labels only when the owner approves plan kensaku-v1-1. They describe Kensaku's rules applied to Exa's extracted data, not independent truth about the pages.",
+  "ruleAdditions": {
+    "4": "Aggregator list gains kiasuprice.com and priceme.com (host or any subdomain).",
+    "5": "Editorial list gains aboutamazon.com, aboutamazon.jp, androidcentral.com, note.com, hardwarezone.com.sg.",
+    "7": "Before the three-letter check, a trimmed currency equal to one of these exact strings is mapped: 'S$' and 'SG$' -> SGD; 'US$' -> USD; '¥', '￥', '円', 'JP¥' -> JPY. A bare '$' and every other string are unchanged (so '$' stays invalid).",
+    "5a": "New, after rule 5: host on the second-hand marketplace list (carousell.sg, carousell.com, jp.mercari.com, auctions.yahoo.co.jp) -> evidence: marketplace.",
+    "5b": "New, after 5a: the hostname's first label is exactly 'search', or any path segment (percent-decoded, lowercased) is one of search, s, category, categories, bestsellers, productlist, or a 'collections' segment is not followed later by a 'products' segment -> evidence: search-or-category. Applies even when Exa reports isProductListing true.",
+    "5c": "New, after 5b: any path segment is one of news, blog, blogs, review, reviews, article, articles -> evidence: editorial."
+  },
+  "supersedes": {
+    "L29": {
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "was": {
+        "outcome": "evidence",
+        "category": "merchant-mismatch"
+      },
+      "rationale": "Rule 5c: hothardware.com/news/... is a news article; it was evidence before and stays evidence, only the category changes (D-031)."
+    },
+    "Y03": {
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "USD",
+        "amount": 278
+      },
+      "was": {
+        "outcome": "evidence",
+        "category": "merchant-no-price"
+      },
+      "rationale": "Rule 7 amendment: 'US$' now maps to USD (D-032). Z05 keeps the invalid-currency coverage with a bare '$'."
+    }
+  },
+  "candidates": {
+    "BOSEQC": {
+      "name": "Bose QuietComfort Noise Cancelling Headphones",
+      "brand": "Bose",
+      "modelIdentifiers": [
+        "QuietComfort Headphones"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "N01",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 0,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "not-a-listing"
+      },
+      "rationale": "Rule 6: Exa did not report isProductListing true (www.courts.com.sg; Exa: isProductListing false, price 289 SGD)."
+    },
+    {
+      "id": "N02",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 1,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 298
+      },
+      "rationale": "Direct merchant product page on www.harveynorman.com.sg; Exa: isProductListing true, price 298 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N03",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 2,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 309
+      },
+      "rationale": "Direct merchant product page on www.stereo.com.sg; Exa: isProductListing true, price 309 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N04",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 3,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "aggregator"
+      },
+      "rationale": "Rule 4: the host is on the aggregator list (kiasuprice.com; Exa: isProductListing true, price 289 SGD)."
+    },
+    {
+      "id": "N05",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 4,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 289
+      },
+      "rationale": "Direct merchant product page on www.courts.com.sg; Exa: isProductListing true, price 289 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N06",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 5,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Rule 5b: search host, or a search/category path segment (online.challenger.sg; Exa: isProductListing true, price 309 SGD)."
+    },
+    {
+      "id": "N07",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 6,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "USD",
+        "amount": 279
+      },
+      "rationale": "Direct merchant product page on mobyshop.com.sg; Exa: isProductListing true, price 279 USD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N08",
+      "fixture": "V2-search-sg-xm5",
+      "resultIndex": 7,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 310
+      },
+      "rationale": "Direct merchant product page on www.amazon.sg; Exa: isProductListing true, price 310 S$; passes identity, price, currency and merchant checks ('S$' maps to SGD, D-032)."
+    },
+    {
+      "id": "N09",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 0,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 698
+      },
+      "rationale": "Direct merchant product page on www.harveynorman.com.sg; Exa: isProductListing true, price 698 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N10",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 1,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 698
+      },
+      "rationale": "Direct merchant product page on breville.sg; Exa: isProductListing true, price 698 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N11",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 2,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (tangs.com; Exa: isProductListing false, price none)."
+    },
+    {
+      "id": "N12",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 3,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "evidence",
+        "category": "not-a-listing"
+      },
+      "rationale": "Rule 6: Exa did not report isProductListing true (modernhome.sg; Exa: isProductListing false, price 684.04 SGD)."
+    },
+    {
+      "id": "N13",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 4,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "evidence",
+        "category": "not-a-listing"
+      },
+      "rationale": "Rule 6: Exa did not report isProductListing true (commonmancoffeeroasters.com; Exa: isProductListing false, price 698 SGD)."
+    },
+    {
+      "id": "N14",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 5,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "evidence",
+        "category": "aggregator"
+      },
+      "rationale": "Rule 4: the host is on the aggregator list (sg.priceme.com; Exa: isProductListing false, price 408.72 SGD)."
+    },
+    {
+      "id": "N15",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 6,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "evidence",
+        "category": "marketplace"
+      },
+      "rationale": "Rule 5a: the host is a second-hand marketplace (www.carousell.sg; Exa: isProductListing false, price 480 SGD)."
+    },
+    {
+      "id": "N16",
+      "fixture": "V3-search-sg-bambino",
+      "resultIndex": 7,
+      "candidate": "BAMBINO",
+      "expected": {
+        "outcome": "evidence",
+        "category": "marketplace"
+      },
+      "rationale": "Rule 5a: the host is a second-hand marketplace (www.carousell.sg; Exa: isProductListing true, price 599 SGD)."
+    },
+    {
+      "id": "N17",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 0,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 19980
+      },
+      "rationale": "Direct merchant product page on www.amazon.co.jp; Exa: isProductListing true, price 19980 JPY; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N18",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 1,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (www.aboutamazon.jp; Exa: isProductListing true, price 56800 JPY)."
+    },
+    {
+      "id": "N19",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 2,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Rule 5b: search host, or a search/category path segment (search.rakuten.co.jp; Exa: isProductListing true, price 27492 JPY)."
+    },
+    {
+      "id": "N20",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 3,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (www.amazon.co.jp; Exa: isProductListing false, price none)."
+    },
+    {
+      "id": "N21",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 4,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Rule 5b: search host, or a search/category path segment (search.rakuten.co.jp; Exa: isProductListing true, price 36449 JPY)."
+    },
+    {
+      "id": "N22",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 5,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (note.com; Exa: isProductListing false, price 16980 JPY)."
+    },
+    {
+      "id": "N23",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 6,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Rule 5b: search host, or a search/category path segment (search.rakuten.co.jp; Exa: isProductListing false, price 27492 JPY)."
+    },
+    {
+      "id": "N24",
+      "fixture": "V5-search-jp-kindle",
+      "resultIndex": 7,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (www.rakuten.co.jp; Exa: isProductListing true, price 54000 JPY)."
+    },
+    {
+      "id": "N25",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 0,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 239
+      },
+      "rationale": "Direct merchant product page on metapod.com; Exa: isProductListing true, price 239 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N26",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 1,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (www.amazon.sg; Exa: isProductListing false, price none)."
+    },
+    {
+      "id": "N27",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 2,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (www.jaben.com; Exa: isProductListing true, price 356.9 SGD)."
+    },
+    {
+      "id": "N28",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 3,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 389
+      },
+      "rationale": "Direct merchant product page on online.challenger.sg; Exa: isProductListing true, price 389 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N29",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 4,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 389
+      },
+      "rationale": "Direct merchant product page on online.challenger.sg; Exa: isProductListing true, price 389 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N30",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 5,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (www.harveynorman.com.sg; Exa: isProductListing true, price 389 SGD)."
+    },
+    {
+      "id": "N31",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 6,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 429
+      },
+      "rationale": "Direct merchant product page on bose.sg; Exa: isProductListing true, price 429 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N32",
+      "fixture": "V7-search-sg-candidate-2",
+      "resultIndex": 7,
+      "candidate": "BOSEQC",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 459
+      },
+      "rationale": "Direct merchant product page on www.robinsons.com.sg; Exa: isProductListing true, price 459 SGD; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N33",
+      "fixture": "R1-Q5-offers-xm5",
+      "resultIndex": 7,
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Rule 5b: search host, or a search/category path segment (search.rakuten.co.jp; Exa: isProductListing true, price 33726 JPY)."
+    },
+    {
+      "id": "N34",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 0,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 18980
+      },
+      "rationale": "Direct merchant product page on www.amazon.co.jp; Exa: isProductListing true, price 18980 JPY; passes identity, price, currency and merchant checks."
+    },
+    {
+      "id": "N35",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 1,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Rule 5b: search host, or a search/category path segment (search.rakuten.co.jp; Exa: isProductListing true, price 27492 JPY)."
+    },
+    {
+      "id": "N36",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 2,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unsupported-currency"
+      },
+      "rationale": "Rule 8: the currency is not USD, SGD or JPY (www.amazon.co.uk; Exa: isProductListing true, price 119.99 GBP)."
+    },
+    {
+      "id": "N37",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 3,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (press.aboutamazon.com; Exa: isProductListing false, price none)."
+    },
+    {
+      "id": "N38",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 4,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unsupported-currency"
+      },
+      "rationale": "Rule 8: the currency is not USD, SGD or JPY (www.amazon.de; Exa: isProductListing true, price 154.99 EUR)."
+    },
+    {
+      "id": "N39",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 5,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unsupported-currency"
+      },
+      "rationale": "Rule 8: the currency is not USD, SGD or JPY (www.amazon.es; Exa: isProductListing true, price 154.99 EUR)."
+    },
+    {
+      "id": "N40",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 6,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "rejected",
+        "category": "irrelevant-product"
+      },
+      "rationale": "Rule 3: no usable model identifier matches the page's product name (safe-direction false negatives are accepted, R-6) (www.amazon.co.jp; Exa: isProductListing false, price 29800 JPY)."
+    },
+    {
+      "id": "N41",
+      "fixture": "R1-Q6-offers-paperwhite",
+      "resultIndex": 7,
+      "candidate": "PAPERWHITE",
+      "expected": {
+        "outcome": "evidence",
+        "category": "merchant-no-price"
+      },
+      "rationale": "Rule 7: no valid price and currency (www.amazon.com; Exa: isProductListing true, price none)."
+    },
+    {
+      "id": "Z01",
+      "synthetic": {
+        "url": "https://www.amazon.sg/dp/B09ZFD9CBB",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Amazon.sg",
+          "price": 310,
+          "currency": "S$"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 310
+      },
+      "rationale": "Synthetic: 'S$' is an unambiguous Singapore-dollar symbol and maps to SGD (D-032)."
+    },
+    {
+      "id": "Z02",
+      "synthetic": {
+        "url": "https://www.lazada.sg/products/sony-wh-1000xm5-i1.html",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Lazada",
+          "price": 299,
+          "currency": "SG$"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 299
+      },
+      "rationale": "Synthetic: 'SG$' maps to SGD."
+    },
+    {
+      "id": "Z03",
+      "synthetic": {
+        "url": "https://www.yodobashi.com/product/100000001007208012/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Yodobashi",
+          "price": 49500,
+          "currency": "¥"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 49500
+      },
+      "rationale": "Synthetic: '¥' maps to JPY; the amount is an integer."
+    },
+    {
+      "id": "Z04",
+      "synthetic": {
+        "url": "https://www.biccamera.com/bc/item/10606020/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Bic Camera",
+          "price": 49500,
+          "currency": "円"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 49500
+      },
+      "rationale": "Synthetic: '円' maps to JPY."
+    },
+    {
+      "id": "Z05",
+      "synthetic": {
+        "url": "https://www.adorama.com/sony-wh-1000xm5/p/x5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Adorama",
+          "price": 278,
+          "currency": "$"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "merchant-no-price"
+      },
+      "rationale": "Synthetic: a bare '$' is ambiguous (USD, SGD and others) and stays invalid."
+    },
+    {
+      "id": "Z06",
+      "synthetic": {
+        "url": "https://www.yodobashi.com/product/100000001007208013/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Yodobashi",
+          "price": 49500.5,
+          "currency": "￥"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "merchant-no-price"
+      },
+      "rationale": "Synthetic: '￥' maps to JPY, but a fractional yen amount is still invalid."
+    },
+    {
+      "id": "Z07",
+      "synthetic": {
+        "url": "https://www.target.com/s/sony+wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Target",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: a '/s/' path segment is a search page even when Exa reports a listing with a price."
+    },
+    {
+      "id": "Z08",
+      "synthetic": {
+        "url": "https://www.stereo.com.sg/collections/headphones/products/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Stereo Electronics",
+          "price": 309,
+          "currency": "SGD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 309
+      },
+      "rationale": "Synthetic: Shopify '/collections/<c>/products/<p>' is a product page; 'collections' is deliberately not a search/category segment."
+    },
+    {
+      "id": "Z09",
+      "synthetic": {
+        "url": "https://www.stereo.com.sg/blogs/news/sony-wh-1000xm5-review",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Stereo Electronics",
+          "price": 309,
+          "currency": "SGD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: a merchant's own blog post is editorial (path segments 'blogs', 'news')."
+    },
+    {
+      "id": "Z10",
+      "synthetic": {
+        "url": "https://research.example-shop.com/p/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "USD",
+        "amount": 278
+      },
+      "rationale": "Synthetic: only a hostname whose first label is exactly 'search' is a search host; 'research.' is not."
+    },
+    {
+      "id": "Z11",
+      "synthetic": {
+        "url": "https://www.courts.com.sg/search?q=sony+wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Courts",
+          "price": 289,
+          "currency": "SGD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: a '/search' path is a search-results page."
+    },
+    {
+      "id": "Z12",
+      "synthetic": {
+        "url": "https://www.courts.com.sg/category/headphones/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Courts",
+          "price": 289,
+          "currency": "SGD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: a '/category/' path is a category page."
+    },
+    {
+      "id": "Z13",
+      "synthetic": {
+        "url": "https://jp.mercari.com/item/m12345678901",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "メルカリ",
+          "price": 32000,
+          "currency": "JPY"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "marketplace"
+      },
+      "rationale": "Synthetic: jp.mercari.com is a second-hand marketplace."
+    },
+    {
+      "id": "Z14",
+      "synthetic": {
+        "url": "https://www.harveynorman.com.sg/sony-wh-1000xm5.html",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Harvey Norman",
+          "price": 298,
+          "currency": " sgd "
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "SGD",
+        "amount": 298
+      },
+      "rationale": "Synthetic: surrounding spaces and lower case are normalized (MVP rule 7, unchanged)."
+    },
+    {
+      "id": "Z16",
+      "synthetic": {
+        "url": "https://online.challenger.sg/collections/sony-headphones",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Challenger",
+          "price": 309,
+          "currency": "SGD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: a Shopify '/collections/<c>' page without a later 'products' segment is a category page."
+    },
+    {
+      "id": "Z15",
+      "synthetic": {
+        "url": "https://www.amazon.co.jp/%E3%82%BD%E3%83%8B%E3%83%BC/s?k=wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Amazon.co.jp",
+          "price": 49500,
+          "currency": "JPY"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: a percent-encoded path still has the '/s' segment of an Amazon search page."
+    },
+    {
+      "id": "Z17",
+      "synthetic": {
+        "url": "https://www.aboutamazon.com/devices/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host aboutamazon.com (no editorial path segment)."
+    },
+    {
+      "id": "Z18",
+      "synthetic": {
+        "url": "https://www.aboutamazon.jp/devices/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host aboutamazon.jp (no editorial path segment)."
+    },
+    {
+      "id": "Z19",
+      "synthetic": {
+        "url": "https://www.androidcentral.com/accessories/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host androidcentral.com."
+    },
+    {
+      "id": "Z20",
+      "synthetic": {
+        "url": "https://note.com/someone/n/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host note.com."
+    },
+    {
+      "id": "Z21",
+      "synthetic": {
+        "url": "https://www.hardwarezone.com.sg/tech/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: editorial host hardwarezone.com.sg."
+    },
+    {
+      "id": "Z22",
+      "synthetic": {
+        "url": "https://search.example-shop.com/p/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: a hostname whose first label is 'search' is a search host even without a search path segment."
+    },
+    {
+      "id": "Z23",
+      "synthetic": {
+        "url": "https://www.example-shop.com/categories/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: the single path segment 'categories' decides the category."
+    },
+    {
+      "id": "Z24",
+      "synthetic": {
+        "url": "https://www.example-shop.com/bestsellers/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: the single path segment 'bestsellers' decides the category."
+    },
+    {
+      "id": "Z25",
+      "synthetic": {
+        "url": "https://www.example-shop.com/productlist/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: the single path segment 'productlist' decides the category."
+    },
+    {
+      "id": "Z26",
+      "synthetic": {
+        "url": "https://www.example-shop.com/blog/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'blog' decides the category."
+    },
+    {
+      "id": "Z38",
+      "synthetic": {
+        "url": "https://www.example-shop.com/blogs/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'blogs' decides the category."
+    },
+    {
+      "id": "Z27",
+      "synthetic": {
+        "url": "https://www.example-shop.com/review/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'review' decides the category."
+    },
+    {
+      "id": "Z28",
+      "synthetic": {
+        "url": "https://www.example-shop.com/reviews/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'reviews' decides the category."
+    },
+    {
+      "id": "Z29",
+      "synthetic": {
+        "url": "https://www.example-shop.com/article/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'article' decides the category."
+    },
+    {
+      "id": "Z30",
+      "synthetic": {
+        "url": "https://www.example-shop.com/articles/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'articles' decides the category."
+    },
+    {
+      "id": "Z31",
+      "synthetic": {
+        "url": "https://www.example-shop.com/news/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "editorial"
+      },
+      "rationale": "Synthetic: the single path segment 'news' decides the category."
+    },
+    {
+      "id": "Z32",
+      "synthetic": {
+        "url": "https://www.carousell.com/p/sony-wh-1000xm5-123/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Carousell",
+          "price": 250,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "marketplace"
+      },
+      "rationale": "Synthetic: carousell.com is a second-hand marketplace."
+    },
+    {
+      "id": "Z33",
+      "synthetic": {
+        "url": "https://auctions.yahoo.co.jp/jp/auction/x123456789",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "ヤフオク",
+          "price": 30000,
+          "currency": "JPY"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "marketplace"
+      },
+      "rationale": "Synthetic: auctions.yahoo.co.jp is a second-hand marketplace."
+    },
+    {
+      "id": "Z34",
+      "synthetic": {
+        "url": "https://www.yodobashi.com/product/100000001007208014/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Yodobashi",
+          "price": 49500,
+          "currency": "￥"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 49500
+      },
+      "rationale": "Synthetic: '￥' (full-width) maps to JPY with an integer amount."
+    },
+    {
+      "id": "Z35",
+      "synthetic": {
+        "url": "https://www.yodobashi.com/product/100000001007208015/",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Yodobashi",
+          "price": 49500,
+          "currency": "JP¥"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "merchant-offer",
+        "currency": "JPY",
+        "amount": 49500
+      },
+      "rationale": "Synthetic: 'JP¥' maps to JPY."
+    },
+    {
+      "id": "Z36",
+      "synthetic": {
+        "url": "https://www.example-shop.com/%73earch/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: segments are percent-decoded before matching ('%73earch' is 'search')."
+    },
+    {
+      "id": "Z37",
+      "synthetic": {
+        "url": "https://www.example-shop.com/Search/sony-wh-1000xm5",
+        "title": "Sony WH-1000XM5",
+        "summary": {
+          "isProductListing": true,
+          "productName": "Sony WH-1000XM5",
+          "availability": "in_stock",
+          "merchant": "Example Shop",
+          "price": 278,
+          "currency": "USD"
+        }
+      },
+      "candidate": "XM5",
+      "expected": {
+        "outcome": "evidence",
+        "category": "search-or-category"
+      },
+      "rationale": "Synthetic: segments are lowercased before matching."
+    }
+  ]
+}

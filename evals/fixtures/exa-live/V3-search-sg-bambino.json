@@ -1,0 +1,254 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the kensaku-v1-1 pre-approval spike. Real data, not a gold label.",
+  "id": "V3-search-sg-bambino",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Breville Bambino Plus price Singapore buy",
+      "type": "auto",
+      "numResults": 8,
+      "userLocation": "SG",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-21T02:21:37.067Z",
+  "receivedAt": "2026-11-21T02:21:40.476Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "b4acc2bd81ca1b959b4d135c00136435",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.harveynorman.com.sg/home-appliances/small-kitchen-appliances-en/coffee-machines-en/breville-the-bambino-plus-stainless-steel-bes500bss.html",
+        "title": "Breville The Bambino® Plus - Stainless Steel (BES500BSS) | Harvey Norman Singapore | Harvey Norman Singapore",
+        "url": "https://www.harveynorman.com.sg/home-appliances/small-kitchen-appliances-en/coffee-machines-en/breville-the-bambino-plus-stainless-steel-bes500bss.html",
+        "highlights": [
+          "# Breville The Bambino® Plus - Stainless Steel (BES500BSS)\n\n \n\n S$ 698 \n\n- Pick your preferred product and proceed to checkout\n- Select DBS as your payment method.\n- Enter your details with your selected choice, confirm purchase.\n- All done!\n\n Visit the following site for more details or terms and conditions: Preferred Banks for Installment Plans \n\n- Pick your preferred product and proceed to checkout\n- Select UOB as your payment method.\n- Enter your details with your selected choice, confirm purchase.\n- All done!\n\n Visit the following site for more details or terms and conditions: Preferred Banks for Installment Plans \n\n Here's how it works: \n\n- Pick your preferred product and proceed to checkout\n- Select American Express as your payment method.\n- Enter your details with your selected choice, confirm purchase.\n- All done!\n\n Visit the following site for more details or terms and conditions: Preferred Banks for Installment Plans\n\n...\n\n### Protection\n\n...\n\n### Delivery & Pickup Information\n\nAll items available for online purchase are not guaranteed to be in stock at the time of order processing. If we are unable to fulfill your order, you will be offered an alternative or given a refund for the unavailable product.\n\nSelf Collect: Ready for collection within 1-3 Working days from the date of your order notification confirmation. Or 2-4 Working days for orders made on Public Holidays, Saturday and Sunday. Subjected to stock availability. Self collection ONLY applies for selected Small Items. \n\nSmall Items: Delivery estimate of 2-7 Working days from the date of your order. Excluding Saturday, Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by SingPost and local couriers.\n\nLarge / Bulky Items: Delivery estimate of 7-14 Working days from the date of your order. Excluding Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by Harvey Norman. \n\nDelivery cost does not include installation/dismantling/carrying up or down by staircase. Installation/Dismantling cost and any other 3rd party cost applies separately."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Breville The Bambino® Plus - Stainless Steel (BES500BSS)\",\"merchant\":\"Harvey Norman Singapore\",\"price\":698,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://hnsgsfp.imgix.net/4/images/detailed/148/Slide1_og9c-yw.JPG?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress"
+      },
+      {
+        "id": "https://breville.sg/product/the-bambino-plus",
+        "title": "the Bambino® Plus",
+        "url": "https://breville.sg/product/the-bambino-plus",
+        "highlights": [
+          "# the Bambino® Plus\nSold by: breville.sg\nCategory: Coffee & Espresso\n\n## Specifications\nColour: Brushed Stainless Steel, Sea Salt\n\n## Pricing & Reviews\nPrice: 698 SGD.\n\n## Description\nLike professional machines, the Bambino Plus can deliver third wave specialty coffee. This is made possible by the 4 keys formula. Delivering barista quality performance using a 54mm stainless steel portafilter with 18 grams of coffee for full flavour and a powerful hands-free automatic steam wand that makes microfoam milk for you ready for latte art. With a proprietary ThermoJet heating system the machine is ready to start in 3 seconds. Learn more about third wave specialty coffee."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"the Bambino® Plus\",\"merchant\":\"breville.sg\",\"price\":698,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://breville.sg/wp-content/uploads/2025/02/BES500SST4JAN1.jpg",
+        "entities": [
+          {
+            "id": "https://breville.sg/product/the-bambino-plus",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "the Bambino® Plus",
+              "description": "Like professional machines, the Bambino Plus can deliver third wave specialty coffee. This is made possible by the 4 keys formula. Delivering barista quality performance using a 54mm stainless steel portafilter with 18 grams of coffee for full flavour and a powerful hands-free automatic steam wand that makes microfoam milk for you ready for latte art. With a proprietary ThermoJet heating system the machine is ready to start in 3 seconds. Learn more about third wave specialty coffee.",
+              "images": [
+                "https://breville.sg/wp-content/uploads/2025/02/BES500SST4JAN1.jpg",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500_Carousel5.png",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500ANZ_CAROUSEL1.png",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500_Carousel4.png",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500_Carousel3.png",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500ANZ_CAROUSEL5.png",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500ANZ_CAROUSEL4.png",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500ANZ_CAROUSEL3.png",
+                "https://breville.sg/wp-content/uploads/2025/02/BES500ANZ_CAROUSEL2.png"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 698,
+                  "currency": "SGD"
+                },
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": [
+                {
+                  "name": "Colour",
+                  "value": "Brushed Stainless Steel, Sea Salt"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://tangs.com/productlist/brand/BREVILLE",
+        "title": "Breville - Singapore",
+        "url": "https://tangs.com/productlist/brand/BREVILLE",
+        "highlights": [
+          "Breville | TANGS Singapore\n\n#### Account\n\n##### Login\n\n- Login\n- Register new account\n\nx\n\n#### SUBTOTAL({x} items)\n\nx\n\nGo to Shopping bag\n\n#### Wishlist\n\nPlease log in to use the wishlist features\n\nLogin Register new account"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Breville\",\"merchant\":\"TANGS Singapore\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}",
+        "image": "https://tangs-prd-cdn.ascentismedia.com/sharedimages/BrandImages/BREVILLE/brandimage_1-250423090850.jpg"
+      },
+      {
+        "id": "https://modernhome.sg/products/breville-the-bambino-plus",
+        "title": "Breville The Bambino Plus",
+        "url": "https://modernhome.sg/products/breville-the-bambino-plus",
+        "highlights": [
+          "# Breville The Bambino Plus\nSold by: modernhome.sg\n\n## Specifications\nColour: Brushed Stainless Steel, Sea Salt\n\n## Pricing & Reviews\nPrice: 684.04 SGD.\n\n## Description\nThird\n...\nThis store supports UCP (Universal Commerce Protocol):"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Breville The Bambino Plus\",\"merchant\":\"modernhome.sg\",\"price\":684.04,\"currency\":\"SGD\",\"availability\":null}",
+        "entities": [
+          {
+            "id": "https://modernhome.sg/products/breville-the-bambino-plus",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Breville The Bambino Plus",
+              "description": "Third wave specialty coffee from a compact machine. The Bambino® Plus pairs a 54mm stainless steel portafilter and 18g dose with a hands-free automatic steam wand that textures microfoam milk for you, and its ThermoJet® heating system is ready in 3 seconds. Key Features: • 4 keys formula used in professional café machines • Low-pressure pre-infusion then 9 bar extraction (15 bar Italian pump) • ThermoJet® heating – ready in 3 seconds • One-touch 1-shot / 2-shot volumetric control and steam • Automatic hands-free microfoam: 3 milk temperatures and 3 texture levels, plus manual mode • 54mm portafilter with dual & single wall filters, 18g dose • PID temperature control • BILT® 3D interactive setup guide Product Dimensions: • Dimensions (W x D x H): 19.5 x 32 x 31 cm • Weight: 6.7 kg • Capacity: 1.9 L water tank; 480 ml milk jug",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0433/7893/3913/files/BES500SST4JAN1.jpg?v=1793608332"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 684.04,
+                  "currency": "SGD"
+                },
+                "availability": "out_of_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": [
+                {
+                  "name": "Colour",
+                  "value": "Brushed Stainless Steel, Sea Salt"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://commonmancoffeeroasters.com/products/breville-bambino-plus",
+        "title": "Best Home Espresso Machines In Singapore",
+        "url": "https://commonmancoffeeroasters.com/products/breville-bambino-plus",
+        "highlights": [
+          "# Breville Bambino Plus\nSold by: commonmancoffeeroasters.com\n\n## Specifications\nColour: Brushed Stainless Steel, Sea Salt\n\n## Pricing & Reviews\nPrice: 698 SGD.\n...\nThis store supports UCP (Universal Commerce Protocol):"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Breville Bambino Plus\",\"merchant\":\"commonmancoffeeroasters.com\",\"price\":698,\"currency\":\"SGD\",\"availability\":\"unknown\"}",
+        "entities": [
+          {
+            "id": "https://commonmancoffeeroasters.com/products/breville-bambino-plus",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Breville Bambino Plus",
+              "description": "Like professional machines, the Bambino Plus can deliver third wave specialty coffee. This is made possible by the 4 keys formula. Delivering barista quality performance using a 54mm stainless steel portafilter with 18 grams of coffee for full flavor and a powerful hands-free automatic steam wand that makes microfoam milk for you ready for latte art. With a proprietary ThermoJet heating system the machine is ready to start in 3 seconds.",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/1000/4780/files/cmcr_breville_bambino_plus.png?v=1752650121"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 698,
+                  "currency": "SGD"
+                },
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": [
+                {
+                  "name": "Colour",
+                  "value": "Brushed Stainless Steel, Sea Salt"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://sg.priceme.com/Breville-the-Bambino-Plus-BES500/p-903366340.aspx",
+        "title": "Breville the Bambino Plus BES500 SG Prices - PriceMe",
+        "url": "https://sg.priceme.com/Breville-the-Bambino-Plus-BES500/p-903366340.aspx",
+        "highlights": [
+          "# Breville the Bambino Plus BES500\n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n 4.6 5 reviews Write a review \n\n Manufacturer: Breville \n\n SGD 408.72 - SGD 698.00 \n\n Too expensive? Set price alert! \n\n \n\n BREVILLE COFFEE MAKER BES500BSS \n\n FREE \n\n SGD 698.00 \n\nPayment Methods\n\n \n\n \n\nOptions\n\n \n\n BREVILLE COFFEE MAKER BES500BSS \n\n SGD 698.00 \n\n##### International offers \n\n Breville Bambino Stainless Steel ThermoJet Espresso Maker with Steam - Brushed Stainless Steel \n\n SGD 408.72 \n\n Macys SG \n\nWithin 30 days returned items must be in original, saleable condition with original tags. Shipping and delivery fees are non-refundable.\n\nDelivery Info\n\nPlatinum & Gold members get free shipping, no minimum. Silver & Bronze members get free shipping with a minimum of $25.00 purchase\n\n Breville Bambino Stainless Steel ThermoJet Espresso Maker with Steam - Brushed Stainless Steel \n\n SGD 408.72 \n\n Breville Bambino Plus ThermoJet Espresso Maker with Steam - Black Truffle \n\n SGD 681.24 \n\n Breville Bambino Plus ThermoJet Espresso Maker with Steam - Brushed Stainless Steel \n\n SGD 681.24\n\n...\n\n## Product details\n\nThe best price for Breville the Bambino Plus BES500 is S$408.72. This is presently the cheapest offer found from comparing prices from 1 shops in Singapore and one overseas retailer. This model is among the most popular products in the Coffee Makers category and has an excellent average rating of 4.6 out of 5 from 5 reviews.\n\n### Product info\n\nManufacturer Breville \n\nList date on PriceMe 2018-10-27T01:56:05+13:00\n\nCategory Coffee Makers\n\n...\n\n## Price trend\n\n| Date | Retailer | Lowest price | Price change |\n| --- | --- | --- | --- |\n| 15 Oct 2026 | Macys SG | SGD 408.72 | +SGD 68.14 |\n| 03 Oct 2026 | Macys SG | SGD 340.58 | -SGD 68.14 |\n| 14 May 2026 | Macys SG | SGD 408.72 | +SGD 68.14 |\n| 28 Apr 2026 | Macys SG | SGD 340.58 | -SGD 68.14 |\n| 05 Apr 2026 | Macys SG | SGD 408.72 | +SGD 68.14 |\n| 17 Mar 2026 | Macys SG | SGD 340.58 | -SGD 68.14 |\n| 28 Dec 2025 | Macys SG | SGD 408.72 | +SGD 68.14 |"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Breville the Bambino Plus BES500\",\"merchant\":\"PriceMe\",\"price\":408.72,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://s3.pricemestatic.com/Images/RetailerProductImages/StRetailer830/0057016152_l.png"
+      },
+      {
+        "id": "https://www.carousell.sg/p/breville-bambino-plus-non-plus-1460710696/",
+        "title": "Breville Bambino Plus / Non-plus, TV & Home Appliances, Kitchen Appliances, Coffee Machines & Makers on Carousell",
+        "url": "https://www.carousell.sg/p/breville-bambino-plus-non-plus-1460710696/",
+        "highlights": [
+          "# Breville Bambino Plus / Non-plus\n\n### S$480\n\n20 people also want this!\n\nDetails\n\nCondition\n\nBrand new\n\nListed\n\n2 months ago by jasaaan\n\nCategory\n\nIn Coffee Machines & Makers\n\nDescription\n\nBrand new in box, local stock. Available in sea salt / brushed steel. Using my staff promo. Bambino Plus: 580 Bambino: 480 Sale ends soon.\n\nDeal method\n\n41\n\nS$\n\n480\n\nMeet the seller\n\nJason\n\nProfile details\n\n5.0\n\n6 reviews\n\n13 years\n\non Carousell"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Breville Bambino Plus / Non-plus\",\"merchant\":\"jasaaan\",\"price\":480,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://media.karousell.com/media/photos/products/2026/9/9/breville_bambino_plus_1788993782_7f53b629.jpg"
+      },
+      {
+        "id": "https://www.carousell.sg/p/breville-bambino-plus-1460484488/",
+        "title": "Breville Bambino Plus, TV & Home Appliances, Kitchen Appliances, Coffee Machines & Makers on Carousell",
+        "url": "https://www.carousell.sg/p/breville-bambino-plus-1460484488/",
+        "highlights": [
+          "# Breville Bambino Plus\n\n### S$599\n\n3 people also want this!\n\nDetails\n\nCondition\n\nBrand new\n\nListed\n\n2 months ago by toh.t.wei.9\n\nCategory\n\nIn Coffee Machines & Makers\n\nDescription\n\n- Breville espresso machine with Singapore 3-pin plug. - IMPORTANT: Ensure machine and plug have SAFETY Mark for safe use. - Avoid imported sets (AU/UK/US) as they may not have local warranty. - Modifying plug heads/cords is unsafe. - Purchase from an official Breville Singapore reseller for valid local warranty. prices subject to changes as 575 was based on 9.9 promo price if you are interested in any breville products, do let me know.\n\nDeal method\n\n19\n\nS$\n\n599\n\nMeet the seller\n\nToh Wei\n\nProfile details\n\n5.0\n\n141 reviews\n\n13 years\n\non Carousell"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Breville Bambino Plus\",\"merchant\":\"Carousell\",\"price\":599,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://media.karousell.com/media/photos/products/2026/9/8/breville_bambino_plus_1788884841_8c8e1cef.jpg"
+      }
+    ],
+    "searchTime": 3213.1,
+    "costDollars": {
+      "total": 0.015,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.008
+    }
+  }
+}

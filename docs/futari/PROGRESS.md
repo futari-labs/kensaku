@@ -1,6 +1,28 @@
 # FutariLabs progress
 
-Phase: execution complete pending the final `dev` CI run. Plan `kensaku-mvp-v1`, revision CR-001 (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`; original approval `3fe529f`, snapshot `77dafb5d…` at `eed64a9`).
+Phase: **v1.1 approved, awaiting publication to `dev`** (plan `kensaku-v1-1`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).
+
+## v1.1 planning session 2026-11-21
+
+- Started with `/futari:bootstrap Kensaku v1.1 — change request on top of approved kensaku-mvp-v1`, with the owner's v1.1 brief (dark mode, image-first cards, real product images, CR-002 and merchant classification, Singapore investigation, engineering requirements).
+- Worktree `.claude/worktrees/v1-1-plan`, branch `v1-1-plan`, from `dev` `a3a2894`.
+- Owner decisions on AskUserQuestion cards: local image proxy with cache (D-029); collapse other-market offers (D-030); pre-approval spike ≤ 10 requests (D-028); classification additions and currency symbols (D-031, D-032); live budget ≤ 130 requests / ≤ $1.50 (D-034); MVP execution limits (D-035).
+- Spike: 10 Exa requests, $0.11 of free credits (cap reached); image probe with no Exa use. Findings in `research/v1-1-spike-2026-11-21.md`. The Singapore cause was found and fixed in the plan (D-033).
+- Independent review of `910ed96` (fable, read-only): CHANGES REQUIRED, 22 findings (3 blocking), all labels confirmed correct. All findings resolved (REVIEW.md, D-041). The image proxy became JM-103, and the later tasks were renumbered to JM-104 to JM-106.
+- Frozen v1.1 inputs:
+  - 79 classification cases;
+  - 148 image cases (80 URL, 10 selection, 58 bytes);
+  - 6 content answers (14 candidates);
+  - 8 live queries;
+  - 12 new live fixtures and a real MVP history fixture.
+
+  A reference implementation of the written rules reproduces all 54 MVP labels, and the v1.1 rules change only L29 and Y03, recorded as supersessions. No single-rule mutation survives.
+- `node evals/harness.mjs`: HARNESS OK (exit 0); `--strict` fails until JM-101 by design.
+- Re-review of `ec779c7`: CHANGES REQUIRED narrowly (N1-N6), all 22 earlier findings confirmed resolved. N1 (leaked JSON in Exa answer text, also present in the accepted MVP run) was decided by the owner as "Cut and flag" (D-042). N1-N6 resolved (REVIEW.md).
+- Final confirmation of `fd34674`: READY (advisory). Nits M1 and M2 resolved in the approval commit.
+- Approval: the owner (d3F0g) selected "Approve plan" on the native card for `kensaku-v1-1` at `c356f9af2e9eb372f23712c6fa699ccf0967e011`. The card stated that approving replaces the `kensaku-mvp-v1` baseline. Recorded in `8186754` (`.futari/approval.json` only); `plan-gate verify`: PASS, snapshot `a6abc4f89279ae69760bfbf24d1ba59b10401de3ede849f5cccaba0c1d0ed6a9`.
+- Publication: with the owner's authorization, `v1-1-plan` was pushed and PR #15 opened into `dev`. `CI` passed. `Futari contract` fails by design at the `Futari-Task` marker, as CR-001 PR #12 did (R-25).
+- Next step: the owner merges PR #15 personally with a merge commit. Then run `/futari:execute` from `dev`; it starts with JM-101 and JM-102.
 
 ## Execution session 2026-11-21
 
@@ -49,7 +71,7 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 
 - Observation: EV-008 run 1 displayed Q5-O1, a Rakuten Ichiba search-results page (`search.rakuten.co.jp/search/mall/...`), as a merchant offer. Exa reported `isProductListing: true`; the approved aggregator list has `product.rakuten.co.jp` only. The owner audit failed it (Direct merchant); the run still passed at 15/16.
 - Recommendation: a reviewed revision adding search-results URL handling (for example `search.rakuten.co.jp` on the aggregator list and a path rule for `/search`), with frozen cases from the run-1 log.
-- Status: owner chose "Follow-up after MVP" (2026-11-21). Not part of `kensaku-mvp-v1`.
+- Status: owner chose "Follow-up after MVP" (2026-11-21). Not part of `kensaku-mvp-v1`. Included in proposed plan `kensaku-v1-1` as rule 5b (D-031, REQ-016, EV-011 case N33).
 
 ### Deferred follow-ups (non-blocking review findings)
 

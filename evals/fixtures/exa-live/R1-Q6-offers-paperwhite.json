@@ -1,0 +1,244 @@
+{
+  "_label": "LIVE EXA RESPONSE copied byte-for-byte from the EV-008 run 1 log (.futari/evidence/live/ev-008-run-1-20261121T005520Z.json, queries[5].exaExchanges[1]) for plan kensaku-v1-1. Real data, not a gold label.",
+  "id": "R1-Q6-offers-paperwhite",
+  "source": {
+    "log": ".futari/evidence/live/ev-008-run-1-20261121T005520Z.json",
+    "queryId": "Q6",
+    "exchangeIndex": 1,
+    "gitSha": "7bfa54f124ae7d5c94f4074c0de30e0f08ec8c12"
+  },
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Amazon Kindle Paperwhite (2024年モデル) buy",
+      "options": {
+        "type": "auto",
+        "numResults": 8,
+        "userLocation": "JP",
+        "contents": {
+          "highlights": true,
+          "summary": {
+            "query": "Extract the product listing's price, currency, availability and merchant.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "isProductListing": {
+                  "type": "boolean",
+                  "description": "True only if this page sells one specific product."
+                },
+                "productName": {
+                  "type": "string"
+                },
+                "merchant": {
+                  "type": "string",
+                  "description": "Store or seller name shown on the page."
+                },
+                "price": {
+                  "type": "number",
+                  "description": "Current listed price as a number, no symbols. Omit if not shown."
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO 4217 code such as USD. Omit if not shown."
+                },
+                "availability": {
+                  "type": "string",
+                  "enum": [
+                    "in_stock",
+                    "out_of_stock",
+                    "preorder",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "isProductListing"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-21T00:55:50.052Z",
+  "receivedAt": "2026-11-21T00:55:50.052Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "2b53c3392585c80a3f90ac62c3c4c5b3",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.amazon.co.jp/dp/B0CFPL6CFY/ref=pav_fromAsin_B09BRLNXJP_toAsin_B0CFPL6CFY",
+        "title": "Amazon Kindle Paperwhite 電子書籍リーダー",
+        "url": "https://www.amazon.co.jp/dp/B0CFPL6CFY/ref=pav_fromAsin_B09BRLNXJP_toAsin_B0CFPL6CFY",
+        "highlights": [
+          "Amazon Kindle Paperwhite 電子書籍リーダー\n\n商品の詳細を表示するには、この商品をカートに追加します。商品は後でいつでも削除できます。\n\n選択した拡張機能は、この出品者では利用できません。 詳細\n\n購入に次の拡張機能を追加するには、別の出品者を選択します。\n\n...\n\n過去1か月で1000点以上購入されました\n\n---\n\n商品の詳細を表示するには、この商品をカートに追加します。商品は後でいつでも削除できます。\n\nAmazonによる発送\n\n安心・安全への取り組み\n\nお客様情報の保護\n\nAmazonによる発送\n\n- Amazon.co.jpが発送する商品の通常配送では、条件を満たした場合、日本国内へは無料で商品をお届けします。 初めてお買い物をされるお客様については、ご注文金額に関わらず通常配送が無料になります。詳しくは、配送料についてをご覧ください。 Amazonプライム会員およびPrime Student会員の方は、配送オプションに関わらず配送料無料です。 商品の配送状況は注文履歴からも追跡できます。 配送状況についての詳細はこちらをご覧ください。\n- 詳細はこちら\n\n安心・安全への取り組み\n\nお客様情報を保護しています\n\nこの商品の最新モデルが表示されています\n\nBrief content visible, double tap to read full content.\n\nFull content visible, double tap to read brief content.\n\nモデル: 本体のみ\n\nモデルの選択ができます\n\n### 購入オプションとあわせ買い\n\n---\n\n- 【最速のKindle】最新のPaperwhiteディスプレイは前モデルと比べてページめくりが25%速くなりました。\n- 【7インチディスプレイ】光の反射を抑えた300ppiディスプレイで紙のような読み心地を。\n- 【読書の時間を贅沢に】Eメールやソーシャルメディアなどの通知に気を取られることなく、本に集中できる読書のための専用端末。\n- 【最大12週間バッテリー】USB-C対応、一度のフル充電で最大12週間続くバッテリー。\n- 【色調調節ライト】ホワイトからアンバーに色の暖かさを調節して、自分にとって読みやすい色合いを。\n- 【防水機能】IPX8等級の防水機能搭載。うっかり水がかかってしまっても、バスタブに落としてしまっても安心。\n- 【本棚をまるごと手の中に】16GBのストレージで、数千冊のコンテンツをこの1台に保存し、持ち歩けます。\n- 【Kindle Unlimited】会員登録(有料)すれば、500万冊以上の本・マンガ・雑誌・洋書が読み放題。新しいお気に入りがきっと見つかります。\n\n もっと見る\n\nこの商品に関する問題を報告する\n\n## 次のチャプターへようこそ\n\n前モデルより大きく、速く、薄くなったKindle Paperwhite第12世代。光の反射を抑えた7インチのPaperwhiteディスプレイのページめくりは25%速く、白黒コントラスト比も高くなり、さらに読みやすくなりました。\n\n## 駆けるようにページが進む\n\n### 最もレスポンスの早いKindle。読書でも、ライブラリやKindleストアの操作でも。\n\n## 読書専用の空間に浸る\n\nKindle Paperwhiteは読書に特化して設計された端末です。Eメールやソーシャルメディアなどの通知に気を取られることなく、本に集中できます。 USB-C対応、一度のフル充電で最大12週間続くバッテリー(使用状況等によって変わります)。\n\n## 続きはどんなタイミングでも\n\n### 持ち運びやすい、軽くて薄いKindle Paperwhite。通勤中から就寝前、暗い室内や明るい室外を問わず、さまざまな場所や時間で物語が続く。\n\n### 好みや環境に合わせてフォントのサイズや種類、文字の太さ、行間などの表示設定を簡単に変更。\n\n## 防水だからバスタイムも読書を\n\n防水だからお風呂、プールなど、お好きな場所で読書を楽しめます。Kindle Paperwhiteは、IPX8等級の防水機能を備えています。うっかり水がかかっても、バスタブに落としてしまっても安心。 防水機能については、こちらをご確認下さい。\n\n## 本棚がまるごと手の中に\n\n16GBのストレージで、数千冊のコンテンツをこの1台に保存し、持ち歩けます(一般的な書籍の場合)。Kindleストアでは最新のベストセラーやコミックなどの豊富な品揃えをご用意しています。 ※Kindle電子書籍リーダーのディスプレイは、カラーではなく16階調グレースケール表示です ※2024年10月16日時点の配信コンテンツです\n\n## 開くと起動する純正カバー\n\nAmazon純正カバーは、Kindle Paperwhite本体にぴったりフィットするよう設計されています。折りたたみ式で、片手での読書も快適。 カバーを閉じるとKindle Paperwhiteが自動的にスリープモードになり、開くと自動的に画面がオンになるので、すぐ本の続きに戻れます。 ※カバーは別売りです。カバーの詳細な情報はこちらでご覧になれます\n\n...\n\n## Kindle電子書籍リーダーの比較\n\nデバイス\n\n価格\n\n￥19,980\n\n￥27,980\n\n￥32,980\n\n￥39,980\n\n￥44,980\n\n￥72,980\n\n￥89,980\n\n￥106,980\n\n評価\n\nカスタマーレビューはありません\n\nカスタマーレビューはありません\n\nカスタマーレビューはありません\n\nディスプレイサイズ\n\n6インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n11インチ反射抑制スクリーン\n\n11インチ反射抑制スクリーン\n\n11インチ反射抑制スクリーン\n\n容量\n\n16GB\n\n16GB\n\n32GB\n\n16GB\n\n32GB\n\n16GB\n\n32GB/64GB\n\n32GB/64GB\n\n解像度\n\n300ppi\n\n300ppi\n\n300ppi\n\n300ppi(白黒)、150ppi(カラー)\n\n300ppi(白黒)、150ppi(カラー)\n\n300ppi\n\n300ppi\n\n300ppi\n\nUSBポート\n\nUSB-C\n\nUSB-C\n\nUSB-C\n\nUSB-C\n\nUSB-C\n\nUSB-C\n\nUSB-C\n\nUSB-C\n\nバッテリー持続時間\n\n最大6週間\n\n最大12週間\n\n最大12週間\n\n最大8週間\n\n最大8週間\n\n最大16週間\n\n最大12週間\n\n最大8週間\n\n防水機能\n\n色調調節ライト\n\n明るさ自動調整機能\n\nワイヤレス充電対応\n\nフラットベゼル\n\n自動画面回転機能\n\n手書き入力機能\n\nカラー\n\nブラック、マッチャ\n\nブラック\n\nメタリックブラック、 メタリックジェード\n\nブラック\n\nメタリックブラック\n\nグラファイト\n\nグラファイト\n\nグラファイト、フィグ\n\n## Kindle Paperwhite\n\n### 技術仕様\n\nディスプレイ\n\n7インチAmazon Paperwhiteディスプレイ、解像度300ppi、内蔵型ライト、フォント最適化技術、16階調グレースケール\n\nサイズ\n\n176.7 x 127.6 x 7.8 mm\n\n重量\n\n211g。実際のサイズと重量は、仕様や製造過程によって多少異なる場合があります\n\nシステム要件\n\nワイヤレス接続対応、コンテンツのダウンロード時にPC不要\n\n容量\n\n16GB。端末本体に数千冊保存可能 (一般的な書籍の場合)\n\nクラウド\n\nAmazonのコンテンツはすべて無料でクラウドに保存可能\n\nバッテリー\n\n一度のフル充電で最大12週間利用可能 (明るさ設定13、ワイヤレス接続オフで1日30分使用した場合)。使用状況により利用できる時間は異なります\n\n充電時間\n\n9W以上の充電アダプター経由でのUSB-C充電で約2.5時間\n\nwifi接続\n\n2.4GHz、5.0GHzをサポート。パスワード認証によるWEP、WPA、WPA2、WPA3、OWEおよびWPSセキュリティに対応。アドホック (またはピアツーピア方式) のwifiネットワークへの接続には対応していません\n\n対応ファイルフォーマット\n\nKindleフォーマット8(AZW3)、Kindle(AZW)、TXT、PDF、保護されていないMOBI、PRCに対応。PDF、DOCX、DOC、HTML、EPUB、TXT、RTF、JPEG、GIF、PNG、BMPは変換して対応\n\nユーザーヘルプ\n\nKindleユーザーズガイド (端末にプリインストール) およびクイックスタートガイド (同梱) はこちらからもご覧いただけます\n\n保証とサービス\n\n同梱内容\n\nKindle Paperwhite、USB-C 充電ケーブル、クイックスタートガイド\n\n防水機能\n\nIPX8等級。実験では、真水で水深2メートルまでで最大60分、または海水で水深0.25メートルまでで最大3分まで耐えられることが確認されています (防水機能については、こちらをご確認下さい)\n\nカラー\n\nブラック\n\n世代\n\nKindle Paperwhite (第12世代) - 2024年発売\n\nソフトウェアのセキュリティアップデート\n\n---\n\n## カスタマーレビュー\n\n星5つ中4.3つ\n\n7,812グローバルレーティング\n\n全体的な星の評価と星ごとの割合の内訳を計算するために、単純な平均は使用されません。その代わり、レビューの日時がどれだけ新しいかや、レビューアーがAmazonで商品を購入したかどうかなどが考慮されます。また、レビューを分析して信頼性が検証されます。\n\n---\n\n---\n\n### お客様のご意見\n\nお客様はこのKindle eBook Readerの読みやすさを高く評価しています。本を読むのに十分な処理性能があり、読書の自由度が一気に広がると好評です。また、操作レスポンスが速くなったため、ページ送りやハイライトの速度が上がり、画面のリフレッシュスピードが上がったという声があります。 さらに、長時間読んでも目が疲れにくく、ノンストレスで読書できる点が特に評価されています。 軽量で片手で持てるため、通勤バッグに入れても邪魔にならないとの声もあります。 一方で、価格については4倍になったという指摘もありますが、全体的にコストパフォーマンスが良いと感じているようです。\n\nお客様の投稿に基づきAIで生成されたものです。カスタマーレビューは、お客様自身による感想や意見であり、Amazon.co.jpの見解を示すものではありません"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite 電子書籍リーダー\",\"merchant\":\"Amazon.co.jp\",\"price\":18980,\"currency\":\"JPY\",\"availability\":\"in_stock\"}",
+        "image": "https://m.media-amazon.com/images/G/09/social_share/amazon_logo._CB634197764_.png"
+      },
+      {
+        "id": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite/560313/tg1045612/",
+        "title": "【楽天市場】kindle paperwhite（ブランドアマゾン）（電子書籍リーダー本体｜スマートフォン・タブレット）の通販",
+        "url": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite/560313/tg1045612/",
+        "highlights": [
+          "【楽天市場】kindle paperwhite（ブランドアマゾン）（電子書籍リーダー本体｜スマートフォン・タブレット）の通販\n\nお届け先(離島除く)への最安送料とお届け日を表示しています。 お届け日は目安のため、正確な情報は注文画面でご確認ください。\n\n価格や送料、納期、ポイント、在庫等の詳細は、商品のサイズや色によって異なる場合があります。正確な情報は商品ページでご確認ください。\n\n商品のお届けに関するお客様ニーズを幅広く満たす商品に「最強翌日配送」ラベルを表示しています。詳細を見る\n\n## 【ダイヤ・プラチナ限定エントリーでポイント5倍！】【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n5(6件)\n\n14:00までの注文で最短11/21(翌日)お届け\n\n## 【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n3(1件)\n\n14:00までの注文で最短11/21(翌日)お届け\n\n 電子問屋 2号店\n\n## 【新品】Kindle Paperwhite シグニチャーエディション 32GB\n\n36,449円\n\n送料無料\n\n662ポイント\n\n(1倍+1倍UP)\n\n5(2件)\n\n14:00までの注文で最短11/21(翌日)お届け\n\n39,980円\n\n363ポイント\n\n(1倍)\n\n## Amazon｜アマゾン Kindle Paperwhite シグニチャーエディション(32GB) 7インチディスプレイ、明るさ自動調整、色調調節ライト、12週間持続バッテリー、広告なし メタリックブラック B0CFPHTMDX [7インチ /防水]\n\n44,980円\n\n送料無料\n\n408ポイント\n\n(1倍)\n\n15:00までの注文で最短11/21(翌日)お届け\n\n## 【新品】【2024モデル】 Kindle Paperwhite シグニチャーエディション (32GB) 7インチディスプレイ 電子書籍リーダー メタリックジェード 広告なし 第12世代\n\n36,448円\n\n送料無料\n\n331ポイント\n\n(1倍)\n\n5(1件)\n\n1〜3日以内に発送予定(店舗休業日を除く)\n\n ノア商社 楽天市場店\n\n...\n\n## 【2台限定入荷！】 【送料無料】 Kindle Paperwhite 16GB Amazon アマゾン キンドル ペーパーホワイト 7インチディスプレイ 色調調節ライト 12週間持続バッテリー B0CFPL6CFY 電子書籍リーダー\n\n37,800円\n\n送料無料\n\n343ポイント\n\n(1倍)\n\n16GB\n\n...\n\n## Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし ブラック B0CFPL6CFY [B0CFPL6CFY]【RBKM】\n\n39,980円\n\n363ポイント\n\n(1倍)\n\n1〜3日で出荷\n\n...\n\n## 【新品】【2024モデル】 Kindle Paperwhite (16GB) 7インチディスプレイ 電子書籍リーダー ブラック 広告なし 第12世代\n\n28,080円\n\n255ポイント\n\n(1倍)\n\n1〜3日以内に発送予定(店舗休業日を除く)"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"kindle paperwhite（ブランドアマゾン）（電子書籍リーダー本体｜スマートフォン・タブレット）の通販\",\"merchant\":\"楽天市場\",\"price\":27492,\"currency\":\"JPY\",\"availability\":\"in_stock\"}",
+        "image": "https://r.r10s.jp/com/img/logo/rakuten_group_red.svg"
+      },
+      {
+        "id": "https://www.amazon.co.uk/All-new-Amazon-Paperwhite-fastest-glare-free/dp/B0CTMQBGF4",
+        "title": "Amazon Kindle Paperwhite (2024 model) – 7\" glare-free display and weeks of battery life – 16 GB – With Ads - Jade - Kindle+ : Amazon.co.uk",
+        "url": "https://www.amazon.co.uk/All-new-Amazon-Paperwhite-fastest-glare-free/dp/B0CTMQBGF4",
+        "author": "Visit the Amazon Kindle Store",
+        "highlights": [
+          "Amazon Kindle Paperwhite (2024 model) – 7\" glare-free display and weeks of battery life – 16 GB – With Ads - Jade - Kindle+ : Amazon.co.uk\n\n £119.99£119.99 \n\n FREE delivery Tuesday, 24 November. Details \n\n Or fastest delivery Sunday, 22 November. Order within 50 mins. Details \n\n In stock \n\n££119.99 119. 99 () Includes selected options. Includes initial monthly payment and selected options. \n\n Details \n\n Price (£ 119. 99 x) £ 119. 99 \n\n Delivery cost, delivery date and order total (including tax) shown at checkout. \n\n Sold by \n\n amazon.co.uk \n\n amazon.co.uk \n\n Sold by amazon.co.uk \n\n Returns \n\n Returnable until Jan 31, 2027 or within 30 days from receipt (whichever is later) \n\n Returnable until Jan 31, 2027 or within 30 days from receipt (whichever is later) \n\n If you purchase this item between November 1 and December 25, 2026, it can be returned until January 31, 2027 or within 30 days from receipt (whichever is later). \n\n Read full Amazon return policy \n\n Payment \n\n Secure transaction \n\n Your transaction is secure\n\n...\n\nOur payment security system encrypts your information during transmission. We don’t share your credit card details with third-party sellers, and we don’t sell your information to others. Learn more \n\n Legal warranty \n\n Available \n\n Warranty and Repairs \n\n Get a repair if you experience an item defect under legal warranty. If your item cannot be repaired, get a replacement or refund. The legal warranty against hidden defects also applies. Learn more \n\n- \n- To view this video download Flash Player \n\n \n\n# Amazon Kindle Paperwhite (2024 model) – 7\" glare-free display and weeks of battery life – 16 GB – With Ads - Jade - Kindle+ \n\n Brand: Amazon \n\n 4.6 4.6 out of 5 stars (17,861) \n\n| List Price: | £184.99£184.99 |\n| --- | --- |\n| With Deal: | £119.99£119.99 |\n| You Save: | £65.00£65.00 (35%) |\n\n Colour: Jade \n\n Make a Colour selection \n\n- Kindle Paperwhite – 7-inch Paperwhite display with high contrast ratio and fast page turns. \n- Ready for travel – The ultra-thin design has a larger glare-free screen so pages stay sharp no matter where you are. \n- Escape into your books – Your Kindle doesn't have social media, notifications or other distracting apps. \n- Battery life for your longest novel – A single charge via USB-C lasts up to 12 weeks. \n- Read in any light – Adjust the display from white to amber to read in bright sunlight or in the dark. \n- Waterproof and worry-free – Take your stories by the pool, in the bath, or anywhere in between. \n- With Kindle+ you have instant access to millions of stories across every genre. eBooks, magazines, comics. No per-title cost. Read on any device.\n\n...\n\n## Technical details\n\n \n\n### Kindle Paperwhite\n\nDisplay\n\nAmazon's 7” Paperwhite display technology with built-in front light, 300 ppi, optimized font technology, 16-level gray scale.\n\nSize\n\n127.5 x 176.7 x 7.8 mm\n\nWeight\n\n211 g. Actual size and weight may vary by configuration and manufacturing process.\n\nSystem Requirements\n\nNone; fully wireless and doesn't require a computer to download content.\n\nOn-Device Storage\n\n16 GB; holds thousands of books.\n\nCloud Storage\n\nFree cloud storage for all Amazon content.\n\nBattery Life\n\nA single charge lasts up to twelve (12) weeks, based on half an hour of reading per day with wireless off and the light setting at 13. Battery life may vary depending on use. Audible audiobook streaming over Bluetooth will reduce battery life.\n\nCharge Time\n\nFully charges in approximately 2.5 hours with a 9 W USB-C power adaptor.\n\n...\n\nWarranty and Service\n\nKindle is sold with a limited warranty of one year provided by the manufacturer. If you are a consumer, the limited warranty is in addition to your consumer rights and does not jeopardise these rights in any way. This means you may still have additional rights at law even after the limited warranty has expired (see here for more information on your consumer rights). Use of Kindle is subject to the terms found here.\n\nIncluded in the Box\n\nKindle Paperwhite, USB-C charging cable and Quick Start Guide.\n\nWaterproofing\n\nWaterproof (IPX8), tested to withstand immersion in 2 metres of fresh water for 60 minutes. Learn more about the waterproof Kindle Paperwhite.\n\nAvailable Colours\n\nBlack, Raspberry and Jade\n\nGeneration\n\nKindle Paperwhite (12th generation) – 2024 release.\n\n...\n\nWhile some customers consider it well worth the extra money, others feel it's not worth the price. The battery life receives mixed reviews, with some finding it great while others say it's uselessly short, and the device's reliability and screen quality also get mixed feedback."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite (2024 model) – 7\\\" glare-free display and weeks of battery life – 16 GB – With Ads - Jade - Kindle+ : Amazon.co.uk\",\"merchant\":\"amazon.co.uk\",\"price\":119.99,\"currency\":\"GBP\",\"availability\":\"in_stock\"}",
+        "entities": [
+          {
+            "id": "https://www.amazon.co.uk/All-new-Amazon-Paperwhite-fastest-glare-free/dp/B0CTMQBGF4",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Amazon Kindle Paperwhite (2024 model) – 7\" glare-free display and weeks of battery life – 16 GB – With Ads - Jade - Kindle+",
+              "description": null,
+              "images": [
+                "https://m.media-amazon.com/images/I/61iA+PdO4IL._AC_SY355_.jpg",
+                "https://m.media-amazon.com/images/I/61iA+PdO4IL._AC_SY450_.jpg",
+                "https://m.media-amazon.com/images/I/61iA+PdO4IL._AC_SX425_.jpg",
+                "https://m.media-amazon.com/images/I/61iA+PdO4IL._AC_SX466_.jpg",
+                "https://m.media-amazon.com/images/I/61iA+PdO4IL._AC_SX522_.jpg",
+                "https://m.media-amazon.com/images/I/61iA+PdO4IL._AC_SX569_.jpg",
+                "https://m.media-amazon.com/images/I/61iA+PdO4IL._AC_SX679_.jpg"
+              ],
+              "brand": {
+                "id": null,
+                "name": "Amazon"
+              },
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 119.99,
+                  "currency": "GBP"
+                },
+                "availability": "in_stock",
+                "sku": "B0CTMQBGF4",
+                "seller": {
+                  "id": "A15TDJPQTW2U5S",
+                  "name": "amazon.co.uk",
+                  "url": null
+                }
+              },
+              "rating": {
+                "value": 4.6,
+                "count": 17844
+              },
+              "attributes": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://press.aboutamazon.com/jp/2024/10/amazon-revamps-kindle-series",
+        "title": "Amazon、Kindleシリーズを刷新 - Press Center",
+        "url": "https://press.aboutamazon.com/jp/2024/10/amazon-revamps-kindle-series",
+        "publishedDate": "2024-10-16T22:30:19.000Z",
+        "highlights": [
+          "October 17, 2024\n\n# Amazon、Kindleシリーズを刷新\n\n2024/10/16\n\n～ Kindle Scribeはデザインを一新し、 読書とノートの融合を更に加速させるべく、新たな書き心地を提供 ～\n\n～ Kindle Paperwhiteはページめくりの速度が前モデル比25%向上、同モデル史上最速を実現 ～\n\n～ Kindleは、新たな色「マッチャ」を追加し、 前モデルよりスムーズなページめくりの実現で、お客様の読書体験をアップグレード ～\n\nAmazonは、10月16日（水）、2012年のKindle発売以来、初めてKindleシリーズ* 1 を一斉に刷新し、新しくなった4機種、「Kindle Scribe」、「Kindle Paperwhite」、「Kindle Paperwhite シグニチャーエディション」、「Kindle」を発表しました。デザインを一新し、さらに新たな機能「Active Canvas」* 2 を追加したKindle Scribeは、読書だけでなく本物の紙のような書き心地を提供します。また、新Kindle Paperwhiteは、前モデル比25％の向上により、Kindle Paperwhite史上最速のページめくりの実現と、7インチディスプレイの採用により、同モデル史上最大の画面サイズを実現しました。新Kindleは、今回初めて新色の「マッチャ」を追加し、前モデルと比べてディスプレイの明るさやページめくりの速度を向上させ、通勤電車やお出かけ先でもより快適な読書体験をお客様に提供します。\n\n...\n\n新しいKindle Paperwhite、Kindle Paperwhite シグニチャーエディション： Paperwhite史上最速のページめくりを実現\n\n- Paperwhiteディスプレイの向上：新Kindle Paperwhiteは、前モデルと比べてページめくりの速度が25%向上し、Kindleライブラリや本のページをすばやくスクロールすることが可能です。本モデルは軽量で薄型なデザインでありながら、Kindle Paperwhite史上最大となる7インチディスプレイを搭載しています。さらに、高い白黒コントラスト比と300ppiの高解像度ディスプレイの実現でくっきりとした文字と画像を表示し、より快適な読書を実現します。\n- 長時間持続のバッテリー* 3 と超薄型防水デザイン：新Kindle Paperwhiteは前モデルと同様に、Kindleシリーズで最長となる最大12週間持続可能なバッテリー* 3 を実現しています。また、従来のIPX8等級の防水機能も搭載し、浴室やビーチ、プールなど場所を問わず読書を楽しむことができます。\n- Kindle Paperwhiteシグニチャーエディション：新しくなったKindle Paperwhiteシグニチャーエディションは、前モデルと同様に32GBのストレージや、周囲の明るさに応じてディスプレイが輝度を自動的に調整する明るさ自動調整機能を搭載しているほか、ワイヤレス充電にも対応しています。\n\n...\n\nお気に入りの一冊\n\nすべてのKindle端末は、前モデルと同様に、最新のベストセラーを含む書籍、マンガ、雑誌など、豊富な品揃えを持つKindle本ストアにアクセスが可能です。さらに、Kindle Unlimitedは、会員登録（有料）すれば、豊富な本、マンガ、雑誌および洋書の中から好きなだけ読み放題で利用いただけます（同時に20冊まで）。Kindle Unlimitedの登録方法に関する詳細は、Amazon.co.jp（ https://www.amazon.co.jp/kindle-dbs/hz/subscribe/ku ）をご覧ください。\n\n価格と購入方法\n\n...\n\n新Kindle Paperwhiteはブラックの1色展開で、価格は27,980円（税込）、新Kindle Paperwhiteシグニチャーエディションは、メタリックブラックとメタリックジェードの2色展開で、価格は32,980円（税込）です。別売りのAmazon純正カバーは、ファブリックカバー、植物性レザーカバー、プレミアムレザーカバーがそれぞれ2色展開で、価格は4,980円（税込）～8,980円（税込）です。新Kindle Paperwhite、新Kindle Paperwhiteシグニチャーエディション、そして別売りのAmazon純正カバーは、本日よりAmazon.co.jp（ https://www.amazon.co.jp/kindlepaperwhite2024 ）、（ https://www.amazon.co.jp/kindlepaperwhite-signatureedition2024 ）にて販売します* 4 。\n\n...\n\n新しいKindleシリーズ* 1 はエディオン、ケーズデンキ、コジマ × ビックカメラ、上新電機、ビックカメラ、ヤマダデンキでも順次販売開始を予定しています *5 。\n\nなお本製品については、About Amazon（ https://www.aboutamazon.jp/news/devices/kindle-2024 ）でもご覧いただけます。\n\n*1 キッズモデルを除く。\n\n*2 Active CanvasによるKindle本の文中への手書き入力は、一部の電子書籍のみ対応（縦書きおよびマンガなど固定レイアウトの電子書籍には対応していません）。\n\n*3 明るさ設定13、ワイヤレス接続オフで1日30分使用した場合、1回のフル充電で最大6週間（Kindleの場合）又は最大12週間（Kindle Paperwhiteの場合）利用可能。使用状況等によって利用できる時間は異なります。\n\n*4 Amazon純正ファブリックカバー（メタリックジェードのみ）は、ご注文いただいてから通常6～8週間後の発送で、11月末以降の提供を予定しています。\n\n*5 五十音順。店舗により取り扱い商品・販売日が異なる場合があります。お取り扱いについては各販売店舗にてご確認ください。"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":null,\"merchant\":null,\"price\":null,\"currency\":null,\"availability\":null}",
+        "image": "https://assets.aboutamazon.com/dims4/default/3039ed1/2147483647/strip/true/crop/2000x1000+0+63/resize/1200x600!/quality/90/?url=https%3A%2F%2Fassets.aboutamazon.com%2Fb3%2F79%2Fb0e61293471b9d35c5ff02e46f37%2Famazon-logo-hero-images-2024.jpg"
+      },
+      {
+        "id": "https://www.amazon.de/kindle-paperwhite-2024/dp/B0CFPWLGF2",
+        "title": "Amazon Kindle Paperwhite 16 GB (Version 2024) – blendfreies 7-Zoll-Display und wochenlange Akkulaufzeit – ohne Werbung – schwarz",
+        "url": "https://www.amazon.de/kindle-paperwhite-2024/dp/B0CFPWLGF2",
+        "highlights": [
+          "# Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – Without Ads - black\nBrand: Amazon\n\n## Features\nKindle Paperwhite – 7“ Paperwhite display with high contrast ratio and fast page turns.; Ready for travel – The ultra-thin design has a larger glare-free screen so pages stay sharp no matter where you are.; Escape into your books – Your Kindle doesn't have social media, notifications or other distracting apps.; Battery life for your longest novel – A single charge via USB-C lasts up to 12 weeks.; Read in any light – Adjust the display from white to amber to read in bright sunlight or in the dark.; Waterproof and worry-free – Take your stories by the pool, in the bath, or anywhere in between.; Massive selection – Get instant access to millions of titles in the Kindle Store, and add a Kindle+ subscription to unlock even more content.\n\n## Pricing & Reviews\nPrice: 154.99 EUR.\nRated 4.6 from 17804 reviews."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite 16 GB (Version 2024) – blendfreies 7-Zoll-Display und wochenlange Akkulaufzeit – ohne Werbung – schwarz\",\"merchant\":\"Amazon\",\"price\":154.99,\"currency\":\"EUR\",\"availability\":\"in_stock\"}",
+        "entities": [
+          {
+            "id": "https://www.amazon.de/kindle-paperwhite-2024/dp/B0CFPWLGF2",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – Without Ads - black",
+              "description": null,
+              "images": [
+                "https://m.media-amazon.com/images/I/61be7WtjSdL._AC_SY355_.jpg",
+                "https://m.media-amazon.com/images/I/61be7WtjSdL._AC_SY450_.jpg",
+                "https://m.media-amazon.com/images/I/61be7WtjSdL._AC_SX425_.jpg",
+                "https://m.media-amazon.com/images/I/61be7WtjSdL._AC_SX466_.jpg",
+                "https://m.media-amazon.com/images/I/61be7WtjSdL._AC_SX522_.jpg",
+                "https://m.media-amazon.com/images/I/61be7WtjSdL._AC_SX569_.jpg",
+                "https://m.media-amazon.com/images/I/61be7WtjSdL._AC_SX679_.jpg"
+              ],
+              "brand": {
+                "id": null,
+                "name": "Amazon"
+              },
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 154.99,
+                  "currency": "EUR"
+                },
+                "availability": "in_stock",
+                "sku": "B0CFPWLGF2",
+                "seller": {
+                  "id": "A3JWKAKR8XB7XF",
+                  "name": "Amazon",
+                  "url": null
+                }
+              },
+              "rating": {
+                "value": 4.6,
+                "count": 17804
+              },
+              "attributes": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.amazon.es/kindle-paperwhite-2024/dp/B0CFPWLGF2",
+        "title": "Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – Without Ads - Black : Amazon.es",
+        "url": "https://www.amazon.es/kindle-paperwhite-2024/dp/B0CFPWLGF2",
+        "author": "Visit the Amazon Kindle Store",
+        "highlights": [
+          "Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – Without Ads - Black : Amazon.es\n\n €154.99€ 154. 99 \n\n FREE returns \n\nFree returns are available for the shipping address you selected. You can return the item for any reason, in new and unused condition, with no shipping costs.\n\n FREE delivery Wednesday, 25 November. Details \n\n Or fastest delivery Sunday, 22 November. Order within 4 hrs 20 mins. Details \n\n In stock \n\n€€154.99 154. 99 () Includes selected options. Includes initial monthly payment and selected options. \n\n Price (€ 154. 99 x) € 154. 99 \n\n Delivery cost, delivery date and order total (including tax) shown at checkout. \n\n Shipper / Seller \n\n Amazon \n\n Amazon \n\n Shipper / Seller Amazon \n\n Returns \n\n Returnable until Feb 6, 2027 \n\n Returnable until Feb 6, 2027 \n\n For the 2026 holiday season, this item if purchased between November 1 and January 6, 2027 can be returned until February 6, 2027 or within 30 days from receipt (whichever is later). \n\n Read Amazon’s full return policy \n\n Legal warranty \n\n Available \n\n Warranty and Repairs \n\n Get a repair if you experience an item defect for 3 years under legal warranty. If your item cannot be repaired, get a replacement or refund. The legal warranty against hidden defects also applies. Learn more \n\n Payment \n\n Secure transaction \n\n Your transaction is secure \n\n We work hard to protect your security and privacy. Our payment security system encrypts your information during transmission. We don’t share your credit card details with third-party sellers, and we don’t sell your information to others. Learn more\n\n...\n\n# Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – Without Ads - Black \n\n Brand: Amazon \n\n 4.7 4.7 out of 5 stars (17,850) \n\n While promotional stock lasts \n\nRecommended Price: €224.99 Recommended Price: €224.99€224.99 \n\n -31% Lowest price in last 30 days: €224.99€224.99 \n\n The prices of products sold on Amazon include VAT. Depending on your delivery address, VAT may vary at the checkout. For more information, click here. \n\n There's a newer model of this product – learn more \n\nKindle Paperwhite devices\n\n Colour: Black \n\n Version: Without Kindle+ \n\n### Purchase options and add-ons \n\n- Kindle Paperwhite – 7“ Paperwhite display with high contrast ratio and fast page turns. \n- Ready for travel – The ultra-thin design has a larger glare-free screen so pages stay sharp no matter where you are. \n- Escape into your books – Your Kindle doesn't have social media, notifications or other distracting apps. \n- Battery life for your longest novel – A single charge via USB-C lasts up to 12 weeks. \n- Read in any light – Adjust the display from white to amber to read in bright sunlight or in the dark. \n- Waterproof and worry-free – Take your stories by the pool, in the bath, or anywhere in between. \n- Massive selection – Get instant access to millions of titles in the Kindle Store, and add a Kindle+ subscription to unlock even more content."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite 16GB (2024 model) – 7\\\" glare-free display and weeks of battery life – Without Ads - Black\",\"merchant\":\"Amazon\",\"price\":154.99,\"currency\":\"EUR\",\"availability\":\"in_stock\"}"
+      },
+      {
+        "id": "https://www.amazon.co.jp/kindle-11%E4%B8%96%E4%BB%A3/s?k=kindle+11%E4%B8%96%E4%BB%A3",
+        "title": "Amazon.co.jp: Kindle 11世代",
+        "url": "https://www.amazon.co.jp/kindle-11%E4%B8%96%E4%BB%A3/s?k=kindle+11%E4%B8%96%E4%BB%A3",
+        "highlights": [
+          "## Results\n\n Check each product page for other buying options.\n\n...\n\n## More results\n\n## Amazon Kindle Paperwhite シグニチャーエディション 32GB 最新モデル - より薄い、アルミニウムデザイン、7インチディスプレイ、明るさ自動調整、グラファイト\n\n4.0 4.0 out of 5 stars (11) 200+ bought in past month\n\nPrice, product page¥44,980¥ 44,980\n\n450 pt (1%)\n\nFREE delivery Sun, Nov 22\n\nOr fastest delivery Tomorrow, Nov 19\n\n...\n\n## Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラック\n\n4.4 4.4 out of 5 stars (10.6K) 100+ bought in past month\n\nPrice, product page¥39,980¥ 39,980\n\nFREE delivery Fri, Nov 20\n\nOr fastest delivery Tomorrow, Nov 19\n\n...\n\n## Amazon Kindle Paperwhite 16GB 最新モデル - より薄く、より軽い、7インチディスプレイ、色調調節ライト、グラファイト\n\n4.7 4.7 out of 5 stars (13) 300+ bought in past month\n\nPrice, product page¥39,980¥ 39,980\n\n400 pt (1%)\n\nFREE delivery Sat, Nov 21\n\nOr fastest delivery Tomorrow, Nov 19"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Amazon Kindle - 目に優しい、かさばらない、大きな画面で読みやすい、6週間持続バッテリー、6インチディスプレイ電子書籍リーダー、ブラック、16GB、広告なし\",\"merchant\":\"Amazon.co.jp\",\"price\":29800,\"currency\":\"JPY\",\"availability\":\"in_stock\"}"
+      },
+      {
+        "id": "https://www.amazon.com/All-new-Amazon-Kindle-Paperwhite-glare-free/dp/B0CFPJYX7P",
+        "title": "Amazon Kindle Paperwhite 16GB (2024 model) – 7\" glare-free display and weeks of battery life – Black",
+        "url": "https://www.amazon.com/All-new-Amazon-Kindle-Paperwhite-glare-free/dp/B0CFPJYX7P",
+        "highlights": [
+          "Amazon.com\n\n#### Click the button below to continue shopping\n\nContinue shopping\n\nConditions of Use Privacy Policy\n\n© 1996-2025, Amazon.com, Inc. or its affiliates\n\nAmazon.com\n**\n**\n#### Click the button below to continue shopping\nContinue shopping\n["
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite 16GB (2024 model) – 7\\\" glare-free display and weeks of battery life – Black\",\"merchant\":\"Amazon.com\",\"price\":null,\"currency\":null,\"availability\":null}"
+      }
+    ],
+    "searchTime": 2675,
+    "costDollars": {
+      "total": 0.015,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.008
+    }
+  }
+}
