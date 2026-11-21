@@ -125,7 +125,7 @@ Playwright, Chromium, `pnpm start` in fixture mode. Scenarios (JM-104 adds the f
 - `no-images`: every candidate fails.
 - `no-market-offers`: SG market, USD offers only.
 - (CR-003) `comparison-truncated`: the comparison is the frozen V9 answer's comparison, which ends in leaked structure.
-- (CR-003) `comparison-dropped`: a synthetic, labeled answer whose comparison has no letter before its first brace.
+- (CR-003) `comparison-dropped`: no frozen answer cuts to a null comparison, so this scenario does not use `FixtureExaPort`. The spec stubs `POST /api/chat` with a Playwright route that returns a UI message stream, as the EV-007 spec already does. The stream holds exactly the parts JM-104's server emits when nothing readable remains: progress parts, a `data-comparison` part `{ truncated: true }` with no text part, and the `xm5-sg-cards` products. The parts are labeled synthetic in the spec. The server side of that contract is tested in JM-104.
 
 1. **Layout.**
    - At 1280×800 the first two cards share a top edge (±2 px), and each is at least 480 px wide. The image box is full-bleed (its width equals the card's border-box width minus the card's border, ±2 px), 4:3 (±1 px), and at least 360 px tall.
@@ -158,8 +158,12 @@ Playwright, Chromium, `pnpm start` in fixture mode. Scenarios (JM-104 adds the f
    A v1.1 run survives a reload with the same cards and image candidates.
 9. **Accessibility.** Zero serious or critical axe violations in dark and light on `xm5-sg-cards` and `no-images`. Every disclosure and link is reachable and operable by keyboard. Image alt text follows REQ-013.
 10. **Malformed-answer note** (REQ-002, D-042; added by CR-003, D-043).
-    - In `comparison-truncated`, the comparison shows the cut text with its inline citations. Beside it is the exact note "Exa's answer ended in malformed output, which is not shown.". No `{` or `}` appears anywhere on the page.
-    - In `comparison-dropped`, no comparison text is shown, the note is shown in its place, and the product cards still render.
+    - In `comparison-truncated`, within the comparison section:
+      - the rendered text equals `evals/cases/product-content.json` K01 `expected.renderedText` (ending `…[4,8].`), with K01's 2 sources as its inline citations;
+      - beside it is the exact note "Exa's answer ended in malformed output, which is not shown.".
+
+      The product card's reason (V9's reason is also cut) shows its cut text with the same note. No `{` or `}` appears anywhere on the page.
+    - In `comparison-dropped`, the comparison section shows no comparison text and shows the note in its place. The product cards still render.
     - In `xm5-sg-cards`, no note is shown.
     - The note is axe-clean in both themes.
 

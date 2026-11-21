@@ -105,7 +105,7 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 - Revision:
   - JM-104 criterion 3 now ends at carrying the flag to the client.
   - JM-105 gains the note criterion.
-  - EV-015 gains REQ-002, two scenarios, and check 10.
+  - EV-015 gains REQ-002, two scenarios (one a stubbed UI stream inside JM-105's test paths), and check 10.
   - No other change.
 - Status: under independent review; it needs the owner's plan-revision approval card. JM-104 merges only after the revised contract is on `dev`.
 
