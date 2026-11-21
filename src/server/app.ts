@@ -11,6 +11,7 @@ import type { RunOptions } from "../research/pipeline";
 import { parseChatBody, toChunks } from "./chat";
 import type { AppConfig } from "./config";
 import { hostOriginGuard } from "./guard";
+import type { ImageProxy } from "./images";
 
 export type LogLine = Record<string, unknown>;
 
@@ -23,6 +24,8 @@ export interface AppDeps {
   log: (line: LogLine) => void;
   /** Pipeline knobs (timeouts, backoff); tests shorten them. */
   run?: Pick<RunOptions, "sleep" | "callTimeoutMs" | "runTimeoutMs">;
+  /** The image proxy behind `GET /api/image/:id`; without one the route does not exist. */
+  images?: ImageProxy;
 }
 
 const jsonError = (kind: ApiErrorKind, message: string) => ({ kind, message });
@@ -84,6 +87,9 @@ export function createApp(deps: AppDeps): Hono {
     });
     return createUIMessageStreamResponse({ stream });
   });
+
+  const { images } = deps;
+  if (images) app.get("/api/image/:id", (c) => images.serve(c.req.param("id"), c.req.header("sec-fetch-site")));
 
   app.all("/api/*", (c) => c.json({ error: "not found" }, 404));
   app.use("/*", serveStatic({ root: "./dist" }));
