@@ -1,17 +1,18 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import dns from "node:dns";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RequestBudget } from "../../src/exa/budget";
 import { connectPinned, NetworkImageFetch } from "../../src/server/images";
+import { UPSTREAM_ACCEPT } from "../../src/server/images/network";
 import type { ImageFetchPort } from "../../src/server/images";
 import { TEST_EXA_KEY } from "../fixtures/test-key";
 import { DAY, fakeConnect, fixture, isolated, proxyHarness, PUBLIC_IP, recordingPort } from "../server/images/helpers";
 
 const MIB = 1024 * 1024;
 const JPG = "ok-400x300.jpg";
+const SAFE = { corp: "same-origin", nosniff: "nosniff", csp: "default-src 'none'" };
 const publicLookup = () => Promise.resolve([{ address: PUBLIC_IP, family: 4 }]);
 
 afterEach(() => {
@@ -181,7 +182,7 @@ describe("EV-014 image proxy", () => {
         await readAll(response.body);
         const headers = seen[0]!;
         for (const name of ["cookie", "authorization", "referer", "proxy-authorization"]) expect(headers[name], name).toBeUndefined();
-        expect(headers.accept).toBe("image/avif,image/webp,image/png,image/jpeg");
+        expect(headers.accept).toBe(UPSTREAM_ACCEPT);
         expect(typeof headers["user-agent"]).toBe("string");
       } finally {
         server.close();
@@ -293,7 +294,22 @@ describe("EV-014 image proxy", () => {
     expect(calls).toEqual([]);
     expect((await h.get(id, { "sec-fetch-site": "same-origin" })).status).toBe(200);
     expect((await h.get(id)).status).toBe(200);
-    expect((await h.get(id, { host: "evil.example" })).status).toBe(403);
+    const foreign = await h.get(id, { host: "evil.example" });
+    expect(foreign.status).toBe(403);
+    expect(isolated(foreign)).toEqual(SAFE);
+  });
+
+  it("10b. every response on an image path carries the security headers, including the guard's 403 and the catch-all 404", async () => {
+    const h = proxyHarness({ port: recordingPort().port });
+    for (const path of ["/api/image", "/api/image/", `/api/image/${"a".repeat(64)}/x`, "/api/image/abc"]) {
+      const res = await h.app.request(path, { headers: { host: "127.0.0.1:8787" } });
+      expect(res.status, path).toBe(404);
+      expect(isolated(res), path).toEqual(SAFE);
+      const foreign = await h.app.request(path, { headers: { host: "evil.example" } });
+      expect(foreign.status, path).toBe(403);
+      expect(isolated(foreign), path).toEqual(SAFE);
+    }
+    expect(isolated(await h.app.request("/api/health", { headers: { host: "127.0.0.1:8787" } })).corp).toBeNull();
   });
 
   describe("11. cache lifecycle (fake clock)", () => {
@@ -407,7 +423,6 @@ describe("EV-014 image proxy", () => {
     it("registration stores only url, pageUrl, and registeredAt; serving touches no Exa budget or ledger", async () => {
       const { port } = recordingPort({ "https://cdn.example.com/a.jpg": fixture(JPG) });
       const h = proxyHarness({ port });
-      const budget = new RequestBudget(5);
       const before = h.usage();
       const id = h.register("https://cdn.example.com/a.jpg");
       const entries = () => readdirSync(h.dir).filter((f) => f.endsWith(".json"));
@@ -418,7 +433,6 @@ describe("EV-014 image proxy", () => {
         for (const word of ["authorization", "cookie", "referer", "bearer", TEST_EXA_KEY]) expect(text).not.toContain(word);
       }
       expect(h.usage()).toEqual(before);
-      expect(budget.used).toBe(0);
     });
 
     it("logs one JSON line per fetch without the query string", async () => {
@@ -432,10 +446,68 @@ describe("EV-014 image proxy", () => {
       expect(JSON.stringify(h.logs)).not.toContain("secret");
     });
 
-    it("the proxy imports no Exa module", () => {
+    it("the proxy imports no Exa module, by relative path, alias, or package", () => {
       const dir = join(import.meta.dirname, "../../src/server");
       const files = [join(dir, "images.ts"), ...readdirSync(join(dir, "images")).map((f) => join(dir, "images", f))];
-      for (const file of files) expect(readFileSync(file, "utf8"), file).not.toMatch(/from "\.\.?\/(\.\.\/)?exa\//);
+      const specifier = /(?:from|import)\s*\(?\s*["']([^"']+)["']/g;
+      const exa = /(^|\/)exa(\/|$)|^@\/exa|exa-js/;
+      for (const file of files) {
+        const imported = [...readFileSync(file, "utf8").matchAll(specifier)].map((m) => m[1]!);
+        expect(imported.filter((spec) => exa.test(spec)), file).toEqual([]);
+      }
+      for (const spec of ["../exa/port", "../../exa/budget", "@/exa/client", "exa-js", "../exa"]) expect(exa.test(spec), spec).toBe(true);
+      for (const spec of ["node:net", "../core", "./example", "../core/url"]) expect(exa.test(spec), spec).toBe(false);
+    });
+  });
+
+  describe("14. unexpected input never escapes the security headers", () => {
+    it.each(["not a url", "http://", "https://exa mple.com/a.jpg", "ftp://cdn.example.com/a.jpg", "javascript:alert(1)"])(
+      "registered %j gets 502 invalid-url with the headers, and one log line",
+      async (url) => {
+        const { connect, calls } = fakeConnect({});
+        const lookup = vi.fn(publicLookup);
+        const h = proxyHarness({ port: new NetworkImageFetch({ lookup, connect }) });
+        const id = h.register(url);
+        const res = await h.get(id);
+        expect(res.status).toBe(502);
+        expect(await res.json()).toEqual({ error: "invalid-url" });
+        expect(isolated(res)).toEqual(SAFE);
+        expect(h.logs).toHaveLength(1);
+        expect(h.logs[0]).toMatchObject({ event: "image_fetch", id, verdict: "invalid-url" });
+        expect(lookup).not.toHaveBeenCalled();
+        expect(calls).toEqual([]);
+      },
+    );
+
+    it("an unparseable page URL registers with an empty source host", () => {
+      const h = proxyHarness({ port: recordingPort().port });
+      const [first] = h.proxy.registerImageCandidates([{ imageUrl: "https://cdn.example.com/a.jpg", pageUrl: "::nope::", sourceTitle: "T" }]);
+      expect(first?.sourceHost).toBe("");
+    });
+
+    it("any unexpected error in serving becomes the standard 502 with the headers", async () => {
+      const { port } = recordingPort({ "https://cdn.example.com/a.jpg": fixture(JPG) });
+      const h = proxyHarness({ port });
+      const id = h.register("https://cdn.example.com/a.jpg");
+      const broken = proxyHarness({ port, dir: h.dir, clock: h.clock, log: () => { throw new Error("log sink failed"); } });
+      const res = await broken.get(id);
+      expect(res.status).toBe(502);
+      expect(await res.json()).toEqual({ error: "network-error" });
+      expect(isolated(res)).toEqual(SAFE);
+    });
+  });
+
+  describe("15. orphan temp files", () => {
+    it("are deleted at startup, and the cache's real files stay", async () => {
+      const { port } = recordingPort({ "https://cdn.example.com/a.jpg": fixture(JPG) });
+      const h = proxyHarness({ port });
+      const id = h.register("https://cdn.example.com/a.jpg");
+      expect((await h.get(id)).status).toBe(200);
+      for (const name of [`${id}.json.123.tmp`, `${id}.bin.456.tmp`, "stray.tmp"]) writeFileSync(join(h.dir, name), "partial");
+      const restarted = h.restart();
+      expect(readdirSync(restarted.dir).sort()).toEqual([`${id}.bin`, `${id}.json`].sort());
+      expect((await restarted.get(id)).status).toBe(200);
+      expect(restarted.logs).toEqual([]);
     });
   });
 

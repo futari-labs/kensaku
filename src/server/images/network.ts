@@ -15,6 +15,9 @@ const ALLOWED_PORTS = new Set(["", "80", "443"]);
 export const UPSTREAM_ACCEPT = "image/avif,image/webp,image/png,image/jpeg";
 const UPSTREAM_USER_AGENT = "Mozilla/5.0 (compatible; KensakuImageProxy/1.0)";
 
+/** The hostname without the brackets a URL keeps around an IPv6 literal. */
+export const bareHost = (url: URL): string => url.hostname.replace(/^\[|\]$/g, "");
+
 export interface PinnedResponse {
   status: number;
   location: string | undefined;
@@ -34,7 +37,7 @@ export type Connect = (url: URL, address: string, signal: AbortSignal | undefine
 export const connectPinned = (input: string | URL, address: string, signal?: AbortSignal): Promise<PinnedResponse> => {
   const url = new URL(input);
   const secure = url.protocol === "https:";
-  const host = url.hostname.replace(/^\[|\]$/g, "");
+  const host = bareHost(url);
   const family = isIP(address);
   const lookup: LookupFunction = (_hostname, options, callback) => {
     if (options.all) (callback as (e: null, a: { address: string; family: number }[]) => void)(null, [{ address, family }]);
@@ -92,7 +95,7 @@ export class NetworkImageFetch implements ImageFetchPort {
     try {
       current = new URL(url);
     } catch {
-      return { ok: false, reason: "blocked-address" };
+      return { ok: false, reason: "invalid-url" };
     }
     for (let redirects = 0; ; redirects++) {
       const pinned = await this.pin(current);
@@ -123,9 +126,9 @@ export class NetworkImageFetch implements ImageFetchPort {
 
   /** The address to connect to, or why this URL must not be fetched. */
   private async pin(url: URL): Promise<string | { failure: FetchFailure }> {
-    if (url.protocol !== "http:" && url.protocol !== "https:") return { failure: "blocked-address" };
+    if (url.protocol !== "http:" && url.protocol !== "https:") return { failure: "invalid-url" };
     if (!ALLOWED_PORTS.has(url.port)) return { failure: "blocked-port" };
-    const host = url.hostname.replace(/^\[|\]$/g, "");
+    const host = bareHost(url);
     let addresses: string[];
     if (isIP(host)) addresses = [host];
     else {

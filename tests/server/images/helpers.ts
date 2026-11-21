@@ -27,12 +27,19 @@ export interface ProxyHarness {
   restart: () => ProxyHarness;
 }
 
-export function proxyHarness(options: { port: ImageFetchPort; maxCacheBytes?: number; dir?: string; clock?: ReturnType<typeof fakeClock> }): ProxyHarness {
+export function proxyHarness(options: {
+  port: ImageFetchPort;
+  maxCacheBytes?: number;
+  dir?: string;
+  clock?: ReturnType<typeof fakeClock>;
+  /** Replaces the recording log sink. */
+  log?: (line: Record<string, unknown>) => void;
+}): ProxyHarness {
   const clock = options.clock ?? fakeClock(START);
   const store = storage(clock);
   const dir = options.dir ?? join(tempDir(), "images");
   const logs: Record<string, unknown>[] = [];
-  const log = (line: Record<string, unknown>) => void logs.push(line);
+  const log = options.log ?? ((line: Record<string, unknown>) => void logs.push(line));
   const proxy = new ImageProxy({ port: options.port, clock, log, dir, ...(options.maxCacheBytes !== undefined && { maxCacheBytes: options.maxCacheBytes }) });
   const app = createApp({
     config: { mode: "fixture", dev: false, port: 8787, exaConfigured: false },
