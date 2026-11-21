@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "live:acceptance": "pnpm build && tsx scripts/live-acceptance.ts",
+    "live:acceptance:v1-1": "pnpm build && tsx scripts/live-acceptance-v1-1.ts",
     "check:components": "node scripts/check-components.mjs"
   },
   "dependencies": {

@@ -42,10 +42,10 @@ Phase: **v1.1 execution** (plan `kensaku-v1-1`, approved; contract on `dev` at `
 | JM-102 | [#17](https://github.com/futari-labs/kensaku/issues/17) | `jm-102-theme` | [#23](https://github.com/futari-labs/kensaku/pull/23) | `a4a62bc` | merged (`5eb034c`) | `.futari/evidence/JM-102.md` |
 | JM-103 | [#18](https://github.com/futari-labs/kensaku/issues/18) | `jm-103-image-proxy` | [#24](https://github.com/futari-labs/kensaku/pull/24) | `055f91c` | merged (`d3e598a`), dev push CI green | `.futari/evidence/JM-103.md` |
 | JM-104 | [#19](https://github.com/futari-labs/kensaku/issues/19) | `jm-104-vertical-slice` | [#25](https://github.com/futari-labs/kensaku/pull/25) | `2551d51` (code reviewed at `a2cc9ea`) | merged (`1f6baaf`), dev push CI green; live smoke PASS (5 requests, $0.055) | `.futari/evidence/JM-104.md`; logs `.futari/evidence/live/jm-104-smoke-Q3.json`, `-Q4.json` |
-| JM-105 | [#20](https://github.com/futari-labs/kensaku/issues/20) | `jm-105-product-cards` | [#27](https://github.com/futari-labs/kensaku/pull/27) | `20cd180` | VERIFIED (3 review rounds APPROVE; owner visual review accepted with brand-once headings); merging | `.futari/evidence/JM-105.md` |
-| JM-106 | [#21](https://github.com/futari-labs/kensaku/issues/21) | | | | pending JM-105 | |
+| JM-105 | [#20](https://github.com/futari-labs/kensaku/issues/20) | `jm-105-product-cards` | [#27](https://github.com/futari-labs/kensaku/pull/27) | `20cd180` | merged (`870db8a`), dev push CI green; owner visual review accepted | `.futari/evidence/JM-105.md` |
+| JM-106 | [#21](https://github.com/futari-labs/kensaku/issues/21) | `jm-106-live-acceptance` | (opening) | `16b7505` (code `66103e9`) | VERIFIED: EV-016 run 3 passes all 12 deterministic thresholds; owner audit offers 29/30, images 10/10; review APPROVE | `.futari/evidence/JM-106.md`; logs `.futari/evidence/live/ev-016-run-{1,2,3}-*.json` |
 
-Plan-wide live Exa use during v1.1 execution: 5 of 130 requests, $0.055 of $1.50 reported cost (JM-104 smoke). Free credits only.
+Plan-wide live Exa use during v1.1 execution: 71 of 130 requests, $0.805 of $1.50 reported cost (JM-104 smoke 5 / $0.055; EV-016 runs 24 / $0.28, 20 / $0.22, 22 / $0.25). Free credits only; $0 additional spend. All three permitted suite runs are used.
 
 Logged interpretations (non-material, reviewer-confirmed):
 - JM-102 `public/theme-init.js` starts with `/* global document */`. The criterion's literal `/* global document, localStorage */` fails lint (no-redeclare).
@@ -111,6 +111,23 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
   - EV-015 gains REQ-002, two scenarios (one a stubbed UI stream inside JM-105's test paths), and check 10.
   - No other change.
 - Status: approved by the owner on the plan-revision card (snapshot `f8ff98c5…` at `47f813d`); merged into `dev` by the owner as PR #26 (`19035b4`). JM-104 then updated from `dev` and merged.
+
+### CR-004: eBay item pages reach the offer list (proposed post-v1.1 revision)
+
+- Observation: EV-016 run 3 displayed Q2-O4, an ebay.com item page (`https://www.ebay.com/itm/167051732563`), as a merchant offer. The owner audit failed it on Direct merchant: it is a marketplace listing. The frozen rule 5a list holds carousell.sg, carousell.com, jp.mercari.com, and auctions.yahoo.co.jp only. Run 3 still passed: 29 of 30 offers, with up to 3 failures allowed.
+- Recommendation: a reviewed revision that adds ebay.com (and regional eBay hosts) to the second-hand marketplace list, with frozen cases from the run-3 log.
+- Status: proposed; not part of `kensaku-v1-1`.
+
+### v1.1 deferred follow-ups (non-blocking review findings)
+
+- EV-016 suite (`scripts/live/`):
+  - `thresholds.ts` should count `analysis.candidateProblems`. Run 3 had 0, so the v1.1 verdict is unaffected.
+  - Type every threshold key from the frozen file and fail before the first query.
+  - Record body-read failures in the capture as unexpected errors.
+  - Move the record-building glue into a pure, tested `recordOf` and extend the offline e2e through analysis.
+  - Small duplications and test nits.
+- Image proxy: index size after a prune during an in-flight fetch; the serve-level catch logs nothing (disk errors only).
+- Cards: rare `productTitle` quirks with combining marks or fullwidth brands; the market guess for pre-v1.1 history is a currency vote.
 
 ### Deferred follow-ups (non-blocking review findings)
 
