@@ -49,6 +49,7 @@
     "evals/cases/ranking-currency.json",
     "evals/cases/citations.json",
     "evals/cases/live-acceptance.json",
+    "evals/cases/citations-spaced.json",
     "evals/fixtures/exa-live/S1-headphones.json",
     "evals/fixtures/exa-live/S2-mouse.json",
     "evals/fixtures/exa-live/S3-espresso.json",
@@ -60,7 +61,8 @@
     "evals/fixtures/exa-live/S9-market-jp.json",
     "evals/fixtures/exa-live/A1-answer.json",
     "evals/fixtures/exa-live/A2-answer-schema.json",
-    "evals/fixtures/exa-live/A3-answer-stream.json"
+    "evals/fixtures/exa-live/A3-answer-stream.json",
+    "evals/fixtures/exa-live/A4-answer-spaced-markers.json"
   ],
   "requirements": [
     {
@@ -78,7 +80,7 @@
       "acceptanceCriteria": [
         "Every rendered source link is a citation URL returned by Exa in this run.",
         "Out-of-range markers are removed and counted; paragraphs with no resolved marker are visibly flagged uncited.",
-        "All cases in evals/cases/citations.json produce their expected results."
+        "All cases in evals/cases/citations.json and evals/cases/citations-spaced.json produce their expected results, including markers written with spaces such as [2, 5, 6] (CR-001)."
       ]
     },
     {
@@ -185,7 +187,7 @@
       "requirementIds": ["REQ-002"],
       "description": "Citation resolution and URL provenance for comparisons and offers.",
       "kind": "deterministic",
-      "passRule": "All 6 cases in evals/cases/citations.json match; in fixture pipeline runs every rendered source URL is in the run's citations and every offer URL is in the run's search results.",
+      "passRule": "All 6 cases in evals/cases/citations.json and all 2 cases in evals/cases/citations-spaced.json match (the test asserts each file's evaluated case count equals its case count, and node evals/harness.mjs --strict exits 0); in fixture pipeline runs every rendered source URL is in the run's citations and every offer URL is in the run's search results.",
       "command": "pnpm vitest run tests/evals/ev-004-citations.test.ts"
     },
     {
@@ -422,8 +424,8 @@
     {
       "id": "JM-006",
       "title": "Live acceptance suite, owner audit, and final integration on dev",
-      "requirementIds": ["REQ-008"],
-      "evalIds": ["EV-008"],
+      "requirementIds": ["REQ-008", "REQ-002"],
+      "evalIds": ["EV-008", "EV-004"],
       "dependsOn": ["JM-005"],
       "allowedPaths": [
         "scripts/live-acceptance.ts",
@@ -434,6 +436,7 @@
         "tests/research/",
         "tests/exa/",
         "tests/core/",
+        "tests/evals/ev-004-citations.test.ts",
         "tests/fixtures/",
         "tests/e2e/",
         "README.md",
@@ -442,6 +445,7 @@
         ".futari/evidence/live/"
       ],
       "acceptanceCriteria": [
+        "src/core/citations.ts implements the amended marker rule in evals/cases/citations.json (CR-001, D-026), and tests/evals/ev-004-citations.test.ts loads evals/cases/citations.json and evals/cases/citations-spaced.json unchanged, asserting each file's evaluated case count; EV-004 passes all 8 cases and node evals/harness.mjs --strict exits 0. This lands before the EV-008 suite runs.",
         "pnpm live:acceptance runs Q1-Q6 with a fresh cache within the live budget and writes a run log with every request, displayed offer, and reported cost under .futari/evidence/live/; every run log is committed at or before the Tested-Commit.",
         "EV-008 thresholds are met under the runRules in evals/cases/live-acceptance.json, including the owner's audit of every displayed offer.",
         "All deterministic suites, including EV-001 to EV-004 on the frozen cases, still pass after any fix made here.",
@@ -449,10 +453,11 @@
       ],
       "verificationCommands": [
         "pnpm typecheck",
+        "pnpm vitest run tests/evals/ev-004-citations.test.ts",
         "pnpm test",
         "pnpm build",
         "pnpm test:e2e",
-        "node evals/harness.mjs",
+        "node evals/harness.mjs --strict",
         "pnpm live:acceptance"
       ],
       "milestone": "mvp"

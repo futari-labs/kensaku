@@ -1,0 +1,20 @@
+{
+  "name": "error-timeout",
+  "description": "Scripted failure on the first call (timeout). The retry (one per run) fails the same way.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "timeout"
+      }
+    },
+    {
+      "op": "answer",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "timeout"
+      }
+    }
+  ]
+}

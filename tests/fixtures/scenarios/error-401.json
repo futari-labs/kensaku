@@ -1,0 +1,13 @@
+{
+  "name": "error-401",
+  "description": "Scripted failure on the first call (auth).",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "auth"
+      }
+    }
+  ]
+}

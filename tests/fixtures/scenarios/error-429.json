@@ -1,0 +1,22 @@
+{
+  "name": "error-429",
+  "description": "Scripted failure on the first call (rate_limited). The retry (one per run) fails the same way.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "rate_limited",
+        "retryAfterMs": 1000
+      }
+    },
+    {
+      "op": "answer",
+      "label": "SYNTHETIC scripted failure; no Exa response involved",
+      "error": {
+        "kind": "rate_limited",
+        "retryAfterMs": 1000
+      }
+    }
+  ]
+}

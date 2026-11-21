@@ -1,0 +1,28 @@
+{
+  "name": "xm5-us",
+  "description": "Baseline US run: synthetic one-candidate answer over real A1 text, then the real S1 headphones search.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC candidates answer (one candidate, Sony WH-1000XM5) composed with the real A1 comparison and citations; not a live Exa response",
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": [
+          {
+            "name": "WH-1000XM5 Wireless Noise Cancelling Headphones",
+            "brand": "Sony",
+            "modelIdentifiers": [
+              "WH-1000XM5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/S1-headphones.json"
+      }
+    }
+  ]
+}

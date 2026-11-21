@@ -36,6 +36,7 @@ Prerequisites observed: git 2.40.1, Node.js `v22.20.0`, pnpm `10.22.0`, `gh` aut
 2. Run `node .futari/plan-gate.mjs verify` before dispatching any task and before each consequential mutation.
 3. Invoke the real pstack skill and load `.agents/playbooks/futari-approved-plan.md`.
 4. Start JM-001. After it merges, run JM-002 and JM-003 in parallel. Then JM-004 (vertical slice gate, including the live smoke). Then JM-005 and JM-006 in order.
+5. Plan revision CR-001 (D-026, 2026-11-21): JM-001 to JM-005 are merged. Resume at JM-006, which first implements the amended citation rule (EV-004 on both case files, `node evals/harness.mjs --strict`) and then runs EV-008.
 5. Every worker brief carries: plan ID, task ID, REQ and EV IDs, allowed paths, dependencies, acceptance criteria, verification commands, the permissions below, and the credential rule (`EXA_ENV_FILE`, never copy the key).
 6. Models follow `.claude/pstack-models.md` (implementation: sonnet; review roles as listed there).
 
