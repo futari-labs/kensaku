@@ -56,3 +56,20 @@ It verified that finding 1 and A-D were resolved and that findings 2-15 were sti
 | N1-N5 | NIT | EV-007 spec path unnamed; stale references; JM-001 missing `pnpm test:e2e`; `workflow`-scope consequence and `allow_rebase_merge` unstated; case-file wording. | All fixed. |
 
 The same reviewer then checked `2b9140b8ffb82ef5faac3103920733c196af4075`: **READY** (advisory). Gate and harness pass, no new inconsistency, nothing weakened. Residual non-blocking nits, accepted as interpretations: "verbatim" for `src/core/types.ts` allows adding `export` keywords; the EXECUTION_PLAN summary row for JM-001 omits `src/core/types.ts` (plan.json is authoritative); `REVIEW.md` is a record, not a frozen input.
+
+## Plan revision CR-001 (citation markers with spaces)
+
+Trigger: the JM-004 live smoke (`.futari/evidence/live/jm-004-smoke-Q2.json`) showed Exa writing `[2, 5, 6]`; the approved rule rejected it, so the Q2 comparison resolved 0 of 8 citations. On 2026-11-21 the owner selected "Revise plan" (AskUserQuestion). Decision D-026; risk R-15.
+
+Independent reviewer: fresh opus thermo-nuclear reviewer with no implementation authority, reviewing the uncommitted revision on branch `cr-001-citation-spaces` (base `dev` 90a0218). Verdict: **READY**, no blocking findings, three should-fix items, all resolved before commit:
+
+| # | Finding | Resolution |
+| --- | --- | --- |
+| 1 | `evals/harness.mjs` never reads `citations-spaced.json` or fixture A4, so JM-006 could skip the spaced cases with EV-004 still READY, and A4 escaped the fixture credential scan. | Harness validates the spaced cases (and so scans A4); EV-004 shows "spaced cases pending JM-006" by default (dev CI stays green) and is INVALID under `--strict`, which is now a JM-006 verification command and part of the EV-004 pass rule. Verified: default exit 0, `--strict` exit 1 on this tree. |
+| 2 | Rule ambiguities: leading zeros, undefined "blank line", no case for tabs, newlines inside brackets, or a stripped spaced marker. | Rule defines n as ASCII digits read as an integer and rendered without leading zeros, and defines a blank line; C07 gained `[1,\t3]`, `[ 9 ]` (stripped), `[05]` and `[1,\n2]` paragraphs. Labels recomputed with an implementation independent of `src/core` and checked by hand (2 unresolved, 2 uncited, 5 sources). |
+| 3 | `plan.json` re-serialization buried the real edits in whitespace changes; the new rule's codified behaviors were not called out. | `plan.json` edited textually (original formatting kept); `ruleRevision` and D-026 name the three codified behaviors. |
+| - | Non-blocking: A4 field provenance; R-15 should name Q5 (Japanese query, full-width brackets); EVALUATION_PLAN fixture count; PSTACK_HANDOFF step wording. | All applied. |
+
+Reviewer-confirmed facts: C01-C06 labels unchanged under the amended rule; C08 (0 unresolved, 0 uncited, 5 sources) matches the reviewer's own implementation and resolves 0 markers under the old rule; A4 `request` and `response` are byte-faithful (`deepStrictEqual`) to the logged exchange and contain no key; no thresholds, budgets, permissions or other evaluations changed; on this tree `plan-gate check` PASS, harness OK, EV-001..004 and `pnpm test` (290) pass.
+
+Publication: the `Futari contract` check fails any PR that changes protected files or `approval.json`, by design. After the owner approves the revised baseline, the approval is recorded with `approve --replace` on this branch and a PR into `dev` is opened; the owner merges it personally with a **merge commit** (not squash or rebase, so `approval.planCommit` stays reachable from `dev`). Agents do not merge it.

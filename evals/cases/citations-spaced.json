@@ -1,0 +1,38 @@
+{
+  "_about": "EV-004 gold cases for citation markers that contain spaces (REQ-002, CR-001). Kept in a separate file so the approved citations.json case count stays 6 until JM-006 implements the amended rule and extends tests/evals/ev-004-citations.test.ts to load both files.",
+  "labelStatus": "Assistant-proposed from the amended rule in evals/cases/citations.json (rule, CR-001), computed with an implementation independent of src/core and checked by hand. Gold once the CR-001 revision of plan kensaku-mvp-v1 is approved.",
+  "rule": "Same as evals/cases/citations.json rule.",
+  "cases": [
+    {
+      "id": "C07",
+      "synthetic": {
+        "text": "Quiet and light [1, 2].\n\nBattery is long [ 3 ].\n\nComfort varies [2 ,9].\n\nPrice dropped [4,  5].\n\nSizes [S, M] vary.\n\nWeight matters [1,\t3].\n\nNoise is low [ 9 ] in tests [05].\n\nRange [1,\n2] here.",
+        "citations": [
+          "https://example.com/source-1",
+          "https://example.com/source-2",
+          "https://example.com/source-3",
+          "https://example.com/source-4",
+          "https://example.com/source-5"
+        ]
+      },
+      "expected": {
+        "unresolvedMarkers": 2,
+        "uncitedParagraphs": 2,
+        "resolvedUrlCount": 5,
+        "renderedText": "Quiet and light [1,2].\n\nBattery is long [3].\n\nComfort varies [2].\n\nPrice dropped [4,5].\n\nSizes [S, M] vary.\n\nWeight matters [1,3].\n\nNoise is low in tests [5].\n\nRange [1,\n2] here."
+      },
+      "rationale": "Synthetic: [1, 2], [ 3 ], [2 ,9], [4,  5] and [1,\\t3] are markers with spaces or a tab; 9 is out of range (5 citations) and removed, leaving [2]; the standalone [ 9 ] is removed with the space before it; [05] resolves to citation 5 and renders as [5]; kept markers render without spaces; [S, M] is not numeric and [1,\\n2] spans a newline, so those two paragraphs are uncited."
+    },
+    {
+      "id": "C08",
+      "fixture": "A4-answer-spaced-markers",
+      "answerPath": "answer.comparison",
+      "expected": {
+        "unresolvedMarkers": 0,
+        "uncitedParagraphs": 0,
+        "resolvedUrlCount": 5
+      },
+      "rationale": "Live (JM-004 smoke Q2): markers [2, 5, 6], [2, 3], [1, 5] and [1, 3, 5, 6] in one paragraph resolve within 8 citations to 5 distinct URLs (citations 1, 2, 3, 5, 6). Under the original rule this answer resolved 0 citations."
+    }
+  ]
+}
