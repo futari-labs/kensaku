@@ -1,0 +1,189 @@
+{
+  "_about": "EV-012 cases for plan kensaku-v1-1 (product card content from the extended /answer schema). P01 and P02 are real /answer responses from the kensaku-v1-1 spike (V1: SG, schema with keySpecs and reason; V8: US, the reason description also says 'Do not mention prices or currency amounts'). P03 is the MVP spike's A2 response, which predates keySpecs and reason, so it pins backward compatibility with cached answers and stored history.",
+  "labelStatus": "Assistant-proposed expected values derived by hand from the frozen citation rule (evals/cases/citations.json 'rule') and the keySpecs rule below. They become gold only when the owner approves plan kensaku-v1-1.",
+  "rules": {
+    "keySpecs": "Trim each string; drop empty strings and strings longer than 80 characters; drop exact duplicates keeping the first; keep at most 5, in Exa's order. A missing or non-array keySpecs yields [].",
+    "reason": "A string reason is rendered with resolveCitations(reason, citationUrls) using the same citations as the comparison (the EV-004 rule, unchanged). A missing, non-string, or whitespace-only reason yields no reason section (null).",
+    "noPriceInCard": "Card prices come only from merchant offers. The reason text is research text and is shown as written by Exa; the /answer schema asks Exa not to mention prices (V8 shows it complying), but Kensaku does not edit the text."
+  },
+  "cases": [
+    {
+      "id": "P01",
+      "fixture": "V1-answer-sg-extended",
+      "candidates": [
+        {
+          "candidateIndex": 0,
+          "name": "WH-1000XM5 Wireless Noise-Cancelling Headphones",
+          "brand": "Sony",
+          "expected": {
+            "keySpecs": [
+              "Up to 30 hours battery life with ANC on",
+              "Lightweight, comfortable design",
+              "Superior sound and call quality",
+              "Smart speaking detection feature"
+            ],
+            "reason": {
+              "renderedText": "Widely recognized as a top-performing model, it is currently available for S$350.10, fitting well under the S$400 budget [1].",
+              "sources": [
+                "https://www.straitstimes.com/life/best-noise-cancelling-headphones-singapore"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0
+            }
+          }
+        },
+        {
+          "candidateIndex": 1,
+          "name": "QuietComfort Noise Cancelling Headphones",
+          "brand": "Bose",
+          "expected": {
+            "keySpecs": [
+              "Active noise cancellation with ambient mode",
+              "Up to 24 hours battery life with ANC on",
+              "Adjustable EQ settings",
+              "Comfortable over-ear design"
+            ],
+            "reason": {
+              "renderedText": "These headphones are currently priced at S$384.90, offering a premium noise-cancelling experience within the requested budget [1].",
+              "sources": [
+                "https://www.straitstimes.com/life/best-noise-cancelling-headphones-singapore"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0
+            }
+          }
+        },
+        {
+          "candidateIndex": 2,
+          "name": "WH-1000XM4 Noise Cancelling Headphones",
+          "brand": "Sony",
+          "expected": {
+            "keySpecs": [
+              "Active noise cancellation",
+              "30 hours battery life",
+              "Foldable design",
+              "Includes microphone"
+            ],
+            "reason": {
+              "renderedText": "Available for around S$299, this highly-rated previous flagship remains an excellent, budget-friendly choice for quality noise cancellation [5].",
+              "sources": [
+                "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/wireless-headphones-en/sony-wf-1000xm5bce-wireless-noise-cancelling-headphones-black.html"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "P02",
+      "fixture": "V8-answer-us-no-price-reason",
+      "candidates": [
+        {
+          "candidateIndex": 0,
+          "name": "Logitech MX Master 4",
+          "brand": "Logitech",
+          "expected": {
+            "keySpecs": [
+              "Wireless ergonomic, best all-round coding work",
+              "MagSpeed wheel for ratchet + free-spin",
+              "8,000 DPI Darkfield sensor",
+              "Multi-device switching (BT + Logi Bolt)",
+              "Haptic Actions Ring/gesture controls"
+            ],
+            "reason": {
+              "renderedText": "Best fit if you want one comfortable, feature-rich wireless mouse for long programming sessions, including fast scrolling and customizable shortcuts for code navigation.[3][1] It’s positioned as the “best overall” programming choice and is an ergonomic comfort upgrade in WIRED’s review.[3][1]",
+              "sources": [
+                "https://computingforgeeks.com/best-mouse-keyboard-for-programming/",
+                "https://www.wired.com/gallery/best-ergonomic-mouse/"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0
+            }
+          }
+        },
+        {
+          "candidateIndex": 1,
+          "name": "Logitech MX Vertical",
+          "brand": "Logitech",
+          "expected": {
+            "keySpecs": [
+              "Vertical shape for wrist/forearm neutrality",
+              "57° handshake angle",
+              "Rechargeable wireless (BT + dongle)",
+              "Long-lasting battery up to ~4 months",
+              "Designed to reduce wrist pain/strain"
+            ],
+            "reason": {
+              "renderedText": "Choose this if your main issue is wrist fatigue: it’s explicitly recommended for wrist strain via its 57-degree vertical “handshake” posture.[3][5] It’s also listed as a top vertical developer-friendly ergonomic option within the $120 budget.[2]",
+              "sources": [
+                "https://computingforgeeks.com/best-mouse-keyboard-for-programming/",
+                "https://argusic.com/hardware/mouse",
+                "https://www.techgearlab.com/topics/small-and-home-office/best-mouse"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0
+            }
+          }
+        },
+        {
+          "candidateIndex": 2,
+          "name": "Logitech MX Ergo S",
+          "brand": "Logitech",
+          "expected": {
+            "keySpecs": [
+              "Trackball keeps desk space free",
+              "Adjustable tilt (0–20°) for wrist angle",
+              "Precision Mode slows cursor",
+              "Pairs via BT or Logi Bolt",
+              "USB-C charging"
+            ],
+            "reason": {
+              "renderedText": "Best if you have a crowded desk or want less arm movement: it’s a programming-focused “best trackball for a small desk” with adjustable tilt and a precision mode for fine control.[3] WIRED also highlights its robust, precise trackball feel and strong build quality.[1]",
+              "sources": [
+                "https://computingforgeeks.com/best-mouse-keyboard-for-programming/",
+                "https://www.wired.com/gallery/best-ergonomic-mouse/"
+              ],
+              "unresolvedMarkers": 0,
+              "uncitedParagraphs": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "P03",
+      "fixture": "A2-answer-schema",
+      "candidates": [
+        {
+          "candidateIndex": 0,
+          "name": "Momentum Series Wireless",
+          "brand": "Sennheiser",
+          "expected": {
+            "keySpecs": [],
+            "reason": null
+          }
+        },
+        {
+          "candidateIndex": 1,
+          "name": "Wave Pro",
+          "brand": "EarFun",
+          "expected": {
+            "keySpecs": [],
+            "reason": null
+          }
+        },
+        {
+          "candidateIndex": 2,
+          "name": "WH-1000XM4Cs",
+          "brand": "Sony",
+          "expected": {
+            "keySpecs": [],
+            "reason": null
+          }
+        }
+      ]
+    }
+  ]
+}

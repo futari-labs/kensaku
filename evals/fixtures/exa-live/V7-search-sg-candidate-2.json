@@ -1,0 +1,301 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the kensaku-v1-1 pre-approval spike. Real data, not a gold label.",
+  "id": "V7-search-sg-candidate-2",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Bose QuietComfort Noise Cancelling Headphones price Singapore buy",
+      "type": "auto",
+      "numResults": 8,
+      "userLocation": "SG",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-21T02:21:53.371Z",
+  "receivedAt": "2026-11-21T02:21:58.259Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "85ae59bd040c0b00034eeb05bab47d7b",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://metapod.com/products/bose-quietcomfort-headphones",
+        "title": "Bose QuietComfort Headphones",
+        "url": "https://metapod.com/products/bose-quietcomfort-headphones",
+        "highlights": [
+          "Bose QuietComfort Noise Cancelling Headphones | Metapod SG\n\n \n\n \n\n# Bose QuietComfort Headphones\n\n Sale price S$239.00\n\n Regular price S$499.00\n\nor 4 x S$59.75 with \n\n### Bose QuietComfort Headphones: Legendary Noise Cancellation, Same Day Delivery Available in Singapore\n\nSeal yourself in with legendary noise cancellation and high-fidelity audio, eliminate distractions and dive deep into your music. Shop with Metapod, an authorised Bose retailer, and enjoy a 1-year official warranty.\n\n### Key Features\n\n- Modes for any moment: Quiet Mode, Aware Mode, or blend the two with a Custom Mode in the Bose Music app.\n- Up to 24 hours battery: keep marathon playlists playing.\n- Adjustable EQ: crank the bass, tweak the treble and balance the mid-range.\n- All-day comfort: plush cushions and a secure band.\n- SimpleSync: pair with a Bose smart soundbar for private TV listening.\n\n### Why buy from Metapod\n\n- Authorised Bose partner with 1-year official warranty.\n- Same day delivery for orders before 11am.\n\n### FAQ\n\nIs an audio cable included? Yes.\n\nHow long does it take to charge? About 2.5 hours.\n\nDoes it come with warranty? Yes, a 1-year official warranty.\n\nOfficial Warranty\n\nSecure Payment\n\n...\n\n## Delivery & Returns\n\n### Delivery Schedule\n\n1. 48-hour delivery\n\nFor orders above $50 - Free\n\nFor orders below $50 - $3.00\n\n• For any order confirmed before 11am, delivery will be scheduled for next working day between 9am to 9pm, barring any unforeseen circumstances.\n\n• For any order confirmed after 11am, delivery will be scheduled for the day after the next working day, barring any unforeseen circumstances.\n\nThere is no delivery on Sundays and Singapore Public Holidays. During sales periods and force majeure events, such as extreme weather conditions, deliveries may take a little longer.\n\n2. Same Day Delivery - S$9.90 per order, including Sat/Sun\n\n• For any order confirmed before 11am, delivery will be scheduled for the same day between 5pm to 9pm, barring any unforeseen circumstances.\n\n• For any order confirmed after 11am, delivery will be scheduled for the next day between 9am to 9pm, barring any unforeseen circumstances.\n\nThere are no Same Day Deliveries on Singapore Public Holidays. During sales periods and force majeure events, such as extreme weather conditions, deliveries may take a little longer.\n\n### Returns & Cancellations\n\n• If you change your mind with your purchase and have yet to open the packaging of the product, you may request for a full refund within 15 days of delivery. Returns of opened packages are strictly not allowed, except if the product has a manufacturing defect. All returned items must be in their original condition with all packaging, labels and tags intact.\n\n• You may cancel your order anytime before the it is shipped and a full refund will be issued to your original mode of payment.\n\n...\n\nAll products are subjected to the warranty given by the official brand owner or their authorized agent in Singapore, usually 12 months from the date of purchase."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Bose QuietComfort Headphones\",\"merchant\":\"Metapod SG\",\"price\":239,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "http://metapod.com/cdn/shop/files/BoseQuietComfortHeadphones_BlueDusk_2.webp?v=1768536397&width=2048",
+        "entities": [
+          {
+            "id": "https://metapod.com/products/bose-quietcomfort-headphones",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Bose QuietComfort Headphones",
+              "description": "Bose QuietComfort Headphones: Legendary Noise Cancellation, Same Day Delivery Available in Singapore Seal yourself in with legendary noise cancellation and high-fidelity audio, eliminate distractions and dive deep into your music. Shop with Metapod, an authorised Bose retailer, and enjoy a 1-year official warranty. Key Features Modes for any moment: Quiet Mode, Aware Mode, or blend the two with a Custom Mode in the Bose Music app. Up to 24 hours battery: keep marathon playlists playing. Adjustable EQ: crank the bass, tweak the treble and balance the mid-range. All-day comfort: plush cushions and a secure band. SimpleSync: pair with a Bose smart soundbar for private TV listening. Why buy from Metapod Authorised Bose partner with 1-year official warranty. Same day delivery for orders before 11am. FAQ Is an audio cable included?Yes. How long does it take to charge?About 2.5 hours. Does it come with warranty?Yes, a 1-year official warranty.",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0604/7760/4036/files/BoseQuietComfortHeadphones_BlueDusk_2.webp?v=1768536397"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 239,
+                  "currency": "SGD"
+                },
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": [
+                {
+                  "name": "Color",
+                  "value": "Petal Pink, Twilight Blue, Blue Dusk, Chilled Lilac, Triple Black, Moonstone Blue, Ice Blue, Moonlight Grey"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.amazon.sg/QuietComfort-Wireless-Cancelling-Headphones-Bluetooth/dp/B0CCZ1SQ8G",
+        "title": "Bose QuietComfort Wireless Noise Cancelling Headphones, Bluetooth ...",
+        "url": "https://www.amazon.sg/QuietComfort-Wireless-Cancelling-Headphones-Bluetooth/dp/B0CCZ1SQ8G",
+        "author": "Brand: BOSE",
+        "highlights": [
+          "Bose QuietComfort Wireless Noise Cancelling Headphones, Bluetooth Over Ear Headphones with Up To 24 Hours of Battery Life, Cypress Green : Amazon.sg: Electronics\n\nCurrently unavailable. We don't know when or if this item will be back in stock.\n\n...\n\n# Bose QuietComfort Wireless Noise Cancelling Headphones, Bluetooth Over Ear Headphones with Up To 24 Hours of Battery Life, Cypress Green\n\n...\n\n# Product Summary: Bose QuietComfort Wireless Noise Cancelling Headphones, Bluetooth Over Ear Headphones with Up To 24 Hours of Battery Life, Cypress Green\n\n...\n\n## Price \n\n No featured offers available"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"Bose QuietComfort Wireless Noise Cancelling Headphones, Bluetooth Over Ear Headphones with Up To 24 Hours of Battery Life, Cypress Green : Amazon.sg: Electronics\",\"merchant\":\"Amazon.sg\",\"price\":null,\"currency\":null,\"availability\":\"unknown\"}"
+      },
+      {
+        "id": "https://www.jaben.com/products/bose-quietcomfort-wireless-noise-cancelling-headphones",
+        "title": "Bose QuietComfort Wireless Noise Cancelling Headphones",
+        "url": "https://www.jaben.com/products/bose-quietcomfort-wireless-noise-cancelling-headphones",
+        "highlights": [
+          "1 Coleman Street #01-25 Singapore 179803\n\n+65 6337 0809\n\n \n\nBose\n\n# Bose QuietComfort Wireless Noise Cancelling Headphones\n\nTake charge of your music and stride along to the beat. High-fidelity audio and legendary noise cancellation work their magic by sealing you in, eliminating distractions, and letting you dive deep into your own rhythm. Toggle between Quiet and Aware Modes, or create a Custom Mode and adjust outside sound to the moment. The design is iconic and the comfort lasting, while an optional audio cable with an in-line microphone plugs you into sound as bold as you, even without a Bluetooth® connection.\n\n Sale price$356.90 SGD\n\n Regular price$499.00 SGD\n\nSave $142.10 SGD\n\nTax excluded. Shipping calculated at checkout \n\nPickup available at Jaben @ The Adelphi\n\nUsually ready in 24 hours\n\n View store information \n\nBose QuietComfort Wireless Noise Cancelling Headphones\n\nBlack\n\nJaben @ The Adelphi\n\nPickup available, usually ready in 24 hours\n\n1 Coleman St, #01-25 The Adelphi Singapore 179803 Singapore\n\n+6563370809\n\nBose Bose QuietComfort Wireless Noise Cancelling Headphones\n\n Sale price$356.90 SGD\n\n Regular price$499.00 SGD\n\n...\n\n- Legendary noise cancellation\n\n...\n\n- Up to 24 hours of battery life¹Modes for any musical moment\n\n...\n\nWhat You Are Getting\n\nWhat’s in the Box\n\n- Bose QuietComfort Headphones\n- Carry Case\n- 3.5 mm to 2.5 mm audio cable\n- USB-C® (A to C) cable (12\")\n- Safety Sheet\n\nWarranty\n\n- Authorised Distributor Warranty - 1 Year\n\nIn-Store Audition\n\n1 Coleman street #01-25, The Adelphi Singapore 179803 Mon - Sat: 12:00 ~ 8:00 PM +65 6337 0809"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Bose QuietComfort Wireless Noise Cancelling Headphones\",\"merchant\":\"Jaben @ The Adelphi\",\"price\":356.9,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "http://www.jaben.com/cdn/shop/files/BOSESandstone_02.png?v=1733407193&width=2048",
+        "entities": [
+          {
+            "id": "https://www.jaben.com/products/bose-quietcomfort-wireless-noise-cancelling-headphones",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Bose QuietComfort Wireless Noise Cancelling Headphones",
+              "description": null,
+              "images": [
+                "https://cdn.shopify.com/s/files/1/1019/4439/files/BOSESandstone_02.png?v=1733407193"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 356.9,
+                  "currency": "SGD"
+                },
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": [
+                {
+                  "name": "Colour",
+                  "value": "Black, Cypress Green, Smoke White, Moonstone, Sandstone, Blue Dusk"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-blue-dust",
+        "title": "Bose QuietComfort Headphones (Blue Dust)\n– Challenger Singapore",
+        "url": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-blue-dust",
+        "highlights": [
+          "Bose QuietComfort Headphones (Blue Dust) – Challenger Singapore \n\n \n\n \n\n \n\n This stock availability is not real-time, please contact customer service to confirm \n\n JEM \n\n Limited Availability \n\n 50 Jurong Gateway Road #04-01, JEM Singapore 608549 \n\n Opening Hours: 11:00am - 09:30pm \n\n Northpoint \n\n Limited Availability \n\n 930 Yishun Avenue 2 #03-07/08/09/10, Northpoint City Singapore 769098 \n\n Opening Hours: 11:00am - 09:30pm \n\n Tampines 1 \n\n Limited Availability \n\n 10 Tampines Central 1 #04-24/25, Tampines 1 Singapore 529536\n\n...\n\nVivoCity \n\n Limited Availability\n\n...\n\n# Bose QuietComfort Headphones (Blue Dust) \n\n S$389.00 \n\n S$499.00 \n\n Variant: BLUE DUST \n\n Overview \n\n- Contact Us\n- ValueClub Extended Warranty\n- Trade-In\n- Frequently Asked Questions\n- (+65) 6333 5858 (+6563335858)"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Bose QuietComfort Headphones (Blue Dust)\",\"merchant\":\"Challenger Singapore\",\"price\":389,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "http://online.challenger.sg/cdn/shop/files/0017817854603_MfjQYYSxSvi5YScuYwnKvNvK25BoWPccvg7bQkp5.jpg?v=1764128934",
+        "entities": [
+          {
+            "id": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-blue-dust",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Bose QuietComfort Headphones (Blue Dust)",
+              "description": null,
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0614/3180/8075/files/0017817854603_MfjQYYSxSvi5YScuYwnKvNvK25BoWPccvg7bQkp5.jpg?v=1764128934"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 379,
+                  "currency": "SGD"
+                },
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-moonstone",
+        "title": "Bose QuietComfort Headphones (Moonstone)\n– Challenger Singapore",
+        "url": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-moonstone",
+        "highlights": [
+          "This stock availability is not real-time, please contact customer service to confirm \n\n Northpoint \n\n Limited Availability \n\n 930 Yishun Avenue 2 #03-07/08/09/10, Northpoint City Singapore 769098 \n\n Opening Hours: 11:00am - 09:30pm \n\n VivoCity \n\n Limited Availability \n\n 1 HarbourFront Walk #02-34/35,VivoCity Singapore 098585 \n\n Opening Hours: 11:00am - 09:30pm\n\n...\n\nOut of Stock\n\n...\n\n# Bose QuietComfort Headphones (Moonstone) \n\n S$389.00 \n\n S$499.00 \n\n Variant: MOONSTONE \n\n Overview"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Bose QuietComfort Headphones (Moonstone)\",\"merchant\":\"Challenger Singapore\",\"price\":389,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "http://online.challenger.sg/cdn/shop/files/0017817850506_v5mf597yrxKKbYP8WfkGyElIu2PdaPOh0cEMAnrB.jpg?v=1764143204",
+        "entities": [
+          {
+            "id": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-moonstone",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "Bose QuietComfort Headphones (Moonstone)",
+              "description": null,
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0614/3180/8075/files/0017817850506_v5mf597yrxKKbYP8WfkGyElIu2PdaPOh0cEMAnrB.jpg?v=1764143204"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 379,
+                  "currency": "SGD"
+                },
+                "availability": "out_of_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": []
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/bose-quietcomfort-wireless-over-ear-active-noise-canceling-headphones-moonstone-blue.html",
+        "title": "Bose QuietComfort Wireless Over-Ear Active Noise Canceling Headphones - Moonstone Blue | Harvey Norman Singapore",
+        "url": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/bose-quietcomfort-wireless-over-ear-active-noise-canceling-headphones-moonstone-blue.html",
+        "highlights": [
+          "Bose QuietComfort Wireless Over-Ear Active Noise Canceling Headphones - Moonstone Blue | Harvey Norman Singapore\n\n# Bose QuietComfort Wireless Over-Ear Active Noise Canceling Headphones - Moonstone Blue\n\n \n\n S$ 389 was S$ 499 \n\nSGD\n\n You Save S$ 110 \n\nThis section should always be read in conjunction with the Terms and Conditions for Product Care TM. \n\n### Protection\n\n With Product Care ® you can relax knowing your purchase comes with additional protection. Product Care ® covers all parts, labour and call out fees for an UNLIMITED amount of repairs. Product Care ® will only use an authorised repairer network which means the job is done the first time. \n\n 1, 2, 3, or 4 years protection terms available \n\n New for Old replacement \n\n International coverage \n\n Transferable\n\n...\n\nPremium build quality, advanced noise-canc ... technology, and superior comfort, the Bose QuietComfort Wireless Over-Ear Active Noise Canceling Headphones in Moonstone Blue are the perfect companion for audiophiles and frequent travelers alike, ... a truly immersive listening experience wherever you go.\n\n#### Key Features\n\n- For Home and Mobile Audio Listening\n- Hybrid Noise Canceling Technology\n- Customizable Listening Modes\n- Adjustable EQ\n- Quiet and Aware Modes\n- Plush Earcups for All-Day Comfort\n- Multipoint Bluetooth 5.1 Connectivity\n- Bose SimpleSync and Spotify Tap Support\n- Up to 24-Hour Playback\n- Includes USB Cable, Audio Cable & Case\n\n...\n\n| Colour | Moonstone Blue |\n| Model | 884367-0500 |\n\n...\n\n### Delivery & Pickup Information\n\nAll items available for online purchase are not guaranteed to be in stock at the time of order processing. If we are unable to fulfill your order, you will be offered an alternative or given a refund for the unavailable product.\n\nSelf Collect: Ready for collection within 1-3 Working days from the date of your order notification confirmation. Or 2-4 Working days for orders made on Public Holidays, Saturday and Sunday. Subjected to stock availability. Self collection ONLY applies for selected Small Items. \n\nSmall Items: Delivery estimate of 2-7 Working days from the date of your order. Excluding Saturday, Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by SingPost and local couriers.\n\nLarge / Bulky Items: Delivery estimate of 7-14 Working days from the date of your order. Excluding Sunday and Public Holidays. Subjected to stock availability. Delivery will be facilitated by Harvey Norman. \n\nDelivery cost does not include installation/dismantling/carrying up or down by staircase. Installation/Dismantling cost and any other 3rd party cost applies separately."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Bose QuietComfort Wireless Over-Ear Active Noise Canceling Headphones - Moonstone Blue\",\"merchant\":\"Harvey Norman Singapore\",\"price\":389,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "https://hnsgsfp.imgix.net/4/images/detailed/133/Slide1_iieq-iu.JPG?fit=fill&bg=0FFF&w=1536&h=901&auto=format,compress"
+      },
+      {
+        "id": "https://bose.sg/products/quietcomfort-headphones-2nd-gen",
+        "title": "QuietComfort Headphones (2nd Gen)",
+        "url": "https://bose.sg/products/quietcomfort-headphones-2nd-gen",
+        "highlights": [
+          "# QuietComfort Headphones (2nd Gen)\nSold by: bose.sg\n\n## Specifications\nColor: Black, White Smoke, Eucalyptus Green, Dewdrop Mint, Rosewood Mauve\n\n## Pricing & Reviews\nPrice: 429 SGD.\n\n## Description\nMeet the next evolution of the original noise-cancelling headphones. Bose QuietComfort Headphones (2nd Gen) combine a refreshed signature look with legendary QuietControl noise-cancelling technology and more listening options for every moment. Modern pill-shaped earcups and a wider, smooth-sliding headband deliver an updated design that is both stylish and comfortable. Updated ActiveSense Technology adaptively smooths sudden spikes in unwanted noise, while Bose TrueSpatial Technology creates an immersive listening experience with a wider, fuller soundstage. Cinema Mode delivers more layered sound and clearer dialogue for video content, while a wired USB connection enables high-fidelity lossless audio.\n\nThis store supports UCP (Universal Commerce Protocol): https://bose.sg/.well-known/ucp lists the capabilities you can use."
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"QuietComfort Headphones (2nd Gen)\",\"merchant\":\"bose.sg\",\"price\":429,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "entities": [
+          {
+            "id": "https://bose.sg/products/quietcomfort-headphones-2nd-gen",
+            "type": "product",
+            "version": 1,
+            "properties": {
+              "name": "QuietComfort Headphones (2nd Gen)",
+              "description": "Meet the next evolution of the original noise-cancelling headphones. Bose QuietComfort Headphones (2nd Gen) combine a refreshed signature look with legendary QuietControl noise-cancelling technology and more listening options for every moment. Modern pill-shaped earcups and a wider, smooth-sliding headband deliver an updated design that is both stylish and comfortable. Updated ActiveSense Technology adaptively smooths sudden spikes in unwanted noise, while Bose TrueSpatial Technology creates an immersive listening experience with a wider, fuller soundstage. Cinema Mode delivers more layered sound and clearer dialogue for video content, while a wired USB connection enables high-fidelity lossless audio.",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0995/1982/4157/files/QCHII27-Black_ThreeQuarterLeft.jpg?v=1786601022"
+              ],
+              "brand": null,
+              "identifiers": null,
+              "offer": {
+                "price": {
+                  "amount": 429,
+                  "currency": "SGD"
+                },
+                "availability": "in_stock",
+                "sku": null,
+                "seller": null
+              },
+              "rating": null,
+              "attributes": [
+                {
+                  "name": "Color",
+                  "value": "Black, White Smoke, Eucalyptus Green, Dewdrop Mint, Rosewood Mauve"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "https://www.robinsons.com.sg/products/bose-quietcomfort-headphones-3",
+        "title": "BOSE QUIETCOMFORT HEADPHONES\n– Robinsons Singapore",
+        "url": "https://www.robinsons.com.sg/products/bose-quietcomfort-headphones-3",
+        "highlights": [
+          "BOSE QUIETCOMFORT HEADPHONES – Robinsons Singapore\n\nBose\n\n# BOSE QUIETCOMFORT HEADPHONES\n\nNOW $459.00\n\nWAS $499.00 (-8%)\n\n or $114.75 x 4 with \n\n or $153.00 x 3 with \n\nFree delivery (SG) on orders over $150.00\n\nWe offer 30 Day Returns. T&C Applies.\n\n## Details \n\n BOSE QUIET COMFORT HEADPHONES CYPRESS GREEN WW \n\n## Delivery and Returns \n\nMany of our products come from different warehouses. As a result, products in your order may ship separately.\n\nLocal delivery (Singapore only)\n\n- If your order is $150.00 and above your order qualifies for Free Delivery\n- If your order is below $150.00, the delivery fee is $4.99 \n- Local shipping will take 3-5 business days to be delivered. Deliveries are scheduled Mondays to Saturdays from 9AM to 6PM (excluding holidays)\n\n...\n\nEasy Returns\n\nWe offer 30 Day Returns. T&C Applies. Our customer service team will arrange for home picking up*. \n\n*More info on 'Returns'"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"BOSE QUIETCOMFORT HEADPHONES\",\"merchant\":\"Robinsons Singapore\",\"price\":459,\"currency\":\"SGD\",\"availability\":\"in_stock\"}",
+        "image": "http://www.robinsons.com.sg/cdn/shop/files/184108485_600x.webp?v=1793279310"
+      }
+    ],
+    "searchTime": 4693.9,
+    "costDollars": {
+      "total": 0.015,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.008
+    }
+  }
+}

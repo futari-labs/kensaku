@@ -8,7 +8,8 @@
 // It does not run product tests and never reports a product PASS.
 //
 // Usage: node evals/harness.mjs            (exit 1 only if cases/fixtures are invalid)
-//        node evals/harness.mjs --strict   (also exit 1 while EV-004 does not load the CR-001 spaced cases)
+//        node evals/harness.mjs --strict   (also exit 1 while EV-004 does not load the CR-001 spaced cases,
+//                                           or EV-001 does not apply the kensaku-v1-1 supersessions)
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,6 +25,8 @@ const OUTCOMES = {
   evidence: ["aggregator", "editorial", "not-a-listing", "merchant-no-price", "merchant-mismatch"],
   rejected: ["irrelevant-product", "unsupported-currency", "url-not-from-run", "invalid-url"],
 };
+// kensaku-v1-1 adds two evidence categories (ARCHITECTURE rules 5a and 5b).
+const OUTCOMES_V11 = { ...OUTCOMES, evidence: [...OUTCOMES.evidence, "marketplace", "search-or-category"] };
 const fixtureCache = new Map();
 const fixture = (id) => {
   if (!fixtureCache.has(id)) {
@@ -88,6 +91,69 @@ check(la.queries.length === 6, "live-acceptance: expected 6 queries");
 for (const m of ["US", "SG", "JP"]) check(la.queries.filter((q) => q.market === m).length === 2, `live-acceptance: expected 2 ${m} queries`);
 check(la.budget.maxRequestsPerQuery <= 5, "live-acceptance: per-query cap must be <= 5 (D-017)");
 
+// EV-011 cases (kensaku-v1-1 classification additions and supersessions)
+const ocv = read("evals/cases/offer-classification-v1-1.json");
+const ocvIds = new Set();
+const v11Candidates = { ...oc.candidates, ...ocv.candidates };
+for (const c of ocv.cases) {
+  check(!ocvIds.has(c.id) && !ids.has(c.id), `offer-classification-v1-1: duplicate id ${c.id}`); ocvIds.add(c.id);
+  check(v11Candidates[c.candidate], `${c.id}: unknown candidate ${c.candidate}`);
+  const e = c.expected ?? {};
+  check(e.outcome in OUTCOMES_V11 && OUTCOMES_V11[e.outcome]?.includes(e.category), `${c.id}: invalid outcome/category ${e.outcome}/${e.category}`);
+  if (e.outcome === "merchant-offer") check(["USD", "SGD", "JPY"].includes(e.currency) && e.amount > 0, `${c.id}: offer needs supported currency and positive amount`);
+  check(typeof c.rationale === "string" && c.rationale.length > 10, `${c.id}: rationale required`);
+  if (c.fixture) {
+    const f = fixture(c.fixture);
+    check(f?._label?.startsWith("LIVE EXA RESPONSE"), `${c.id}: fixture ${c.fixture} missing or not labeled live`);
+    check(f?.response?.results?.[c.resultIndex]?.url, `${c.id}: ${c.fixture} has no result ${c.resultIndex}`);
+  } else {
+    check(c.synthetic?.url && c.synthetic?.summary, `${c.id}: synthetic case needs url and summary`);
+  }
+}
+for (const [id, s] of Object.entries(ocv.supersedes ?? {})) {
+  const original = oc.cases.find((c) => c.id === id);
+  check(original, `supersedes: unknown MVP case ${id}`);
+  check(original && JSON.stringify(original.expected) === JSON.stringify(s.was), `supersedes ${id}: 'was' must equal the frozen MVP label`);
+  check(s.expected?.outcome in OUTCOMES_V11 && typeof s.rationale === "string", `supersedes ${id}: expected and rationale required`);
+}
+check(ocv.cases.filter((c) => c.fixture).length >= 40, "offer-classification-v1-1: expected at least 40 live cases");
+
+// EV-012 cases (product card content)
+const pc = read("evals/cases/product-content.json");
+for (const c of pc.cases) {
+  const f = fixture(c.fixture);
+  check(f?.response?.answer?.candidates?.length === c.candidates.length, `${c.id}: candidate count differs from ${c.fixture}`);
+  for (const k of c.candidates) {
+    const specs = k.expected.keySpecs;
+    check(Array.isArray(specs) && specs.length <= 5 && specs.every((s) => typeof s === "string" && s.length > 0 && s.length <= 80), `${c.id}#${k.candidateIndex}: keySpecs must be at most 5 strings of 1-80 characters`);
+    const urls = (f?.response?.citations ?? []).map((x) => x.url);
+    if (k.expected.reason) for (const u of k.expected.reason.sources) check(urls.includes(u), `${c.id}#${k.candidateIndex}: source ${u} is not a citation of ${c.fixture}`);
+  }
+}
+
+// EV-013 cases (product images)
+const im = read("evals/cases/image-selection.json");
+const URL_VERDICTS = ["ok", "invalid-url", "bad-scheme", "credentials", "svg", "deny-pattern"];
+const BYTE_VERDICTS = ["ok", "too-large", "unsupported-type", "no-dimensions", "too-small", "aspect"];
+for (const c of im.urlCases) check(URL_VERDICTS.includes(c.expected) && typeof c.imageUrl === "string", `${c.id}: invalid url case`);
+for (const c of im.bytesCases) check(BYTE_VERDICTS.includes(c.expected), `${c.id}: invalid bytes verdict ${c.expected}`);
+for (const c of im.selectionCases) {
+  const f = fixture(c.fixture);
+  check(v11Candidates[c.candidate] && ["US", "SG", "JP"].includes(c.market), `${c.id}: unknown candidate or market`);
+  check(c.expected.length <= 4, `${c.id}: at most 4 image candidates`);
+  for (const e of c.expected) {
+    const r = f?.response?.results?.find((x) => x.url === e.pageUrl);
+    check(r && r.image === e.imageUrl, `${c.id}: ${e.pageUrl} with that image is not a result of ${c.fixture}`);
+  }
+}
+
+// EV-016 query set (kensaku-v1-1 live acceptance)
+const lv = read("evals/cases/live-acceptance-v1-1.json");
+check(lv.queries.length === 8, "live-acceptance-v1-1: expected 8 queries");
+for (const [m, n] of [["US", 2], ["SG", 4], ["JP", 2]]) check(lv.queries.filter((q) => q.market === m).length === n, `live-acceptance-v1-1: expected ${n} ${m} queries`);
+for (const q of la.queries) check(lv.queries.some((x) => x.id === q.id && x.market === q.market && x.text === q.text), `live-acceptance-v1-1: MVP query ${q.id} must be unchanged`);
+check(lv.budget.maxRequestsPerQuery <= 5 && lv.budget.maxRequestsPerSuiteRun <= 40 && lv.budget.maxSuiteRuns <= 3 && lv.budget.maxReportedCostDollarsPerSuiteRun <= 0.5, "live-acceptance-v1-1: budget exceeds the approved caps");
+
 // Fixture hygiene: no key-like strings in any fixture.
 for (const f of fixtureCache.values()) {
   const s = JSON.stringify(f ?? {});
@@ -104,11 +170,18 @@ const evals = [
   ["EV-005", "Spend guard and cache", "tests/evals/ev-005-spend-guard.test.ts", "src/exa/budget.ts"],
   ["EV-006", "Streaming and failure states", "tests/evals/ev-006-stream-failures.test.ts", "src/server/app.ts"],
   ["EV-007", "Frontend quality", "tests/e2e/ev-007-frontend.spec.ts", "src/web/main.tsx"],
-  ["EV-008", "Live acceptance", "scripts/live-acceptance.ts", "src/research/pipeline.ts", "live-acceptance.json"],
   ["EV-009", "Local and key safety", "tests/evals/ev-009-key-safety.test.ts", "src/server/index.ts"],
+  ["EV-010", "Theme", "tests/e2e/ev-010-theme.spec.ts", "src/web/app/theme.ts"],
+  ["EV-011", "Non-merchant pages and currency symbols", "tests/evals/ev-011-page-classification.test.ts", "src/core/offers.ts", "offer-classification-v1-1.json"],
+  ["EV-012", "Product card content", "tests/evals/ev-012-product-content.test.ts", "src/core/content.ts", "product-content.json"],
+  ["EV-013", "Product image selection", "tests/evals/ev-013-image-selection.test.ts", "src/core/images.ts", "image-selection.json"],
+  ["EV-014", "Image proxy safety and cache", "tests/evals/ev-014-image-proxy.test.ts", "src/server/images.ts"],
+  ["EV-015", "Image-first product cards", "tests/e2e/ev-015-product-cards.spec.ts", "src/web/app/ProductCard.tsx"],
+  ["EV-016", "Live acceptance v1.1", "scripts/live-acceptance-v1-1.ts", "src/research/pipeline.ts", "live-acceptance-v1-1.json"],
+  ["EV-017", "Request contract", "tests/evals/ev-017-request-contract.test.ts", "src/exa/requests.ts"],
 ];
 
-console.log(errors.length ? `HARNESS INVALID (${errors.length} problems)` : `HARNESS OK: ${oc.cases.length} classification cases (${live} live), ${rc.cases.length} ranking cases, ${cc.cases.length} citation cases (+${sc.cases.length} spaced), ${la.queries.length} live queries.`);
+console.log(errors.length ? `HARNESS INVALID (${errors.length} problems)` : `HARNESS OK: ${oc.cases.length} classification cases (${live} live), ${rc.cases.length} ranking cases, ${cc.cases.length} citation cases (+${sc.cases.length} spaced), ${la.queries.length} MVP live queries; v1.1: ${ocv.cases.length} classification cases (+${Object.keys(ocv.supersedes ?? {}).length} supersessions), ${pc.cases.length} content cases, ${im.urlCases.length}/${im.selectionCases.length}/${im.bytesCases.length} image url/selection/bytes cases, ${lv.queries.length} live queries.`);
 for (const e of errors) console.log(`  - ${e}`);
 for (const [id, name, test, product, caseFile] of evals) {
   let state;
@@ -122,6 +195,11 @@ for (const [id, name, test, product, caseFile] of evals) {
       state = `INVALID TEST (${test} does not load frozen evals/cases/citations-spaced.json; CR-001)`;
       errors.push(`${id}: ${test} must load evals/cases/citations-spaced.json (CR-001)`);
     } else state = `READY (CR-001 spaced cases pending JM-006: ${test} does not load evals/cases/citations-spaced.json yet)`;
+  } else if (id === "EV-001" && !readFileSync(join(root, test), "utf8").includes("offer-classification-v1-1.json")) {
+    if (STRICT) {
+      state = `INVALID TEST (${test} does not apply the supersessions in evals/cases/offer-classification-v1-1.json; kensaku-v1-1)`;
+      errors.push(`${id}: ${test} must apply the supersessions in evals/cases/offer-classification-v1-1.json (D-031, D-032)`);
+    } else state = `READY (kensaku-v1-1 supersessions L29/Y03 pending JM-101: ${test} does not load evals/cases/offer-classification-v1-1.json yet)`;
   } else state = `READY (run the command listed for ${id} in .futari/plan.json)`;
   console.log(`${id} ${name}: ${state}`);
 }

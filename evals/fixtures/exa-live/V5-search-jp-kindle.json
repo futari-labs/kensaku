@@ -1,0 +1,156 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the kensaku-v1-1 pre-approval spike. Real data, not a gold label.",
+  "id": "V5-search-jp-kindle",
+  "request": {
+    "endpoint": "/search",
+    "body": {
+      "query": "Amazon Kindle Paperwhite (2024年モデル) price Japan buy",
+      "type": "auto",
+      "numResults": 8,
+      "userLocation": "JP",
+      "contents": {
+        "highlights": true,
+        "summary": {
+          "query": "Extract the product listing's price, currency, availability and merchant.",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "isProductListing": {
+                "type": "boolean",
+                "description": "True only if this page sells one specific product."
+              },
+              "productName": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string",
+                "description": "Store or seller name shown on the page."
+              },
+              "price": {
+                "type": "number",
+                "description": "Current listed price as a number, no symbols. Omit if not shown."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 code such as USD. Omit if not shown."
+              },
+              "availability": {
+                "type": "string",
+                "enum": [
+                  "in_stock",
+                  "out_of_stock",
+                  "preorder",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "isProductListing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requestedAt": "2026-11-21T02:21:43.920Z",
+  "receivedAt": "2026-11-21T02:21:49.840Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "3c1de2cf4f8e4e9d807dd5e797dbd6b0",
+    "resolvedSearchType": "",
+    "results": [
+      {
+        "id": "https://www.amazon.co.jp/dp/B0CFPL6CFY/",
+        "title": "Amazon Kindle Paperwhite 電子書籍リーダー",
+        "url": "https://www.amazon.co.jp/dp/B0CFPL6CFY/",
+        "highlights": [
+          "Amazon Kindle Paperwhite 電子書籍リーダー\n\n商品の詳細を表示するには、この商品をカートに追加します。商品は後でいつでも削除できます。\n\n...\n\n商品の詳細を表示するには、この商品をカートに追加します。商品は後でいつでも削除できます。\n\nAmazonによる発送\n\n安心・安全への取り組み\n\nお客様情報の保護\n\nAmazonによる発送\n\n- Amazon.co.jpが発送する商品の通常配送では、条件を満たした場合、日本国内へは無料で商品をお届けします。 初めてお買い物をされるお客様については、ご注文金額に関わらず通常配送が無料になります。詳しくは、配送料についてをご覧ください。 Amazonプライム会員およびPrime Student会員の方は、配送オプションに関わらず配送料無料です。 商品の配送状況は注文履歴からも追跡できます。 配送状況についての詳細はこちらをご覧ください。\n- 詳細はこちら\n\n...\n\nこの商品の最新モデルが表示されています\n\nBrief content visible, double tap to read full content.\n\nFull content visible, double tap to read brief content.\n\nモデル: 本体のみ\n\nモデルの選択ができます\n\n### 購入オプションとあわせ買い\n\n---\n\n- 【最速のKindle】最新のPaperwhiteディスプレイは前モデルと比べてページめくりが25%速くなりました。\n- 【7インチディスプレイ】光の反射を抑えた300ppiディスプレイで紙のような読み心地を。\n- 【読書の時間を贅沢に】Eメールやソーシャルメディアなどの通知に気を取られることなく、本に集中できる読書のための専用端末。\n- 【最大12週間バッテリー】USB-C対応、一度のフル充電で最大12週間続くバッテリー。\n- 【色調調節ライト】ホワイトからアンバーに色の暖かさを調節して、自分にとって読みやすい色合いを。\n- 【防水機能】IPX8等級の防水機能搭載。うっかり水がかかってしまっても、バスタブに落としてしまっても安心。\n- 【本棚をまるごと手の中に】16GBのストレージで、数千冊のコンテンツをこの1台に保存し、持ち歩けます。\n\n...\n\n前モデルより大きく、速く、薄くなったKindle Paperwhite第12世代。光の反射を抑えた7インチのPaperwhiteディスプレイのページめくりは25%速く、白黒コントラスト比も高くなり、さらに読みやすくなりました。\n\n...\n\n## Kindle電子書籍リーダーの比較\n\nデバイス\n\n価格\n\n￥19,980\n\n￥27,980\n\n￥32,980\n\n￥39,980\n\n￥44,980\n\n￥72,980\n\n￥89,980\n\n￥106,980\n\n評価\n\nカスタマーレビューはありません\n\nカスタマーレビューはありません\n\nカスタマーレビューはありません\n\nディスプレイサイズ\n\n6インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n7インチ反射抑制スクリーン\n\n11インチ反射抑制スクリーン\n\n11インチ反射抑制スクリーン\n\n11インチ反射抑制スクリーン\n\n容量\n\n16GB\n\n16GB\n\n32GB\n\n16GB\n\n32GB\n\n16GB\n\n32GB/64GB\n\n32GB/64GB\n\n...\n\n## Kindle Paperwhite\n\n### 技術仕様\n\nディスプレイ\n\n7インチAmazon Paperwhiteディスプレイ、解像度300ppi、内蔵型ライト、フォント最適化技術、16階調グレースケール\n\n...\n\n容量\n\n16GB。端末本体に数千冊保存可能 (一般的な書籍の場合)\n\n...\n\nカラー\n\nブラック\n\n世代\n\nKindle Paperwhite (第12世代) - 2024年発売"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite 電子書籍リーダー\",\"merchant\":\"Amazon.co.jp\",\"price\":19980,\"currency\":\"JPY\",\"availability\":\"in_stock\"}",
+        "image": "https://m.media-amazon.com/images/G/09/social_share/amazon_logo._CB634197764_.png"
+      },
+      {
+        "id": "https://www.aboutamazon.jp/news/devices/kindle-2024",
+        "title": "Amazonが 新Kindle（キンドル）シリーズ 4機種を発表。デザインや操作性が向上し、より読書が楽しく - About Amazon Japan",
+        "url": "https://www.aboutamazon.jp/news/devices/kindle-2024",
+        "publishedDate": "2024-10-16T13:01:51.000Z",
+        "author": "Amazonスタッフ",
+        "highlights": [
+          "筆者 Amazonスタッフ\n\n公開日 2024年10月16日\n\n...\n\n2024年10月16日に発表されたのは、手書き入力機能を搭載したKindle Scribe（キンドルスクライブ）、防水機能を備えたKindle Paperwhite（キンドルペーパーホワイト）Kindle Paperwhiteシグニチャーエディション（キンドルペーパーホワイトシグニチャーエディション）、シリーズ中最も手ごろな価格のKindle（キンドル）の4機種。その特徴をご紹介します。\n\n...\n\n### 新しいKindle Paperwhite（キンドルペーパーホワイト）、Kindle Paperwhite（キンドルペーパーホワイトシグニチャーエディション）：Paperwhite史上最速のページめくりを実現\n\n操作性の向上と、より見やすい7インチディスプレイを実現 Kindle Paperwhiteは、前モデルと比べてページめくりの速度が25%向上し、Kindleライブラリや本のページをすばやくスクロールすることが可能です。本モデルは軽量で薄型なデザインでありながら、Kindle Paperwhite史上最大となる7インチディスプレイを搭載しています。さらに、高い白黒コントラスト比と300ppiの最高解像度ディスプレイの実現でくっきりとした文字と画像を表示し、より快適な読書を実現します。 最大12週間持続可能バッテリーと超薄型防水デザイン Kindle Paperwhiteは前モデルと同様に、Kindleシリーズで最長となる最大12週間持続可能なバッテリーを実現* 2 しています。また、従来のIPX8等級の防水仕様も搭載し、浴室やビーチ、プールなど場所を問わず読書を楽しむことができます。\n\n### Kindle Paperwhite（キンドルペーパーホワイト）\n\nスクリーンサイズ：７インチ 本体サイズ： 176.7 × 127.6 × 7.8 mm 重さ： 211g ストレージ容量： 16GB カラー：ブラック 価格： 27,980円（税込）\n\n2024年10月16日より販売開始\n\n### Kindle Paperwhiteシグニチャーエディション\n\n新しくなったKindle Paperwhiteシグニチャーエディションは、前モデルと同様に32GBのストレージや、周囲の明るさに応じてディスプレイが輝度を自動的に調整する明るさ自動調整機能を搭載しているほか、ワイヤレス充電にも対応しています。\n\nスクリーンサイズ： 7インチ 本体サイズ： 176.7 × 127.6 × 7.8 mm 重さ： 214g ストレージ容量： 32GB カラー：メタリックブラック、メタリックジェード（2種） 価格： 32,980円（税込）\n\n2024年10月16日より販売開始"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"新Kindle Scribe（キンドルスクライブ）／新Kindle Paperwhite（キンドルペーパーホワイト）／Kindle Paperwhiteシグニチャーエディション／新しいKindle（キンドル）\",\"merchant\":\"About Amazon Japan\",\"price\":56800,\"currency\":\"JPY\",\"availability\":\"in_stock\"}",
+        "image": "https://assets.aboutamazon.com/dims4/default/67856eb/2147483647/strip/true/crop/1600x800+0+50/resize/1200x600!/quality/90/?url=https%3A%2F%2Fassets.aboutamazon.com%2Fc5%2Fdb%2Ff9b96ddd46f6a76b9afa3234aa2a%2F1-top-kindle-opt-2-1.jpg"
+      },
+      {
+        "id": "https://search.rakuten.co.jp/search/mall/Amazon+Kindle+Paperwhite+(16GB)+7%E3%82%A4%E3%83%B3%E3%83%81%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4%E3%80%81%E8%89%B2%E8%AA%BF%E8%AA%BF%E7%AF%80%E3%83%A9%E3%82%A4%E3%83%88%E3%80%8112%E9%80%B1%E9%96%93%E6%8C%81%E7%B6%9A%E3%83%90%E3%83%83%E3%83%86%E3%83%AA%E3%83%BC%E3%80%81%E5%BA%83%E5%91%8A%E3%81%AA%E3%81%97%E3%80%81%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF/",
+        "title": "【楽天市場】Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラックの通販",
+        "url": "https://search.rakuten.co.jp/search/mall/Amazon+Kindle+Paperwhite+(16GB)+7%E3%82%A4%E3%83%B3%E3%83%81%E3%83%87%E3%82%A3%E3%82%B9%E3%83%97%E3%83%AC%E3%82%A4%E3%80%81%E8%89%B2%E8%AA%BF%E8%AA%BF%E7%AF%80%E3%83%A9%E3%82%A4%E3%83%88%E3%80%8112%E9%80%B1%E9%96%93%E6%8C%81%E7%B6%9A%E3%83%90%E3%83%83%E3%83%86%E3%83%AA%E3%83%BC%E3%80%81%E5%BA%83%E5%91%8A%E3%81%AA%E3%81%97%E3%80%81%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF/",
+        "highlights": [
+          "【楽天市場】Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラックの通販\n\nお届け先(離島除く)への最安送料とお届け日を表示しています。 お届け日は目安のため、正確な情報は注文画面でご確認ください。\n\n価格や送料、納期、ポイント、在庫等の詳細は、商品のサイズや色によって異なる場合があります。正確な情報は商品ページでご確認ください。\n\n商品のお届けに関するお客様ニーズを幅広く満たす商品に「最強翌日配送」ラベルを表示しています。詳細を見る\n\n## [PR] 【ダイヤ・プラチナ限定エントリーでポイント5倍！】【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n5(6件)\n\n14:00までの注文で最短11/22(翌日)お届け\n\n## 【ダイヤ・プラチナ限定エントリーでポイント5倍！】【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n5(6件)\n\n14:00までの注文で最短11/22(翌日)お届け\n\n## 【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n3(1件)\n\n14:00までの注文で最短11/22(翌日)お届け\n\n## Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし ブラック B0CFPL6CFY [B0CFPL6CFY]【RBKM】\n\n39,980円\n\n363ポイント\n\n(1倍)\n\n1〜3日で出荷\n\n## 【エントリーで最大全額ポイント還元｜11/25まで】 Amazon｜アマゾン Kindle Paperwhite 第12世代 [7インチ /16GB] ブラック B0CFPL6CFY [7インチ /防水]\n\n39,980円\n\n送料無料\n\n363ポイント\n\n(1倍)\n\n5(5件)\n\n15:00までの注文で最短11/22(翌日)お届け\n\n...\n\n## 【新品】【2024モデル】 Kindle Paperwhite (16GB) 7インチディスプレイ 電子書籍リーダー ブラック 広告なし 第12世代\n\n28,080円\n\n送料無料\n\n255ポイント\n\n(1倍)\n\n1〜3日以内に発送予定(店舗休業日を除く)\n\n ノア商社 楽天市場店"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラック\",\"merchant\":\"楽天市場\",\"price\":27492,\"currency\":\"JPY\",\"availability\":\"in_stock\"}",
+        "image": "https://r.r10s.jp/com/img/logo/rakuten_group_red.svg"
+      },
+      {
+        "id": "https://www.amazon.co.jp/gp/bestsellers/computers/45726011",
+        "title": "Best Sellers",
+        "url": "https://www.amazon.co.jp/gp/bestsellers/computers/45726011",
+        "highlights": [
+          "Amazon.co.jp Best Sellers: The most popular items in eBook Readers\n\n# Best Sellers\n\nOur most popular products based on sales. Updated hourly.\n\nAll Categories\n\n...\n\n# Best Sellers in eBook Readers\n\n#1\n\nKindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラック\n\n1 offer from ¥27,980\n\n#2\n\nKindle Paperwhite シグニチャーエディション (32GB) 7インチディスプレイ、明るさ自動調整、色調調節ライト、12週間持続バッテリー、広告なし、メタリックブラック\n\n1 offer from ¥32,980\n\n#3\n\nKindle (2024年発売)、6インチディスプレイ電子書籍リーダー、16GBストレージ、ブラック、広告なし\n\n1 offer from ¥19,980"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":null,\"merchant\":null,\"price\":null,\"currency\":null,\"availability\":null}",
+        "image": "https://fls-fe.amazon.co.jp/1/batch/1/OP/A1VC38T7YXB528:356-7830210-6606619:7RDXAKEDR4JM66QG9Q2P$uedata=s:%2Frd%2Fuedata%3Fstaticb%26id%3D7RDXAKEDR4JM66QG9Q2P:0"
+      },
+      {
+        "id": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite+%E6%9C%AC%E4%BD%93/560313/",
+        "title": "【楽天市場】kindle paperwhite 本体（電子書籍リーダー本体｜スマートフォン・タブレット）の通販",
+        "url": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite+%E6%9C%AC%E4%BD%93/560313/",
+        "highlights": [
+          "お届け先(離島除く)への最安送料とお届け日を表示しています。 お届け日は目安のため、正確な情報は注文画面でご確認ください。\n\n価格や送料、納期、ポイント、在庫等の詳細は、商品のサイズや色によって異なる場合があります。正確な情報は商品ページでご確認ください。\n\n...\n\n## 【ダイヤ・プラチナ限定エントリーでポイント5倍！】【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n5(6件)\n\n14:00までの注文で最短11/21(翌日)お届け\n\n...\n\n送料無料\n\n363ポイント\n\n...\n\n5(5件)\n\n15:00までの注文で最短11/21(翌日)お届け\n\n## 【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n...\n\n## 【新品】【2024モデル】 Kindle Paperwhite (16GB) 7インチディスプレイ 電子書籍リーダー ブラック 広告なし 第12世代\n\n28,080円\n\n送料無料\n\n255ポイント\n\n(1倍)\n\n1〜3日以内に発送予定(店舗休業日を除く)"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"新品】Kindle Paperwhite シグニチャーエディション 32GB\",\"merchant\":\"電子問屋 2号店\",\"price\":36449,\"currency\":\"JPY\",\"availability\":\"in_stock\"}",
+        "image": "https://r.r10s.jp/com/img/logo/rakuten_group_red.svg"
+      },
+      {
+        "id": "https://note.com/solo_dev_jp/n/n93d3ccd267df",
+        "title": "【Amazonプライム感謝祭】 Kindle 2024が16,980円。2026年モデルとの違いと、初めての1台の選び方｜YASUO-JP",
+        "url": "https://note.com/solo_dev_jp/n/n93d3ccd267df",
+        "publishedDate": "2026-10-12T18:45:40.000Z",
+        "author": "YASUO-JP",
+        "highlights": [
+          "# 【Amazonプライム感謝祭】 Kindle 2024が16,980円。2026年モデルとの違いと、初めての1台の選び方\n\nYASUO-JP 2026年10月13日 03:45\n\n【感謝祭終了のお知らせ】 本記事で紹介した10月のAmazonプライム感謝祭は終了しました。掲載価格・ポイント還元は執筆時点の情報です。\n\n紹介した商品が、11月下旬ブラックフライデーで再びセール対象になる可能性もあります。購入を検討している方は、次回のブラックフライデーにも注目してみてください。\n\n電子書籍リーダーを試してみたい。でも、本を読むための端末に3万円となると、少し迷う。\n\n2026年10月に発表された新しいKindleは、無印の16GBモデルが29,980円、Kindle Paperwhiteが39,980円になりました。\n\n2024年モデルの発売時価格と比べると、それぞれ10,000円、12,000円の上昇です。\n\nそんな中、Amazonのプライム感謝祭先行セールでは、 2024年の無印Kindleが16,980円、Paperwhiteが22,980円になっています。（キッズモデルも追記しました）\n\n私自身も、今回の2024年モデルの購入を検討しています。→購入しました。 新型の軽さや速度改善には魅力がありますが、読書のための道具として考えると、旧モデルにも選ぶ理由があるからです。\n\n何が変わり、どこが変わっていないのか。価格、機能、ページめくりの速度から整理します。\n\n> ※ 価格・販売条件は2026年10月13日に確認したものです。価格は税込で、ポイントを差し引かない商品代金です。 ※ Amazonプライム感謝祭は本日10月19日（月）23:59 までです。ご注意ください。→ 終了しました。次回のAmazonのセールは（通例であれば）11月下旬ブラックフライデーになります。\n\n10/17 追記： Kindleデバイス、特に 無印と Paperwhite の売れ行きが早く、Paperwhite (2024年式) はなかなか在庫が復活しません、セール中に在庫切れになる事も予想されます。（7月プライムデーの時も同じ事が起きました） また、 Kid+プラン付きのものもセール対象になっています。\n\nコストを抑えて購入したい方は、無印 Kindle 2024年式がベストです。 今から、7インチの Paperwhiteを希望する方は、Kid+/カバー付きのもの（24,980円）を検討するか、もしくは2026年式の最新モデル（39,800円）の選択となります。\n\n## まず価格。新旧モデルでは1万円以上の差がある\n\n> 2024年モデルはいずれも、Amazon.co.jpが出荷・販売する新品で、「プライム感謝祭先行セール」「プライム限定価格」と表示されていました。確認したのは、ブラックの「本体のみ」です。無印Kindle（2024）、 Paperwhite（2024）\n\n無印は商品ページの19,980円から3,000円引き、Paperwhiteは同27,980円から5,000円引きです。過去価格からの値引きと、新モデルとの価格差は別なので、区別して見てください。\n\n2026年の無印Kindleは販売中ですが、新Paperwhiteは予約商品で、出荷開始は11月11日予定です。\n\n...\n\n## Paperwhite：2024年モデルにも、防水と暖色のライトがある\n\nPaperwhiteを選ぶ意味は、無印より大きな7インチ画面、防水、色調調節ライトにあります。これらは2024年モデルにも搭載されています。\n\n> 仕様は各モデルの販売ページをもとにしています。 Paperwhite（2024）、 Paperwhite（2026）\n\n2026年モデルは7g軽くなり、厚さが1mm減りました。新しいデザインや持ちやすさに魅力はありますが、大きめの画面、暖色のライト、防水というPaperwhiteらしい機能は、2024年モデルでも使えます。\n\n> ※ バッテリーの「最大6週間」「最大12週間」は所定の使用条件に基づく公称値です。2024年モデルでは、明るさ設定13、ワイヤレス接続オフ、1日30分使用が条件で、連続して何週間も読めるという意味ではありません。防水も、あらゆる水濡れや高温・蒸気への耐性を保証するものではありません。\n\n...\n\n## 初めてなら、無印16,980円とPaperwhite22,980円を比べたい\n\n...\n\n### 大きめの画面・暖色のライトを重視するなら、Paperwhite\n\nマンガも読む、少し大きな画面が欲しい、夜はライトの色を暖かくしたい。そうした希望があるなら、Paperwhiteを比較したいところです。\n\n2024年モデルなら22,980円で、無印の2026年モデルよりも7,000円安くなっています。軽さでは無印に劣りますが、画面やライトの機能を重視するなら、こちらが用途に合う場合もあります。\n\nただし、マンガの細かな文字や見開き、雑誌のレイアウトまで、7インチで必ず読みやすいとは限りません。写真やカラー図版を重視するなら、タブレットなども含めて考えましょう。\n\nKindle Paperwhiteは早い段階で在庫がなくなり、復活は厳しいように感じます。同じKindle Paperwhite 2024年式 ( カバーとKid+付 )であれば +2,000円ですが、購入は可能のようです。\n\n...\n\n## 買う前に知っておきたいこと\n\n...\n\n購入時は、次の点も確認してください。\n\n- 商品名に「2024年発売」とあるか、容量は16GBか\n- 新品か、出荷元・販売元はAmazon.co.jpか\n- プライム限定価格が適用されるか\n- Kindle Unlimitedの特典を選ぶ場合、自動更新や解約の条件はどうなっているか\n\n...\n\n追記： Kindle Paperwhite （2024年モデル）を購入しました。 Amazon 利用者によっては 更に安くなる可能性がありますが、ユーザーよって違うのでご自身でご確認して頂くことをおすすめします。\n\n### Kindle Paperwhite ( 2024年式 ) / セール対象\n\n Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラック link.amazon \n\n 22,980円 (2026年10月13日 19:06時点 詳しくはこちら) \n\n Amazon.co.jpで購入する"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"【Amazonプライム感謝祭】 Kindle 2024が16,980円。2026年モデルとの違いと、初めての1台の選び方｜YASUO-JP\",\"merchant\":\"YASUO-JP\",\"price\":16980,\"currency\":\"JPY\",\"availability\":\"unknown\"}",
+        "image": "https://assets.st-note.com/production/uploads/images/323754599/rectangle_large_type_2_0508d2bf1a478fded7ad4999ddd06b91.jpeg?fit=bounds&quality=85&width=1280"
+      },
+      {
+        "id": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite/560313/tg1045612/",
+        "title": "【楽天市場】kindle paperwhite（ブランドアマゾン）（電子書籍リーダー本体｜スマートフォン・タブレット）の通販",
+        "url": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite/560313/tg1045612/",
+        "highlights": [
+          "【楽天市場】kindle paperwhite（ブランドアマゾン）（電子書籍リーダー本体｜スマートフォン・タブレット）の通販\n\nお届け先(離島除く)への最安送料とお届け日を表示しています。 お届け日は目安のため、正確な情報は注文画面でご確認ください。\n\n価格や送料、納期、ポイント、在庫等の詳細は、商品のサイズや色によって異なる場合があります。正確な情報は商品ページでご確認ください。\n\n商品のお届けに関するお客様ニーズを幅広く満たす商品に「最強翌日配送」ラベルを表示しています。詳細を見る\n\n## 【ダイヤ・プラチナ限定エントリーでポイント5倍！】【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n5(6件)\n\n14:00までの注文で最短11/21(翌日)お届け\n\n## 【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,492円\n\n送料無料\n\n498ポイント\n\n(1倍+1倍UP)\n\n3(1件)\n\n14:00までの注文で最短11/21(翌日)お届け\n\n 電子問屋 2号店\n\n...\n\n## 【新品】【2024モデル】 Kindle Paperwhite (16GB) 7インチディスプレイ 電子書籍リーダー ブラック 広告なし 第12世代\n\n28,080円\n\n255ポイント\n\n(1倍)\n\n1〜3日以内に発送予定(店舗休業日を除く)"
+        ],
+        "summary": "{\"isProductListing\":false,\"productName\":\"kindle paperwhite（ブランドアマゾン）（電子書籍リーダー本体｜スマートフォン・タブレット）\",\"merchant\":\"楽天市場\",\"price\":27492,\"currency\":\"JPY\",\"availability\":\"in_stock\"}",
+        "image": "https://r.r10s.jp/com/img/logo/rakuten_group_red.svg"
+      },
+      {
+        "id": "https://www.rakuten.co.jp/category/560313/",
+        "title": "【楽天市場】電子書籍リーダー本体（スマートフォン・タブレット）の通販",
+        "url": "https://www.rakuten.co.jp/category/560313/",
+        "highlights": [
+          "2 位\n\n【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック\n\n27,600 円\n...\n4 位\n\n【新品】Amazon アマゾン Kindle Paperwhite 16GB 7インチ 広告なし 2024モデル ブラック 電子書籍リーダ…\n\n27,660 円\n...\n価格や送料、納期、ポイント、在庫等の詳細は、商品のサイズや色によって異なる場合があります。正確な情報は商品ページでご確認ください。"
+        ],
+        "summary": "{\"isProductListing\":true,\"productName\":\"電子書籍リーダー本体\",\"merchant\":null,\"price\":54000,\"currency\":\"JPY\",\"availability\":\"unknown\"}",
+        "image": "https://r.r10s.jp/com/img/logo/rakuten_group_red.svg"
+      }
+    ],
+    "searchTime": 5722.5,
+    "costDollars": {
+      "total": 0.015,
+      "search": {
+        "neural": 0.007
+      },
+      "summary": 0.008
+    }
+  }
+}

@@ -1,6 +1,16 @@
 # FutariLabs progress
 
-Phase: execution complete pending the final `dev` CI run. Plan `kensaku-mvp-v1`, revision CR-001 (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`; original approval `3fe529f`, snapshot `77dafb5d…` at `eed64a9`).
+Phase: **v1.1 planning** (plan `kensaku-v1-1`, unapproved). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).
+
+## v1.1 planning session 2026-11-21
+
+- Started with `/futari:bootstrap Kensaku v1.1 — change request on top of approved kensaku-mvp-v1`, with the owner's v1.1 brief (dark mode, image-first cards, real product images, CR-002 and merchant classification, Singapore investigation, engineering requirements).
+- Worktree `.claude/worktrees/v1-1-plan`, branch `v1-1-plan`, from `dev` `a3a2894`.
+- Owner decisions on AskUserQuestion cards: local image proxy with cache (D-029); collapse other-market offers (D-030); pre-approval spike ≤ 10 requests (D-028); classification additions and currency symbols (D-031, D-032); live budget ≤ 130 requests / ≤ $1.50 (D-034); MVP execution limits (D-035).
+- Spike: 8 Exa requests, $0.10 of free credits; image probe with no Exa use. Findings in `research/v1-1-spike-2026-11-21.md`. The Singapore cause was found and fixed in the plan (D-033).
+- Frozen v1.1 inputs: 57 classification cases, 115 image cases, 3 content cases, 8 live queries, 10 new live fixtures. A reference implementation of the written rules reproduces all 54 MVP labels; the v1.1 rules change only L29 and Y03, recorded as supersessions.
+- `node evals/harness.mjs`: HARNESS OK (exit 0); `--strict` fails until JM-101 by design.
+- Next step: independent review, then the approval card. Nothing executes before an `Approve plan` selection.
 
 ## Execution session 2026-11-21
 
@@ -49,7 +59,7 @@ Filled in after approval; reconcile every entry with actual GitHub and Git state
 
 - Observation: EV-008 run 1 displayed Q5-O1, a Rakuten Ichiba search-results page (`search.rakuten.co.jp/search/mall/...`), as a merchant offer. Exa reported `isProductListing: true`; the approved aggregator list has `product.rakuten.co.jp` only. The owner audit failed it (Direct merchant); the run still passed at 15/16.
 - Recommendation: a reviewed revision adding search-results URL handling (for example `search.rakuten.co.jp` on the aggregator list and a path rule for `/search`), with frozen cases from the run-1 log.
-- Status: owner chose "Follow-up after MVP" (2026-11-21). Not part of `kensaku-mvp-v1`.
+- Status: owner chose "Follow-up after MVP" (2026-11-21). Not part of `kensaku-mvp-v1`. Included in proposed plan `kensaku-v1-1` as rule 5b (D-031, REQ-016, EV-011 case N33).
 
 ### Deferred follow-ups (non-blocking review findings)
 

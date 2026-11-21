@@ -1,0 +1,1010 @@
+{
+  "_about": "EV-013 cases for plan kensaku-v1-1 (product image selection). urlCases test rule I1 (URL eligibility, no network); selectionCases test rule I2 (which product pages may supply an image, and in what order) on real Exa responses; bytesCases test rule I3 (what the image proxy accepts after fetching) on the type and dimensions measured by spikes/exa-v1-1/image-probe.mjs on 2026-11-21, plus synthetic edge cases. Image bytes are not committed.",
+  "labelStatus": "Assistant-proposed labels computed by a reference implementation of the written rules in docs/futari/ARCHITECTURE.md 'Product images' (independent of src/), checked by hand. They become gold labels only when the owner approves plan kensaku-v1-1. Whether an image shows the right product is not decidable by these rules; EV-016's owner image audit measures it.",
+  "rules": {
+    "I1": "An image URL is eligible only if it is at most 2048 characters, parses, uses http or https, has no username or password, and its last path segment (percent-decoded, lowercased) neither ends in '.svg' nor contains any of: logo, social, share, placeholder, missing, noimage, no-image, no_image, sprite, banner, campaign, brandimage, uedata, pixel, spacer, favicon, 1x1.",
+    "I2": "For one product, consider that product's search hits in Exa result order. A hit can supply its image only if the image URL passes I1 and the hit is (tier 1) a merchant offer in the selected market's currency, else (tier 2) on a manufacturer host and classified as a merchant offer or as evidence not-a-listing or merchant-no-price, else (tier 3) any other merchant offer. A manufacturer host is one whose labels (hostname split on '.' and '-') include the candidate brand normalized with NFKC, lowercased, and stripped of non-letters and non-digits, when that brand has at least 3 characters. Aggregator, editorial, marketplace, search-or-category, merchant-mismatch and rejected hits never supply images. Order: tier 1, then 2, then 3, each in Exa order; drop repeated image URLs; keep at most 4.",
+    "I3": "After fetching (see ARCHITECTURE 'Image proxy'), the bytes are accepted only if they are at most 5 MiB, their magic bytes identify JPEG, PNG, WebP or AVIF, both pixel dimensions are known, the shorter side is at least 200 px, and width/height is between 0.5 and 2.0 inclusive."
+  },
+  "urlCases": [
+    {
+      "id": "U01",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "www.courts.com.sg",
+      "imageUrl": "https://www.courts.com.sg/on/demandware.static/-/Sites-courts-m-catalog-sg/default/dwcb88e492/images/hires/media/catalog/product/i/p/ip176694_00.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U02",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "www.harveynorman.com.sg",
+      "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/108/Sony_WH-1000XM5_Wireless_Noise_Cancelling_Headphones_-_Midnight_Blue_(Main).jpg?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress",
+      "expected": "ok"
+    },
+    {
+      "id": "U03",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "www.stereo.com.sg",
+      "imageUrl": "http://www.stereo.com.sg/cdn/shop/files/1_wh-1000xm5_standard_black-mid.jpg?v=1726745173",
+      "expected": "ok"
+    },
+    {
+      "id": "U04",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "kiasuprice.com",
+      "imageUrl": "https://kiasuprice.com/mimg/shopee/21001553225.jpg?s=l",
+      "expected": "ok"
+    },
+    {
+      "id": "U05",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "www.courts.com.sg",
+      "imageUrl": "https://www.courts.com.sg/on/demandware.static/-/Sites-courts-m-catalog-sg/default/dwede2d62d/images/hires/media/catalog/product/i/p/ip183532_00.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U06",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "online.challenger.sg",
+      "imageUrl": "http://online.challenger.sg/cdn/shop/files/Challenger-SocialSharing.jpg?v=1756269582",
+      "expected": "deny-pattern"
+    },
+    {
+      "id": "U07",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "mobyshop.com.sg",
+      "imageUrl": "https://mobyshop.com.sg/media/catalog/product/cache/1/image/300x300/9df78eab33525d08d6e5fb8d27136e95/w/h/wh-1000xm5.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U08",
+      "fixture": "V2-search-sg-xm5",
+      "pageHost": "www.amazon.sg",
+      "imageUrl": "https://fls-fe.amazon.sg/1/batch/1/OP/A19VAU5U5O7RUS:356-8163780-7106125:2MCNGN638GZWJPB9M1JM$uedata=s:%2Frd%2Fuedata%3Fstaticb%26id%3D2MCNGN638GZWJPB9M1JM:0",
+      "expected": "deny-pattern"
+    },
+    {
+      "id": "U09",
+      "fixture": "V3-search-sg-bambino",
+      "pageHost": "www.harveynorman.com.sg",
+      "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/148/Slide1_og9c-yw.JPG?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress",
+      "expected": "ok"
+    },
+    {
+      "id": "U10",
+      "fixture": "V3-search-sg-bambino",
+      "pageHost": "breville.sg",
+      "imageUrl": "https://breville.sg/wp-content/uploads/2025/02/BES500SST4JAN1.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U11",
+      "fixture": "V3-search-sg-bambino",
+      "pageHost": "tangs.com",
+      "imageUrl": "https://tangs-prd-cdn.ascentismedia.com/sharedimages/BrandImages/BREVILLE/brandimage_1-250423090850.jpg",
+      "expected": "deny-pattern"
+    },
+    {
+      "id": "U12",
+      "fixture": "V3-search-sg-bambino",
+      "pageHost": "sg.priceme.com",
+      "imageUrl": "https://s3.pricemestatic.com/Images/RetailerProductImages/StRetailer830/0057016152_l.png",
+      "expected": "ok"
+    },
+    {
+      "id": "U13",
+      "fixture": "V3-search-sg-bambino",
+      "pageHost": "www.carousell.sg",
+      "imageUrl": "https://media.karousell.com/media/photos/products/2026/9/9/breville_bambino_plus_1788993782_7f53b629.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U14",
+      "fixture": "V3-search-sg-bambino",
+      "pageHost": "www.carousell.sg",
+      "imageUrl": "https://media.karousell.com/media/photos/products/2026/9/8/breville_bambino_plus_1788884841_8c8e1cef.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U15",
+      "fixture": "V4-search-us-xm5-control",
+      "pageHost": "www.theverge.com",
+      "imageUrl": "https://platform.theverge.com/wp-content/uploads/sites/2/2025/04/DSCF7932.webp?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200",
+      "expected": "ok"
+    },
+    {
+      "id": "U16",
+      "fixture": "V4-search-us-xm5-control",
+      "pageHost": "electronics.sony.com",
+      "imageUrl": "https://d1ncau8tqf99kp.cloudfront.net/converted/103375_original_local_1200x1050_v3_converted.webp",
+      "expected": "ok"
+    },
+    {
+      "id": "U17",
+      "fixture": "V4-search-us-xm5-control",
+      "pageHost": "www.howtogeek.com",
+      "imageUrl": "https://static0.howtogeekimages.com/wordpress/wp-content/uploads/2022/09/sony-wh-1000xm5-wearing.jpg?w=1200&h=675&fit=crop",
+      "expected": "ok"
+    },
+    {
+      "id": "U18",
+      "fixture": "V4-search-us-xm5-control",
+      "pageHost": "www.target.com",
+      "imageUrl": "https://target.scene7.com/is/image/Target/GUEST_e47219be-8eb6-4843-bce5-b9e70b45fa01",
+      "expected": "ok"
+    },
+    {
+      "id": "U19",
+      "fixture": "V4-search-us-xm5-control",
+      "pageHost": "www.walmart.com",
+      "imageUrl": "https://i5.walmartimages.com/seo/Sony-WH-1000XM5-The-Best-Wireless-Noise-Canceling-Headphones-Black_7384c879-1d54-47e8-9876-1d7adadcf0a5.542c245c25d295b30fa5820eacea4450.jpeg",
+      "expected": "ok"
+    },
+    {
+      "id": "U20",
+      "fixture": "V4-search-us-xm5-control",
+      "pageHost": "www.androidcentral.com",
+      "imageUrl": "https://cdn.mos.cms.futurecdn.net/BXMaMM8d4wpc3PxnoAWfnJ-2000-80.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U21",
+      "fixture": "V5-search-jp-kindle",
+      "pageHost": "www.amazon.co.jp",
+      "imageUrl": "https://m.media-amazon.com/images/G/09/social_share/amazon_logo._CB634197764_.png",
+      "expected": "deny-pattern"
+    },
+    {
+      "id": "U22",
+      "fixture": "V5-search-jp-kindle",
+      "pageHost": "www.aboutamazon.jp",
+      "imageUrl": "https://assets.aboutamazon.com/dims4/default/67856eb/2147483647/strip/true/crop/1600x800+0+50/resize/1200x600!/quality/90/?url=https%3A%2F%2Fassets.aboutamazon.com%2Fc5%2Fdb%2Ff9b96ddd46f6a76b9afa3234aa2a%2F1-top-kindle-opt-2-1.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U23",
+      "fixture": "V5-search-jp-kindle",
+      "pageHost": "search.rakuten.co.jp",
+      "imageUrl": "https://r.r10s.jp/com/img/logo/rakuten_group_red.svg",
+      "expected": "svg"
+    },
+    {
+      "id": "U24",
+      "fixture": "V5-search-jp-kindle",
+      "pageHost": "www.amazon.co.jp",
+      "imageUrl": "https://fls-fe.amazon.co.jp/1/batch/1/OP/A1VC38T7YXB528:356-7830210-6606619:7RDXAKEDR4JM66QG9Q2P$uedata=s:%2Frd%2Fuedata%3Fstaticb%26id%3D7RDXAKEDR4JM66QG9Q2P:0",
+      "expected": "deny-pattern"
+    },
+    {
+      "id": "U25",
+      "fixture": "V5-search-jp-kindle",
+      "pageHost": "note.com",
+      "imageUrl": "https://assets.st-note.com/production/uploads/images/323754599/rectangle_large_type_2_0508d2bf1a478fded7ad4999ddd06b91.jpeg?fit=bounds&quality=85&width=1280",
+      "expected": "ok"
+    },
+    {
+      "id": "U26",
+      "fixture": "V6-search-sg-candidate-1",
+      "pageHost": "online.challenger.sg",
+      "imageUrl": "http://online.challenger.sg/cdn/shop/files/4548736132603_MeCzoRiO2u6do3E89JcCKhIyCW9aEBOEu9AhjW4r.jpg?v=1754983817",
+      "expected": "ok"
+    },
+    {
+      "id": "U27",
+      "fixture": "V7-search-sg-candidate-2",
+      "pageHost": "metapod.com",
+      "imageUrl": "http://metapod.com/cdn/shop/files/BoseQuietComfortHeadphones_BlueDusk_2.webp?v=1768536397&width=2048",
+      "expected": "ok"
+    },
+    {
+      "id": "U28",
+      "fixture": "V7-search-sg-candidate-2",
+      "pageHost": "www.jaben.com",
+      "imageUrl": "http://www.jaben.com/cdn/shop/files/BOSESandstone_02.png?v=1733407193&width=2048",
+      "expected": "ok"
+    },
+    {
+      "id": "U29",
+      "fixture": "V7-search-sg-candidate-2",
+      "pageHost": "online.challenger.sg",
+      "imageUrl": "http://online.challenger.sg/cdn/shop/files/0017817854603_MfjQYYSxSvi5YScuYwnKvNvK25BoWPccvg7bQkp5.jpg?v=1764128934",
+      "expected": "ok"
+    },
+    {
+      "id": "U30",
+      "fixture": "V7-search-sg-candidate-2",
+      "pageHost": "online.challenger.sg",
+      "imageUrl": "http://online.challenger.sg/cdn/shop/files/0017817850506_v5mf597yrxKKbYP8WfkGyElIu2PdaPOh0cEMAnrB.jpg?v=1764143204",
+      "expected": "ok"
+    },
+    {
+      "id": "U31",
+      "fixture": "V7-search-sg-candidate-2",
+      "pageHost": "www.harveynorman.com.sg",
+      "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/133/Slide1_iieq-iu.JPG?fit=fill&bg=0FFF&w=1536&h=901&auto=format,compress",
+      "expected": "ok"
+    },
+    {
+      "id": "U32",
+      "fixture": "V7-search-sg-candidate-2",
+      "pageHost": "www.robinsons.com.sg",
+      "imageUrl": "http://www.robinsons.com.sg/cdn/shop/files/184108485_600x.webp?v=1793279310",
+      "expected": "ok"
+    },
+    {
+      "id": "U33",
+      "fixture": "S1-headphones",
+      "pageHost": "www.adorama.com",
+      "imageUrl": "https://www.adorama.com/images/300x300/sony-wh-1000xm5-black_sowh1xm5b.webp",
+      "expected": "ok"
+    },
+    {
+      "id": "U34",
+      "fixture": "S2-mouse",
+      "pageHost": "www.logitech.com",
+      "imageUrl": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/homepage/delorean-hp/logitech-global-og-image.png",
+      "expected": "ok"
+    },
+    {
+      "id": "U35",
+      "fixture": "S2-mouse",
+      "pageHost": "www.logitech.com",
+      "imageUrl": "https://resource.logitech.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/common/og-generic/og-image-electrico.png",
+      "expected": "ok"
+    },
+    {
+      "id": "U36",
+      "fixture": "S3-espresso",
+      "pageHost": "www.breville.com",
+      "imageUrl": "https://assets.breville.com/cdn-cgi/image/width=1300,format=auto/BES500/BES500BSS1BUS1/pdp_1300px.png?pdp",
+      "expected": "ok"
+    },
+    {
+      "id": "U37",
+      "fixture": "S3-espresso",
+      "pageHost": "www.williams-sonoma.com",
+      "imageUrl": "https://assets.wsimgs.com/wsimgs/rk/images/dp/wcm/202641/0006/breville-bambino-plus-espresso-machine-c.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U38",
+      "fixture": "S3-espresso",
+      "pageHost": "www.macys.com",
+      "imageUrl": "https://slimages.macysassets.com/is/image/MCY/products/7/optimized/22520597_fpx.tif?$filterlrg$&wid=327",
+      "expected": "ok"
+    },
+    {
+      "id": "U39",
+      "fixture": "S4-ereader",
+      "pageHost": "www.target.com",
+      "imageUrl": "https://target.scene7.com/is/image/Target/GUEST_8608ea59-7cd0-4700-9575-7624d4dc5a89",
+      "expected": "ok"
+    },
+    {
+      "id": "U40",
+      "fixture": "S4-ereader",
+      "pageHost": "www.officeworks.com.au",
+      "imageUrl": "https://images.officeworks.com.au/api/2/img/https://s3-ap-southeast-2.amazonaws.com/wc-prod-pim/JPEG_300x300/AMCFPL6CFY_kindle_paperwhite_2024_16gb_black.jpg/resize?size=300&auth=MjA5OTcwODkwMg__",
+      "expected": "ok"
+    },
+    {
+      "id": "U41",
+      "fixture": "S6-fresh-crawl",
+      "pageHost": "www.bestbuy.com",
+      "imageUrl": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6505/6505727_rd.jpg;maxHeight=128;maxWidth=56?format=webp",
+      "expected": "ok"
+    },
+    {
+      "id": "U42",
+      "fixture": "S6-fresh-crawl",
+      "pageHost": "hothardware.com",
+      "imageUrl": "https://images.hothardware.com/contentimages/newsitem/72167/content/16x9_2133x1200_highres-sony-wh-1000xm5.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U43",
+      "fixture": "S6-fresh-crawl",
+      "pageHost": "www.bestpricescanner.com",
+      "imageUrl": "https://pisces.bbystatic.com/prescaled/500/500/image2/BestBuy_US/images/products/6505/6505727_rd.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U44",
+      "fixture": "S8-market-sg",
+      "pageHost": "www.harveynorman.com.sg",
+      "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/146/Slide1_ycwo-0e.JPG?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress",
+      "expected": "ok"
+    },
+    {
+      "id": "U45",
+      "fixture": "S9-market-jp",
+      "pageHost": "pur.store.sony.jp",
+      "imageUrl": "https://www.sony.jp/imag/product/WH-1000XM5?$ImageL$",
+      "expected": "ok"
+    },
+    {
+      "id": "U46",
+      "fixture": "S9-market-jp",
+      "pageHost": "www.sony.jp",
+      "imageUrl": "https://www.sony.jp/products/picture/WH-1000XM5.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U47",
+      "fixture": "S9-market-jp",
+      "pageHost": "www.ksdenki.com",
+      "imageUrl": "https://www.ksdenki.com/ito/img_public/prod/454873/454873613/4548736132566/IMG_PATH_M/pc/4548736132566_02_00.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U48",
+      "fixture": "S9-market-jp",
+      "pageHost": "product.rakuten.co.jp",
+      "imageUrl": "https://r.r10s.jp/g/gran_img/ko/PET/6RO/S5Y/NI8/9b7b654b8848e334e32f205761ed6698.jpg",
+      "expected": "ok"
+    },
+    {
+      "id": "U49",
+      "synthetic": true,
+      "imageUrl": "data:image/png;base64,iVBORw0KGgo=",
+      "expected": "bad-scheme",
+      "note": "data: URLs are never fetched or rendered"
+    },
+    {
+      "id": "U50",
+      "synthetic": true,
+      "imageUrl": "javascript:alert(1)",
+      "expected": "bad-scheme",
+      "note": "script URLs are rejected"
+    },
+    {
+      "id": "U51",
+      "synthetic": true,
+      "imageUrl": "ftp://example.com/p.jpg",
+      "expected": "bad-scheme",
+      "note": "only http and https"
+    },
+    {
+      "id": "U52",
+      "synthetic": true,
+      "imageUrl": "https://user:pass@cdn.example.com/p.jpg",
+      "expected": "credentials",
+      "note": "URLs with credentials are rejected"
+    },
+    {
+      "id": "U53",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/WH1000XM5.SVG?w=800",
+      "expected": "svg",
+      "note": "SVG is rejected case-insensitively; the query does not hide the extension"
+    },
+    {
+      "id": "U54",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/default/products/wh-1000xm5.jpg",
+      "expected": "ok",
+      "note": "deny tokens apply to the file name only; '/default/' in the path is fine (Courts)"
+    },
+    {
+      "id": "U55",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/products/site-Logo%20Dark.png",
+      "expected": "deny-pattern",
+      "note": "the file name is percent-decoded before matching"
+    },
+    {
+      "id": "U56",
+      "synthetic": true,
+      "imageUrl": "https://cdn.example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg",
+      "expected": "invalid-url",
+      "note": "URLs longer than 2048 characters are rejected"
+    },
+    {
+      "id": "U57",
+      "synthetic": true,
+      "imageUrl": "not a url",
+      "expected": "invalid-url",
+      "note": "unparseable"
+    }
+  ],
+  "selectionCases": [
+    {
+      "id": "I01",
+      "fixture": "V2-search-sg-xm5",
+      "candidate": "XM5",
+      "market": "SG",
+      "expected": [
+        {
+          "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/108/Sony_WH-1000XM5_Wireless_Noise_Cancelling_Headphones_-_Midnight_Blue_(Main).jpg?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress",
+          "pageUrl": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/sony-wh-1000xm5-lme-wireless-noise-cancelling-headphones-midnight-blue.html"
+        },
+        {
+          "imageUrl": "http://www.stereo.com.sg/cdn/shop/files/1_wh-1000xm5_standard_black-mid.jpg?v=1726745173",
+          "pageUrl": "https://www.stereo.com.sg/products/sony-wh1000xm5"
+        },
+        {
+          "imageUrl": "https://www.courts.com.sg/on/demandware.static/-/Sites-courts-m-catalog-sg/default/dwede2d62d/images/hires/media/catalog/product/i/p/ip183532_00.jpg",
+          "pageUrl": "https://www.courts.com.sg/sony-wireless-noise-cancellation%2C-headphones-midnight-blue-wh-1000xm5%2Flme-IP183532.html"
+        },
+        {
+          "imageUrl": "https://mobyshop.com.sg/media/catalog/product/cache/1/image/300x300/9df78eab33525d08d6e5fb8d27136e95/w/h/wh-1000xm5.jpg",
+          "pageUrl": "https://mobyshop.com.sg/wearables/brands/sony/sony-wh-1000xm5.html"
+        }
+      ]
+    },
+    {
+      "id": "I02",
+      "fixture": "V3-search-sg-bambino",
+      "candidate": "BAMBINO",
+      "market": "SG",
+      "expected": [
+        {
+          "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/148/Slide1_og9c-yw.JPG?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress",
+          "pageUrl": "https://www.harveynorman.com.sg/home-appliances/small-kitchen-appliances-en/coffee-machines-en/breville-the-bambino-plus-stainless-steel-bes500bss.html"
+        },
+        {
+          "imageUrl": "https://breville.sg/wp-content/uploads/2025/02/BES500SST4JAN1.jpg",
+          "pageUrl": "https://breville.sg/product/the-bambino-plus"
+        }
+      ]
+    },
+    {
+      "id": "I03",
+      "fixture": "V4-search-us-xm5-control",
+      "candidate": "XM5",
+      "market": "US",
+      "expected": [
+        {
+          "imageUrl": "https://d1ncau8tqf99kp.cloudfront.net/converted/103375_original_local_1200x1050_v3_converted.webp",
+          "pageUrl": "https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-s"
+        },
+        {
+          "imageUrl": "https://i5.walmartimages.com/seo/Sony-WH-1000XM5-The-Best-Wireless-Noise-Canceling-Headphones-Black_7384c879-1d54-47e8-9876-1d7adadcf0a5.542c245c25d295b30fa5820eacea4450.jpeg",
+          "pageUrl": "https://www.walmart.com/ip/Sony-WH-1000XM5-The-Best-Wireless-Noise-Canceling-Headphones-Black/386006068"
+        }
+      ]
+    },
+    {
+      "id": "I04",
+      "fixture": "V7-search-sg-candidate-2",
+      "candidate": "BOSEQC",
+      "market": "SG",
+      "expected": [
+        {
+          "imageUrl": "http://metapod.com/cdn/shop/files/BoseQuietComfortHeadphones_BlueDusk_2.webp?v=1768536397&width=2048",
+          "pageUrl": "https://metapod.com/products/bose-quietcomfort-headphones"
+        },
+        {
+          "imageUrl": "http://online.challenger.sg/cdn/shop/files/0017817854603_MfjQYYSxSvi5YScuYwnKvNvK25BoWPccvg7bQkp5.jpg?v=1764128934",
+          "pageUrl": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-blue-dust"
+        },
+        {
+          "imageUrl": "http://online.challenger.sg/cdn/shop/files/0017817850506_v5mf597yrxKKbYP8WfkGyElIu2PdaPOh0cEMAnrB.jpg?v=1764143204",
+          "pageUrl": "https://online.challenger.sg/products/bose-quietcomfort-wireless-noise-cancelling-headphones-moonstone"
+        },
+        {
+          "imageUrl": "http://www.robinsons.com.sg/cdn/shop/files/184108485_600x.webp?v=1793279310",
+          "pageUrl": "https://www.robinsons.com.sg/products/bose-quietcomfort-headphones-3"
+        }
+      ]
+    },
+    {
+      "id": "I05",
+      "fixture": "S9-market-jp",
+      "candidate": "XM5",
+      "market": "JP",
+      "expected": [
+        {
+          "imageUrl": "https://www.sony.jp/products/picture/WH-1000XM5.jpg",
+          "pageUrl": "https://www.sony.jp/headphone/products/WH-1000XM5/"
+        },
+        {
+          "imageUrl": "https://www.ksdenki.com/ito/img_public/prod/454873/454873613/4548736132566/IMG_PATH_M/pc/4548736132566_02_00.jpg",
+          "pageUrl": "https://www.ksdenki.com/item?sku=4548736132566"
+        },
+        {
+          "imageUrl": "https://www.sony.jp/imag/product/WH-1000XM5?$ImageL$",
+          "pageUrl": "https://pur.store.sony.jp/headphone/products/WH-1000XM5/WH-1000XM5_purchase/"
+        }
+      ]
+    },
+    {
+      "id": "I06",
+      "fixture": "V2-search-sg-xm5",
+      "candidate": "XM5",
+      "market": "US",
+      "expected": [
+        {
+          "imageUrl": "https://mobyshop.com.sg/media/catalog/product/cache/1/image/300x300/9df78eab33525d08d6e5fb8d27136e95/w/h/wh-1000xm5.jpg",
+          "pageUrl": "https://mobyshop.com.sg/wearables/brands/sony/sony-wh-1000xm5.html"
+        },
+        {
+          "imageUrl": "https://hnsgsfp.imgix.net/4/images/detailed/108/Sony_WH-1000XM5_Wireless_Noise_Cancelling_Headphones_-_Midnight_Blue_(Main).jpg?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress",
+          "pageUrl": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/over-ear-headphones-en-2/sony-wh-1000xm5-lme-wireless-noise-cancelling-headphones-midnight-blue.html"
+        },
+        {
+          "imageUrl": "http://www.stereo.com.sg/cdn/shop/files/1_wh-1000xm5_standard_black-mid.jpg?v=1726745173",
+          "pageUrl": "https://www.stereo.com.sg/products/sony-wh1000xm5"
+        },
+        {
+          "imageUrl": "https://www.courts.com.sg/on/demandware.static/-/Sites-courts-m-catalog-sg/default/dwede2d62d/images/hires/media/catalog/product/i/p/ip183532_00.jpg",
+          "pageUrl": "https://www.courts.com.sg/sony-wireless-noise-cancellation%2C-headphones-midnight-blue-wh-1000xm5%2Flme-IP183532.html"
+        }
+      ]
+    },
+    {
+      "id": "I07",
+      "fixture": "V5-search-jp-kindle",
+      "candidate": "PAPERWHITE",
+      "market": "JP",
+      "expected": []
+    }
+  ],
+  "bytesCases": [
+    {
+      "id": "B01",
+      "source": "V2-search-sg-xm5 www.courts.com.sg",
+      "type": "jpeg",
+      "width": 1600,
+      "height": 1600,
+      "bytes": 55379,
+      "expected": "ok"
+    },
+    {
+      "id": "B02",
+      "source": "V2-search-sg-xm5 www.harveynorman.com.sg",
+      "type": "avif",
+      "width": 1536,
+      "height": 900,
+      "bytes": 4866,
+      "expected": "ok"
+    },
+    {
+      "id": "B03",
+      "source": "V2-search-sg-xm5 www.stereo.com.sg",
+      "type": "webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 33622,
+      "expected": "ok"
+    },
+    {
+      "id": "B04",
+      "source": "V2-search-sg-xm5 kiasuprice.com",
+      "type": "jpeg",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 379028,
+      "expected": "ok"
+    },
+    {
+      "id": "B05",
+      "source": "V2-search-sg-xm5 www.courts.com.sg",
+      "type": "jpeg",
+      "width": 1600,
+      "height": 1600,
+      "bytes": 63576,
+      "expected": "ok"
+    },
+    {
+      "id": "B06",
+      "source": "V2-search-sg-xm5 online.challenger.sg",
+      "type": "webp",
+      "width": 596,
+      "height": 312,
+      "bytes": 38170,
+      "expected": "ok"
+    },
+    {
+      "id": "B07",
+      "source": "V2-search-sg-xm5 www.amazon.sg",
+      "type": "gif",
+      "width": 1,
+      "height": 1,
+      "bytes": 43,
+      "expected": "unsupported-type"
+    },
+    {
+      "id": "B08",
+      "source": "V3-search-sg-bambino www.harveynorman.com.sg",
+      "type": "avif",
+      "width": 1536,
+      "height": 900,
+      "bytes": 11120,
+      "expected": "ok"
+    },
+    {
+      "id": "B09",
+      "source": "V3-search-sg-bambino breville.sg",
+      "type": "jpeg",
+      "width": 1300,
+      "height": 1300,
+      "bytes": 109200,
+      "expected": "ok"
+    },
+    {
+      "id": "B10",
+      "source": "V3-search-sg-bambino tangs.com",
+      "type": "jpeg",
+      "width": 1124,
+      "height": 259,
+      "bytes": 23773,
+      "expected": "aspect"
+    },
+    {
+      "id": "B11",
+      "source": "V3-search-sg-bambino sg.priceme.com",
+      "type": "png",
+      "width": 600,
+      "height": 600,
+      "bytes": 72283,
+      "expected": "ok"
+    },
+    {
+      "id": "B12",
+      "source": "V3-search-sg-bambino www.carousell.sg",
+      "type": "jpeg",
+      "width": 712,
+      "height": 1080,
+      "bytes": 67503,
+      "expected": "ok"
+    },
+    {
+      "id": "B13",
+      "source": "V3-search-sg-bambino www.carousell.sg",
+      "type": "jpeg",
+      "width": 498,
+      "height": 1080,
+      "bytes": 89290,
+      "expected": "aspect"
+    },
+    {
+      "id": "B14",
+      "source": "V4-search-us-xm5-control www.theverge.com",
+      "type": "webp",
+      "width": 1200,
+      "height": 624,
+      "bytes": 56728,
+      "expected": "ok"
+    },
+    {
+      "id": "B15",
+      "source": "V4-search-us-xm5-control electronics.sony.com",
+      "type": "webp",
+      "width": 1200,
+      "height": 1050,
+      "bytes": 34406,
+      "expected": "ok"
+    },
+    {
+      "id": "B16",
+      "source": "V4-search-us-xm5-control www.howtogeek.com",
+      "type": "avif",
+      "width": 1200,
+      "height": 675,
+      "bytes": 118810,
+      "expected": "ok"
+    },
+    {
+      "id": "B17",
+      "source": "V4-search-us-xm5-control www.target.com",
+      "type": "avif",
+      "width": 400,
+      "height": 400,
+      "bytes": 4214,
+      "expected": "ok"
+    },
+    {
+      "id": "B18",
+      "source": "V4-search-us-xm5-control www.walmart.com",
+      "type": "avif",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 10921,
+      "expected": "ok"
+    },
+    {
+      "id": "B19",
+      "source": "V4-search-us-xm5-control www.androidcentral.com",
+      "type": "jpeg",
+      "width": 2000,
+      "height": 1125,
+      "bytes": 116532,
+      "expected": "ok"
+    },
+    {
+      "id": "B20",
+      "source": "V5-search-jp-kindle www.amazon.co.jp",
+      "type": "png",
+      "width": 600,
+      "height": 315,
+      "bytes": 5108,
+      "expected": "ok"
+    },
+    {
+      "id": "B21",
+      "source": "V5-search-jp-kindle www.aboutamazon.jp",
+      "type": "jpeg",
+      "width": 1200,
+      "height": 600,
+      "bytes": 145028,
+      "expected": "ok"
+    },
+    {
+      "id": "B22",
+      "source": "V5-search-jp-kindle search.rakuten.co.jp",
+      "type": "unknown",
+      "width": 0,
+      "height": 0,
+      "bytes": 3896,
+      "expected": "unsupported-type"
+    },
+    {
+      "id": "B23",
+      "source": "V5-search-jp-kindle www.amazon.co.jp",
+      "type": "gif",
+      "width": 1,
+      "height": 1,
+      "bytes": 43,
+      "expected": "unsupported-type"
+    },
+    {
+      "id": "B24",
+      "source": "V5-search-jp-kindle note.com",
+      "type": "webp",
+      "width": 1280,
+      "height": 670,
+      "bytes": 95114,
+      "expected": "ok"
+    },
+    {
+      "id": "B25",
+      "source": "V6-search-sg-candidate-1 online.challenger.sg",
+      "type": "webp",
+      "width": 800,
+      "height": 800,
+      "bytes": 13170,
+      "expected": "ok"
+    },
+    {
+      "id": "B26",
+      "source": "V7-search-sg-candidate-2 metapod.com",
+      "type": "webp",
+      "width": 800,
+      "height": 800,
+      "bytes": 26404,
+      "expected": "ok"
+    },
+    {
+      "id": "B27",
+      "source": "V7-search-sg-candidate-2 www.jaben.com",
+      "type": "webp",
+      "width": 700,
+      "height": 700,
+      "bytes": 24402,
+      "expected": "ok"
+    },
+    {
+      "id": "B28",
+      "source": "V7-search-sg-candidate-2 online.challenger.sg",
+      "type": "webp",
+      "width": 800,
+      "height": 800,
+      "bytes": 24554,
+      "expected": "ok"
+    },
+    {
+      "id": "B29",
+      "source": "V7-search-sg-candidate-2 online.challenger.sg",
+      "type": "webp",
+      "width": 800,
+      "height": 800,
+      "bytes": 21974,
+      "expected": "ok"
+    },
+    {
+      "id": "B30",
+      "source": "V7-search-sg-candidate-2 www.harveynorman.com.sg",
+      "type": "avif",
+      "width": 1536,
+      "height": 901,
+      "bytes": 8831,
+      "expected": "ok"
+    },
+    {
+      "id": "B31",
+      "source": "V7-search-sg-candidate-2 www.robinsons.com.sg",
+      "type": "webp",
+      "width": 600,
+      "height": 450,
+      "bytes": 9958,
+      "expected": "ok"
+    },
+    {
+      "id": "B32",
+      "source": "S1-headphones www.adorama.com",
+      "type": "webp",
+      "width": 300,
+      "height": 300,
+      "bytes": 3702,
+      "expected": "ok"
+    },
+    {
+      "id": "B33",
+      "source": "S2-mouse www.logitech.com",
+      "type": "webp",
+      "width": 1200,
+      "height": 630,
+      "bytes": 2596,
+      "expected": "ok"
+    },
+    {
+      "id": "B34",
+      "source": "S2-mouse www.logitech.com",
+      "type": "webp",
+      "width": 1200,
+      "height": 630,
+      "bytes": 3016,
+      "expected": "ok"
+    },
+    {
+      "id": "B35",
+      "source": "S3-espresso www.breville.com",
+      "type": "avif",
+      "width": 1300,
+      "height": 1300,
+      "bytes": 52289,
+      "expected": "ok"
+    },
+    {
+      "id": "B36",
+      "source": "S3-espresso www.williams-sonoma.com",
+      "type": "jpeg",
+      "width": 574,
+      "height": 574,
+      "bytes": 54015,
+      "expected": "ok"
+    },
+    {
+      "id": "B37",
+      "source": "S3-espresso www.macys.com",
+      "type": "jpeg",
+      "width": 327,
+      "height": 400,
+      "bytes": 23572,
+      "expected": "ok"
+    },
+    {
+      "id": "B38",
+      "source": "S4-ereader www.target.com",
+      "type": "avif",
+      "width": 400,
+      "height": 400,
+      "bytes": 13885,
+      "expected": "ok"
+    },
+    {
+      "id": "B39",
+      "source": "S4-ereader www.officeworks.com.au",
+      "type": "avif",
+      "width": 300,
+      "height": 300,
+      "bytes": 5218,
+      "expected": "ok"
+    },
+    {
+      "id": "B40",
+      "source": "S6-fresh-crawl www.bestbuy.com",
+      "type": "webp",
+      "width": 56,
+      "height": 86,
+      "bytes": 1292,
+      "expected": "too-small"
+    },
+    {
+      "id": "B41",
+      "source": "S6-fresh-crawl www.bestpricescanner.com",
+      "type": "jpeg",
+      "width": 324,
+      "height": 500,
+      "bytes": 16071,
+      "expected": "ok"
+    },
+    {
+      "id": "B42",
+      "source": "S8-market-sg www.harveynorman.com.sg",
+      "type": "avif",
+      "width": 1536,
+      "height": 900,
+      "bytes": 6535,
+      "expected": "ok"
+    },
+    {
+      "id": "B43",
+      "source": "S9-market-jp pur.store.sony.jp",
+      "type": "jpeg",
+      "width": 252,
+      "height": 190,
+      "bytes": 10972,
+      "expected": "too-small"
+    },
+    {
+      "id": "B44",
+      "source": "S9-market-jp www.sony.jp",
+      "type": "jpeg",
+      "width": 626,
+      "height": 470,
+      "bytes": 56218,
+      "expected": "ok"
+    },
+    {
+      "id": "B45",
+      "source": "S9-market-jp product.rakuten.co.jp",
+      "type": "webp",
+      "width": 500,
+      "height": 500,
+      "bytes": 8392,
+      "expected": "ok"
+    },
+    {
+      "id": "B46",
+      "synthetic": true,
+      "note": "tracking beacon",
+      "type": "gif",
+      "width": 1,
+      "height": 1,
+      "bytes": 43,
+      "expected": "unsupported-type"
+    },
+    {
+      "id": "B47",
+      "synthetic": true,
+      "note": "SVG or other non-raster bytes",
+      "type": "unknown",
+      "width": 0,
+      "height": 0,
+      "bytes": 3896,
+      "expected": "unsupported-type"
+    },
+    {
+      "id": "B48",
+      "synthetic": true,
+      "note": "over 5 MiB",
+      "type": "jpeg",
+      "width": 1600,
+      "height": 1600,
+      "bytes": 6291456,
+      "expected": "too-large"
+    },
+    {
+      "id": "B49",
+      "synthetic": true,
+      "note": "one side under 200 px",
+      "type": "png",
+      "width": 199,
+      "height": 800,
+      "bytes": 20000,
+      "expected": "too-small"
+    },
+    {
+      "id": "B50",
+      "synthetic": true,
+      "note": "aspect exactly 0.5 is allowed",
+      "type": "webp",
+      "width": 200,
+      "height": 400,
+      "bytes": 9000,
+      "expected": "ok"
+    },
+    {
+      "id": "B51",
+      "synthetic": true,
+      "note": "aspect just over 2.0",
+      "type": "webp",
+      "width": 801,
+      "height": 400,
+      "bytes": 9000,
+      "expected": "aspect"
+    }
+  ]
+}

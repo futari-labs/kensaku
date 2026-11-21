@@ -1,0 +1,176 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the kensaku-v1-1 pre-approval spike. Real data, not a gold label.",
+  "id": "V1-answer-sg-extended",
+  "request": {
+    "endpoint": "/answer",
+    "body": {
+      "query": "Best noise cancelling headphones under S$400 in Singapore",
+      "text": false,
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "comparison": {
+            "type": "string",
+            "description": "Short comparison with numbered citation markers like [1]."
+          },
+          "candidates": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "brand": {
+                  "type": "string"
+                },
+                "modelIdentifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Model numbers or distinctive tokens."
+                },
+                "keySpecs": {
+                  "type": "array",
+                  "maxItems": 5,
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Up to 5 short key specifications, each under 60 characters."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "One or two sentences on why this product fits the question, with numbered citation markers like [1]."
+                }
+              },
+              "required": [
+                "name",
+                "brand",
+                "modelIdentifiers",
+                "keySpecs",
+                "reason"
+              ]
+            }
+          }
+        },
+        "required": [
+          "comparison",
+          "candidates"
+        ]
+      },
+      "userLocation": "SG"
+    }
+  },
+  "requestedAt": "2026-11-21T02:21:31.039Z",
+  "receivedAt": "2026-11-21T02:21:33.783Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "8497f3459b232b952827ca6f0fefcb79",
+    "answer": {
+      "candidates": [
+        {
+          "name": "WH-1000XM5 Wireless Noise-Cancelling Headphones",
+          "modelIdentifiers": [
+            "WH-1000XM5"
+          ],
+          "reason": "Widely recognized as a top-performing model, it is currently available for S$350.10, fitting well under the S$400 budget [1].",
+          "keySpecs": [
+            "Up to 30 hours battery life with ANC on",
+            "Lightweight, comfortable design",
+            "Superior sound and call quality",
+            "Smart speaking detection feature"
+          ],
+          "brand": "Sony"
+        },
+        {
+          "modelIdentifiers": [
+            "QuietComfort Headphones"
+          ],
+          "brand": "Bose",
+          "keySpecs": [
+            "Active noise cancellation with ambient mode",
+            "Up to 24 hours battery life with ANC on",
+            "Adjustable EQ settings",
+            "Comfortable over-ear design"
+          ],
+          "reason": "These headphones are currently priced at S$384.90, offering a premium noise-cancelling experience within the requested budget [1].",
+          "name": "QuietComfort Noise Cancelling Headphones"
+        },
+        {
+          "name": "WH-1000XM4 Noise Cancelling Headphones",
+          "keySpecs": [
+            "Active noise cancellation",
+            "30 hours battery life",
+            "Foldable design",
+            "Includes microphone"
+          ],
+          "reason": "Available for around S$299, this highly-rated previous flagship remains an excellent, budget-friendly choice for quality noise cancellation [5].",
+          "brand": "Sony",
+          "modelIdentifiers": [
+            "WH-1000XM4"
+          ]
+        }
+      ],
+      "comparison": "While premium options like the Sony WH-1000XM5 and Bose QuietComfort provide top-tier performance under S$400 [1], older flagship models like the Sony WH-1000XM4 offer excellent value and high user ratings at a significantly lower price point [5]."
+    },
+    "citations": [
+      {
+        "id": "https://www.straitstimes.com/life/best-noise-cancelling-headphones-singapore",
+        "title": "Best noise-cancelling headphones in Singapore | The Straits Times",
+        "url": "https://www.straitstimes.com/life/best-noise-cancelling-headphones-singapore",
+        "publishedDate": "2025-09-25T03:56:51.000Z",
+        "image": "https://cassette.sphdigital.com.sg/image/straitstimes/3c5495967dc1c5c2d7b202fe3b9322546201950dd63163515136fd85fd6f45bd?t=og"
+      },
+      {
+        "id": "https://sg.priceme.com/Sony-WH-1000XM4/p-905639468.aspx",
+        "title": "Sony WH-1000XM4 SG Prices - PriceMe",
+        "url": "https://sg.priceme.com/Sony-WH-1000XM4/p-905639468.aspx",
+        "image": "https://m.media-amazon.com/images/I/71o8Q5XJS5L._AC_SX522_.jpg"
+      },
+      {
+        "id": "https://www.hardwarezone.com.sg/lifestyle/audio/best-active-noise-cancelling-headphones",
+        "title": "Tech Awards 2026 Best Noise Cancelling Headphones  | HardwareZone Singapore",
+        "url": "https://www.hardwarezone.com.sg/lifestyle/audio/best-active-noise-cancelling-headphones",
+        "publishedDate": "2026-11-20T02:00:00.000Z",
+        "author": "Cheryl Tan",
+        "image": "https://cassette.sphdigital.com.sg/image/hardwarezone/ece4536394cabcfea8174f17b6c58dcc64b44fa1aae7158ec9b15e92f57af15c"
+      },
+      {
+        "id": "https://www.harveynorman.com.sg/headphones-and-audio/headphones/wireless-headphones/sony-wh-ch720n-wireless-noise-cancelling-headphone-black.html",
+        "title": "Sony WH-CH720N Wireless Noise Cancelling Headphone - Black | Harvey Norman Singapore",
+        "url": "https://www.harveynorman.com.sg/headphones-and-audio/headphones/wireless-headphones/sony-wh-ch720n-wireless-noise-cancelling-headphone-black.html",
+        "image": "https://hnsgsfp.imgix.net/4/images/detailed/101/sony-wh-ch720n-wireless-noise-cancelling-headphone-black_1.jpg?fit=fill&bg=0FFF&w=1534&h=900&auto=format,compress"
+      },
+      {
+        "id": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/wireless-headphones-en/sony-wf-1000xm5bce-wireless-noise-cancelling-headphones-black.html",
+        "title": "Sony WF-1000XM5BCE Wireless Noise Cancelling Headphones - Black | Harvey Norman Singapore",
+        "url": "https://www.harveynorman.com.sg/tv-and-audio/headphones-en/wireless-headphones-en/sony-wf-1000xm5bce-wireless-noise-cancelling-headphones-black.html",
+        "image": "https://hnsgsfp.imgix.net/4/images/detailed/117/Sony_WF-1000XM5BCE_Wireless_Noise_Cancelling_Headphones_-_Black_(Main).jpg?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress"
+      },
+      {
+        "id": "https://www.stereo.com.sg/products/edifier-wh950nb-2025-edition-wireless-noise-cancelling-headphone",
+        "title": "Edifier WH950NB (2025 edition) Wireless Noise Cancelling Headphone – Stereo Electronics Pte Ltd",
+        "url": "https://www.stereo.com.sg/products/edifier-wh950nb-2025-edition-wireless-noise-cancelling-headphone",
+        "author": "The4",
+        "image": "http://www.stereo.com.sg/cdn/shop/files/0d48a49bddcfe91fb5424b5cc9e4914c.png?v=1752138549"
+      },
+      {
+        "id": "https://www.sudio.com/sg/k3pro-onyx-black",
+        "title": "Sudio K3 Pro Hybrid Noise Cancelling Headphones, Onyx Black – Premium Wireless Audio",
+        "url": "https://www.sudio.com/sg/k3pro-onyx-black",
+        "image": "https://www.sudio.com/media/catalog/product/cache/96a1dc5e9bab94a8a77e2322ab4fc4bf/k/3/k3problk_0.5x.png"
+      },
+      {
+        "id": "https://thedigitalgadgets.sg/products/shure-aonic-40-wireless-anc-headphones-black",
+        "title": "Shure AONIC 40 Wireless ANC Headphones Black | Singapore",
+        "url": "https://thedigitalgadgets.sg/products/shure-aonic-40-wireless-anc-headphones-black",
+        "image": "https://d2j6dbq0eux0bg.cloudfront.net/images/22454125/products/857142404/6307841899.jpg"
+      }
+    ],
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}

@@ -1,0 +1,468 @@
+{
+  "schemaVersion": 1,
+  "planId": "kensaku-mvp-v1",
+  "projectName": "Kensaku",
+  "repository": "futari-labs/kensaku",
+  "completionCondition": "JM-001 to JM-006 are merged into dev through one PR each with required checks green; on the final dev head CI passes EV-001 to EV-007 and EV-009 plus typecheck, lint, build, evals/harness.mjs, scripts/check-components.mjs and the Futari contract check; EV-008 passes locally under the thresholds in evals/cases/live-acceptance.json with its run log and owner audit committed under .futari/evidence/live/; and the owner records product acceptance in docs/futari/PROGRESS.md. Promotion to main and deployment are excluded.",
+  "maxParallelTasks": 2,
+  "maxRepairAttemptsPerTask": 3,
+  "liveEvaluationBudget": {
+    "currency": "USD",
+    "maxSpend": 0
+  },
+  "pstack": {
+    "plugin": "pstack@pstack-claude",
+    "version": "0.9.145",
+    "projectPlaybook": ".agents/playbooks/futari-approved-plan.md",
+    "compatibilityVerified": true
+  },
+  "permissions": {
+    "createIssues": true,
+    "pushBranches": true,
+    "openPullRequests": true,
+    "mergePolicy": "after-required-checks",
+    "deploy": false
+  },
+  "protectedFiles": [
+    ".futari/plan.json",
+    ".futari/plan-gate.mjs",
+    ".futari/ci-check.mjs",
+    ".agents/playbooks/futari-approved-plan.md",
+    "CLAUDE.md",
+    ".claude/pstack-models.md",
+    ".github/workflows/futari-contract.yml",
+    "docs/futari/PRODUCT_SPEC.md",
+    "docs/futari/ARCHITECTURE.md",
+    "docs/futari/EVALUATION_PLAN.md",
+    "docs/futari/EXECUTION_PLAN.md",
+    "docs/futari/DECISIONS.md",
+    "docs/futari/RISKS.md",
+    "docs/futari/PSTACK_HANDOFF.md",
+    "docs/futari/templates/task-brief.md",
+    "docs/futari/templates/pr-body.md",
+    "docs/futari/templates/evidence.md",
+    "docs/futari/research/exa-2026-11-21.md",
+    "docs/futari/research/references-2026-11-21.md",
+    "docs/futari/research/github-2026-11-21.md",
+    "evals/harness.mjs",
+    "evals/cases/offer-classification.json",
+    "evals/cases/ranking-currency.json",
+    "evals/cases/citations.json",
+    "evals/cases/live-acceptance.json",
+    "evals/cases/citations-spaced.json",
+    "evals/fixtures/exa-live/S1-headphones.json",
+    "evals/fixtures/exa-live/S2-mouse.json",
+    "evals/fixtures/exa-live/S3-espresso.json",
+    "evals/fixtures/exa-live/S4-ereader.json",
+    "evals/fixtures/exa-live/S5-nonexistent.json",
+    "evals/fixtures/exa-live/S6-fresh-crawl.json",
+    "evals/fixtures/exa-live/S7-output-schema.json",
+    "evals/fixtures/exa-live/S8-market-sg.json",
+    "evals/fixtures/exa-live/S9-market-jp.json",
+    "evals/fixtures/exa-live/A1-answer.json",
+    "evals/fixtures/exa-live/A2-answer-schema.json",
+    "evals/fixtures/exa-live/A3-answer-stream.json",
+    "evals/fixtures/exa-live/A4-answer-spaced-markers.json"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "description": "Ask and stream: the owner submits a shopping question and sees ordered research progress until exactly one terminal state.",
+      "acceptanceCriteria": [
+        "POST /api/chat streams data-progress parts in the order candidates, offers, validate, compare.",
+        "Each run ends in exactly one of completed, failed, or cancelled.",
+        "The UI shows the current stage, disables input while running, and offers Cancel."
+      ]
+    },
+    {
+      "id": "REQ-002",
+      "description": "Cited comparison: a completed run shows a comparison of 1-3 candidates whose citation markers resolve to Exa citations from the same run.",
+      "acceptanceCriteria": [
+        "Every rendered source link is a citation URL returned by Exa in this run.",
+        "Out-of-range markers are removed and counted; paragraphs with no resolved marker are visibly flagged uncited.",
+        "All cases in evals/cases/citations.json and evals/cases/citations-spaced.json produce their expected results, including markers written with spaces such as [2, 5, 6] (CR-001)."
+      ]
+    },
+    {
+      "id": "REQ-003",
+      "description": "Authentic, relevant merchant offers: only direct, validated merchant product pages for the candidate model are offers; other pages are labeled evidence or rejected; prices are never invented or edited.",
+      "acceptanceCriteria": [
+        "Every displayed offer has merchant host, positive price, supported ISO currency, canonical http(s) URL from this run, availability enum value, source exa, and retrievedAt.",
+        "Aggregator, editorial, non-listing, price-less, and merchant-mismatch pages appear only in a separately labeled evidence section.",
+        "Irrelevant products, unsupported currencies, URLs not from the run, and non-http URLs never appear as offers.",
+        "All 54 cases in evals/cases/offer-classification.json produce their labeled outcome, category, and offer fields."
+      ]
+    },
+    {
+      "id": "REQ-004",
+      "description": "Currency-safe ranking: offers group by USD, SGD, JPY with the selected market's currency first, sort deterministically within a group, and are never compared across currencies.",
+      "acceptanceCriteria": [
+        "All cases in evals/cases/ranking-currency.json produce the expected groups and order.",
+        "A seeded property test over 1,000 generated offer lists shows no mixed-currency group and no lost or duplicated offers beyond the canonical-URL collapse."
+      ]
+    },
+    {
+      "id": "REQ-005",
+      "description": "Failure recovery: Exa errors and cancellation end the run with a typed, visible reason, partial results are labeled, and live mode never falls back to fixtures.",
+      "acceptanceCriteria": [
+        "401, 402 or credit errors, 429, 5xx, timeout, no candidates, and no offers each yield the specified data-error kind or empty state; a client cancel aborts the Exa call, ends the stream, and shows the client-side cancelled state.",
+        "A failure after the candidates stage sets partial true and keeps already validated products visible.",
+        "The next question works after any failure."
+      ]
+    },
+    {
+      "id": "REQ-006",
+      "description": "Spend guard and cache: at most 5 Exa requests per question by construction, at most 3 for a normal question, 6-hour cache, monthly limits, and stop on exhausted credits.",
+      "acceptanceCriteria": [
+        "No sequence of candidates, retries, or errors makes a sixth Exa call in one run.",
+        "A repeated question within the TTL makes no Exa call and shows the original retrievedAt.",
+        "Monthly request and cost limits block calls before they are made; a 402 or credit error blocks later calls until reset.",
+        "Each response's costDollars.total is added to the ledger and shown in the run's usage."
+      ]
+    },
+    {
+      "id": "REQ-007",
+      "description": "Local and key safety: the server listens only on 127.0.0.1, rejects foreign Host or Origin, and the Exa key never leaves the server process.",
+      "acceptanceCriteria": [
+        "The listen address is hard-coded to 127.0.0.1; requests with a foreign Host or cross-origin Origin get 403.",
+        "A test key string is absent from a production build, server logs, .cache/, evals/fixtures/, API responses, and browser storage."
+      ]
+    },
+    {
+      "id": "REQ-008",
+      "description": "Live acceptance: the 6-query live suite across US, SG, and JP meets the agreed thresholds within the live usage limits before the MVP is declared complete.",
+      "acceptanceCriteria": [
+        "At least 4 of 6 queries show at least one merchant offer.",
+        "100% of displayed offers pass revalidation against the recorded Exa responses, and at least 90% pass the owner's audit rubric.",
+        "Zero fabricated offers and no unexpected error runs; at most 5 requests per query and $0.40 reported cost per suite run."
+      ]
+    },
+    {
+      "id": "REQ-009",
+      "description": "Persistent local history: the conversation survives reloads through versioned, validated localStorage and can be cleared with confirmation; no secret is stored in the browser.",
+      "acceptanceCriteria": [
+        "After a reload the full conversation, including results, is restored.",
+        "Clear history asks for confirmation, then empties the thread and removes kensaku.history.v1.",
+        "Invalid stored data is discarded with a visible notice."
+      ]
+    },
+    {
+      "id": "REQ-010",
+      "description": "Frontend quality and components: the UI uses unmodified official AI Elements and shadcn/ui components, has a persistent market selector, and meets accessibility, layout, and owner visual review.",
+      "acceptanceCriteria": [
+        "scripts/check-components.mjs confirms every installed component file matches components.lock.json and components.json lists the @ai-elements registry.",
+        "axe reports zero serious or critical violations on empty, running, completed, and error states; the journey works by keyboard alone.",
+        "At 375 px width there is no horizontal page scroll.",
+        "The owner records visual review in .futari/evidence/JM-005.md."
+      ]
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "EV-001",
+      "requirementIds": ["REQ-003"],
+      "description": "Merchant authenticity: classify all frozen cases (40 live Exa results, 14 synthetic) as merchant offer, labeled evidence, or rejected.",
+      "kind": "deterministic",
+      "passRule": "54/54 cases in evals/cases/offer-classification.json match the labeled outcome and category, and for offers the labeled currency, amount, canonicalUrl and availability where given; the test asserts the evaluated case count equals the file's case count.",
+      "command": "pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts"
+    },
+    {
+      "id": "EV-002",
+      "requirementIds": ["REQ-003"],
+      "description": "Product relevance: identity matching rejects wrong and near-miss products and accepts every labeled right product.",
+      "kind": "deterministic",
+      "passRule": "100% of cases in evals/cases/offer-classification.json are classified irrelevant-product exactly when labeled so.",
+      "command": "pnpm vitest run tests/evals/ev-002-product-relevance.test.ts"
+    },
+    {
+      "id": "EV-003",
+      "requirementIds": ["REQ-004"],
+      "description": "Currency grouping, market ordering, and deterministic ranking.",
+      "kind": "deterministic",
+      "passRule": "All 4 cases in evals/cases/ranking-currency.json match exactly, and the seeded 1,000-list property test finds no mixed-currency group and no lost or duplicated offers.",
+      "command": "pnpm vitest run tests/evals/ev-003-ranking-currency.test.ts"
+    },
+    {
+      "id": "EV-004",
+      "requirementIds": ["REQ-002"],
+      "description": "Citation resolution and URL provenance for comparisons and offers.",
+      "kind": "deterministic",
+      "passRule": "All 6 cases in evals/cases/citations.json and all 2 cases in evals/cases/citations-spaced.json match (the test asserts each file's evaluated case count equals its case count, and node evals/harness.mjs --strict exits 0); in fixture pipeline runs every rendered source URL is in the run's citations and every offer URL is in the run's search results.",
+      "command": "pnpm vitest run tests/evals/ev-004-citations.test.ts"
+    },
+    {
+      "id": "EV-005",
+      "requirementIds": ["REQ-006"],
+      "description": "Spend guard at two levels: unit (RequestBudget, cache, ledger limits, exhausted-credit stop; JM-003) and run (pipeline call counts, cached repeats, single-run lock; JM-004).",
+      "kind": "deterministic",
+      "passRule": "Unit: a sixth token is refused, cache hits use no token and keep retrievedAt, limits block before calling, and a 402 or credit error blocks later calls. Run: every scripted scenario stays within 5 calls, a normal question uses at most 3, a cached repeat uses 0 with the original retrievedAt, and a concurrent second run gets 409.",
+      "command": "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts"
+    },
+    {
+      "id": "EV-006",
+      "requirementIds": ["REQ-001", "REQ-005"],
+      "description": "UI message stream shape and failure states through the Hono app with scripted Exa behaviour.",
+      "kind": "deterministic",
+      "passRule": "For success, no candidates, no offers, 401, 402, 429, 500, and timeout scenarios, the stream has ordered progress parts, exactly one terminal state, the expected data-error kind and partial flag, and no fixture data in live mode; for a client abort, the Exa call is aborted, no parts follow, and a cancelled log line is written; after every scenario the run lock is released and the next request succeeds.",
+      "command": "pnpm vitest run tests/evals/ev-006-stream-failures.test.ts"
+    },
+    {
+      "id": "EV-007",
+      "requirementIds": ["REQ-001", "REQ-002", "REQ-003", "REQ-007", "REQ-009", "REQ-010"],
+      "description": "Frontend quality: Playwright journey, states, history, market, accessibility, layout, absence of the key from browser storage, and component integrity, plus owner visual review.",
+      "kind": "deterministic plus human review",
+      "passRule": "All Playwright checks listed in docs/futari/EVALUATION_PLAN.md section Frontend quality pass, scripts/check-components.mjs exits 0, and the owner's visual review is recorded as accepted.",
+      "command": "pnpm test:e2e && node scripts/check-components.mjs"
+    },
+    {
+      "id": "EV-008",
+      "requirementIds": ["REQ-008"],
+      "description": "Live acceptance of 6 queries across US, SG, and JP against the real Exa API with owner audit.",
+      "kind": "live integration plus human audit",
+      "passRule": "Thresholds in evals/cases/live-acceptance.json: at least 4/6 queries with a merchant offer, 100% revalidation, at least 90% owner audit pass, zero fabricated offers, no unexpected errors, at most 30 requests and $0.40 reported cost per suite run, at most 3 suite runs.",
+      "command": "pnpm live:acceptance"
+    },
+    {
+      "id": "EV-009",
+      "requirementIds": ["REQ-007"],
+      "description": "Loopback binding, Host and Origin guards, and absence of the key from every artifact.",
+      "kind": "deterministic",
+      "passRule": "The running server listens on 127.0.0.1, foreign Host and Origin get 403, and a test key string is absent from a production build the test makes itself, from server logs of a fixture run, .cache/, evals/fixtures/, and API responses.",
+      "command": "pnpm vitest run tests/evals/ev-009-key-safety.test.ts"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "JM-001",
+      "title": "Scaffold toolchain, install official components, and add deterministic CI",
+      "requirementIds": ["REQ-010"],
+      "evalIds": ["EV-007"],
+      "dependsOn": [],
+      "allowedPaths": [
+        "package.json",
+        "pnpm-lock.yaml",
+        ".npmrc",
+        ".gitignore",
+        ".mcp.json",
+        "tsconfig.json",
+        "tsconfig.app.json",
+        "tsconfig.node.json",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "playwright.config.ts",
+        "eslint.config.js",
+        "index.html",
+        "components.json",
+        "components.lock.json",
+        "scripts/check-components.mjs",
+        "src/web/components/",
+        "src/web/lib/",
+        "src/web/index.css",
+        "src/web/main.tsx",
+        "src/server/index.ts",
+        "src/core/types.ts",
+        "tests/smoke/",
+        "tests/e2e/",
+        ".github/workflows/ci.yml"
+      ],
+      "acceptanceCriteria": [
+        "pnpm install --frozen-lockfile, pnpm typecheck, pnpm lint, pnpm test, and pnpm build succeed.",
+        "All runtime and dev dependencies named in docs/futari/ARCHITECTURE.md are installed with exact versions.",
+        "components.json lists the @ai-elements registry and aliases hooks to src/web/lib/hooks; .mcp.json pins shadcn@4.23.0; the shadcn CLI installed AI Elements conversation, message, prompt-input, suggestion, task, inline-citation, sources, shimmer and shadcn table, badge, select, alert-dialog, alert; components.lock.json records their SHA-256 hashes; scripts/check-components.mjs passes.",
+        "pnpm start serves the web shell and GET /api/health on 127.0.0.1:8787 only.",
+        ".github/workflows/ci.yml, named CI, runs install, typecheck, lint, test, build, test:e2e, evals/harness.mjs, and check-components on pull requests to dev and on pushes to dev, without secrets; pnpm test:e2e passes with a Playwright smoke spec in tests/e2e/ that loads the shell.",
+        ".gitignore also ignores .cache/, test-results/, and playwright-report/.",
+        "src/core/types.ts contains the type declarations from docs/futari/ARCHITECTURE.md 'Interfaces and data' verbatim, so JM-002 and JM-003 compile against the same types."
+      ],
+      "verificationCommands": [
+        "pnpm install --frozen-lockfile",
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm test",
+        "pnpm build",
+        "pnpm test:e2e",
+        "node scripts/check-components.mjs",
+        "node evals/harness.mjs"
+      ],
+      "milestone": "vertical-slice"
+    },
+    {
+      "id": "JM-002",
+      "title": "Implement pure offer, identity, currency, ranking, and citation rules",
+      "requirementIds": ["REQ-002", "REQ-003", "REQ-004"],
+      "evalIds": ["EV-001", "EV-002", "EV-003", "EV-004"],
+      "dependsOn": ["JM-001"],
+      "allowedPaths": [
+        "src/core/",
+        "tests/core/",
+        "tests/evals/ev-001-merchant-authenticity.test.ts",
+        "tests/evals/ev-002-product-relevance.test.ts",
+        "tests/evals/ev-003-ranking-currency.test.ts",
+        "tests/evals/ev-004-citations.test.ts"
+      ],
+      "acceptanceCriteria": [
+        "src/core follows the file layout and exports the types and functions specified in docs/futari/ARCHITECTURE.md, with no I/O and no exa-js import; src/core/types.ts (created by JM-001) is not changed.",
+        "EV-001, EV-002, EV-003, and EV-004 pass, loading the frozen case files unchanged.",
+        "The citation fixture-run part of EV-004 is covered by JM-004; this task covers the six citation cases."
+      ],
+      "verificationCommands": [
+        "pnpm typecheck",
+        "pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts",
+        "pnpm vitest run tests/evals/ev-002-product-relevance.test.ts",
+        "pnpm vitest run tests/evals/ev-003-ranking-currency.test.ts",
+        "pnpm vitest run tests/evals/ev-004-citations.test.ts",
+        "pnpm test"
+      ],
+      "milestone": "vertical-slice"
+    },
+    {
+      "id": "JM-003",
+      "title": "Implement Exa port, request budget, cache, usage ledger, and error mapping",
+      "requirementIds": ["REQ-006"],
+      "evalIds": ["EV-005"],
+      "dependsOn": ["JM-001"],
+      "allowedPaths": [
+        "src/exa/",
+        "tests/exa/",
+        "tests/fixtures/",
+        "tests/evals/ev-005-spend-guard.test.ts"
+      ],
+      "acceptanceCriteria": [
+        "src/exa/ follows the file layout in docs/futari/ARCHITECTURE.md (port.ts ExaPort, budget.ts RequestBudget, errors.ts ExaFailure, sdk-port.ts, fixture-port.ts, cache.ts, ledger.ts) with the signatures given there; ExaSdkPort is the only module importing exa-js; FixtureExaPort replays named scenarios from tests/fixtures/scenarios/, including baseline scenarios xm5-us, xm5-sg, and xm5-jp, with synthetic responses labeled synthetic.",
+        "RequestBudget makes a sixth call impossible by construction; the cache, ledger, and error mapping behave as specified in docs/futari/ARCHITECTURE.md.",
+        "The unit-level part of EV-005 passes with no network access; the run-level part is covered by JM-004."
+      ],
+      "verificationCommands": [
+        "pnpm typecheck",
+        "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts",
+        "pnpm test"
+      ],
+      "milestone": "vertical-slice"
+    },
+    {
+      "id": "JM-004",
+      "title": "Vertical slice: pipeline, streaming API, and minimal AI Elements chat UI with live smoke",
+      "requirementIds": ["REQ-001", "REQ-005", "REQ-006", "REQ-007"],
+      "evalIds": ["EV-006", "EV-009", "EV-004", "EV-005"],
+      "dependsOn": ["JM-002", "JM-003"],
+      "allowedPaths": [
+        "src/research/",
+        "src/server/",
+        "src/web/app/",
+        "src/web/main.tsx",
+        "src/core/",
+        "src/exa/",
+        "tests/core/",
+        "tests/exa/",
+        "tests/fixtures/",
+        "tests/research/",
+        "tests/server/",
+        "tests/evals/ev-004-citations.test.ts",
+        "tests/evals/ev-005-spend-guard.test.ts",
+        "tests/evals/ev-006-stream-failures.test.ts",
+        "tests/evals/ev-009-key-safety.test.ts",
+        "tests/e2e/",
+        "playwright.config.ts",
+        "vitest.config.ts",
+        "package.json",
+        "pnpm-lock.yaml",
+        ".futari/evidence/live/"
+      ],
+      "acceptanceCriteria": [
+        "runResearch executes the fixed stages with at most 5 Exa calls and yields typed RunEvents; POST /api/chat converts them to the UI message stream parts in docs/futari/ARCHITECTURE.md.",
+        "The server binds 127.0.0.1 only and enforces the Host and Origin guards; fixture mode requires NODE_ENV=test and shows a banner.",
+        "The UI, composed only from installed AI Elements and shadcn components, renders progress, cited comparison, offer table, and separate evidence for a fixture run in a Playwright test.",
+        "EV-004 (including fixture pipeline runs), the run-level part of EV-005, EV-006, and EV-009 pass, and EV-001 to EV-003 still pass after any src/core fix.",
+        "A live smoke of Q1 and Q2 makes at most 10 Exa requests in total; Q1 shows at least one merchant offer that passes revalidation; the Q2 outcome and whether /answer accepted userLocation are recorded; both logs are committed under .futari/evidence/live/ at or before the Tested-Commit."
+      ],
+      "verificationCommands": [
+        "pnpm typecheck",
+        "pnpm vitest run tests/evals/ev-004-citations.test.ts",
+        "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts",
+        "pnpm vitest run tests/evals/ev-006-stream-failures.test.ts",
+        "pnpm vitest run tests/evals/ev-009-key-safety.test.ts",
+        "pnpm test",
+        "pnpm build",
+        "pnpm test:e2e"
+      ],
+      "milestone": "vertical-slice"
+    },
+    {
+      "id": "JM-005",
+      "title": "Complete the frontend: market selector, persistent history, all states, accessibility",
+      "requirementIds": ["REQ-009", "REQ-010", "REQ-007"],
+      "evalIds": ["EV-007"],
+      "dependsOn": ["JM-004"],
+      "allowedPaths": [
+        "src/web/",
+        "components.json",
+        "components.lock.json",
+        "tests/e2e/",
+        "tests/fixtures/",
+        "playwright.config.ts",
+        "vitest.config.ts",
+        "package.json",
+        "pnpm-lock.yaml"
+      ],
+      "acceptanceCriteria": [
+        "Market selector (US, SG, JP) persists and changes request market and group order.",
+        "History persists across reloads, clears with confirmation, and recovers from invalid stored data with a notice.",
+        "Every UI state in docs/futari/PRODUCT_SPEC.md is implemented.",
+        "Files under src/web/components/ change only through the shadcn CLI, with components.lock.json updated in the same commit.",
+        "EV-007 automated checks live in tests/e2e/ev-007-frontend.spec.ts (the path evals/harness.mjs checks) and pass, and the owner's visual review is recorded in .futari/evidence/JM-005.md."
+      ],
+      "verificationCommands": [
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm test",
+        "pnpm build",
+        "pnpm test:e2e",
+        "node scripts/check-components.mjs"
+      ],
+      "milestone": "mvp"
+    },
+    {
+      "id": "JM-006",
+      "title": "Live acceptance suite, owner audit, and final integration on dev",
+      "requirementIds": ["REQ-008", "REQ-002"],
+      "evalIds": ["EV-008", "EV-004"],
+      "dependsOn": ["JM-005"],
+      "allowedPaths": [
+        "scripts/live-acceptance.ts",
+        "src/research/",
+        "src/exa/",
+        "src/core/",
+        "src/web/app/",
+        "tests/research/",
+        "tests/exa/",
+        "tests/core/",
+        "tests/evals/ev-004-citations.test.ts",
+        "tests/fixtures/",
+        "tests/e2e/",
+        "README.md",
+        "package.json",
+        "pnpm-lock.yaml",
+        ".futari/evidence/live/"
+      ],
+      "acceptanceCriteria": [
+        "src/core/citations.ts implements the amended marker rule in evals/cases/citations.json (CR-001, D-026), and tests/evals/ev-004-citations.test.ts loads evals/cases/citations.json and evals/cases/citations-spaced.json unchanged, asserting each file's evaluated case count; EV-004 passes all 8 cases and node evals/harness.mjs --strict exits 0. This lands before the EV-008 suite runs.",
+        "pnpm live:acceptance runs Q1-Q6 with a fresh cache within the live budget and writes a run log with every request, displayed offer, and reported cost under .futari/evidence/live/; every run log is committed at or before the Tested-Commit.",
+        "EV-008 thresholds are met under the runRules in evals/cases/live-acceptance.json, including the owner's audit of every displayed offer.",
+        "All deterministic suites, including EV-001 to EV-004 on the frozen cases, still pass after any fix made here.",
+        "README.md explains setup, EXA_ENV_FILE, pnpm start, limits, and data caveats."
+      ],
+      "verificationCommands": [
+        "pnpm typecheck",
+        "pnpm vitest run tests/evals/ev-004-citations.test.ts",
+        "pnpm test",
+        "pnpm build",
+        "pnpm test:e2e",
+        "node evals/harness.mjs --strict",
+        "pnpm live:acceptance"
+      ],
+      "milestone": "mvp"
+    }
+  ],
+  "verticalSliceTaskIds": ["JM-001", "JM-002", "JM-003", "JM-004"],
+  "blockingQuestions": []
+}

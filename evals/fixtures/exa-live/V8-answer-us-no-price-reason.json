@@ -1,0 +1,198 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the kensaku-v1-1 pre-approval spike. Real data, not a gold label.",
+  "id": "V8-answer-us-no-price-reason",
+  "request": {
+    "endpoint": "/answer",
+    "body": {
+      "query": "Best ergonomic wireless mouse for programming under $120",
+      "text": false,
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "comparison": {
+            "type": "string",
+            "description": "Short comparison with numbered citation markers like [1]."
+          },
+          "candidates": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "brand": {
+                  "type": "string"
+                },
+                "modelIdentifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Model numbers or distinctive tokens."
+                },
+                "keySpecs": {
+                  "type": "array",
+                  "maxItems": 5,
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Up to 5 short key specifications, each under 60 characters."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "One or two sentences on why this product fits the question, with numbered citation markers like [1]. Do not mention prices or currency amounts."
+                }
+              },
+              "required": [
+                "name",
+                "brand",
+                "modelIdentifiers",
+                "keySpecs",
+                "reason"
+              ]
+            }
+          }
+        },
+        "required": [
+          "comparison",
+          "candidates"
+        ]
+      },
+      "userLocation": "US"
+    }
+  },
+  "requestedAt": "2026-11-21T02:25:04.620Z",
+  "receivedAt": "2026-11-21T02:25:10.226Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "2353e293987dfdd5bbc1c80161e66284",
+    "answer": {
+      "comparison": "For programming comfort under $120, the WIRED-tested Logitech MX Master 4 is the best all-round ergonomic wireless pick, while the Logitech MX Vertical is the top vertical option for reducing wrist strain and the MX Ergo S is a good space-saving trackball alternative for small desks.[1][5][3]",
+      "candidates": [
+        {
+          "name": "Logitech MX Master 4",
+          "brand": "Logitech",
+          "modelIdentifiers": [
+            "MX Master 4",
+            "Actions Ring",
+            "Logi Options+",
+            "Easy-Switch",
+            "USB-C charging"
+          ],
+          "keySpecs": [
+            "Wireless ergonomic, best all-round coding work",
+            "MagSpeed wheel for ratchet + free-spin",
+            "8,000 DPI Darkfield sensor",
+            "Multi-device switching (BT + Logi Bolt)",
+            "Haptic Actions Ring/gesture controls"
+          ],
+          "reason": "Best fit if you want one comfortable, feature-rich wireless mouse for long programming sessions, including fast scrolling and customizable shortcuts for code navigation.[3][1] It’s positioned as the “best overall” programming choice and is an ergonomic comfort upgrade in WIRED’s review.[3][1]"
+        },
+        {
+          "name": "Logitech MX Vertical",
+          "brand": "Logitech",
+          "modelIdentifiers": [
+            "MX Vertical",
+            "57-degree handshake angle",
+            "Logi Bolt/BT",
+            "vertical mouse"
+          ],
+          "keySpecs": [
+            "Vertical shape for wrist/forearm neutrality",
+            "57° handshake angle",
+            "Rechargeable wireless (BT + dongle)",
+            "Long-lasting battery up to ~4 months",
+            "Designed to reduce wrist pain/strain"
+          ],
+          "reason": "Choose this if your main issue is wrist fatigue: it’s explicitly recommended for wrist strain via its 57-degree vertical “handshake” posture.[3][5] It’s also listed as a top vertical developer-friendly ergonomic option within the $120 budget.[2]"
+        },
+        {
+          "name": "Logitech MX Ergo S",
+          "brand": "Logitech",
+          "modelIdentifiers": [
+            "MX Ergo S",
+            "trackball",
+            "Precision Mode button",
+            "0–20° tilt base"
+          ],
+          "keySpecs": [
+            "Trackball keeps desk space free",
+            "Adjustable tilt (0–20°) for wrist angle",
+            "Precision Mode slows cursor",
+            "Pairs via BT or Logi Bolt",
+            "USB-C charging"
+          ],
+          "reason": "Best if you have a crowded desk or want less arm movement: it’s a programming-focused “best trackball for a small desk” with adjustable tilt and a precision mode for fine control.[3] WIRED also highlights its robust, precise trackball feel and strong build quality.[1]"
+        }
+      ]
+    },
+    "citations": [
+      {
+        "id": "https://www.wired.com/gallery/best-ergonomic-mouse/",
+        "title": "5 Best Ergonomic Mice (2025), Tested and Reviewed | WIRED",
+        "url": "https://www.wired.com/gallery/best-ergonomic-mouse/",
+        "publishedDate": "2025-05-16T11:30:00.000Z",
+        "author": "Henri Robbins",
+        "image": "https://media.wired.com/photos/68a3725c4c06b0189ee3f1f3/191:100/w_1280,c_limit/The%20Best%20Ergonomic%20Mouse%20to%20Keep%20Wrist%20Strain%20at%20Bay.png"
+      },
+      {
+        "id": "https://www.techgearlab.com/topics/small-and-home-office/best-mouse",
+        "title": "The Best Mouse | Lab Tested & Ranked",
+        "url": "https://www.techgearlab.com/topics/small-and-home-office/best-mouse",
+        "publishedDate": "2025-08-18T15:00:00.000Z",
+        "author": "Austin Palmer",
+        "image": "https://techgearlab.b-cdn.net/photos/38/43/505824_29780_XXL.jpg"
+      },
+      {
+        "id": "https://computingforgeeks.com/best-mouse-keyboard-for-programming/",
+        "title": "Best Mouse and Keyboard for Programming & Coding | ComputingForGeeks",
+        "url": "https://computingforgeeks.com/best-mouse-keyboard-for-programming/",
+        "publishedDate": "2026-11-07T01:49:09.000Z",
+        "author": "Mary Wanjiru",
+        "image": "https://computingforgeeks.com/wp-content/uploads/2026/09/mkfp.png"
+      },
+      {
+        "id": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/",
+        "title": "Best ergonomic vertical and trackball mice for developers who type all day | Botmonster Tech",
+        "url": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/",
+        "publishedDate": "2026-05-14T09:54:44.000Z",
+        "author": "Botmonster",
+        "image": "https://botmonster.com/hardware/best-ergonomic-vertical-trackball-mice-developers/best-ergonomic-vertical-trackball-mice-developers_hu_c61a02086eb4b5c8.webp"
+      },
+      {
+        "id": "https://argusic.com/hardware/mouse",
+        "title": "Best mice for programming: ergonomic and wireless | Argusic",
+        "url": "https://argusic.com/hardware/mouse",
+        "image": "https://argusic.com/hardware/mouse/opengraph-image/card?8a0c26f621b01bac"
+      },
+      {
+        "id": "https://droid4x.com/best-ergonomic-mice-for-programming/",
+        "title": "8 Best Ergonomic Mice for Programming (October 2026)",
+        "url": "https://droid4x.com/best-ergonomic-mice-for-programming/",
+        "publishedDate": "2026-08-20T12:47:25.000Z",
+        "author": "Ethan Blake",
+        "image": "https://droid4x.com/wp-content/uploads/2026/08/cf-featured-js78am6h8p474xt2qm16mg2kkd8cvxh3.jpg"
+      },
+      {
+        "id": "https://www.thepcjournal.com/guides/best-mouse-for-work",
+        "title": "Best Mice for Work | The PC Journal",
+        "url": "https://www.thepcjournal.com/guides/best-mouse-for-work",
+        "author": "Alex Morgan",
+        "image": "https://www.thepcjournal.com/images/pcj/pc-peripherals.webp"
+      },
+      {
+        "id": "https://www.tomshardware.com/best-picks/best-wireless-mouse",
+        "title": "Best Wireless Mouse 2026: Productivity, Portability, and Comfort | Tom's Hardware",
+        "url": "https://www.tomshardware.com/best-picks/best-wireless-mouse",
+        "publishedDate": "2023-11-07T19:47:06.000Z",
+        "author": "Sarah Jacobsson Purewal",
+        "image": "https://cdn.mos.cms.futurecdn.net/63QVV3MEpWXGvUF5mru6Hf-2560-80.jpg"
+      }
+    ],
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}

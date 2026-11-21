@@ -1,0 +1,48 @@
+{
+  "_about": "EV-016 live acceptance query set for plan kensaku-v1-1 (REQ-008 as amended, D-034). Q1-Q6 are the MVP queries, unchanged, so results are comparable with EV-008 run 1. Q7 (specific model) and Q8 (open-ended, budget in SGD) add Singapore coverage; Q8's text is the spike's V1 question. Run only through the live acceptance command within the budget below. The owner approves this set with plan kensaku-v1-1.",
+  "queries": [
+    { "id": "Q1", "market": "US", "text": "Sony WH-1000XM5 headphones: where can I buy them and are they worth it?" },
+    { "id": "Q2", "market": "US", "text": "Best ergonomic wireless mouse for programming under $120" },
+    { "id": "Q3", "market": "SG", "text": "Sony WH-1000XM5 price in Singapore" },
+    { "id": "Q4", "market": "SG", "text": "Breville Bambino Plus espresso machine in Singapore" },
+    { "id": "Q5", "market": "JP", "text": "ソニー WH-1000XM5 はどこで買うのがいい？" },
+    { "id": "Q6", "market": "JP", "text": "Kindle Paperwhite 2024 price in Japan" },
+    { "id": "Q7", "market": "SG", "text": "Bose QuietComfort headphones price in Singapore" },
+    { "id": "Q8", "market": "SG", "text": "Best noise cancelling headphones under S$400 in Singapore" }
+  ],
+  "budget": {
+    "maxRequestsPerQuery": 5,
+    "maxRequestsPerSuiteRun": 40,
+    "maxSuiteRuns": 3,
+    "maxReportedCostDollarsPerSuiteRun": 0.5
+  },
+  "runRules": [
+    "Each suite run starts with an empty Exa cache and an empty image cache, so every run makes fresh Exa calls and fresh image fetches.",
+    "Every suite run's log is committed under .futari/evidence/live/, including failed and blocked runs.",
+    "A second or third run is allowed only after a recorded fix (commit SHA and reason in .futari/evidence/JM-105.md) or after a run recorded as BLOCKED by an Exa outage. The verdict comes from the last run; best-of-N selection is not allowed.",
+    "Revalidation is a self-consistency check: each displayed offer is reclassified from the recorded Exa response and must equal what the UI showed, and each displayed image is re-derived from the recorded Exa response (rules I1 and I2) and the recorded fetch result (rule I3). It detects display or pipeline mutation, not extraction errors; the owner audit covers those.",
+    "The suite drives the built app in a real browser (Playwright, Chromium) so that image loading and network requests are observed as a user would see them."
+  ],
+  "thresholds": {
+    "queriesWithAtLeastOneMerchantOffer": { "min": 6, "of": 8 },
+    "singaporeQueriesWithAnSgdOfferInTheMainList": { "min": 3, "of": 4, "queries": ["Q3", "Q4", "Q7", "Q8"] },
+    "displayedOffersPassingRevalidation": "100%",
+    "displayedOffersPassingOwnerAudit": "at least 90% of all displayed offers across the run (main and Other markets lists), each audited by the owner as the right product on a direct merchant page",
+    "searchOrCategoryPagesDisplayedAsOffers": 0,
+    "fabricatedOffers": 0,
+    "productsWithAnOfferShowingAProductImage": "at least 70% of product cards that list at least one merchant offer show a loaded product image (not the fallback)",
+    "displayedImagesPassingRevalidation": "100%",
+    "displayedImagesPassingOwnerAudit": "at least 90% of displayed images, each audited by the owner with the image rubric",
+    "browserRequestsToNonLocalOrigins": 0,
+    "unexpectedErrorRuns": 0
+  },
+  "auditRubric": [
+    "Right product: the merchant page sells the candidate model (a colour variant counts; a different model or a bundle does not).",
+    "Direct merchant: the URL is the merchant's own product page, not a review, aggregator, marketplace, search, or category page.",
+    "Price display: the shown price, currency, and availability equal the values Exa returned for that URL in this run, as recorded in the run log."
+  ],
+  "imageAuditRubric": [
+    "Right product: the image shows the card's product model (any colour or variant counts when the caption names the source page's product title; a different model, a bundle shot that hides the product, a logo, a banner, a placeholder, or a lifestyle photo where the product is not the subject does not).",
+    "Attributed: the caption names the host of the page the image came from, and that page is one of the card's merchant offers or the manufacturer's page."
+  ]
+}

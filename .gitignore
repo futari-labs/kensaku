@@ -17,3 +17,5 @@ spikes/exa/.request-count
 .cache/
 test-results/
 playwright-report/
+spikes/exa-v1-1/.request-count
+spikes/exa-v1-1/out/
