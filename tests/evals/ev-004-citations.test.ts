@@ -5,7 +5,7 @@ import { runResearch } from "../../src/research/pipeline";
 import type { RunEvent } from "../../src/research/events";
 import { loadLiveFixture, readJson } from "../core/fixtures";
 
-// Frozen gold cases: evals/cases/citations.json (read-only, every case evaluated).
+// Frozen gold cases: evals/cases/citations.json and evals/cases/citations-spaced.json (CR-001), read-only, every case evaluated.
 interface CitationCase {
   id: string;
   fixture?: string;
@@ -13,7 +13,10 @@ interface CitationCase {
   synthetic?: { text: string; citations: string[] };
   expected: { unresolvedMarkers: number; uncitedParagraphs: number; resolvedUrlCount: number; renderedText?: string };
 }
-const file = readJson<{ cases: CitationCase[] }>("evals/cases/citations.json");
+const FILES = [
+  { path: "evals/cases/citations.json", count: 6 },
+  { path: "evals/cases/citations-spaced.json", count: 2 },
+].map(({ path, count }) => ({ path, count, cases: readJson<{ cases: CitationCase[] }>(path).cases }));
 
 function inputFor(c: CitationCase): { text: string; citations: string[] } {
   if (c.synthetic) return c.synthetic;
@@ -24,12 +27,12 @@ function inputFor(c: CitationCase): { text: string; citations: string[] } {
   return { text: node, citations: (response.citations ?? []).map((x) => x.url) };
 }
 
-describe("EV-004 citation cases", () => {
+describe.each(FILES)("EV-004 citation cases: $path", ({ cases, count }) => {
   it("evaluates every case in the frozen file", () => {
-    expect(file.cases.length).toBe(6);
+    expect(cases.length).toBe(count);
   });
 
-  it.each(file.cases.map((c) => [c.id, c] as const))("%s matches its label", (_id, c) => {
+  it.each(cases.map((c) => [c.id, c] as const))("%s matches its label", (_id, c) => {
     const { text, citations } = inputFor(c);
     const result = resolveCitations(text, citations);
     expect(result.unresolvedMarkers).toBe(c.expected.unresolvedMarkers);

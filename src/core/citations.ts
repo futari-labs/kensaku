@@ -1,8 +1,10 @@
 import type { ResolvedCitations } from "./types";
 
-// The marker grammar is frozen in evals/cases/citations.json. A marker may follow spaces or tabs, which are removed with it.
-const BARE_MARKER = /\[(\d+(?:,\d+)*)\]/;
-const MARKER = new RegExp(`([ \\t]*)${BARE_MARKER.source}`, "g");
+// The marker grammar is frozen in evals/cases/citations.json (CR-001): spaces or tabs, never a newline, may
+// surround the numbers and commas. A marker may follow spaces or tabs, which are removed with it when it has no kept number.
+const MARKER = /([ \t]*)\[[ \t]*(\d+(?:[ \t]*,[ \t]*\d+)*)[ \t]*\]/g;
+// The canonical rendering of a kept marker: no spaces, no leading zeros. `segmentMarkers` reads only this form.
+const CANONICAL_MARKER = /\[(\d+(?:,\d+)*)\]/;
 // Capturing, so split() keeps each separator at an odd index and the original text can be rejoined unchanged.
 const BLANK_LINE = /(\n(?:[ \t\r]*\n)+)/;
 
@@ -12,8 +14,8 @@ export function splitParagraphs(text: string): string[] {
 }
 
 interface MarkerResolution {
-  /** The marker's numbers that point at a citation, as written. */
-  kept: string[];
+  /** The marker's numbers that point at a citation. */
+  kept: number[];
   urls: string[];
   dropped: number;
 }
@@ -21,13 +23,13 @@ interface MarkerResolution {
 function resolveMarker(numbers: string, citationUrls: string[]): MarkerResolution {
   const out: MarkerResolution = { kept: [], urls: [], dropped: 0 };
   for (const raw of numbers.split(",")) {
-    const n = Number(raw);
+    const n = Number(raw.trim());
     const url = Number.isSafeInteger(n) && n >= 1 ? citationUrls[n - 1] : undefined;
     if (url === undefined) {
       out.dropped++;
       continue;
     }
-    out.kept.push(raw);
+    out.kept.push(n);
     out.urls.push(url);
   }
   return out;
@@ -45,7 +47,7 @@ export interface CitedText extends ResolvedCitations {
 }
 
 /**
- * Resolves 1-based `[n]` and `[n,m]` markers against citation URLs; unresolvable numbers are removed
+ * Resolves 1-based `[n]` and `[n, m]` markers (spaces and tabs allowed inside) against citation URLs; unresolvable numbers are removed
  * and counted. Each marker is resolved once, and `citedSources` says which numbers reached each URL.
  */
 export function resolveCitations(text: string, citationUrls: string[]): CitedText {
@@ -62,10 +64,10 @@ export function resolveCitations(text: string, citationUrls: string[]): CitedTex
       const r = resolveMarker(numbers, citationUrls);
       resolved += r.kept.length;
       unresolvedMarkers += r.dropped;
-      r.kept.forEach((raw, k) => {
+      r.kept.forEach((n, k) => {
         const url = r.urls[k]!;
         const seen = numbersByUrl.get(url) ?? new Set<number>();
-        seen.add(Number(raw));
+        seen.add(n);
         numbersByUrl.set(url, seen);
       });
       return r.kept.length > 0 ? `${lead}[${r.kept.join(",")}]` : "";
@@ -92,6 +94,6 @@ export type MarkerSegment = string | { citation: number[] };
 
 /** Splits already-resolved text at its markers, using the same grammar as `resolveCitations`. */
 export function segmentMarkers(text: string): MarkerSegment[] {
-  const parts = text.split(BARE_MARKER);
+  const parts = text.split(CANONICAL_MARKER);
   return parts.map((part, i) => (i % 2 === 0 ? part : { citation: part.split(",").map(Number) })).filter((seg) => seg !== "");
 }
