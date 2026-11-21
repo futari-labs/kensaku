@@ -41,8 +41,8 @@ Phase: **v1.1 execution** (plan `kensaku-v1-1`, approved; contract on `dev` at `
 | JM-101 | [#16](https://github.com/futari-labs/kensaku/issues/16) | `jm-101-core-rules` | [#22](https://github.com/futari-labs/kensaku/pull/22) | `8e28262` (code reviewed at `b39e4f8`) | merged (`59ada31`), dev push CI green | `.futari/evidence/JM-101.md` |
 | JM-102 | [#17](https://github.com/futari-labs/kensaku/issues/17) | `jm-102-theme` | [#23](https://github.com/futari-labs/kensaku/pull/23) | `a4a62bc` | merged (`5eb034c`) | `.futari/evidence/JM-102.md` |
 | JM-103 | [#18](https://github.com/futari-labs/kensaku/issues/18) | `jm-103-image-proxy` | [#24](https://github.com/futari-labs/kensaku/pull/24) | `055f91c` | merged (`d3e598a`), dev push CI green | `.futari/evidence/JM-103.md` |
-| JM-104 | [#19](https://github.com/futari-labs/kensaku/issues/19) | `jm-104-vertical-slice` | [#25](https://github.com/futari-labs/kensaku/pull/25) | `2551d51` (code reviewed at `a2cc9ea`) | VERIFIED; live smoke PASS (Q3, Q4; 5 Exa requests, $0.055); merging | `.futari/evidence/JM-104.md`; logs `.futari/evidence/live/jm-104-smoke-Q3.json`, `-Q4.json` |
-| JM-105 | [#20](https://github.com/futari-labs/kensaku/issues/20) | | | | pending JM-102, JM-104 | |
+| JM-104 | [#19](https://github.com/futari-labs/kensaku/issues/19) | `jm-104-vertical-slice` | [#25](https://github.com/futari-labs/kensaku/pull/25) | `2551d51` (code reviewed at `a2cc9ea`) | merged (`1f6baaf`), dev push CI green; live smoke PASS (5 requests, $0.055) | `.futari/evidence/JM-104.md`; logs `.futari/evidence/live/jm-104-smoke-Q3.json`, `-Q4.json` |
+| JM-105 | [#20](https://github.com/futari-labs/kensaku/issues/20) | `jm-105-product-cards` | [#27](https://github.com/futari-labs/kensaku/pull/27) | `20cd180` | VERIFIED (3 review rounds APPROVE; owner visual review accepted with brand-once headings); merging | `.futari/evidence/JM-105.md` |
 | JM-106 | [#21](https://github.com/futari-labs/kensaku/issues/21) | | | | pending JM-105 | |
 
 Plan-wide live Exa use during v1.1 execution: 5 of 130 requests, $0.055 of $1.50 reported cost (JM-104 smoke). Free credits only.
@@ -50,6 +50,7 @@ Plan-wide live Exa use during v1.1 execution: 5 of 130 requests, $0.055 of $1.50
 Logged interpretations (non-material, reviewer-confirmed):
 - JM-102 `public/theme-init.js` starts with `/* global document */`. The criterion's literal `/* global document, localStorage */` fails lint (no-redeclare).
 - After the single-parser review fix, theme-init.js is the only storage parser, and theme.ts owns the key and applying the theme.
+- JM-105 owner visual review (native card, "Accept, drop repeated brand"): REQ-012, REQ-013 (alt text) and EV-015 check 3 read "brand and name" as the product name with the brand shown once (`productTitle`). This is owner-directed, not a plan change; the frozen docs are unchanged.
 
 ## Execution session 2026-11-21
 
