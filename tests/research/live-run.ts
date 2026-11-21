@@ -22,8 +22,9 @@ export interface LiveQuery {
   text: string;
 }
 
-export function loadQueries(ids: string[]): LiveQuery[] {
-  const queries = (JSON.parse(readFileSync(join(ROOT, "evals/cases/live-acceptance.json"), "utf8")) as { queries: LiveQuery[] }).queries;
+/** `file` is a live-acceptance case file under evals/cases/; the MVP set by default. */
+export function loadQueries(ids: string[], file = "live-acceptance.json"): LiveQuery[] {
+  const queries = (JSON.parse(readFileSync(join(ROOT, "evals/cases", file), "utf8")) as { queries: LiveQuery[] }).queries;
   return ids.map((id) => {
     const query = queries.find((q) => q.id === id);
     if (!query) throw new Error(`unknown query ${id}`);
@@ -163,6 +164,7 @@ export async function executeQuery({ server, keyPrefix, answerMarketMode, exchan
     displayed: {
       comparison: text === undefined ? null : { text, sources: ofType(chunks, "source-url").map((c) => ({ sourceId: c.sourceId, url: c.url })) },
       products: ofType(chunks, "data-products")[0]?.data ?? null,
+      comparisonTruncated: ofType(chunks, "data-comparison").length > 0,
     },
     progress: ofType(chunks, "data-progress").map((c) => c.data),
     usage: usage ?? null,

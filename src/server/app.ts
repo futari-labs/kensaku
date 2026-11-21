@@ -14,8 +14,13 @@ import type { AppConfig } from "./config";
 import { hostOriginGuard } from "./guard";
 import { SECURITY_HEADERS } from "./images";
 import type { ImageProxy } from "./images";
+import type { ImageSource } from "../core/types";
 
 export type LogLine = Record<string, unknown>;
+
+/** ARCHITECTURE, "Content-Security-Policy (v1.1)". Every response but `/api/image/:id`, which sends its own stricter one. */
+export const CONTENT_SECURITY_POLICY =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
 
 export interface AppDeps {
   config: AppConfig;
@@ -34,7 +39,7 @@ const jsonError = (kind: ApiErrorKind, message: string) => ({ kind, message });
 
 /** The Hono app. Everything it touches arrives through `deps`; it holds one run lock and nothing else. */
 export function createApp(deps: AppDeps): Hono {
-  const { config, ledger, clock, log } = deps;
+  const { config, ledger, clock, log, images } = deps;
   const app = new Hono();
   let running = false;
 
@@ -45,6 +50,11 @@ export function createApp(deps: AppDeps): Hono {
   };
   app.use("/api/image", imageHeaders);
   app.use("/api/image/*", imageHeaders);
+  // Also outermost, so the guard's 403 carries it. The image paths already have their own policy.
+  app.use("*", async (c, next) => {
+    await next();
+    if (!/^\/api\/image(\/|$)/.test(c.req.path)) c.res.headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  });
   app.use("*", hostOriginGuard({ port: config.port, dev: config.dev }));
 
   app.get("/api/health", (c) => c.json({ ok: true, exaConfigured: config.exaConfigured, mode: config.mode }));
@@ -71,11 +81,12 @@ export function createApp(deps: AppDeps): Hono {
     const signal = c.req.raw.signal;
     const runId = randomUUID();
     const month = () => ({ monthRequests: ledger.read(clock()).requests, monthLimit: ledger.limits.requestLimit });
+    const registerImages = images && ((sources: ImageSource[]) => images.registerImageCandidates(sources));
     const stream = createUIMessageStream<KensakuMessage>({
       execute: async ({ writer }) => {
         try {
           writer.write({ type: "start", messageId: runId });
-          for await (const event of runResearch({ question, market }, port, signal, { ...deps.run, runId, log })) {
+          for await (const event of runResearch({ question, market }, port, signal, { ...deps.run, runId, log, ...(registerImages && { registerImages }) })) {
             if (signal.aborted) break;
             for (const chunk of toChunks(event, month)) writer.write(chunk);
           }
@@ -97,7 +108,6 @@ export function createApp(deps: AppDeps): Hono {
     return createUIMessageStreamResponse({ stream });
   });
 
-  const { images } = deps;
   if (images) app.get("/api/image/:id", (c) => images.serve(c.req.param("id"), c.req.header("sec-fetch-site")));
 
   app.all("/api/*", (c) => c.json({ error: "not found" }, 404));

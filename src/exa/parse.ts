@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { Candidate, OfferSummary, SearchHit } from "../core/types";
 import { ExaFailure } from "./errors";
-import { CandidateSchema, OfferSummarySchema } from "./schemas";
+import { CandidateSchema, lenient, OfferSummarySchema } from "./schemas";
 
 /** What every response is billed for, read before and independently of strict parsing. */
 export interface Billing {
@@ -36,7 +36,7 @@ const SearchBodySchema = z.object({
   results: z.array(z.unknown()),
 });
 
-const SearchRowSchema = z.object({ url: z.string(), title: z.string().nullish(), summary: z.unknown().optional() });
+const SearchRowSchema = z.object({ url: z.string(), title: z.string().nullish(), summary: z.unknown().optional(), image: lenient(z.string().nullable()) });
 
 export interface ParsedAnswer {
   comparison: string;
@@ -100,7 +100,13 @@ export function parseSearchResponse(raw: unknown): ParsedSearch {
       skipped += 1;
       continue;
     }
-    hits.push({ url: hit.data.url, title: hit.data.title ?? null, summary: parseSummary(hit.data.summary), exaRequestId });
+    hits.push({
+      url: hit.data.url,
+      title: hit.data.title ?? null,
+      summary: parseSummary(hit.data.summary),
+      ...(hit.data.image != null && { image: hit.data.image }),
+      exaRequestId,
+    });
   }
   return { hits, exaRequestId, skipped };
 }

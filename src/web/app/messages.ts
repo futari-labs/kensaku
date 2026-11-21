@@ -9,6 +9,8 @@ export type ChatMessage = UIMessage<unknown, Omit<KensakuDataParts, "error"> & {
 export interface RunView {
   progress: ProgressData[];
   text: string | undefined;
+  /** Exa's comparison ended in leaked structure that was cut or dropped (D-042); the note belongs beside it. */
+  comparisonTruncated: boolean;
   sources: SourceRef[];
   products: ProductResult[] | undefined;
   usage: UsageData | undefined;
@@ -17,7 +19,7 @@ export interface RunView {
 
 /** Collects what an assistant message's parts say about its run. */
 export function viewOf(message: ChatMessage | undefined): RunView {
-  const view: RunView = { progress: [], text: undefined, sources: [], products: undefined, usage: undefined, error: undefined };
+  const view: RunView = { progress: [], text: undefined, comparisonTruncated: false, sources: [], products: undefined, usage: undefined, error: undefined };
   for (const part of message?.parts ?? []) {
     switch (part.type) {
       case "data-progress":
@@ -25,6 +27,9 @@ export function viewOf(message: ChatMessage | undefined): RunView {
         break;
       case "data-products":
         view.products = part.data;
+        break;
+      case "data-comparison":
+        view.comparisonTruncated = part.data.truncated;
         break;
       case "data-usage":
         view.usage = part.data;

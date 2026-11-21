@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { classifyHit, rankOffers, resolveCitations } from "../core";
-import type { Candidate, Evidence, Market, Offer, RejectCategory, SearchHit } from "../core/types";
+import { classifyHit, cutLeakedStructure, normalizeKeySpecs, rankImageCandidates, rankOffers, resolveCitations, resolveReason } from "../core";
+import type { Classified as ClassifiedHit } from "../core";
+import type { Candidate, Evidence, ImageCandidate, ImageSource, Market, Offer, RejectCategory, SearchHit } from "../core/types";
 import { RequestBudget, MAX_EXA_REQUESTS_PER_RUN } from "../exa/budget";
 import { ExaFailure, mapExaError } from "../exa/errors";
 import type { ExaPort } from "../exa/port";
@@ -25,6 +26,8 @@ export interface RunOptions {
   /** Waits before the retry; rejects when the signal aborts. Tests pass an instant one. */
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
   clock?: () => number;
+  /** Records a product's image sources with the image proxy and returns the candidates the browser gets. Default: no images. */
+  registerImages?: (sources: ImageSource[]) => ImageCandidate[];
 }
 
 /** An Exa failure the user sees as an error. `budget_exhausted` is not one: it ends the offers stage early instead. */
@@ -59,6 +62,8 @@ interface Classified {
   offers: Offer[];
   evidence: Evidence[];
   rejectedCounts: Record<RejectCategory, number>;
+  /** Every result of this candidate's search with its classification, in Exa's order (rule I2 reads it). */
+  entries: ClassifiedHit[];
   /** Set when this candidate has no search results. */
   notSearched?: string;
 }
@@ -71,9 +76,10 @@ type Searched =
 
 function classifyAll(candidate: Candidate, hits: SearchHit[]): Classified {
   const runUrls = new Set(hits.map((hit) => hit.url));
-  const out: Classified = { candidate, offers: [], evidence: [], rejectedCounts: emptyRejected() };
+  const out: Classified = { candidate, offers: [], evidence: [], rejectedCounts: emptyRejected(), entries: [] };
   for (const hit of hits) {
     const result = classifyHit(hit, candidate, runUrls);
+    out.entries.push({ hit, result });
     if (result.kind === "merchant-offer") out.offers.push(result);
     else if (result.kind === "evidence") out.evidence.push(result);
     else out.rejectedCounts[result.category]++;
@@ -84,17 +90,26 @@ function classifyAll(candidate: Candidate, hits: SearchHit[]): Classified {
 function classifiedOf(searched: Searched): Classified {
   if (searched.status === "searched") return searched.classified;
   const notSearched = searched.status === "failed" ? SEARCH_INCOMPLETE : searched.reason;
-  return { candidate: searched.candidate, offers: [], evidence: [], rejectedCounts: emptyRejected(), notSearched };
+  return { candidate: searched.candidate, offers: [], evidence: [], rejectedCounts: emptyRejected(), entries: [], notSearched };
 }
 
 /** Ranks per candidate; an offer URL already shown for an earlier candidate is not shown again. */
-function validate(classified: Classified[], market: Market): ProductResult[] {
+function validate(
+  classified: Classified[],
+  market: Market,
+  { citationUrls, registerImages }: { citationUrls: string[]; registerImages: (sources: ImageSource[]) => ImageCandidate[] },
+): ProductResult[] {
   const shown = new Set<string>();
   return classified.map((c) => {
     const fresh = c.offers.filter((offer) => !shown.has(offer.canonicalUrl));
     for (const offer of fresh) shown.add(offer.canonicalUrl);
+    const { name, brand, modelIdentifiers, keySpecs, reason } = c.candidate;
     return {
-      candidate: c.candidate,
+      // Without the raw keySpecs and reason: the card reads only the normalized fields below.
+      candidate: { name, brand, modelIdentifiers },
+      keySpecs: normalizeKeySpecs(keySpecs),
+      reason: resolveReason(reason, citationUrls),
+      imageCandidates: registerImages(rankImageCandidates(c.entries, c.candidate, market)),
       offerGroups: rankOffers(fresh, market),
       evidence: c.evidence,
       rejectedCounts: c.rejectedCounts,
@@ -115,6 +130,7 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     runTimeoutMs = RUN_TIMEOUT_MS,
     sleep = abortableSleep,
     clock = Date.now,
+    registerImages = () => [],
   } = options;
   const { question, market } = input;
   const budget = new RequestBudget(MAX_EXA_REQUESTS_PER_RUN);
@@ -197,12 +213,16 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     }
     yield candidatesStage.finish("done", `${answer.candidates.length} candidate(s)`);
 
-    const cited = resolveCitations(answer.comparison, answer.citationUrls);
+    // D-042: cut leaked structure before resolving, so markers inside the cut part never reach the sources.
+    const cut = cutLeakedStructure(answer.comparison);
+    const cited = cut && resolveCitations(cut.text, answer.citationUrls);
     const comparison: RunEvent = {
       type: "comparison",
-      text: cited.renderedText,
-      sources: cited.citedSources.map((s) => ({ url: s.url, sourceId: s.numbers.join(",") })),
+      text: cited?.renderedText ?? null,
+      truncated: cut?.truncated ?? true,
+      sources: (cited?.citedSources ?? []).map((s) => ({ url: s.url, sourceId: s.numbers.join(",") })),
     };
+    const validation = { citationUrls: answer.citationUrls, registerImages };
 
     // Stage 2: offers (1 request per candidate: 1 and 2, then 3 only if 1 and 2 found no merchant offer)
     const offersStage = startStage("offers");
@@ -237,7 +257,7 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     if (failure) {
       yield offersStage.finish("failed");
       yield comparison;
-      yield { type: "products", products: validate(classified, market) };
+      yield { type: "products", products: validate(classified, market, validation) };
       yield* fail(failure, true);
       return;
     }
@@ -246,7 +266,7 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     // Stage 3: validate (no request)
     const validateStage = startStage("validate");
     yield validateStage.running;
-    yield { type: "products", products: validate(classified, market) };
+    yield { type: "products", products: validate(classified, market, validation) };
     yield validateStage.finish("done");
 
     // Stage 4: compare (no request)

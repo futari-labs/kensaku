@@ -58,6 +58,47 @@ test("fixture run: progress, cited comparison, offer table, and separate evidenc
   await expect(page.getByTestId("usage")).toContainText("Exa requests: 2");
 });
 
+test("an image loads through the proxy, with its key specs and reason, and the page makes no request to a non-local origin", async ({ page }) => {
+  const origins = new Set<string>();
+  const imageReplies: { status: number; type: string | undefined }[] = [];
+  page.on("request", (request) => {
+    const { protocol, origin } = new URL(request.url());
+    if (protocol === "http:" || protocol === "https:") origins.add(origin);
+  });
+  page.on("response", (response) => {
+    if (new URL(response.url()).pathname.startsWith("/api/image/")) imageReplies.push({ status: response.status(), type: response.headers()["content-type"] });
+  });
+  await page.addInitScript(() => localStorage.setItem("kensaku.market.v1", "SG"));
+  await page.goto("/?scenario=xm5-sg-cards");
+  await ask(page, Q1);
+
+  const first = page.getByTestId("product").first();
+  const figure = first.getByTestId("product-image");
+  await expect(figure).toHaveAttribute("data-loaded", "true");
+  // The first candidate fails rule I3 (422), so the caption names the second one, which loaded.
+  await expect(first.getByTestId("image-caption")).toContainText("stereo.com.sg");
+  const img = figure.locator("img");
+  await expect(img).toHaveAttribute("src", /^\/api\/image\/[0-9a-f]{64}$/);
+  expect(await img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  expect(imageReplies.some((r) => r.status === 422)).toBe(true);
+  expect(imageReplies.some((r) => r.status === 200 && r.type === "image/jpeg")).toBe(true);
+
+  await expect(first.getByTestId("key-specs").locator("li")).toHaveCount(4);
+  await expect(first.getByTestId("reason")).toContainText("frequent travel");
+  await expect(first.getByTestId("reason").getByRole("link").first()).toHaveAttribute("href", /^https:\/\//);
+
+  expect([...origins]).toEqual(["http://127.0.0.1:8787"]);
+});
+
+test("a product whose every image candidate fails shows the no-image panel", async ({ page }) => {
+  await page.route("**/api/image/*", (route) => route.fulfill({ status: 502, contentType: "application/json", body: "{}" }));
+  await page.addInitScript(() => localStorage.setItem("kensaku.market.v1", "SG"));
+  await page.goto("/?scenario=xm5-sg-cards");
+  await ask(page, Q1);
+  await expect(page.getByTestId("no-image")).toHaveCount(2);
+  await expect(page.getByTestId("no-image").first()).toHaveText("No verified product image");
+});
+
 test("running state: input disabled, Cancel works, and the server is free for the next run", async ({ page, request }) => {
   await page.goto("/?scenario=cancel-offers");
   await ask(page, Q1);

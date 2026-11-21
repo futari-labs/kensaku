@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { Availability, Candidate, Currency, Evidence, EvidenceCategory, Offer, OfferGroup, RejectCategory } from "../../core/types";
+import type { Availability, Candidate, Currency, Evidence, EvidenceCategory, ImageCandidate, Offer, OfferGroup, RejectCategory, ResolvedCitations } from "../../core/types";
 import { API_ERROR_KINDS, STAGES } from "../../research/events";
-import type { ExaMode, ProductResult, ProgressData, SourceRef, UsageData } from "../../research/events";
+import type { ComparisonNoticeData, ExaMode, ProductResult, ProgressData, SourceRef, UsageData } from "../../research/events";
 import type { ChatMessage, FailureData } from "./messages";
 
 // `core` exports these unions as types only. Each list is checked against its union, in both directions, where it is declared.
@@ -36,12 +36,24 @@ const EvidenceSchema = z.looseObject({
   host: z.string(),
   reportedPrice: z.looseObject({ amount: z.number(), currency: z.string() }).optional(),
 }) satisfies z.ZodType<Evidence>;
+const ImageCandidateSchema = z.looseObject({ id: z.string(), sourceHost: z.string(), sourceTitle: z.string() }) satisfies z.ZodType<ImageCandidate>;
+const ReasonSchema = z.looseObject({
+  renderedText: z.string(),
+  sources: z.array(z.string()),
+  unresolvedMarkers: z.number(),
+  uncitedParagraphs: z.array(z.number()),
+  truncated: z.boolean(),
+}) satisfies z.ZodType<ResolvedCitations & { truncated: boolean }>;
 const ProductResultSchema = z.looseObject({
   candidate: CandidateSchema,
   offerGroups: z.array(OfferGroupSchema),
   evidence: z.array(EvidenceSchema),
   rejectedCounts: z.record(z.enum(REJECT_CATEGORIES), z.number()),
   notSearched: z.string().optional(),
+  // Absent in history saved by the MVP.
+  keySpecs: z.array(z.string()).optional(),
+  reason: ReasonSchema.nullable().optional(),
+  imageCandidates: z.array(ImageCandidateSchema).optional(),
 }) satisfies z.ZodType<ProductResult>;
 
 const ProgressSchema = z.looseObject({
@@ -56,6 +68,7 @@ const UsageSchema = z.looseObject({
   monthRequests: z.number(),
   monthLimit: z.number(),
 }) satisfies z.ZodType<UsageData>;
+const ComparisonNoticeSchema = z.looseObject({ truncated: z.literal(true) }) satisfies z.ZodType<ComparisonNoticeData>;
 const FailureSchema = z.looseObject({ kind: z.enum(API_ERROR_KINDS), message: z.string(), partial: z.boolean() }) satisfies z.ZodType<FailureData>;
 const SourceSchema = z.looseObject({ type: z.literal("source-url"), sourceId: z.string(), url: z.string() }) satisfies z.ZodType<SourceRef & { type: "source-url" }>;
 
@@ -64,6 +77,7 @@ const PartSchema = z.discriminatedUnion("type", [
   SourceSchema,
   z.looseObject({ type: z.literal("data-progress"), data: ProgressSchema }),
   z.looseObject({ type: z.literal("data-products"), data: z.array(ProductResultSchema) }),
+  z.looseObject({ type: z.literal("data-comparison"), data: ComparisonNoticeSchema }),
   z.looseObject({ type: z.literal("data-usage"), data: UsageSchema }),
   z.looseObject({ type: z.literal("data-error"), data: FailureSchema }),
 ]);

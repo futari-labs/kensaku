@@ -24,7 +24,7 @@ describe("onExchange", () => {
     });
     const candidate = { name: "WH-1000XM5", brand: "Sony", modelIdentifiers: ["WH-1000XM5"] };
     await port.searchOffers(candidate, "US", new RequestBudget(5), signal);
-    expect(seen[0]).toMatchObject({ endpoint: "/search", request: { query: "Sony WH-1000XM5 buy" }, response: raw });
+    expect(seen[0]).toMatchObject({ endpoint: "/search", request: { query: "Sony WH-1000XM5 price United States buy" }, response: raw });
     await expect(port.searchOffers({ ...candidate, name: "other" }, "US", new RequestBudget(5), signal)).resolves.toMatchObject({ cached: false });
     expect(notes).toEqual([expect.stringContaining("exchange observer")]);
   });
