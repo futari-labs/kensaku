@@ -3,6 +3,7 @@ import type { ResolvedReason } from "../../core";
 import type { Availability, Currency, Evidence, EvidenceCategory, ImageCandidate, Offer, OfferGroup, RejectCategory } from "../../core/types";
 import { API_ERROR_KINDS, STAGES } from "../../research/events";
 import type { CandidateIdentity, ComparisonNoticeData, ExaMode, ProductResult, ProgressData, SourceRef, UsageData } from "../../research/events";
+import { MARKETS } from "./markets";
 import type { ChatMessage, FailureData } from "./messages";
 
 // `core` exports these unions as types only. Each list is checked against its union, in both directions, where it is declared.
@@ -84,7 +85,12 @@ const PartSchema = z.discriminatedUnion("type", [
   z.looseObject({ type: z.literal("data-error"), data: FailureSchema }),
 ]);
 
-export const StoredMessageSchema = z.looseObject({ id: z.string(), role: z.enum(["user", "assistant"]), parts: z.array(PartSchema) }) satisfies z.ZodType<ChatMessage>;
+export const StoredMessageSchema = z.looseObject({
+  id: z.string(),
+  role: z.enum(["user", "assistant"]),
+  parts: z.array(PartSchema),
+  metadata: z.looseObject({ market: z.enum(MARKETS).optional() }).optional(),
+}) satisfies z.ZodType<ChatMessage>;
 
 /** The reply of `GET /api/health`; only the mode matters to the page. */
 export const HealthSchema = z.object({ mode: z.enum(["live", "fixture"]) }) satisfies z.ZodType<{ mode: ExaMode }>;

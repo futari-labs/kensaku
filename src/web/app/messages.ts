@@ -1,4 +1,6 @@
 import type { UIMessage } from "ai";
+import type { Market } from "../../core/types";
+import { MARKETS } from "./markets";
 import { STAGES } from "../../research/events";
 import type { ApiErrorKind, ErrorData, KensakuDataParts, ProductResult, ProgressData, RunState, SourceRef, Stage, UsageData } from "../../research/events";
 
@@ -69,9 +71,17 @@ export function runStateOf(
   return "cancelled";
 }
 
+/** The market a question was asked in, kept in its metadata so its card keeps saying that market after the selection changes. */
+const marketOf = (question: ChatMessage): Market | undefined => {
+  const metadata = question.metadata;
+  return MARKETS.find((m) => typeof metadata === "object" && metadata !== null && "market" in metadata && metadata.market === m);
+};
+
 /** One question and the run that answers it; a question cancelled before the reply began has an empty view. */
 export interface Turn {
   question: ChatMessage;
+  /** Absent for questions saved before v1.1; the card then reads the market from the offers. */
+  market: Market | undefined;
   view: RunView;
   state: ClientRunState;
 }
@@ -89,7 +99,7 @@ export function turnsOf(messages: ChatMessage[], now: { running: boolean; reques
   return pairs.map(({ question, answer }, i) => {
     const newest = i === pairs.length - 1;
     const view = viewOf(answer);
-    return { question, view, state: runStateOf(view, { streaming: newest && now.running, requestFailed: newest && now.requestFailed }) };
+    return { question, market: marketOf(question), view, state: runStateOf(view, { streaming: newest && now.running, requestFailed: newest && now.requestFailed }) };
   });
 }
 

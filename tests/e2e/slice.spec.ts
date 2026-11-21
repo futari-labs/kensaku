@@ -44,17 +44,18 @@ test("fixture run: progress, cited comparison, offer table, and separate evidenc
   await expect(page.getByTestId("last-observed-notice")).toContainText("last observed");
   const row = page.getByTestId("offer-row").first();
   await expect(row).toBeVisible();
-  await expect(row.locator("td").nth(0)).not.toBeEmpty();
-  await expect(row.locator("td").nth(1)).toHaveText(/\d[\d,]*(\.\d\d)? USD/);
-  await expect(row.locator("td").nth(2)).toHaveText(/In stock|Out of stock|Preorder|Availability unknown/);
-  await expect(row.locator("td").nth(3).locator("time")).toHaveAttribute("datetime", /^\d{4}-\d\d-\d\dT/);
+  await expect(row.locator('[data-slot="item-title"]')).not.toBeEmpty();
+  await expect(row).toContainText(/\d[\d,]*(\.\d\d)? USD/);
+  await expect(row.locator('[data-slot="badge"]')).toHaveText(/In stock|Out of stock|Preorder|Availability unknown/);
+  await expect(row.locator("time")).toHaveAttribute("datetime", /^\d{4}-\d\d-\d\dT/);
   await expect(row.getByRole("link", { name: /View .* at / })).toHaveAttribute("href", /^https:\/\//);
 
-  // Evidence is its own labeled section, outside every offer table.
+  // Evidence is its own labeled section: the card's Research details, outside the offer list.
+  await page.getByRole("button", { name: /^Research details/ }).first().click();
   const evidence = page.getByTestId("evidence").first();
   await expect(evidence).toContainText("Research evidence (not merchant offers)");
   await expect(evidence.getByTestId("evidence-item").first()).toContainText("not a merchant offer");
-  expect(await page.getByTestId("offer-table").getByTestId("evidence").count()).toBe(0);
+  expect(await page.getByTestId("offers").getByTestId("evidence").count()).toBe(0);
   await expect(page.getByTestId("usage")).toContainText("Exa requests: 2");
 });
 
@@ -85,7 +86,10 @@ test("an image loads through the proxy, with its key specs and reason, and the p
 
   await expect(first.getByTestId("key-specs").locator("li")).toHaveCount(4);
   await expect(first.getByTestId("reason")).toContainText("frequent travel");
-  await expect(first.getByTestId("reason").getByRole("link").first()).toHaveAttribute("href", /^https:\/\//);
+  // The reason's citations are AI Elements inline citations: a button opens its source links.
+  await first.getByTestId("reason").getByTestId("inline-citation").first().click();
+  await expect(page.getByTestId("citation-link").first()).toHaveAttribute("href", /^https:\/\//);
+  await page.keyboard.press("Escape");
 
   expect([...origins]).toEqual(["http://127.0.0.1:8787"]);
 });
