@@ -1,6 +1,7 @@
 import type { UIMessage } from "ai";
 import { z } from "zod";
-import type { Candidate, Evidence, ImageCandidate, Market, OfferGroup, RejectCategory, ResolvedCitations } from "../core/types";
+import type { ResolvedReason } from "../core";
+import type { Candidate, Evidence, ImageCandidate, Market, OfferGroup, RejectCategory } from "../core/types";
 import type { ExaFailureKind } from "../exa/errors";
 
 export const STAGES = ["candidates", "offers", "validate", "compare"] as const;
@@ -33,8 +34,11 @@ export const ApiErrorBodySchema = z.object({ kind: z.enum(API_ERROR_KINDS), mess
 /** `"live"` calls Exa; `"fixture"` replays recorded scenarios (tests only). */
 export type ExaMode = "live" | "fixture";
 
+/** What a card shows of the candidate. The raw `keySpecs` and `reason` stay out: the card reads the normalized fields of `ProductResult`. */
+export type CandidateIdentity = Pick<Candidate, "name" | "brand" | "modelIdentifiers">;
+
 export interface ProductResult {
-  candidate: Candidate;
+  candidate: CandidateIdentity;
   offerGroups: OfferGroup[];
   evidence: Evidence[];
   rejectedCounts: Record<RejectCategory, number>;
@@ -42,7 +46,7 @@ export interface ProductResult {
   notSearched?: string;
   /** (v1.1) Optional so history saved by the MVP still validates. The card reads these, never the raw `candidate` fields. */
   keySpecs?: string[];
-  reason?: (ResolvedCitations & { truncated: boolean }) | null;
+  reason?: ResolvedReason | null;
   imageCandidates?: ImageCandidate[];
 }
 
@@ -63,8 +67,9 @@ export type RunState = "completed" | "failed" | "cancelled";
 /** What `runResearch` yields. Every run ends with exactly one `end`; a failed run has one `error` before it. */
 export type RunEvent =
   | { type: "progress"; stage: Stage; status: "running" | "done" | "failed"; detail?: string }
-  /** `text` is Exa's comparison cut at leaked structure (D-042), or null when nothing readable is left. */
-  | { type: "comparison"; text: string | null; truncated: boolean; sources: SourceRef[] }
+  /** The comparison cut at leaked structure (D-042). Nothing readable left means no text, and that is always a truncation. */
+  | { type: "comparison"; text: string; truncated: boolean; sources: SourceRef[] }
+  | { type: "comparison"; text: null; truncated: true; sources: [] }
   | { type: "products"; products: ProductResult[] }
   | { type: "usage"; usage: RunUsage }
   | { type: "error"; kind: RunErrorKind; message: string; partial: boolean }

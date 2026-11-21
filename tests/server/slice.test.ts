@@ -2,8 +2,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ProductResult } from "../../src/research/events";
+import type { ProductResult, RunEvent } from "../../src/research/events";
 import { toChunks } from "../../src/server/chat";
+import { StoredMessageSchema } from "../../src/web/app/schemas";
 import { loadHistory } from "../../src/web/app/storage";
 import { runtimeApp } from "./runtime-app";
 import { ofType, readChunks } from "./sse";
@@ -107,10 +108,10 @@ describe("slice: the comparison cut reaches the stream", () => {
   const month = () => ({ monthRequests: 0, monthLimit: 400 });
 
   it("a cut comparison streams its text and a truncated notice; a dropped one streams only the notice; a clean one streams neither", () => {
-    const types = (text: string | null, truncated: boolean) => toChunks({ type: "comparison", text, truncated, sources: text === null ? [] : sources }, month).map((c) => c.type);
-    expect(types("Good [1].", true)).toEqual(["text-start", "text-delta", "text-end", "source-url", "data-comparison"]);
-    expect(types(null, true)).toEqual(["data-comparison"]);
-    expect(types("Good [1].", false)).toEqual(["text-start", "text-delta", "text-end", "source-url"]);
+    const types = (event: RunEvent) => toChunks(event, month).map((c) => c.type);
+    expect(types({ type: "comparison", text: "Good [1].", truncated: true, sources })).toEqual(["text-start", "text-delta", "text-end", "source-url", "data-comparison"]);
+    expect(types({ type: "comparison", text: null, truncated: true, sources: [] })).toEqual(["data-comparison"]);
+    expect(types({ type: "comparison", text: "Good [1].", truncated: false, sources })).toEqual(["text-start", "text-delta", "text-end", "source-url"]);
   });
 });
 
@@ -125,5 +126,18 @@ describe("slice: stored history", () => {
     const products = messages.flatMap((m) => m.parts.flatMap((p) => (p.type === "data-products" ? p.data : [])));
     expect(products.length).toBeGreaterThan(0);
     for (const p of products) expect(p).not.toHaveProperty("imageCandidates");
+  });
+});
+
+describe("slice: the reason keeps its marker numbers to the page", () => {
+  const product = (reason: object) => ({
+    id: "m", role: "assistant",
+    parts: [{ type: "data-products", data: [{ candidate: { name: "n", brand: "b", modelIdentifiers: [] }, offerGroups: [], evidence: [], rejectedCounts: { "irrelevant-product": 0, "unsupported-currency": 0, "url-not-from-run": 0, "invalid-url": 0 }, reason }] }],
+  });
+  const reason = { renderedText: "Good [4].", sources: ["https://r.example/a"], unresolvedMarkers: 0, uncitedParagraphs: [], truncated: false };
+
+  it("validates citedSources and rejects a reason without them", () => {
+    expect(StoredMessageSchema.safeParse(product({ ...reason, citedSources: [{ url: "https://r.example/a", numbers: [4] }] })).success).toBe(true);
+    expect(StoredMessageSchema.safeParse(product(reason)).success).toBe(false);
   });
 });

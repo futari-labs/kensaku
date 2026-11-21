@@ -13,7 +13,6 @@ import { ExaSdkPort } from "../exa/sdk-port";
 import type { AppDeps, LogLine } from "./app";
 import { appConfigOf } from "./config";
 import { FixtureImageFetch, ImageProxy, NetworkImageFetch } from "./images";
-import type { ImageFetchPort } from "./images";
 import type { ServerConfig } from "./config";
 
 export const DEFAULT_FIXTURE_SCENARIO = "xm5-us";
@@ -54,20 +53,17 @@ export function createRuntime(config: ServerConfig): AppDeps {
   const imageDir = join(storage, "images");
 
   if (config.mode === "fixture") {
-    // The scenario that ran last says which fixture file each image URL maps to; earlier scenarios' mappings stay.
-    const files: Record<string, string> = {};
-    let fetcher = new FixtureImageFetch(files, FIXTURE_IMAGE_DIR);
-    const port: ImageFetchPort = { fetch: (url) => fetcher.fetch(url) };
+    // Each scenario run adds the fixture file its image URLs map to; earlier scenarios' mappings stay.
+    const fetcher = new FixtureImageFetch(FIXTURE_IMAGE_DIR);
     return {
       config: appConfigOf(config),
       ledger,
       clock,
       log,
-      images: new ImageProxy({ port, clock, log, dir: imageDir }),
+      images: new ImageProxy({ port: fetcher, clock, log, dir: imageDir }),
       portFor: (scenario) => {
         const exa = FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock, answerMarketMode: config.answerMarketMode, onWarning });
-        Object.assign(files, exa.scenario.images);
-        fetcher = new FixtureImageFetch({ ...files }, FIXTURE_IMAGE_DIR);
+        fetcher.add(exa.scenario.images);
         return exa;
       },
     };

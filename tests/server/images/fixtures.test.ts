@@ -32,14 +32,23 @@ describe("FixtureImageFetch", () => {
   const dir = join(import.meta.dirname, "../../fixtures/images");
 
   it("serves a mapped file from the directory it is given, and a 404 for anything else", async () => {
-    const port = new FixtureImageFetch({ "https://cdn.example.com/a.jpg": "ok-400x300.jpg" }, dir);
+    const port = new FixtureImageFetch(dir, { "https://cdn.example.com/a.jpg": "ok-400x300.jpg" });
     expect(await port.fetch("https://cdn.example.com/a.jpg")).toEqual({ ok: true, bytes: fixture("ok-400x300.jpg") });
     expect(await port.fetch("https://cdn.example.com/other.jpg")).toEqual({ ok: false, reason: "upstream-status" });
     expect(await port.fetch("constructor")).toEqual({ ok: false, reason: "upstream-status" });
   });
 
   it.each(["../fixtures.test.ts", "sub/ok-400x300.jpg", "/etc/passwd", "..", ""])("rejects the mapping value %j, which is not a bare file name", (file) => {
-    expect(() => new FixtureImageFetch({ "https://cdn.example.com/a.jpg": file }, dir)).toThrow(/file name/);
+    expect(() => new FixtureImageFetch(dir, { "https://cdn.example.com/a.jpg": file })).toThrow(/file name/);
+  });
+
+  it("keeps earlier mappings when more are added, remaps a repeated URL, and adds nothing from a rejected batch", async () => {
+    const port = new FixtureImageFetch(dir, { "https://cdn.example.com/a.jpg": "ok-400x300.jpg" });
+    port.add({ "https://cdn.example.com/b.jpg": "ok-400x300.jpg" });
+    expect(await port.fetch("https://cdn.example.com/a.jpg")).toMatchObject({ ok: true });
+    expect(await port.fetch("https://cdn.example.com/b.jpg")).toMatchObject({ ok: true });
+    expect(() => port.add({ "https://cdn.example.com/c.jpg": "ok-400x300.jpg", "https://cdn.example.com/d.jpg": "../x" })).toThrow(/file name/);
+    expect(await port.fetch("https://cdn.example.com/c.jpg")).toEqual({ ok: false, reason: "upstream-status" });
   });
 });
 

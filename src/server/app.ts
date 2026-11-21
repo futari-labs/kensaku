@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createUIMessageStream, createUIMessageStreamResponse } from "ai";
 import { Hono } from "hono";
-import type { MiddlewareHandler } from "hono";
 import type { Clock } from "../exa/clock";
 import type { ExaPort } from "../exa/port";
 import type { UsageLedger } from "../exa/ledger";
@@ -14,7 +13,6 @@ import type { AppConfig } from "./config";
 import { hostOriginGuard } from "./guard";
 import { SECURITY_HEADERS } from "./images";
 import type { ImageProxy } from "./images";
-import type { ImageSource } from "../core/types";
 
 export type LogLine = Record<string, unknown>;
 
@@ -35,6 +33,9 @@ export interface AppDeps {
   images?: ImageProxy;
 }
 
+/** `/api/image` and everything under it: one policy of its own, the proxy's. */
+const isImagePath = (path: string): boolean => /^\/api\/image(\/|$)/.test(path);
+
 const jsonError = (kind: ApiErrorKind, message: string) => ({ kind, message });
 
 /** The Hono app. Everything it touches arrives through `deps`; it holds one run lock and nothing else. */
@@ -44,16 +45,11 @@ export function createApp(deps: AppDeps): Hono {
   let running = false;
 
   // Outermost, and set after next(), so the guard's 403 and the catch-all 404 on image paths carry the security headers too.
-  const imageHeaders: MiddlewareHandler = async (c, next) => {
-    await next();
-    for (const [name, value] of Object.entries(SECURITY_HEADERS)) c.res.headers.set(name, value);
-  };
-  app.use("/api/image", imageHeaders);
-  app.use("/api/image/*", imageHeaders);
-  // Also outermost, so the guard's 403 carries it. The image paths already have their own policy.
+  // The page policy goes on every other path, also outermost so the guard's 403 carries it.
   app.use("*", async (c, next) => {
     await next();
-    if (!/^\/api\/image(\/|$)/.test(c.req.path)) c.res.headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+    if (isImagePath(c.req.path)) for (const [name, value] of Object.entries(SECURITY_HEADERS)) c.res.headers.set(name, value);
+    else c.res.headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
   });
   app.use("*", hostOriginGuard({ port: config.port, dev: config.dev }));
 
@@ -81,7 +77,7 @@ export function createApp(deps: AppDeps): Hono {
     const signal = c.req.raw.signal;
     const runId = randomUUID();
     const month = () => ({ monthRequests: ledger.read(clock()).requests, monthLimit: ledger.limits.requestLimit });
-    const registerImages = images && ((sources: ImageSource[]) => images.registerImageCandidates(sources));
+    const registerImages = images?.registerImageCandidates.bind(images);
     const stream = createUIMessageStream<KensakuMessage>({
       execute: async ({ writer }) => {
         try {

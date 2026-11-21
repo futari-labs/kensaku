@@ -59,13 +59,18 @@ const emptyRejected = (): Record<RejectCategory, number> => ({
 
 interface Classified {
   candidate: Candidate;
-  offers: Offer[];
-  evidence: Evidence[];
-  rejectedCounts: Record<RejectCategory, number>;
-  /** Every result of this candidate's search with its classification, in Exa's order (rule I2 reads it). */
+  /** Every result of this candidate's search with its classification, in Exa's order (rule I2 reads it). Offers, evidence and rejections derive from it. */
   entries: ClassifiedHit[];
   /** Set when this candidate has no search results. */
   notSearched?: string;
+}
+
+const offersOf = ({ entries }: Classified): Offer[] => entries.flatMap(({ result }) => (result.kind === "merchant-offer" ? [result] : []));
+const evidenceOf = ({ entries }: Classified): Evidence[] => entries.flatMap(({ result }) => (result.kind === "evidence" ? [result] : []));
+function rejectedCountsOf({ entries }: Classified): Record<RejectCategory, number> {
+  const counts = emptyRejected();
+  for (const { result } of entries) if (result.kind === "rejected") counts[result.category]++;
+  return counts;
 }
 
 /** What searching one candidate came to. */
@@ -76,21 +81,13 @@ type Searched =
 
 function classifyAll(candidate: Candidate, hits: SearchHit[]): Classified {
   const runUrls = new Set(hits.map((hit) => hit.url));
-  const out: Classified = { candidate, offers: [], evidence: [], rejectedCounts: emptyRejected(), entries: [] };
-  for (const hit of hits) {
-    const result = classifyHit(hit, candidate, runUrls);
-    out.entries.push({ hit, result });
-    if (result.kind === "merchant-offer") out.offers.push(result);
-    else if (result.kind === "evidence") out.evidence.push(result);
-    else out.rejectedCounts[result.category]++;
-  }
-  return out;
+  return { candidate, entries: hits.map((hit) => ({ hit, result: classifyHit(hit, candidate, runUrls) })) };
 }
 
 function classifiedOf(searched: Searched): Classified {
   if (searched.status === "searched") return searched.classified;
   const notSearched = searched.status === "failed" ? SEARCH_INCOMPLETE : searched.reason;
-  return { candidate: searched.candidate, offers: [], evidence: [], rejectedCounts: emptyRejected(), entries: [], notSearched };
+  return { candidate: searched.candidate, entries: [], notSearched };
 }
 
 /** Ranks per candidate; an offer URL already shown for an earlier candidate is not shown again. */
@@ -101,7 +98,7 @@ function validate(
 ): ProductResult[] {
   const shown = new Set<string>();
   return classified.map((c) => {
-    const fresh = c.offers.filter((offer) => !shown.has(offer.canonicalUrl));
+    const fresh = offersOf(c).filter((offer) => !shown.has(offer.canonicalUrl));
     for (const offer of fresh) shown.add(offer.canonicalUrl);
     const { name, brand, modelIdentifiers, keySpecs, reason } = c.candidate;
     return {
@@ -111,8 +108,8 @@ function validate(
       reason: resolveReason(reason, citationUrls),
       imageCandidates: registerImages(rankImageCandidates(c.entries, c.candidate, market)),
       offerGroups: rankOffers(fresh, market),
-      evidence: c.evidence,
-      rejectedCounts: c.rejectedCounts,
+      evidence: evidenceOf(c),
+      rejectedCounts: rejectedCountsOf(c),
       ...(c.notSearched !== undefined && { notSearched: c.notSearched }),
     };
   });
@@ -216,12 +213,9 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     // D-042: cut leaked structure before resolving, so markers inside the cut part never reach the sources.
     const cut = cutLeakedStructure(answer.comparison);
     const cited = cut && resolveCitations(cut.text, answer.citationUrls);
-    const comparison: RunEvent = {
-      type: "comparison",
-      text: cited?.renderedText ?? null,
-      truncated: cut?.truncated ?? true,
-      sources: (cited?.citedSources ?? []).map((s) => ({ url: s.url, sourceId: s.numbers.join(",") })),
-    };
+    const comparison: RunEvent = cited
+      ? { type: "comparison", text: cited.renderedText, truncated: cut.truncated, sources: cited.citedSources.map((s) => ({ url: s.url, sourceId: s.numbers.join(",") })) }
+      : { type: "comparison", text: null, truncated: true, sources: [] };
     const validation = { citationUrls: answer.citationUrls, registerImages };
 
     // Stage 2: offers (1 request per candidate: 1 and 2, then 3 only if 1 and 2 found no merchant offer)
@@ -247,7 +241,7 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     const results = await Promise.all([first, second].flatMap((c) => (c ? [search(c)] : [])));
     if (third) {
       const failed = results.some((r) => r.status === "failed");
-      const hasOffers = results.some((r) => r.status === "searched" && r.classified.offers.length > 0);
+      const hasOffers = results.some((r) => r.status === "searched" && offersOf(r.classified).length > 0);
       results.push(failed ? notSearched(third, NOT_SEARCHED_FAILED) : hasOffers ? notSearched(third, NOT_SEARCHED_OFFERS) : await search(third));
     }
     if (signal.aborted) throw new Cancelled();

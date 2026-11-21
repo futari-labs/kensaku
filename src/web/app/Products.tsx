@@ -94,7 +94,7 @@ function ProductImage({ label, candidates }: { label: string; candidates: ImageC
           alt={label}
           className="size-full object-contain"
           onLoad={() => setLoaded(true)}
-          onError={() => setIndex(index + 1)}
+          onError={() => setIndex((i) => i + 1)}
         />
       </div>
       {loaded && (

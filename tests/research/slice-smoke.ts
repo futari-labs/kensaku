@@ -69,10 +69,11 @@ try {
       summary.push(`${query.id}: not run, ${BUDGET - used} requests left and the worst case is ${WORST_CASE_PER_QUERY}`);
       break;
     }
-    const log = await executeQuery(session, query);
-    used += log.totals.exaRequests;
+    const serverLogStart = session.server.lines.length;
+    const queryLog = await executeQuery(session, query);
+    used += queryLog.totals.exaRequests;
 
-    const products = log.displayed.products ?? [];
+    const products = queryLog.displayed.products ?? [];
     const images = [];
     for (const product of products) {
       const probes: ImageProbe[] = [];
@@ -80,6 +81,8 @@ try {
       images.push({ product: `${product.candidate.brand} ${product.candidate.name}`, candidates: probes });
     }
     const offers = products.flatMap((p) => p.offerGroups.flatMap((g) => g.offers.map((o) => ({ product: `${p.candidate.brand} ${p.candidate.name}`, merchantHost: o.merchantHost, price: o.price, availability: o.availability, canonicalUrl: o.canonicalUrl }))));
+    // After the probes, so the snapshot holds the image requests' log lines too.
+    const log = { ...queryLog, serverLog: session.server.lines.slice(serverLogStart) };
     const loaded = images.flatMap((i) => i.candidates).filter((c) => c.status === 200);
     const sgdOffers = offers.filter((o) => o.price.currency === "SGD").length;
     const outcome = log.error ? ["credits_exhausted", "monthly_limit", "rate_limited", "upstream", "timeout"].includes((log.error as { kind?: string }).kind ?? "") ? "BLOCKED" : "FAIL" : sgdOffers > 0 && loaded.length > 0 ? "PASS" : "FAIL";

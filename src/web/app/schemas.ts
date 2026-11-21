@@ -1,7 +1,8 @@
 import { z } from "zod";
-import type { Availability, Candidate, Currency, Evidence, EvidenceCategory, ImageCandidate, Offer, OfferGroup, RejectCategory, ResolvedCitations } from "../../core/types";
+import type { ResolvedReason } from "../../core";
+import type { Availability, Currency, Evidence, EvidenceCategory, ImageCandidate, Offer, OfferGroup, RejectCategory } from "../../core/types";
 import { API_ERROR_KINDS, STAGES } from "../../research/events";
-import type { ComparisonNoticeData, ExaMode, ProductResult, ProgressData, SourceRef, UsageData } from "../../research/events";
+import type { CandidateIdentity, ComparisonNoticeData, ExaMode, ProductResult, ProgressData, SourceRef, UsageData } from "../../research/events";
 import type { ChatMessage, FailureData } from "./messages";
 
 // `core` exports these unions as types only. Each list is checked against its union, in both directions, where it is declared.
@@ -14,7 +15,7 @@ void everyValueListed;
 
 // Loose objects keep any field a newer server adds; the declared fields are what the page reads, and `satisfies` ties them to the stream's types.
 const CurrencySchema = z.enum(CURRENCIES);
-const CandidateSchema = z.looseObject({ name: z.string(), brand: z.string(), modelIdentifiers: z.array(z.string()) }) satisfies z.ZodType<Candidate>;
+const CandidateSchema = z.looseObject({ name: z.string(), brand: z.string(), modelIdentifiers: z.array(z.string()) }) satisfies z.ZodType<CandidateIdentity>;
 const OfferSchema = z.looseObject({
   kind: z.literal("merchant-offer"),
   merchantHost: z.string(),
@@ -42,8 +43,9 @@ const ReasonSchema = z.looseObject({
   sources: z.array(z.string()),
   unresolvedMarkers: z.number(),
   uncitedParagraphs: z.array(z.number()),
+  citedSources: z.array(z.looseObject({ url: z.string(), numbers: z.array(z.number()) })),
   truncated: z.boolean(),
-}) satisfies z.ZodType<ResolvedCitations & { truncated: boolean }>;
+}) satisfies z.ZodType<ResolvedReason>;
 const ProductResultSchema = z.looseObject({
   candidate: CandidateSchema,
   offerGroups: z.array(OfferGroupSchema),

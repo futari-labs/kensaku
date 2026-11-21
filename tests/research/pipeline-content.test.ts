@@ -65,7 +65,7 @@ describe("runResearch product content and images", () => {
     const [product] = productsOf(events);
     expect(product!.candidate).toEqual(xm5);
     expect(product!.keySpecs).toEqual(["ANC", "30 h battery"]);
-    expect(product!.reason).toMatchObject({ renderedText: "Great for travel [1].", sources: ["https://review.example/a"], truncated: true });
+    expect(product!.reason).toMatchObject({ renderedText: "Great for travel [1].", sources: ["https://review.example/a"], citedSources: [{ url: "https://review.example/a", numbers: [1] }], truncated: true });
     expect(registered).toEqual([[{ imageUrl: "https://img.example/a.jpg", pageUrl: "https://shop.example/a", sourceTitle: "Sony WH-1000XM5" }]]);
     expect(product!.imageCandidates).toEqual([{ id: "id-0", sourceHost: "shop.example", sourceTitle: "Sony WH-1000XM5" }]);
   });
