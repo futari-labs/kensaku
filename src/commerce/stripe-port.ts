@@ -36,34 +36,57 @@ function toResult(session: Stripe.Checkout.Session): SessionResult {
   return { ...fields, status, url: session.url };
 }
 
-async function call<T>(run: () => Promise<T>): Promise<T> {
+/** What the SDK said about a failed call. The message can quote part of a key, so only a caller that redacts may keep it. */
+export interface StripeErrorShape {
+  type?: string;
+  code?: string;
+  statusCode?: number;
+  message?: string;
+}
+
+const shapeOf = (error: unknown): StripeErrorShape => {
+  const e = error as Record<string, unknown> | null;
+  return {
+    ...(typeof e?.type === "string" && { type: e.type }),
+    ...(typeof e?.code === "string" && { code: e.code }),
+    ...(typeof e?.statusCode === "number" && { statusCode: e.statusCode }),
+    ...(typeof e?.message === "string" && { message: e.message }),
+  };
+};
+
+async function call<T>(run: () => Promise<T>, observe?: (raw: StripeErrorShape) => void): Promise<T> {
   try {
     return await run();
   } catch (error) {
+    if (!(error instanceof CheckoutPortError)) observe?.(shapeOf(error));
     throw error instanceof CheckoutPortError ? error : new CheckoutPortError("stripe-error");
   }
 }
 
 export class StripeCheckoutPort implements CheckoutPort {
-  constructor(private readonly client: StripeClientLike) {}
+  /** `observe` sees the raw SDK error of a failed call (the sandbox smoke records the shape of a refused expire); the app never passes one. */
+  constructor(
+    private readonly client: StripeClientLike,
+    private readonly observe?: (raw: StripeErrorShape) => void,
+  ) {}
 
   /** The key goes to the SDK constructor and nowhere else. */
-  static fromSecretKey(key: string): StripeCheckoutPort {
-    return new StripeCheckoutPort(new Stripe(key, { apiVersion: STRIPE_API_VERSION, timeout: 10000, maxNetworkRetries: 0 }));
+  static fromSecretKey(key: string, observe?: (raw: StripeErrorShape) => void): StripeCheckoutPort {
+    return new StripeCheckoutPort(new Stripe(key, { apiVersion: STRIPE_API_VERSION, timeout: 10000, maxNetworkRetries: 0 }), observe);
   }
 
   async createSession(params: CheckoutSessionParams, options: CheckoutSessionOptions): Promise<SessionResult> {
-    const result = await call(async () => toResult(await this.client.checkout.sessions.create(params, options)));
+    const result = await call(async () => toResult(await this.client.checkout.sessions.create(params, options)), this.observe);
     if (result.status !== "open") throw new CheckoutPortError("stripe-error");
     return result;
   }
 
   async expireSession(id: string): Promise<void> {
-    await call(() => this.client.checkout.sessions.expire(id));
+    await call(() => this.client.checkout.sessions.expire(id), this.observe);
   }
 
   retrieveSession(id: string): Promise<SessionResult> {
-    return call(async () => toResult(await this.client.checkout.sessions.retrieve(id)));
+    return call(async () => toResult(await this.client.checkout.sessions.retrieve(id)), this.observe);
   }
 }
 

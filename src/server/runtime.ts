@@ -23,10 +23,12 @@ import type { CommerceDeps } from "./commerce-routes";
 import { FixtureImageFetch, ImageProxy, NetworkImageFetch } from "./images";
 import type { ServerConfig } from "./config";
 
-/** Where the runtime keeps its files. Tests pass their own; the default is `.cache/` and `.data/commerce/` (a temp directory in fixture mode). */
-export interface RuntimeDirs {
+/** What tests and the dry-run smoke may set. Files default to `.cache/` and `.data/commerce/` (a temp directory in fixture mode). */
+export interface RuntimeOptions {
   cache?: string;
   commerce?: string;
+  /** The fake port a fixture runtime uses, when the caller needs to see or script its calls. */
+  fakeCheckoutPort?: FakeCheckoutPort;
 }
 
 /**
@@ -64,13 +66,13 @@ function exchangeRecorder(path: string): NonNullable<PortOptions["onExchange"]> 
  * fixture run never touches `.cache/`, never serves another scenario's cached answer, and a scripted
  * 402 cannot block the next scenario (the ledger shown by `/api/usage` is a throwaway one).
  */
-export function createRuntime(config: ServerConfig, dirs?: RuntimeDirs): AppDeps {
+export function createRuntime(config: ServerConfig, options?: RuntimeOptions): AppDeps {
   const clock = systemClock;
   const log = stdoutLogger([config.exaApiKey, config.stripe?.secretKey, config.stripe?.webhookSecret]);
   const fixtureRoot = config.mode === "fixture" ? mkdtempSync(join(tmpdir(), "kensaku-fixture-")) : undefined;
-  const storage = dirs?.cache ?? fixtureRoot ?? resolve(".cache");
+  const storage = options?.cache ?? fixtureRoot ?? resolve(".cache");
   const ledger = new UsageLedger({ dir: join(storage, "ledger"), ...config.limits });
-  const commerceStore = new CommerceStore(dirs?.commerce ?? (fixtureRoot ? join(fixtureRoot, "commerce") : resolve(".data/commerce")));
+  const commerceStore = new CommerceStore(options?.commerce ?? (fixtureRoot ? join(fixtureRoot, "commerce") : resolve(".data/commerce")));
   const offers = new OfferStore({ dir: join(storage, "offers"), clock });
   const onWarning = (note: string) => log({ event: "warning", note });
 
@@ -80,7 +82,7 @@ export function createRuntime(config: ServerConfig, dirs?: RuntimeDirs): AppDeps
     // Fixture mode (so `NODE_ENV=test`, which `parseConfig` enforces) never contacts Stripe: a fake port, a secret
     // built at runtime unless the test brought its own, and the test-only hosted page.
     const webhookSecret = config.stripe?.webhookSecret ?? `whsec_${randomBytes(24).toString("hex")}`;
-    const service = new CommerceService({ store: commerceStore, offers, port: new FakeCheckoutPort(config.port), clock, log, serverPort: config.port });
+    const service = new CommerceService({ store: commerceStore, offers, port: options?.fakeCheckoutPort ?? new FakeCheckoutPort(config.port), clock, log, serverPort: config.port });
     const commerce: CommerceDeps = { service, webhookSecret, fakeHosted: fakeHostedRoutes({ service, secret: webhookSecret, clock }) };
     // Each scenario run adds the fixture file its image URLs map to; earlier scenarios' mappings stay.
     const fetcher = new FixtureImageFetch(FIXTURE_IMAGE_DIR);
