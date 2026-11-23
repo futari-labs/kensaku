@@ -364,7 +364,7 @@ export const demoPriceLabel = (unitMinor: number, currency: Currency): string =>
 
 /** `localTime` is the viewer's local date and time, formatted by the caller. */
 export const observedPriceLabel = (observed: CartLine["observed"], localTime: string): string =>
-  `Last observed ${observed.amount} ${observed.currency} on ${observed.merchantHost}, ${localTime}`;
+  `Last observed ${formatMinor(toMinorUnits(observed.amount, observed.currency) ?? 0, observed.currency)} ${observed.currency} on ${observed.merchantHost}, ${localTime}`;
 
 export const demoTotalLabel = (totalMinor: number, currency: Currency): string =>
   `Demo total ${formatMinor(totalMinor, currency)} ${currency}`;
