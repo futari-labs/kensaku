@@ -1,0 +1,63 @@
+{
+  "name": "xm5-sg-cards",
+  "description": "SG market, 2 candidates (real V2 and V3 searches): SGD offers plus one USD offer; image candidates mapped to fixture images, the first of each failing rule I3.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC 2-candidate answer with key specifications and reasons (unrelated products, for card layout only) composed with the real A1 comparison and citations; not a live Exa response",
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": [
+          {
+            "name": "WH-1000XM5 Wireless Noise Cancelling Headphones",
+            "brand": "Sony",
+            "modelIdentifiers": [
+              "WH-1000XM5"
+            ],
+            "keySpecs": [
+              "Active noise cancelling with 8 microphones",
+              "Up to 30 hours of battery life",
+              "Bluetooth 5.2 with multipoint",
+              "Weighs about 250 g"
+            ],
+            "reason": "Strong noise cancelling and long battery life suit frequent travel [1][2]."
+          },
+          {
+            "name": "Bambino Plus",
+            "brand": "Breville",
+            "modelIdentifiers": [
+              "Bambino Plus"
+            ],
+            "keySpecs": [
+              "Automatic milk texturing",
+              "3 second heat up",
+              "54 mm portafilter",
+              "Compact 19 cm wide body"
+            ],
+            "reason": "A fast, compact espresso machine that steams milk automatically [3]."
+          }
+        ]
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/V2-search-sg-xm5.json"
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/V3-search-sg-bambino.json"
+      }
+    }
+  ],
+  "images": {
+    "https://hnsgsfp.imgix.net/4/images/detailed/108/Sony_WH-1000XM5_Wireless_Noise_Cancelling_Headphones_-_Midnight_Blue_(Main).jpg?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress": "fail-150x400.png",
+    "http://www.stereo.com.sg/cdn/shop/files/1_wh-1000xm5_standard_black-mid.jpg?v=1726745173": "ok-400x300.jpg",
+    "https://www.courts.com.sg/on/demandware.static/-/Sites-courts-m-catalog-sg/default/dwede2d62d/images/hires/media/catalog/product/i/p/ip183532_00.jpg": "ok-400x300.png",
+    "https://mobyshop.com.sg/media/catalog/product/cache/1/image/300x300/9df78eab33525d08d6e5fb8d27136e95/w/h/wh-1000xm5.jpg": "ok-400x300.webp",
+    "https://hnsgsfp.imgix.net/4/images/detailed/148/Slide1_og9c-yw.JPG?fit=fill&bg=0FFF&w=1536&h=900&auto=format,compress": "fail-1200x630.webp",
+    "https://breville.sg/wp-content/uploads/2025/02/BES500SST4JAN1.jpg": "ok-400x300.png"
+  }
+}

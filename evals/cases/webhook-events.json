@@ -1,0 +1,1245 @@
+{
+  "_label": "SYNTHETIC CASES authored for plan kensaku-v1-2 (EV-020). Event shapes follow the Stripe Event and Checkout Session objects documented for apiVersion 2026-10-28.endive (research/stripe-2026-11-23.md S28-S42). Not captured from a live Stripe delivery. Frozen at approval.",
+  "rules": {
+    "delivery": "The test posts each delivery to POST /api/stripe/webhook on the app built by createApp with a fake CheckoutPort and a temporary store. The body is JSON.stringify of the full event: { id, object: 'event', api_version: '2026-10-28.endive', created, livemode, type, data: { object } }, where created is the test clock's time in seconds. The Stripe-Signature header is made with stripe.webhooks.generateTestHeaderString({ payload, secret, timestamp }) using a secret the test builds at runtime (never a literal that looks like a real secret). signature: 'valid' signs with the right secret and the current time; 'wrong-secret' signs with another secret; 'stale' signs with a timestamp 400 seconds in the past (tolerance 300 s, S29); 'missing' sends no header; 'tampered' signs, then changes one byte of the body.",
+    "verification": "W-V1: signature invalid, stale, missing, or tampered -> 400 rejected-signature; no state change; the event id is not recorded as processed. W-V2: valid signature but body not a JSON event object -> 400 invalid-payload. W-V3: event.livemode === true or data.object.livemode === true -> 400 rejected-livemode, logged, no state change, not recorded.",
+    "dedupe": "W-D1: after verification and the live-mode check, an event id already processed -> 200 duplicate and nothing else happens. Processed ids persist in the commerce store across restarts (kept 30 days, at most 10000, oldest dropped first). Events rejected with 400 are never recorded.",
+    "matching": "W-M1: checkout.session.* events find the order by data.object.client_reference_id; payment_intent.payment_failed finds it by data.object.metadata.kensaku_order_id (missing metadata counts as no order). No order -> 200 unknown-order. W-M2: for every checkout.session.* type (completed, expired, async_payment_succeeded, async_payment_failed), data.object.id must equal the order's stripeSessionId, and for checkout.session.completed and async_payment_succeeded also amount_total must equal the order's totalMinor and currency its lowercase currency; otherwise 200 mismatch, no state change, logged. Every 200 outcome records the event id as processed.",
+    "transitions": "States: open, paid, cancelled, expired, payment_failed, failed. checkout.session.completed with payment_status 'paid' -> paid from any state except paid; if the prior state was not open, record anomaly 'completed-after-<prior state>'. completed with payment_status 'unpaid' -> stays open with awaitingAsyncPayment true. completed with 'no_payment_required' -> no-transition, logged. checkout.session.async_payment_succeeded -> paid (same rules as completed paid). checkout.session.async_payment_failed -> payment_failed only from open. checkout.session.expired -> expired only from open; no-transition otherwise. payment_intent.payment_failed -> declinedAttempts + 1 only while open; no-transition otherwise. Any other type -> 200 ignored-type. Outcome 'applied' means the order or its declinedAttempts changed.",
+    "cart": "When an order becomes paid, the cart is cleared if and only if the cart's version still equals the order's cartVersion (the cart was not edited after checkout started).",
+    "paidOnlyByWebhook": "No code path other than a verified checkout.session.completed (paid) or checkout.session.async_payment_succeeded event sets state paid (D-047). The cancel and checkout routes never set paid.",
+    "cancel": "POST /api/orders/:id/cancel: unknown id -> 404. paid -> 409 already-paid, no port call. cancelled, expired, payment_failed, failed -> 200 unchanged, no port call. open -> port.expireSession(sessionId): success -> cancelled (200). On an expire error the service calls port.retrieveSession(sessionId): status 'expired' -> cancelled (200; the owner's intent, not a paid write); status 'complete' -> 409 already-completed, state unchanged (the webhook will decide); status 'open' or a retrieve error -> 502 cancel-failed, state unchanged.",
+    "checkout": "POST /api/checkout: checkout not configured -> 503 checkout-not-configured (checked first); empty cart -> 400 cart-empty; both without a port call. Every other open order is superseded first, oldest first (after X15 there can be more than one): port.expireSession -> on success the prior order becomes expired with reason superseded; on an expire error, port.retrieveSession: 'expired' -> prior order expired, reason superseded; 'complete' -> prior order left open (the webhook will decide) and the new checkout proceeds; 'open' or retrieve error -> 502 checkout-failed, no new order, no create call. Then a new order (state open, cartVersion = current cart version, stripeSessionId from the port) is created. Port create error, a session with livemode true, or (live port only) a url that does not start with https://checkout.stripe.com/ -> 502 checkout-failed, the order is stored as failed, no url is returned, the cart is unchanged.",
+    "serialization": "Every commerce mutation (cart operations, POST /api/checkout, POST /api/orders/:id/cancel, and the webhook handler after signature verification) runs on one in-process serialized queue, including its awaited CheckoutPort calls (port timeout 10 s). A webhook that arrives while a cancel or checkout is calling Stripe is applied after it. Two concurrent checkouts run one after the other.",
+    "expiredDisplay": "An open order whose expiresAt has passed is still open in the store (only a verified event, cancel, or supersede changes it) and the UI labels it 'Checkout link expired'."
+  },
+  "baseOrder": {
+    "orderId": "ord_A",
+    "stripeSessionId": "cs_test_A",
+    "currency": "USD",
+    "totalMinor": 42799,
+    "state": "open",
+    "cartVersion": 3,
+    "declinedAttempts": 0
+  },
+  "baseCartVersion": 3,
+  "templates": {
+    "completed": {
+      "type": "checkout.session.completed",
+      "object": {
+        "id": "cs_test_A",
+        "object": "checkout.session",
+        "client_reference_id": "ord_A",
+        "status": "complete",
+        "payment_status": "paid",
+        "amount_total": 42799,
+        "currency": "usd",
+        "livemode": false,
+        "metadata": {
+          "kensaku_order_id": "ord_A",
+          "kensaku_simulated": "true"
+        }
+      }
+    },
+    "expired": {
+      "type": "checkout.session.expired",
+      "object": {
+        "id": "cs_test_A",
+        "object": "checkout.session",
+        "client_reference_id": "ord_A",
+        "status": "expired",
+        "payment_status": "unpaid",
+        "amount_total": 42799,
+        "currency": "usd",
+        "livemode": false,
+        "metadata": {
+          "kensaku_order_id": "ord_A",
+          "kensaku_simulated": "true"
+        }
+      }
+    },
+    "asyncSucceeded": {
+      "type": "checkout.session.async_payment_succeeded",
+      "object": {
+        "id": "cs_test_A",
+        "object": "checkout.session",
+        "client_reference_id": "ord_A",
+        "status": "complete",
+        "payment_status": "paid",
+        "amount_total": 42799,
+        "currency": "usd",
+        "livemode": false,
+        "metadata": {
+          "kensaku_order_id": "ord_A",
+          "kensaku_simulated": "true"
+        }
+      }
+    },
+    "asyncFailed": {
+      "type": "checkout.session.async_payment_failed",
+      "object": {
+        "id": "cs_test_A",
+        "object": "checkout.session",
+        "client_reference_id": "ord_A",
+        "status": "complete",
+        "payment_status": "unpaid",
+        "amount_total": 42799,
+        "currency": "usd",
+        "livemode": false,
+        "metadata": {
+          "kensaku_order_id": "ord_A",
+          "kensaku_simulated": "true"
+        }
+      }
+    },
+    "piFailed": {
+      "type": "payment_intent.payment_failed",
+      "object": {
+        "id": "pi_test_A",
+        "object": "payment_intent",
+        "amount": 42799,
+        "currency": "usd",
+        "livemode": false,
+        "metadata": {
+          "kensaku_order_id": "ord_A",
+          "kensaku_simulated": "true"
+        },
+        "last_payment_error": {
+          "code": "card_declined",
+          "decline_code": "generic_decline"
+        }
+      }
+    },
+    "other": {
+      "type": "customer.created",
+      "object": {
+        "id": "cus_test_A",
+        "object": "customer",
+        "livemode": false
+      }
+    }
+  },
+  "webhookCases": [
+    {
+      "id": "W01",
+      "rationale": "Paid by a verified completed event; cart cleared.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "cartCleared": true,
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W02",
+      "rationale": "Cart edited after checkout started: paid, cart kept.",
+      "cartVersionAtDelivery": 4,
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "cartCleared": false,
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W03",
+      "rationale": "Duplicate delivery of the same event (S32).",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "duplicate"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "cartCleared": true,
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W04",
+      "rationale": "Out of order: expired after completed does not undo paid (S31).",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_2",
+          "template": "expired",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "no-transition"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W05",
+      "rationale": "Session expired while open.",
+      "deliveries": [
+        {
+          "event": "evt_2",
+          "template": "expired",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "expired",
+        "cartCleared": false,
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W06",
+      "rationale": "A verified payment wins even after an expired event; the anomaly is recorded.",
+      "deliveries": [
+        {
+          "event": "evt_2",
+          "template": "expired",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "anomaly": "completed-after-expired",
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W07",
+      "rationale": "Wrong secret is rejected and not recorded, so a later valid delivery of the same id still applies.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "wrong-secret",
+          "expect": {
+            "status": 400,
+            "outcome": "rejected-signature"
+          }
+        },
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W08",
+      "rationale": "Timestamp outside tolerance.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "stale",
+          "expect": {
+            "status": 400,
+            "outcome": "rejected-signature"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W09",
+      "rationale": "No signature header.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "missing",
+          "expect": {
+            "status": 400,
+            "outcome": "rejected-signature"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W10",
+      "rationale": "Body changed after signing.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "tampered",
+          "expect": {
+            "status": 400,
+            "outcome": "rejected-signature"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W11",
+      "rationale": "Live-mode event is refused (D-050).",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "livemode": true
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 400,
+            "outcome": "rejected-livemode"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W12",
+      "rationale": "Live-mode object inside a test-mode event is refused.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.livemode": true
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 400,
+            "outcome": "rejected-livemode"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W13",
+      "rationale": "Unknown order reference.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.client_reference_id": "ord_UNKNOWN"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "unknown-order"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W14",
+      "rationale": "Session id does not match the order's session.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.id": "cs_test_OTHER"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "mismatch"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W15",
+      "rationale": "Amount differs from the order total.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.amount_total": 100
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "mismatch"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W16",
+      "rationale": "Currency differs from the order currency.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.currency": "sgd"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "mismatch"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W17",
+      "rationale": "Completed but unpaid, then the async payment succeeds.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.payment_status": "unpaid"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_3",
+          "template": "asyncSucceeded",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "awaitingAsyncPayment": false,
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W18",
+      "rationale": "Completed but unpaid, then the async payment fails.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.payment_status": "unpaid"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_4",
+          "template": "asyncFailed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "payment_failed",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W19",
+      "rationale": "Declined attempts are counted while open; a duplicate is not counted twice.",
+      "deliveries": [
+        {
+          "event": "evt_5",
+          "template": "piFailed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_6",
+          "template": "piFailed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_5",
+          "template": "piFailed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "duplicate"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "declinedAttempts": 2,
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W20",
+      "rationale": "A decline after cancellation changes nothing.",
+      "startState": "cancelled",
+      "deliveries": [
+        {
+          "event": "evt_5",
+          "template": "piFailed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "no-transition"
+          }
+        }
+      ],
+      "final": {
+        "state": "cancelled",
+        "declinedAttempts": 0,
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W21",
+      "rationale": "Unhandled event types are acknowledged and ignored.",
+      "deliveries": [
+        {
+          "event": "evt_7",
+          "template": "other",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "ignored-type"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W22",
+      "rationale": "Expired after the owner cancelled: stays cancelled.",
+      "startState": "cancelled",
+      "deliveries": [
+        {
+          "event": "evt_2",
+          "template": "expired",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "no-transition"
+          }
+        }
+      ],
+      "final": {
+        "state": "cancelled",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W23",
+      "rationale": "no_payment_required is not expected for these orders.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.payment_status": "no_payment_required"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "no-transition"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W24",
+      "rationale": "Correctly signed body that is not an event object.",
+      "deliveries": [
+        {
+          "rawBody": "[1,2,3]",
+          "signature": "valid",
+          "expect": {
+            "status": 400,
+            "outcome": "invalid-payload"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W25",
+      "rationale": "Session-id check applies to expired events too.",
+      "deliveries": [
+        {
+          "event": "evt_2",
+          "template": "expired",
+          "override": {
+            "object.id": "cs_test_OTHER"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "mismatch"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W26",
+      "rationale": "Amount check applies to async_payment_succeeded.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "object.payment_status": "unpaid"
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_3",
+          "template": "asyncSucceeded",
+          "override": {
+            "object.amount_total": 1
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "mismatch"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "awaitingAsyncPayment": true,
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W27",
+      "rationale": "Two distinct paid events for one session (S32): one paid transition.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "event": "evt_8",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "no-transition"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W28",
+      "rationale": "A payment_failed without Kensaku metadata matches no order.",
+      "deliveries": [
+        {
+          "event": "evt_5",
+          "template": "piFailed",
+          "override": {
+            "object.metadata": {}
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "unknown-order"
+          }
+        }
+      ],
+      "final": {
+        "state": "open",
+        "declinedAttempts": 0,
+        "paidTransitions": 0
+      }
+    },
+    {
+      "id": "W29",
+      "rationale": "A live-mode rejection is not recorded, so the same id later in test mode is applied.",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "override": {
+            "livemode": true
+          },
+          "signature": "valid",
+          "expect": {
+            "status": 400,
+            "outcome": "rejected-livemode"
+          }
+        },
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "paidTransitions": 1
+      }
+    },
+    {
+      "id": "W30",
+      "rationale": "Processed ids survive a server restart (the test recreates the app on the same store between deliveries).",
+      "deliveries": [
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "applied"
+          }
+        },
+        {
+          "restart": true
+        },
+        {
+          "event": "evt_1",
+          "template": "completed",
+          "signature": "valid",
+          "expect": {
+            "status": 200,
+            "outcome": "duplicate"
+          }
+        }
+      ],
+      "final": {
+        "state": "paid",
+        "paidTransitions": 1
+      }
+    }
+  ],
+  "routeCases": [
+    {
+      "id": "X01",
+      "rationale": "Owner cancels an open order; the later expired event is a no-op.",
+      "steps": [
+        {
+          "call": "cancel",
+          "port": {
+            "expireSession": "ok"
+          },
+          "expect": {
+            "status": 200,
+            "state": "cancelled",
+            "expireCalls": 1
+          }
+        },
+        {
+          "deliver": {
+            "event": "evt_2",
+            "template": "expired",
+            "signature": "valid"
+          },
+          "expect": {
+            "status": 200,
+            "outcome": "no-transition",
+            "state": "cancelled"
+          }
+        }
+      ]
+    },
+    {
+      "id": "X02",
+      "rationale": "Cancel races a completed payment: expire fails, the webhook then marks paid.",
+      "steps": [
+        {
+          "call": "cancel",
+          "port": {
+            "expireSession": "error",
+            "retrieveSession": "complete"
+          },
+          "expect": {
+            "status": 409,
+            "code": "already-completed",
+            "state": "open"
+          }
+        },
+        {
+          "deliver": {
+            "event": "evt_1",
+            "template": "completed",
+            "signature": "valid"
+          },
+          "expect": {
+            "status": 200,
+            "outcome": "applied",
+            "state": "paid"
+          }
+        }
+      ]
+    },
+    {
+      "id": "X03",
+      "rationale": "Cancel is idempotent.",
+      "startState": "cancelled",
+      "steps": [
+        {
+          "call": "cancel",
+          "expect": {
+            "status": 200,
+            "state": "cancelled",
+            "expireCalls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "X04",
+      "rationale": "A paid order cannot be cancelled.",
+      "startState": "paid",
+      "steps": [
+        {
+          "call": "cancel",
+          "expect": {
+            "status": 409,
+            "code": "already-paid",
+            "state": "paid",
+            "expireCalls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "X05",
+      "rationale": "Unknown order id.",
+      "steps": [
+        {
+          "call": "cancel",
+          "orderId": "ord_UNKNOWN",
+          "expect": {
+            "status": 404
+          }
+        }
+      ]
+    },
+    {
+      "id": "X06",
+      "rationale": "A new checkout supersedes the open order.",
+      "cart": "nonEmpty",
+      "steps": [
+        {
+          "call": "checkout",
+          "port": {
+            "expireSession": "ok",
+            "createSession": "ok"
+          },
+          "expect": {
+            "status": 200,
+            "priorOrderState": "expired",
+            "priorOrderReason": "superseded",
+            "newOrderState": "open",
+            "expireCalls": 1,
+            "createCalls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "X07",
+      "rationale": "Empty cart.",
+      "noBaseOrder": true,
+      "cart": "empty",
+      "steps": [
+        {
+          "call": "checkout",
+          "expect": {
+            "status": 400,
+            "code": "cart-empty",
+            "createCalls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "X08",
+      "rationale": "Stripe not configured.",
+      "noBaseOrder": true,
+      "cart": "nonEmpty",
+      "checkoutConfigured": false,
+      "steps": [
+        {
+          "call": "checkout",
+          "expect": {
+            "status": 503,
+            "code": "checkout-not-configured",
+            "createCalls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "X09",
+      "rationale": "The port returns a live-mode session.",
+      "noBaseOrder": true,
+      "cart": "nonEmpty",
+      "steps": [
+        {
+          "call": "checkout",
+          "port": {
+            "createSession": "livemode"
+          },
+          "expect": {
+            "status": 502,
+            "newOrderState": "failed",
+            "urlReturned": false,
+            "cartUnchanged": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "X10",
+      "rationale": "The port fails.",
+      "noBaseOrder": true,
+      "cart": "nonEmpty",
+      "steps": [
+        {
+          "call": "checkout",
+          "port": {
+            "createSession": "error"
+          },
+          "expect": {
+            "status": 502,
+            "newOrderState": "failed",
+            "urlReturned": false,
+            "cartUnchanged": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "X11",
+      "rationale": "The live port refuses a checkout url that is not Stripe-hosted.",
+      "noBaseOrder": true,
+      "cart": "nonEmpty",
+      "livePortWithStubbedSdk": true,
+      "steps": [
+        {
+          "call": "checkout",
+          "port": {
+            "createSession": "url:https://evil.example.com/pay"
+          },
+          "expect": {
+            "status": 502,
+            "newOrderState": "failed",
+            "urlReturned": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "X12",
+      "rationale": "Expire fails and the session is already expired at Stripe (timed out while no webhook arrived): cancelled.",
+      "steps": [
+        {
+          "call": "cancel",
+          "port": {
+            "expireSession": "error",
+            "retrieveSession": "expired"
+          },
+          "expect": {
+            "status": 200,
+            "state": "cancelled",
+            "expireCalls": 1,
+            "retrieveCalls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "X13",
+      "rationale": "Expire and retrieve both fail: 502, unchanged.",
+      "steps": [
+        {
+          "call": "cancel",
+          "port": {
+            "expireSession": "error",
+            "retrieveSession": "error"
+          },
+          "expect": {
+            "status": 502,
+            "code": "cancel-failed",
+            "state": "open"
+          }
+        }
+      ]
+    },
+    {
+      "id": "X14",
+      "rationale": "Supersede when the prior session already expired at Stripe.",
+      "cart": "nonEmpty",
+      "steps": [
+        {
+          "call": "checkout",
+          "port": {
+            "expireSession": "error",
+            "retrieveSession": "expired",
+            "createSession": "ok"
+          },
+          "expect": {
+            "status": 200,
+            "priorOrderState": "expired",
+            "priorOrderReason": "superseded",
+            "newOrderState": "open",
+            "createCalls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "X15",
+      "rationale": "Supersede when the prior session completed: prior stays open for the webhook, new checkout proceeds.",
+      "cart": "nonEmpty",
+      "steps": [
+        {
+          "call": "checkout",
+          "port": {
+            "expireSession": "error",
+            "retrieveSession": "complete",
+            "createSession": "ok"
+          },
+          "expect": {
+            "status": 200,
+            "priorOrderState": "open",
+            "newOrderState": "open",
+            "createCalls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "X16",
+      "rationale": "Supersede cannot determine the prior session: no new checkout.",
+      "cart": "nonEmpty",
+      "steps": [
+        {
+          "call": "checkout",
+          "port": {
+            "expireSession": "error",
+            "retrieveSession": "error"
+          },
+          "expect": {
+            "status": 502,
+            "code": "checkout-failed",
+            "priorOrderState": "open",
+            "createCalls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "X17",
+      "rationale": "Not configured is checked before an empty cart.",
+      "noBaseOrder": true,
+      "cart": "empty",
+      "checkoutConfigured": false,
+      "steps": [
+        {
+          "call": "checkout",
+          "expect": {
+            "status": 503,
+            "code": "checkout-not-configured",
+            "createCalls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "X18",
+      "rationale": "Two checkouts started concurrently run one after the other: the first is superseded by the second.",
+      "noBaseOrder": true,
+      "cart": "nonEmpty",
+      "steps": [
+        {
+          "call": "checkout-concurrent-pair",
+          "port": {
+            "expireSession": "ok",
+            "createSession": "ok"
+          },
+          "expect": {
+            "statuses": [
+              200,
+              200
+            ],
+            "firstOrderState": "expired",
+            "firstOrderReason": "superseded",
+            "secondOrderState": "open",
+            "createCalls": 2,
+            "expireCalls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "X19",
+      "rationale": "A webhook delivered while a cancel is waiting on Stripe is applied after the cancel.",
+      "steps": [
+        {
+          "call": "cancel-with-concurrent-delivery",
+          "port": {
+            "expireSession": "ok-delayed"
+          },
+          "deliver": {
+            "event": "evt_2",
+            "template": "expired",
+            "signature": "valid"
+          },
+          "expect": {
+            "cancelStatus": 200,
+            "deliveryStatus": 200,
+            "deliveryOutcome": "no-transition",
+            "state": "cancelled"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -13,7 +13,10 @@ spikes/exa/.request-count
 
 .DS_Store
 
-# Local cache, test output
+# Local cache, simulated commerce state, test output
 .cache/
+.data/
 test-results/
 playwright-report/
+spikes/exa-v1-1/.request-count
+spikes/exa-v1-1/out/

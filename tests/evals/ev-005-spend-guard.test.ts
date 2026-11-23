@@ -1,13 +1,16 @@
 // EV-005 Spend guard and cache. Unit level (JM-003) lives here; JM-004 adds the run-level describe.
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RequestBudget } from "../../src/exa/budget";
+import { FixtureExaPort } from "../../src/exa/fixture-port";
+import { createApp } from "../../src/server/app";
 import { monthOf } from "../../src/exa/ledger";
 import { ExaSdkPort } from "../../src/exa/sdk-port";
 import type { Candidate } from "../../src/core/types";
 import { fakeClient, fakeClock, frozen, HttpError, storage } from "../exa/helpers";
 import { harness } from "../server/helpers";
+import { runtimeApp } from "../server/runtime-app";
 import { ofType, readChunks } from "../server/sse";
 import type { Chunk } from "../server/sse";
 
@@ -229,5 +232,53 @@ describe("EV-005 run level: spend guard through the app", () => {
     abort.abort();
     await first.text().catch(() => "");
     expect((await h.chat("xm5-us")).status).toBe(200);
+  });
+});
+
+describe("EV-005 images: serving them spends nothing", () => {
+  // runtimeApp silences console.log with a spy.
+  afterEach(() => vi.restoreAllMocks());
+
+  it("loading every image of a run leaves the run's request count and the ledger unchanged, and the proxy never calls Exa", async () => {
+    // The fixture runtime keeps no ledger, so give the app one that records, over the runtime's own image proxy.
+    const runtime = runtimeApp();
+    const clock = fakeClock(START);
+    const store = storage(clock);
+    const portCalls = {} as { answer: ReturnType<typeof vi.spyOn>; search: ReturnType<typeof vi.spyOn> };
+    const app = createApp({
+      ...runtime.deps,
+      clock,
+      ledger: store.ledger,
+      // The runtime's portFor also teaches its image proxy this scenario's image files.
+      portFor: (scenario) => {
+        runtime.deps.portFor(scenario);
+        const port = FixtureExaPort.load(scenario ?? "xm5-us", { ledger: store.ledger, clock });
+        portCalls.answer = vi.spyOn(port, "answerCandidates");
+        portCalls.search = vi.spyOn(port, "searchOffers");
+        return port;
+      },
+    });
+    const host = { host: "127.0.0.1:8787" };
+    const res = await app.request("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...host },
+      body: JSON.stringify({ messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: "q" }] }], market: "SG", fixtureScenario: "xm5-sg-cards" }),
+    });
+    const chunks = await readChunks(res);
+    const usage = usageOf(chunks)!;
+    const ids = ofType(chunks, "data-products")[0]!.data.flatMap((p) => p.imageCandidates!.map((c) => c.id));
+    expect(ids).toHaveLength(6);
+    expect(usage.exaRequests).toBe(3);
+
+    const before = store.usage();
+    expect(before.requests).toBe(3);
+    const portCallsBefore = portCalls.answer.mock.calls.length + portCalls.search.mock.calls.length;
+    expect(portCallsBefore).toBe(3);
+    const loaded = await Promise.all(ids.map((id) => app.request(`/api/image/${id}`, { headers: { ...host, "sec-fetch-site": "same-origin" } })));
+    expect(loaded.filter((r) => r.status === 200)).toHaveLength(4);
+
+    expect(store.usage()).toEqual(before);
+    expect(portCalls.answer.mock.calls.length + portCalls.search.mock.calls.length).toBe(portCallsBefore);
+    expect(await (await app.request("/api/usage", { headers: host })).json()).toMatchObject({ requests: 3, costDollars: before.costDollars });
   });
 });

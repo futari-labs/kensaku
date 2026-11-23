@@ -1,83 +1,349 @@
 # Evaluation Plan
 
-Status: proposed for approval with plan `kensaku-mvp-v1`.
+Status: proposed for approval with plan `kensaku-v1-2`. EV-001 to EV-007, EV-009 to EV-015, and EV-017 carry over from `kensaku-v1-1` with their descriptions and pass rules unchanged (v1.2 additions are marked "(v1.2)"). EV-016 is retired like EV-008 before it: its three committed v1.1 runs and audits stay in `.futari/evidence/live/` as history and it is no longer an evaluation of this plan (D-044). EV-018 to EV-023 are new. Earlier text in this file describes the v1.1 evaluations as approved.
 
 ## Traceability
 
 | Eval | Requirements | Cases / fixture | Command | Pass rule |
 | --- | --- | --- | --- | --- |
-| EV-001 Merchant authenticity | REQ-003 | `evals/cases/offer-classification.json` (54 cases: 40 live, 14 synthetic) | `pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts` | Every case's outcome and category equal the label; for offers, currency, amount, canonical URL (when labeled), and availability (when labeled) equal the label. 54/54, and the test asserts that the number of evaluated cases equals the file's case count. |
-| EV-002 Product relevance | REQ-003 | Same file: identity cases L21-L25, L35, Y06, Y07, plus every live case whose label is not `irrelevant-product` (must pass identity) | `pnpm vitest run tests/evals/ev-002-product-relevance.test.ts` | 100% of cases: `irrelevant-product` exactly when labeled. |
-| EV-003 Currency and ranking | REQ-004 | `evals/cases/ranking-currency.json` (4 cases) plus property tests | `pnpm vitest run tests/evals/ev-003-ranking-currency.test.ts` | All 4 cases produce exactly the expected groups and order. A property test (1,000 generated offer lists, fixed seed) shows that no group mixes currencies, output is a permutation of the de-duplicated input, and results do not depend on input order except where the rule's "first received" applies. |
-| EV-004 Citations | REQ-002 | `evals/cases/citations.json` (2 live, 4 synthetic) and `evals/cases/citations-spaced.json` (1 live, 1 synthetic; CR-001, D-026) plus pipeline fixture runs | `pnpm vitest run tests/evals/ev-004-citations.test.ts` | All 6 + 2 cases match (the spaced cases are wired into the test by JM-006). In fixture pipeline runs every rendered source URL is in that run's citations, and every offer URL is in that run's search result URLs. |
-| EV-005 Spend guard and cache | REQ-006 | `FixtureExaPort` scenarios with call counting | `pnpm vitest run tests/evals/ev-005-spend-guard.test.ts` | Unit level (JM-003): `RequestBudget` refuses a sixth token; cache hits consume no token and keep `retrievedAt`; monthly limits block before a call; a 402 or credit error sets `exhaustedAt` and blocks later calls. Run level (JM-004): a run never exceeds 5 Exa calls under any combination of 3 candidates, the retry, and errors; a normal question uses ≤ 3; a repeated question within the TTL uses 0 and shows the original `retrievedAt`; a second concurrent `POST /api/chat` gets 409. All assertions pass. |
-| EV-006 Streaming and failure states | REQ-001, REQ-005 | Hono app with `FixtureExaPort` scenarios that succeed, return no candidates, return no offers, and fail with 401, 402, 429, 500, and timeout; plus a client abort | `pnpm vitest run tests/evals/ev-006-stream-failures.test.ts` | For each non-cancel scenario, the stream contains progress parts in stage order, exactly one terminal state, the expected `data-error.kind`, and `partial` set correctly. For the abort: the in-flight Exa call is aborted, no parts follow the abort, and a `cancelled` log line is written (the client's cancelled state is checked in EV-007). After every scenario, including the abort, the run lock is released and the next request succeeds. No fixture data appears when `KENSAKU_EXA_MODE=live` and Exa fails. All pass. |
-| EV-007 Frontend quality | REQ-001, REQ-002, REQ-003, REQ-007, REQ-009, REQ-010 | Playwright against `pnpm start` in fixture mode | `pnpm test:e2e` and `node scripts/check-components.mjs` | See "Frontend quality" below. All automated checks pass; owner visual review recorded in evidence. |
-| EV-008 Live acceptance | REQ-008 | `evals/cases/live-acceptance.json` (6 queries) | `pnpm live:acceptance` | See "CI and live checks". |
-| EV-009 Local and key safety | REQ-007 | Server start tests; a build made by the test itself; logs, cache, fixtures | `pnpm vitest run tests/evals/ev-009-key-safety.test.ts` | The running server's listening address is 127.0.0.1; requests with a foreign `Host` or `Origin` get 403; the test runs a production build into a temporary directory with a test key in the environment and asserts the key string is absent from that build, from server logs of a fixture run, `.cache/`, `evals/fixtures/`, and API responses. (Browser storage is checked in EV-007.) |
+| EV-001 Merchant authenticity | REQ-003, REQ-016 | `evals/cases/offer-classification.json` (54, unchanged) plus the `supersedes` block of `offer-classification-v1-1.json` (L29, Y03) | `pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts && node evals/harness.mjs --strict` | MVP rule verbatim (54/54 outcome, category, and offer fields; count asserted). (v1.1) L29 and Y03 are compared with their superseding labels, the test asserts that exactly those two were replaced, and harness `--strict` exits 0. |
+| EV-002 Product relevance | REQ-003 | MVP cases | `pnpm vitest run tests/evals/ev-002-product-relevance.test.ts` | 100% of cases are `irrelevant-product` exactly when labeled. |
+| EV-003 Currency and ranking | REQ-004 | `ranking-currency.json` plus the property test | `pnpm vitest run tests/evals/ev-003-ranking-currency.test.ts` | All 4 cases match exactly; the seeded 1,000-list property test finds no mixed-currency group and no lost or duplicated offers. |
+| EV-004 Citations | REQ-002 | `citations.json` (6) and `citations-spaced.json` (2) plus fixture pipeline runs | `pnpm vitest run tests/evals/ev-004-citations.test.ts` | All 6 + 2 cases match; the test asserts each file's evaluated count, and harness `--strict` exits 0. In fixture pipeline runs every rendered source URL is a citation of the run and every offer URL is a search result of the run. |
+| EV-005 Spend guard and cache | REQ-006 | `FixtureExaPort` scenarios with call counting | `pnpm vitest run tests/evals/ev-005-spend-guard.test.ts` | MVP rule verbatim, both levels: unit (sixth token refused, cache hits keep `retrievedAt`, limits block before calling, 402 blocks later calls) and run (≤ 5 calls in every scenario, ≤ 3 for a normal question, 0 for a cached repeat, 409 for a concurrent run). (v1.1) A fixture run that loads every product image leaves `RequestBudget.used` and the ledger identical to the same run without image loads. |
+| EV-006 Streaming and failure states | REQ-001, REQ-005 | Hono app with scripted scenarios | `pnpm vitest run tests/evals/ev-006-stream-failures.test.ts` | MVP rule verbatim: for success, no candidates, no offers, 401, 402, 429, 500, and timeout, the stream has ordered progress parts, exactly one terminal state, the expected `data-error` kind and `partial`, and no fixture data in live mode. A client abort aborts the Exa call, emits no further parts, and logs `cancelled`. The lock is released after every scenario. |
+| EV-007 Frontend quality | REQ-001, REQ-002, REQ-003, REQ-007, REQ-009, REQ-010 | Playwright, fixture mode | `pnpm test:e2e && node scripts/check-components.mjs` | "Frontend quality (EV-007, amended)" below; owner visual review of v1.1 recorded in `.futari/evidence/JM-105.md`. |
+| EV-009 Local and key safety | REQ-007 | Server start tests, a self-made build, logs, caches, fixtures | `pnpm vitest run tests/evals/ev-009-key-safety.test.ts` | MVP rule verbatim (127.0.0.1 only; foreign Host or Origin get 403; key absent from the build, logs, `.cache/`, `evals/fixtures/`, and responses). (v1.1) Key absent from `.cache/images/` after a run that loads images; `GET /` carries exactly the ARCHITECTURE CSP; `/api/image/:id` with a foreign Host gets 403. |
+| EV-010 Theme | REQ-011, REQ-010 | Playwright, fixture mode | `pnpm exec playwright test tests/e2e/ev-010-theme.spec.ts` | "Theme (EV-010)" below. |
+| EV-011 Non-merchant pages and currency symbols | REQ-016, REQ-003 | `evals/cases/offer-classification-v1-1.json` (79: 41 live, 38 synthetic) | `pnpm vitest run tests/evals/ev-011-page-classification.test.ts` | 79/79 outcome and category; offers also currency and amount; asserts the case count. |
+| EV-012 Product card content and leaked structure | REQ-012, REQ-002 | `evals/cases/product-content.json` (6 answers, 17 candidates; 6 comparison cases) | `pnpm vitest run tests/evals/ev-012-product-content.test.ts` | Every candidate's `keySpecs` and reason (cut, resolved, `truncated`, or `null`) and every comparison case equal the labels; asserts all counts. |
+| EV-013 Product image selection | REQ-013 | `evals/cases/image-selection.json` (80 URL, 10 selection, 58 bytes cases) | `pnpm vitest run tests/evals/ev-013-image-selection.test.ts` | Every case equals its label. Selection cases compare exact ordered `{imageUrl, pageUrl}` lists, using `classifyHit` on the real fixtures or on the inline synthetic hits. Asserts each section's count. |
+| EV-014 Image proxy safety and cache | REQ-014, REQ-007 | Injected resolver and upstream, a local connector test, generated image bytes | `pnpm vitest run tests/evals/ev-014-image-proxy.test.ts` | "Image proxy (EV-014)" below. |
+| EV-015 Image-first product cards | REQ-012, REQ-013, REQ-015, REQ-009, REQ-010, REQ-002 | Playwright, fixture mode, scenarios with fixture images, the frozen MVP history | `pnpm exec playwright test tests/e2e/ev-015-product-cards.spec.ts` | "Product cards (EV-015)" below. |
+| EV-016 Live acceptance v1.1 (historical) | — | `evals/cases/live-acceptance-v1-1.json` (8 queries) | not run in v1.2 | Passed in v1.1 (run 3); kept as history (D-044). |
+| EV-018 Cart and demo price rules (v1.2) | REQ-017, REQ-018 | `evals/cases/commerce-rules.json` (4 id, 11 minor-unit, 34 cart, 6 version, 2 snapshot cases) | `pnpm vitest run tests/evals/ev-018-commerce-rules.test.ts` | "Commerce rules (EV-018)" below. |
+| EV-019 Checkout session request (v1.2) | REQ-019, REQ-018, REQ-022 | `evals/cases/checkout-session-request.json` (4) | `pnpm vitest run tests/evals/ev-019-checkout-request.test.ts` | Each case's `{ params, options }` deep-equals `buildCheckoutSessionRequest` output; `StripeCheckoutPort` passes exactly that to a stubbed `stripe.checkout.sessions.create`; asserts the count. |
+| EV-020 Webhooks and order state (v1.2) | REQ-020, REQ-021 | `evals/cases/webhook-events.json` (30 webhook, 19 route cases) | `pnpm vitest run tests/evals/ev-020-webhooks.test.ts` | "Webhooks (EV-020)" below. |
+| EV-021 Sandbox-only Stripe keys (v1.2) | REQ-023, REQ-007 | Config tests, captured logs and responses, `.data/`, `dist/`, tracked files | `pnpm build && pnpm vitest run tests/evals/ev-021-stripe-keys.test.ts` | "Stripe keys (EV-021)" below. |
+| EV-022 Simulated commerce UI (v1.2) | REQ-024, REQ-017, REQ-018, REQ-021, REQ-022, REQ-009, REQ-010, REQ-007 | Playwright, fixture mode, `FakeCheckoutPort` and the test-only hosted page | `pnpm exec playwright test tests/e2e/ev-022-commerce.spec.ts && node scripts/check-components.mjs` | "Commerce UI (EV-022)" below. |
+| EV-023 Live sandbox acceptance (v1.2) | REQ-008, REQ-019, REQ-020, REQ-021, REQ-022 | `evals/cases/live-acceptance-v1-2.json` (3 queries, 8 scenarios, audit H1-H5) | `pnpm live:acceptance:v1-2` | "Live sandbox acceptance (EV-023)" below. |
+| EV-017 Request contract | REQ-015, REQ-012 | Frozen requests in V9, V2, V3 | `pnpm vitest run tests/evals/ev-017-request-contract.test.ts` | The `/answer` `outputSchema` deep-equals V9's frozen `request.body.outputSchema`. The offer requests for V2's and V3's candidates equal their frozen `query` and `userLocation`, with the MVP contents unchanged. A US and a JP candidate get `"… price United States buy"` and `"… price Japan buy"`. The cache key differs from the MVP query's key. |
 
 ## Fixtures and provenance
 
-- `evals/fixtures/exa-live/*.json`: 12 real Exa responses captured 2026-11-21 by `spikes/exa/exa-spike.mjs` (stage 1: S1-S7, A1; stage 2: A2, S8, S9, A3). Each file has a `_label` saying it is a live response, plus the exact request, timestamps, and HTTP status. No credentials (checked by script after each run, and by the harness).
-- Gold labels in `evals/cases/*.json` are **assistant-proposed** from the rules in `ARCHITECTURE.md`, with a rationale per case. They become gold only through the owner's plan approval; the approval packet lists every non-obvious label. They are labels for Kensaku's rules applied to Exa's extracted data, not independent truth about the live pages.
-- Synthetic cases (Y01-Y14, R01-R04, C03-C06) are marked synthetic in their files. Y11-Y14 were added after the independent review (missing merchant, three-decimal price, rule precedence, a second merchant-mismatch case).
-- Fixture scenarios for pipeline, stream, and e2e tests live in `tests/fixtures/scenarios/` (see ARCHITECTURE "Fixture scenarios"). Synthetic responses in them are labeled synthetic; they are test inputs, not gold labels.
-- The live query set (Q1-Q6) is assistant-chosen to cover all three markets, specific and open-ended questions; owner approves it with the plan.
-- Privacy: fixtures contain only public web data and the spike's own queries.
+- MVP fixtures (`evals/fixtures/exa-live/S1`-`S9`, `A1`-`A4`) are unchanged.
+- `V1`-`V10`: real Exa responses from the v1.1 pre-approval spike (D-028, 10 of 10 requests), labeled `LIVE EXA RESPONSE`, with the exact request, timestamps, and status. `R1-Q4-answer-bambino`, `R1-Q5-offers-xm5`, and `R1-Q6-offers-paperwhite` are byte-for-byte copies of three EV-008 run 1 responses; provenance fields name the log and indexes. No credentials: the harness scans every file in the fixture directories, and EV-009 checks too.
+- `evals/fixtures/history/mvp-history-xm5-sg.json`: a real `kensaku.history.v1` value stored by the accepted MVP build. It was captured by driving the app in fixture mode (scenario `xm5-sg`, market SG) with a `src` tree identical to `a3a2894`, as asserted during capture. It is loaded into `localStorage` unchanged for REQ-009 and EV-015 check 8.
+- Gold labels in the four v1.1 case files are **assistant-proposed**. They were computed by reference implementations of the written rules, which are independent of `src/`, and checked by hand. They become gold only through the owner's plan approval.
+  - The independent reviewer's own implementation agreed with every label.
+  - For classification, both implementations reproduce all 54 MVP labels under the MVP rules. Under the v1.1 rules only L29 and Y03 change, and both are recorded as supersessions.
+  - Mutation check with the reviewer's scripts: every single-element mutation of the v1.1 classification rules (39) and every I1 and I3 mutation in the image script makes at least one frozen case fail.
+- Non-obvious labels the owner approves with the plan:
+  - N06: the Challenger collection page becomes evidence, not an offer.
+  - N07: Mobyshop's USD price on an SG site stays a USD offer, shown under Other markets.
+  - N08: Amazon SG `S$310` becomes an SGD offer.
+  - N26, N27, N30: Bose listings are rejected as irrelevant because Exa's identifier "QuietComfort Headphones" is not contiguous in their titles (R-21, safe direction).
+  - I07: no image for the Kindle in JP, because Amazon JP's only image is its logo.
+  - B33, B34, B53: Logitech's 1200×630 logo card fails I3's 1.8 aspect limit.
+  - P04, K01, K02: V9's reason and comparison and MVP run 1 Q4's comparison are cut at leaked structure (D-042), keeping their cited sentences.
+  - L29, Y03: the supersessions.
+- Synthetic cases (Z01-Z38, the synthetic U, I, and B cases, P06) are marked synthetic.
+- Fixture images under `tests/fixtures/images/` (created by JM-103) are synthetic, solid-colour images of known type and size, labeled synthetic. They exist so CI never fetches the internet and are never shown in live mode.
+- Image bytes from the probe are not committed. The bytes cases record only the measured type, dimensions, and size.
+
+## Historical live logs
+
+The committed MVP live logs (`.futari/evidence/live/jm-004-smoke-*.json`, `ev-008-run-1-*.json`) are history. `tests/research/live-smoke-revalidation.test.ts` keeps re-deriving their displayed offers with the current rules. Under the v1.1 rules exactly one displayed offer changes: Q5-O1 (`search.rakuten.co.jp`) becomes evidence `search-or-category`, which is the CR-002 fix. JM-101 updates that test to assert exactly this difference and nothing else (independent review finding 2).
 
 ## Harness and baseline
 
-`node evals/harness.mjs` validates the frozen cases and fixtures and reports each evaluation's state without running product code. Baseline on 2026-11-21:
+`node evals/harness.mjs` validates every frozen case file and fixture and reports each evaluation's readiness without running product code. Baseline on this planning branch, 2026-11-21:
 
 ```
-HARNESS OK: 54 classification cases (40 live), 4 ranking cases, 6 citation cases, 6 live queries.
-EV-001 .. EV-009: NOT RUNNABLE (product module does not exist)
+HARNESS OK: 54 classification cases (40 live), 4 ranking cases, 6 citation cases (+2 spaced), 6 MVP live queries; v1.1: 79 classification cases (+2 supersessions), 6 content cases, 80/10/58 image url/selection/bytes cases, 8 live queries.
+EV-001: READY (kensaku-v1-1 supersessions L29/Y03 pending JM-101)
+EV-002 .. EV-007, EV-009: READY
+EV-010, EV-012 .. EV-017: NOT RUNNABLE (product module or test does not exist)
+EV-011: NOT RUNNABLE (test does not exist)
 ```
 
-States are kept distinct: **harness valid** (cases and fixtures are consistent), **not runnable** (product module or test file missing), **product assertion failing** (test runs and a case mismatches), **blocked** (an external dependency such as Exa or the browser runtime is unavailable). Only a run of the listed command can produce PASS or FAIL. An Exa outage during EV-008 is BLOCKED, not FAIL, and not PASS.
+`node evals/harness.mjs --strict` fails until JM-101 makes the EV-001 test load `offer-classification-v1-1.json`. JM-101 lists it as a verification command. Default mode stays exit 0, so `dev` CI is green until then (the CR-001 pattern). CI runs the harness without `--strict`, and the completion condition requires `--strict` locally at the final head.
 
-Tests that implement EV-001 to EV-004, and the EV-008 script, must load their frozen case files directly and assert per case (EV-005, EV-006, and EV-009 have no case file; they use fixture scenarios); they may not copy, filter, or edit cases. Once a test file exists, `node evals/harness.mjs` fails if it does not reference its frozen case file, and the case-driven tests assert that the number of evaluated cases equals the file's case count.
+States stay distinct: **harness valid**, **not runnable** (product module or test file missing), **product assertion failing**, and **blocked** (an external dependency such as Exa, a merchant image host, or the browser runtime is unavailable). Only a run of the listed command produces PASS or FAIL. A merchant image host refusing a live fetch is an expected outcome measured by EV-016, not an error.
+
+Tests for EV-001, EV-011, EV-012, and EV-013, and the EV-016 script, load their frozen case files directly. They may not copy, filter, or edit cases, and they assert the evaluated counts. The harness fails a READY test file that does not reference its case file.
 
 ## AI quality
 
-Kensaku uses no model of its own; Exa's `/answer` and summary extraction are external AI. Their quality is controlled by deterministic gates rather than an LLM judge:
+Kensaku still runs no model of its own. v1.1 adds two Exa-generated fields (key specs and reason) and one Exa-extracted field (the page image):
 
-- Extraction errors (wrong product, editorial pages, aggregator attribution, missing prices) are caught by the classification rules and measured by EV-001 and EV-002 on 40 live results.
-- Comparison quality is not scored automatically. Citations are checked structurally (EV-004), and the owner judges usefulness in EV-008's audit and in final product acceptance. With 6 live queries the audit is a sanity check, not a statistical guarantee; RISKS R-3 records this.
-- No AI judge is used, so there is no judge calibration.
+- Key specs and reasons are checked structurally: normalization, citation resolution, and the malformed-reason rule in EV-012; the exact schema in EV-017. The owner judges their usefulness in EV-016 and product acceptance. No LLM judge is used.
+- The tighter `modelIdentifiers` description (D-037) was tested on two questions. Q2 now returns one clean identifier; Q6 still returns a weak one (R-21). EV-016's offer audit measures the effect.
+- Image correctness cannot be decided by rules. Rules I1-I3 remove known junk, and EV-016's owner image audit measures the rest. With the 1.8 aspect limit, every image in the spike's visual check that would still be shown was correct. This is a sanity baseline, not a statistical guarantee (R-3, R-17).
 
-## Failure coverage
+## Theme (EV-010)
 
-- Boundaries: zero, fractional-yen, and non-ISO prices; unsupported currencies; non-http URLs; URLs not from the run; colour variants; near-miss model numbers; non-Latin merchant names; tracking parameters.
-- Provider: 401, 402, 429 with `Retry-After`, 5xx, timeout, cancel, no candidates, no offers, out-of-range citation markers.
-- Spend: per-run cap, monthly limits, exhausted credits, cache hits.
-- Security: listening address is 127.0.0.1, foreign Host/Origin, key leakage into bundle, logs, cache, fixtures, or browser storage.
-- Concurrency: a second simultaneous run is refused with 409, keeping one ledger writer (EV-005).
+Playwright, Chromium, `pnpm start` in fixture mode:
 
-## Frontend quality
+1. **Default.** A fresh context (empty storage) emulating `prefers-color-scheme: light` loads the page: `<html>` has class `dark`, `getComputedStyle(document.documentElement).colorScheme` is `dark`, and the body background equals the computed `--background` of `.dark`.
+2. **No flash, before the bundle.** With every request for the app's module bundle delayed by 2 s (Playwright route), the theme checks hold before the bundle runs: with empty storage, dark class and dark background; with `kensaku.theme.v1 = "light"`, no dark class and a light background.
+3. **No flash, through load.** An init script installs a `MutationObserver` on `<html>` before any page script runs and records every class change. After the page is idle with empty storage, the recorded history never shows `<html>` without `dark`. With `light` stored, it never shows `dark`.
+4. **Toggle.** The header has a button with accessible name "Switch to light theme". Activating it with the keyboard (Tab to it, Enter) removes the dark class, stores `light`, and changes the name to "Switch to dark theme". A mouse click switches back and stores `dark`.
+5. **Persistence.** After choosing light and reloading, the page is light. A new page in the same context is also light.
+6. **Fallbacks.** A stored value of `"blue"` renders dark. With `localStorage` access throwing (init script), the page renders dark, the toggle still switches the current page, and no uncaught error is logged.
+7. **Accessibility.** `@axe-core/playwright` reports zero serious or critical violations in both themes on the empty state, the running state (`cancel-offers` scenario), a completed `xm5-sg` run, and an error state.
+8. **Theming convention.** The theme is applied only through the `dark` class on `<html>` and `color-scheme`; the theme code sets no inline colour styles. Component integrity is checked by `scripts/check-components.mjs` (EV-007), and the unchanged `src/web/index.css` by the JM-102 and JM-105 reviewers.
 
-EV-007 automated checks (Playwright, Chromium, fixture mode):
+## Image proxy (EV-014)
 
-1. Primary journey: submit Q1's text; progress shows the four stages in order; the comparison shows inline citations that link to the fixture's citation URLs; the offer table shows merchant host, price with currency code, availability badge, retrieved time, and link; evidence appears in a separate, labeled section; the "last observed" price notice is visible.
-2. States: empty state with suggestions; running state with input disabled and a working cancel; no-offers state text; each `data-error` kind renders its specific message; partial results are labeled partial.
-3. History: after a reload the conversation is restored; Clear history asks for confirmation and then empties the thread and removes `kensaku.history.v1`; corrupted stored data shows the reset notice.
-4. Market: switching to SG or JP sends that market and orders that currency group first; the choice survives reload.
-5. Accessibility: `@axe-core/playwright` reports zero serious or critical violations on the empty, running, completed, and error states; the whole journey works with the keyboard only; progress changes are announced through an ARIA live region.
-6. Layout: at 375 px width there is no horizontal page scroll and the offer table remains readable (scrolls within its container).
-7. Secrets (REQ-007): after the journey, no `localStorage` or `sessionStorage` value contains the test key.
-8. Component integrity: `scripts/check-components.mjs` verifies that every file under `src/web/components/ui/` and `src/web/components/ai-elements/` matches the SHA-256 recorded in `components.lock.json` when the shadcn CLI installed it, and that `components.json` lists the `@ai-elements` registry.
+Vitest against the Hono app factory, with an injected `lookup` and an injected upstream (no internet), plus one connector test against a local server:
 
-Owner review (human, recorded in `.futari/evidence/JM-005.md`): visual polish and readability on desktop and mobile widths.
+1. An unknown id, or an id that is not 64 lowercase hex characters, gets 404. The injected upstream receives no request.
+2. A registered id whose host resolves to any of these addresses gets 502, and no connection is attempted: 127.0.0.1, 10.1.2.3, 172.16.0.1, 192.168.1.1, 169.254.169.254, 100.64.0.1, 0.0.0.0, 192.0.2.1, ::1, ::, fc00::1, fe80::1, fec0::1, ff02::1, ::ffff:127.0.0.1, ::127.0.0.1, 64:ff9b::7f00:1, 2001::1, 2002:7f00:1::1, 2001:db8::1.
+3. Registered URLs with literal or unusual hosts get 502 without a DNS lookup or connection: `http://127.0.0.1/a.jpg`, `http://[::1]/a.jpg`, `http://2130706433/a.jpg`, `http://0x7f.1/a.jpg`. A URL on `localhost` resolved to 127.0.0.1 also gets 502. Ports other than 80 and 443 get 502: `https://cdn.example.com:8443/a.jpg`, `http://cdn.example.com:22/a.jpg`.
+4. A public host that redirects to a private address gets 502. A chain of 4 redirects gets 502. A chain of 3 public redirects to a valid image succeeds.
+5. Pinning, routing level: when the injected resolver returns a public address first and a private one on a second lookup, the request goes to the public address, and the second lookup is never used for that hop.
+6. Pinning, connector level: the exported `connectPinned(url, address)`, the layer below the address and port policy, is called with `http://img.invalid:<port>/a.jpg` and the loopback address of a local test HTTP server. Checks 2 and 3 go through the policy layer above it. The server receives the request with the original `Host` header, and no DNS lookup is attempted (the test's lookup spy is never called). This runs the real `node:http` path.
+7. The upstream request has no `Cookie`, `Authorization`, or `Referer` header, and its `Accept` header is exactly as in ARCHITECTURE.
+8. Bytes over 5 MiB get 502, and reading stops at the limit. An upstream that never finishes gets 502 within 8.5 s, measured with fake timers.
+9. Generated images: a 400×300 JPEG, PNG, WebP, and AVIF are each served with:
+   - the sniffed `Content-Type`;
+   - `X-Content-Type-Options: nosniff`;
+   - `Content-Security-Policy: default-src 'none'`;
+   - `Cross-Origin-Resource-Policy: same-origin`;
+   - `Cache-Control: private, max-age=604800`.
+
+   The upstream's own `Content-Type` (for example `text/html`) and `Set-Cookie` are ignored and never forwarded. A 1×1 GIF, an SVG document, a 150×400 PNG, and a 1200×630 WebP each get 422.
+10. Cross-site: a request with `Sec-Fetch-Site: cross-site` or `same-site` gets 403 without any upstream request. A request with `same-origin`, or with no `Sec-Fetch-Site` header, is served. A foreign `Host` gets 403.
+11. Cache lifecycle (fake clock):
+    - A second request within 7 days is served from disk with no upstream request. At 7 days plus a second it refetches.
+    - A 422 is reused for 24 hours. A 502 is reused for 10 minutes and refetched after.
+    - An entry registered 31 days ago is pruned at startup, and its id then gets 404.
+    - With the cap lowered for the test, the oldest bytes are evicted first and refetched on demand.
+12. Concurrency: 10 simultaneous requests for one id cause exactly 1 upstream request. Requests for 10 different ids never have more than 4 upstream requests in flight.
+13. Hygiene: a run's registration writes no key and no request header to `.cache/images/`. Serving images changes neither `RequestBudget.used` nor the Exa ledger.
+
+## Product cards (EV-015)
+
+Playwright, Chromium, `pnpm start` in fixture mode. Scenarios (JM-104 adds the first two, JM-105 the rest, including the two CR-003 scenarios):
+- `xm5-sg-cards`: SG market, 2 candidates; SGD offers plus one USD offer; image candidates mapped to fixture images, one of which fails rule I3.
+- `xm5-us-cards`.
+- `no-images`: every candidate fails.
+- `no-market-offers`: SG market, USD offers only.
+- (CR-003) `comparison-truncated`: the comparison is the frozen V9 answer's comparison, which ends in leaked structure.
+- (CR-003) `comparison-dropped`: no frozen answer cuts to a null comparison, so this scenario does not use `FixtureExaPort`. The spec stubs `POST /api/chat` with a Playwright route that returns a UI message stream, as the EV-007 spec already does. The stream holds the parts JM-104's server emits when nothing readable remains: `start`, progress parts, a `data-comparison` part `{ truncated: true }` with no text part, the `xm5-sg-cards` products, `data-usage`, and `finish`. The parts are labeled synthetic in the spec. The server side of that contract is tested in JM-104.
+
+1. **Layout.**
+   - At 1280×800 the first two cards share a top edge (±2 px), and each is at least 480 px wide. The image box is full-bleed (its width equals the card's border-box width minus the card's border, ±2 px), 4:3 (±1 px), and at least 360 px tall.
+   - At 375×812 the cards stack (each card's top is below the previous card's bottom). The image box is full-bleed and at least 300 px wide, and `document.scrollingElement.scrollWidth <= innerWidth`.
+2. **Content order.** Each card's DOM order is:
+   1. heading;
+   2. image box with caption;
+   3. price summary;
+   4. specs list (at most 5 items);
+   5. "Why it fits" reason with at least one inline citation;
+   6. merchant offer list;
+   7. Other markets disclosure (only when other-currency offers exist);
+   8. Research details disclosure.
+3. **Product versus merchant.** The card heading equals the candidate's brand and name and contains no merchant host. Each offer item shows the merchant host, merchant name, price with ISO code, availability badge, `<time>` retrieved, and a "View offer" link with an accessible name naming product and merchant.
+4. **Images.**
+   - While a delayed image loads, a skeleton is visible and the alt text is set.
+   - The rule-I3-failing first candidate is skipped and the next one shows, with a caption naming that candidate's host and source title.
+   - In `no-images`, each card shows "No verified product image" at the same box size, and no `img` element is in the `error` state.
+5. **No third-party requests.** During every scenario, every browser request URL has origin `http://127.0.0.1:<port>`. The document response's CSP header equals the ARCHITECTURE value.
+6. **Markets.**
+   - In `xm5-sg-cards` the main list shows only SGD offers, and the price summary reads "From <lowest listed SGD price> SGD · <n> Singapore offer(s)". "Other markets (may not ship to Singapore) · 1" is collapsed (`aria-expanded="false"`); expanding it by keyboard shows the USD offer.
+   - In `no-market-offers` the main list reads "No Singapore offers found".
+   - No converted amount appears anywhere.
+7. **Research details.** Collapsed by default. When expanded, it lists every evidence item with its category label and the rejected count.
+8. **History.** The frozen `evals/fixtures/history/mvp-history-xm5-sg.json` value, loaded into `kensaku.history.v1` unchanged before the first navigation:
+   - renders as cards with the fallback image panel;
+   - shows no specs or reason sections;
+   - shows no history-reset notice and logs no error.
+
+   A v1.1 run survives a reload with the same cards and image candidates.
+9. **Accessibility.** Zero serious or critical axe violations in dark and light on `xm5-sg-cards` and `no-images`. Every disclosure and link is reachable and operable by keyboard. Image alt text follows REQ-013.
+10. **Malformed-answer note** (REQ-002, D-042; added by CR-003, D-043).
+    - In `comparison-truncated`, within the comparison section:
+      - the rendered text equals `evals/cases/product-content.json` K01 `expected.renderedText` (ending `…[4,8].`), with K01's 2 sources as its inline citations;
+      - beside it is the exact note "Exa's answer ended in malformed output, which is not shown.".
+
+      The product card's reason (V9's reason is also cut) shows its cut text with the same note. No `{` or `}` appears anywhere on the page.
+    - In `comparison-dropped`, the comparison section shows no comparison text and shows the note in its place. The product cards still render.
+    - In `xm5-sg-cards`, no note is shown.
+    - The note is axe-clean in both themes.
+
+## Frontend quality (EV-007, amended)
+
+Playwright, Chromium, fixture mode. The MVP's eight checks with v1.1 amendments (D-038). The full text replaces the MVP section, which is preserved at commit `2866477`:
+
+1. **Primary journey.** Submit Q1's text.
+   - Progress shows the four stages in order.
+   - The comparison shows inline citations that link to the fixture's citation URLs.
+   - (v1.1) The offer list in the product card shows merchant host, price with currency code, availability badge, retrieved time, and link.
+   - Evidence appears in a separate, labeled section; (v1.1) that section is Research details.
+   - The "last observed" price notice is visible.
+2. **States.** Empty state with suggestions; running state with input disabled and a working cancel; no-offers state text; each `data-error` kind renders its specific message; partial results are labeled partial.
+3. **History.** After a reload the conversation is restored. Clear history asks for confirmation, then empties the thread and removes `kensaku.history.v1`. Corrupted stored data shows the reset notice.
+4. **Market.** Switching to SG or JP sends that market. (v1.1) That market's currency fills the card's main offer list, and other currencies move to Other markets. The choice survives reload.
+5. **Accessibility.** `@axe-core/playwright` reports zero serious or critical violations on the empty, running, completed, and error states. The whole journey works with the keyboard only. Progress changes are announced through an ARIA live region. (v1.1) These run in the default dark theme; EV-010 and EV-015 cover light.
+6. **Layout.** (v1.1) Replaces "the offer table remains readable": at 375 px width there is no horizontal page scroll, and the card layout checks in EV-015 check 1 apply.
+7. **Secrets** (REQ-007). After the journey, no `localStorage` or `sessionStorage` value contains the test key. (v1.1) `kensaku.theme.v1` holds only `dark` or `light`.
+8. **Component integrity.** `scripts/check-components.mjs` verifies that every file under `src/web/components/ui/` and `src/web/components/ai-elements/` matches the SHA-256 recorded in `components.lock.json` when the shadcn CLI installed it, and that `components.json` lists the `@ai-elements` registry. (v1.1) This includes `card`, `aspect-ratio`, `skeleton`, and `item`.
+
+Owner review (human, recorded in `.futari/evidence/JM-105.md`): visual polish and readability of the v1.1 cards on desktop and mobile widths in both themes.
 
 ## CI and live checks
 
-- Deterministic CI (`.github/workflows/ci.yml`, created by JM-001, no secrets, on pull requests to `dev` and on pushes to `dev`): `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test` (vitest, including EV-001 to EV-006 and EV-009), `pnpm build`, `pnpm test:e2e` (EV-007 in fixture mode), `node evals/harness.mjs`, `node scripts/check-components.mjs`.
-- Live checks never run in CI. They run locally with the owner's key:
-  - Slice smoke (JM-004): Q1 and Q2, at most 10 requests in total.
-  - EV-008 (JM-006): `pnpm live:acceptance` runs Q1-Q6 with a fresh cache, at most 5 requests each and 30 per suite run, at most 3 suite runs under the `runRules` in `live-acceptance.json` (rerun only after a recorded fix or a BLOCKED run; the last run decides). It writes `.futari/evidence/live/<timestamp>.json` with every request, response summary, displayed offer, and cost; every run log is committed.
-  - Pass rule: at least 4 of 6 queries show at least one merchant offer; 100% of displayed offers pass revalidation (a self-consistency check against the recorded Exa responses); the owner audits every displayed offer with the rubric in `live-acceptance.json` and at least 90% pass; zero fabricated offers; no unexpected error runs; reported cost per suite run ≤ $0.40.
-- Total live usage during execution: at most 120 Exa requests (planned maximum 10 + 3 × 30 = 100) and $2.00 of reported cost, all from free credits. Additional spend: $0 (`liveEvaluationBudget.maxSpend = 0`). If Exa reports exhausted credits, live checks stop and the task records BLOCKED.
+- Deterministic CI (`.github/workflows/ci.yml`, unchanged) runs on pull requests to `dev` and pushes to `dev`:
+  - install, typecheck, lint;
+  - `pnpm test` (EV-001 to EV-006, EV-009, EV-011 to EV-014, EV-017);
+  - build;
+  - `pnpm test:e2e` (EV-007, EV-010, EV-015);
+  - harness and component check.
+- Live checks never run in CI. They run locally with the owner's key. The MVP `pnpm live:acceptance` (EV-008) must not be run during v1.1; JM-106 removes its script.
+- **Slice smoke (JM-104).** Q3 and Q4 from the v1.1 set, through the real app in live mode, at most 10 Exa requests in total (5 per query by construction).
+  - Pass: each shows at least one SGD merchant offer, and at least one product image loads through the proxy.
+  - BLOCKED: an Exa outage or exhausted credits.
+  - FAIL: any other miss. It stops JM-104 and goes to the owner as a plan revision trigger; there is no rerun within this plan's budget.
+- **EV-016 (JM-106).** `pnpm live:acceptance:v1-1`, under the budget and run rules in `live-acceptance-v1-1.json`.
+
+## Live acceptance (EV-016)
+
+- Runs Q1-Q8 in Chromium against the built app in live mode, with empty Exa and image caches. Limits: at most 5 requests per query, 40 per suite run, and $0.50 reported cost per run; at most 3 runs. The plan-wide cap of 130 requests and $1.50 governs. Reruns follow the run rules, and the last run decides.
+- Pass rule (all of these, from the last run):
+  - Offers:
+    - at least 6 of 8 queries show a merchant offer;
+    - at least 3 of the 4 SG queries (Q3, Q4, Q7, Q8) show an SGD offer in a card's main list;
+    - at least 12 offers are displayed, and 100% pass revalidation;
+    - owner audit failures are at most floor(10% of displayed offers);
+    - 0 search or category pages are displayed as offers;
+    - 0 fabricated offers.
+  - Images:
+    - at least 6 images are displayed, and at least 70% of offer-bearing cards show a loaded image;
+    - 100% of displayed images pass revalidation (rules I1-I3 re-derived from the log);
+    - owner image audit failures are at most max(1, floor(10% of displayed images)).
+  - Run health:
+    - 0 displayed comparisons or reasons containing `{` or `}` (D-042);
+    - 0 browser requests to non-local origins;
+    - no unexpected error runs.
+- Expected outcomes recorded in advance:
+  - Q6 (Kindle, JP) is likely to show no offer (weak identifiers, R-21) and no image (I07); the 6-of-8 offer threshold allows two such queries.
+  - The Logitech logo card that motivated the 1.8 aspect limit is now rejected by rule I3.
+- Total live use during v1.1 execution: at most 130 Exa requests (10 smoke + 3 × 40) and $1.50 of reported cost, all from free credits. Additional spend: $0 (`liveEvaluationBudget.maxSpend = 0`). If Exa reports exhausted credits or a 402, live checks stop and the task records BLOCKED.
+
+## Failure coverage
+
+- MVP coverage unchanged.
+- v1.1 classification:
+  - one case per added list entry, path token, and currency symbol;
+  - search hosts versus `research.` hosts;
+  - percent-encoded and uppercase segments;
+  - Shopify `collections` with and without `products`;
+  - merchant blogs;
+  - a bare `$`;
+  - fractional yen with `￥`.
+- Images:
+  - every deny token, tokens in directory names, encoded file names, undecodable names, trailing slashes;
+  - SVG, data and script URLs, credentials, 2048 and 2049 characters;
+  - beacons, tiny or extreme or social-card aspect ratios, unreadable dimensions, exactly 5 MiB and one byte more, unsupported types, verdict precedence;
+  - tier order, duplicates, the cap of 4;
+  - 403 hosts, slow hosts, redirect chains, private and special addresses, IP-literal hosts, non-standard ports, DNS rebinding, cross-site embedding;
+  - cache expiry, pruning, eviction, concurrency.
+- Content: whitespace, empty, over-80, duplicate, and non-string specs; six valid specs (the cap of 5); non-array specs; whitespace-only, leaked-structure, nothing-readable, and out-of-range-marker reasons; comparisons with leaked structure (V9, MVP run 1 Q4) and clean ones.
+- UI: no images, no market offers, real MVP history, both themes, keyboard-only use, 375 px width, storage unavailable.
 
 ## Frozen inputs
 
-Added to `protectedFiles`: `evals/cases/offer-classification.json`, `evals/cases/ranking-currency.json`, `evals/cases/citations.json`, `evals/cases/live-acceptance.json`, `evals/harness.mjs`, all 13 `evals/fixtures/exa-live/*.json` (A4 added by CR-001), and the research notes `docs/futari/research/exa-2026-11-21.md`, `docs/futari/research/references-2026-11-21.md`, and `docs/futari/research/github-2026-11-21.md`. Test files written during execution are not frozen, but they must load these frozen inputs unchanged.
+`protectedFiles` keeps every MVP frozen input and adds:
+- `evals/cases/offer-classification-v1-1.json`, `image-selection.json`, `product-content.json`, `live-acceptance-v1-1.json`;
+- the 13 new Exa fixtures (`V1`-`V10`, `R1-Q4`, `R1-Q5`, `R1-Q6`) and the MVP history fixture;
+- the amended `evals/harness.mjs`;
+- the spike and probe scripts;
+- the research note `research/v1-1-spike-2026-11-21.md`;
+- the archived MVP contract.
+
+Test files written during execution are not frozen, but they must load these inputs unchanged.
+
+## (v1.2) Simulated commerce evaluations
+
+Gold labels in the four v1.2 case files are **assistant-proposed** from the written rules and become gold only through the owner's plan approval. They are synthetic: no Stripe call was made during planning (D-056). `node evals/harness.mjs` recomputes the offer ids, minor units, cart totals, and session request fields from the written rules, and a mutation check (changing M03's expected value, R01's `expires_at`, and W11's final state) made the harness fail each time. The independent reviewer's own implementation from the rule text reproduced every label of the first draft; the cases added after the review (C29-C34, V01-V06, R04, W25-W30, X12-X19) were computed from the revised rules.
+
+### Commerce rules (EV-018)
+
+The test loads `commerce-rules.json` unchanged and calls the pure functions in `src/core/commerce.ts`:
+
+- `offerId` equals each `offerIdCases` offer's precomputed id;
+- `toMinorUnits` equals every `minorUnitCases` value (including the floating-point cases M03 and M11 and the invalid ones);
+- `applyCartOp(cart, op, registry)` reproduces every `cartCases` outcome, error code, details, and resulting cart (lines, quantities, `demoUnitAmountMinor`, `totalMinor`, currency), and leaves the cart deep-equal where `cartUnchanged` is set;
+- `versionCases` give the stated cart version after each operation;
+- `snapshotCases` lines carry the observed snapshot exactly;
+- it asserts each section's count.
+
+The same cases run once more through the HTTP routes (`POST /api/cart/items` and friends, fixture registry) in `tests/server/`, so the route maps codes to the documented statuses; that test is not the evaluation but is a JM-203 criterion.
+
+### Webhooks (EV-020)
+
+The test builds the app with `FakeCheckoutPort`, a temporary `.data` directory, and a runtime test secret, seeds `baseOrder` (or the case's `startState`), and plays each `webhookCases` delivery (a `restart` entry recreates the app on the same store) with real signatures from `stripe.webhooks.generateTestHeaderString`. For each delivery it asserts status and outcome; at the end, the order's state, `declinedAttempts`, `anomaly`, `awaitingAsyncPayment`, whether the cart was cleared, and the number of transitions into paid. `routeCases` drive `POST /api/orders/:id/cancel` and `POST /api/checkout` with scripted port outcomes (expire, retrieve, create), including the concurrency cases X18 (two simultaneous checkouts) and X19 (a webhook arriving during a cancel's delayed expire). The test asserts both counts. A naive handler that trusts unsigned JSON, skips dedupe, or lets `expired` overwrite `paid` fails.
+
+### Stripe keys (EV-021)
+
+1. `parseConfig` refuses `sk_live_…`, `rk_live_…`, any key containing `_live_`, a key with another prefix, and a webhook secret without `whsec_`; the error names the variable and does not contain the value. Valid sandbox keys (`sk_test_`, `rk_test_`, `rkcs_test_`) are accepted; checkout is configured only with both values.
+2. `StripeCheckoutPort` with a stubbed SDK client refuses a `livemode: true` session (error, no url) and a url outside `https://checkout.stripe.com/`.
+3. With a runtime-built fake key and secret, a fixture run through research, cart, checkout, webhook, and cancel leaves neither string (nor any `(sk|rk|rkcs|pk)_(test|live)_[A-Za-z0-9]{8,}` or `whsec_[A-Za-z0-9]{8,}` match) in captured logs, any response body or header, `.data/commerce/`, `.cache/offers/`, or the built `dist/` (the test builds or reads `dist/` after `pnpm build`).
+4. `git ls-files` content contains no match of those patterns, and `.gitignore` ignores `.env.local` and `.data/`.
+5. `GET /api/cart` reports `checkoutConfigured`; `GET /api/health` keeps its v1.1 shape and says nothing about Stripe.
+
+### Commerce UI (EV-022)
+
+Playwright against the `pnpm start`-equivalent fixture server (as EV-007), Chromium, both themes where marked. Each test starts with `POST /__test/commerce/reset` so commerce state is not shared between specs:
+
+1. **Add.** After the `xm5-us` scenario, every offer item has "Add to cart"; clicking it updates the header count to 1 and announces "Added to simulated cart".
+2. **Disabled reasons.** An out-of-stock offer and a pre-v1.2 history offer (the frozen MVP history fixture) show disabled buttons with "Out of stock" and "Ask again to buy".
+3. **Currency replace.** With USD in the cart, adding an SGD offer (`xm5-sg` scenario) opens the dialog; "Keep cart" leaves the cart unchanged; "Replace" leaves only the SGD line.
+4. **Prices distinct.** Each cart line shows "Demo checkout price" and, in a separate element, "Last observed <amount> <code> on <host>"; the demo total equals the sum of lines.
+5. **Success.** Checkout navigates to the fake hosted page; "Pay" returns to the app, which shows "Confirming simulated payment…" and then "Simulated payment received (Stripe sandbox). No order was placed with <host>." after the signed webhook; the cart count returns to 0; the order list shows a Paid badge.
+6. **Decline then back.** "Decline" posts a signed `payment_intent.payment_failed`, then "Back" returns to the cancel URL: "Simulated checkout cancelled. Your cart is unchanged." and the best-effort "The test card was declined." (shown because the fake sends the event; live Stripe may not, R-30); the cart still has its lines; the order shows Cancelled.
+7. **Cancel.** "Back" without decline gives the cancelled message without the decline note.
+8. **Duplicate.** Re-posting the same signed completed event leaves one Paid order and no second confirmation.
+9. **Not configured.** With checkout unconfigured through `POST /__test/commerce/checkout-configured { value: false }`, the checkout button is disabled with "Stripe sandbox is not configured. See README."
+10. **Waiting hint.** With webhook delivery withheld through `POST /__test/commerce/withhold-webhooks { value: true }`, the hint about `stripe listen` appears after 20 s (test clock or shortened interval through a test-only setting).
+11. **Labels.** "Simulated cart", the banner, and "Simulated" badges are present; none of "Order confirmed", "Order placed", "Thank you for your order", "Purchase complete", "has shipped" appears anywhere in the page text during the whole test (case-insensitive).
+12. **Accessibility.** Keyboard only: open the sheet, change quantity, remove, check out; focus returns to the trigger on close. Axe: zero serious or critical violations with the sheet open and on each return panel, in both themes.
+13. **No third-party requests.** No browser request to a non-local origin during the whole test.
+14. **Regression.** EV-007, EV-010, and EV-015 pass with their carried assertions unchanged (R-37); `scripts/check-components.mjs` passes with the new `sheet`.
+15. **Expired link.** After `POST /__test/commerce/expire-open-order` on an open order, the order list shows "Checkout link expired" and the next checkout supersedes it.
+
+### Live sandbox acceptance (EV-023)
+
+Defined in `evals/cases/live-acceptance-v1-2.json`: preconditions, the 3 queries (Q1, Q3, Q5 reused verbatim from v1.1), scenarios A1-A8 (A1-A5 by the owner on the Stripe-hosted page, A6-A8 by the agent), research checks, thresholds (8/8 scenarios, or 7/8 when only A3 is BLOCKED under the case file's `blockedAllowances` because Q5 yields no addable JPY offer (CR-006, D-060); 0 paid without a verified event, 0 live-mode objects, 0 duplicate paid transitions, 0 amount mismatches; Exa within budget; owner audit H1-H5 all yes), the run log, and run rules (at most 2 runs; run 1 ran on 2026-11-23 and its tooling-reduced log is accompanied by its terminal output and server log, CR-006). The run log refers to scenarios by id and never copies instruction text or test card numbers. A miss caused by a Stripe fact that differs from research stops execution for a plan revision (D-056); an Exa outage or exhausted credits is BLOCKED.
+
+### Slice smoke (JM-203, v1.2)
+
+Local, before expansion, ≤ 5 Exa requests (Q1 once):
+
+- agent: create sessions in USD, SGD, and JPY from registered offers through the real port, retrieve each, expire each (R-27, R-28, the 60-minute expiry, the absent top-level `currency`, key permissions), then expire one again and record the real error shape for a non-open session;
+- owner: one decline with 4000 0000 0000 0002, then the back link; record whether `payment_intent.payment_failed` arrived (R-30);
+- owner: one USD purchase with 4242; the order becomes paid only after the verified webhook;
+- agent: `stripe events resend` of that completed event answers `duplicate`.
+
+Pass: all of the above. A Stripe-fact miss → stop for a plan revision. The log goes to `.futari/evidence/live/jm-203-sandbox-smoke-*.json`.
+
+### CI (v1.2)
+
+`ci.yml` stays unchanged: `pnpm test` picks up EV-018 to EV-021 and `pnpm test:e2e` picks up EV-022. Tests never contact Stripe; `stripe` is imported only by `src/commerce/stripe-port.ts`, which tests exercise with a stubbed client. EV-021 check 3 needs `dist/`; its test runs `pnpm build` itself when `dist/` is missing or older than `src/`.
+
+### Harness baseline (v1.2 planning branch, 2026-11-23)
+
+```
+HARNESS OK: … v1.2: 34 cart, 11 minor-unit, 4 session-request, 30 webhook and 19 route cases, 8 live sandbox scenarios.
+EV-001 .. EV-015, EV-017: READY
+EV-016 (historical): READY
+EV-018 .. EV-023: NOT RUNNABLE (product module does not exist)
+```
+
+`node evals/harness.mjs --final` (new in v1.2) also exits 1 while any listed evaluation is NOT RUNNABLE; the completion condition requires `--strict --final` at the final head, so a missing EV-018 to EV-023 test cannot pass silently. `--strict` keeps its v1.1 meaning, so the carried EV-001 command still works during execution.
+
+### Frozen inputs (v1.2)
+
+`protectedFiles` keeps every v1.1 frozen input and adds `evals/cases/commerce-rules.json`, `checkout-session-request.json`, `webhook-events.json`, `live-acceptance-v1-2.json`, the amended `evals/harness.mjs`, the research note `research/stripe-2026-11-23.md`, and the archived v1.1 contract.

@@ -5,6 +5,7 @@ export type Endpoint = "/answer" | "/search";
 
 const MARKET_NAME: Record<Market, string> = { US: "United States", SG: "Singapore", JP: "Japan" };
 
+/** Binding: deep-equals `request.body.outputSchema` of the frozen fixture V9 (EV-017). */
 export const ANSWER_OUTPUT_SCHEMA = {
   type: "object",
   properties: {
@@ -17,9 +18,25 @@ export const ANSWER_OUTPUT_SCHEMA = {
         properties: {
           name: { type: "string" },
           brand: { type: "string" },
-          modelIdentifiers: { type: "array", items: { type: "string" }, description: "Model numbers or distinctive tokens." },
+          modelIdentifiers: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "Manufacturer model names or model numbers only (for example WH-1000XM5 or MX Master 3S). No features, specifications, colours, connectivity, or generation labels.",
+          },
+          keySpecs: {
+            type: "array",
+            maxItems: 5,
+            items: { type: "string" },
+            description: "Up to 5 short key specifications, each under 60 characters.",
+          },
+          reason: {
+            type: "string",
+            description:
+              "One or two sentences on why this product fits the question, with numbered citation markers like [1]. Do not mention prices or currency amounts.",
+          },
         },
-        required: ["name", "brand", "modelIdentifiers"],
+        required: ["name", "brand", "modelIdentifiers", "keySpecs", "reason"],
       },
     },
   },
@@ -73,7 +90,7 @@ export function buildAnswerRequest(question: string, market: Market, mode: Answe
 
 export function buildSearchRequest(candidate: Candidate, market: Market): SearchRequest {
   return {
-    query: `${candidate.brand} ${candidate.name} buy`,
+    query: `${candidate.brand} ${candidate.name} price ${MARKET_NAME[market]} buy`,
     options: {
       type: "auto",
       numResults: 8,

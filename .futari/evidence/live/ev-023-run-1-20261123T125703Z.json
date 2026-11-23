@@ -1,0 +1,19 @@
+{
+  "task": "JM-205",
+  "plan": "kensaku-v1-2",
+  "evaluation": "EV-023",
+  "status": "aborted",
+  "run": 1,
+  "mode": "live",
+  "gitSha": "c7ba58ea2dc95362dcee2494efadca3d256b90a9",
+  "startedAt": "2026-11-23T12:57:03.231Z",
+  "finishedAt": "2026-11-23T13:11:15.277Z",
+  "verdict": "BLOCKED",
+  "exa": {
+    "ev023Requests": 9,
+    "ev023CostDollars": 0.105
+  },
+  "notes": [
+    "the leak scan found a key or signing secret in this log; every string was scrubbed before writing; the scrubbed log still matched, so only this summary was kept"
+  ]
+}

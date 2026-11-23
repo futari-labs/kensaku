@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalizeUrl, classifyHit, matchesIdentity, resolveCitations, segmentMarkers, splitParagraphs } from "../../src/core";
+import { canonicalizeUrl, classifyHit, matchesIdentity, normalizeKeySpecs, resolveCitations, segmentMarkers, splitParagraphs } from "../../src/core";
 
 describe("canonicalizeUrl", () => {
   it("drops tracking parameters and keeps the rest in order", () => {
@@ -107,5 +107,31 @@ describe("resolveCitations sources and segmentMarkers", () => {
   it("splits resolved text into text and marker segments with the same grammar", () => {
     expect(segmentMarkers("A [1,2] and B[3].")).toEqual(["A ", { citation: [1, 2] }, " and B", { citation: [3] }, "."]);
     expect(segmentMarkers("no markers, [1, 2] has spaces")).toEqual(["no markers, [1, 2] has spaces"]);
+  });
+});
+
+describe("collection pages (rule 5b)", () => {
+  const candidate = { name: "n", brand: "b", modelIdentifiers: ["WH-1000XM5"] };
+  const categoryOf = (url: string) => {
+    const hit = {
+      url,
+      title: "Sony WH-1000XM5",
+      summary: { isProductListing: true, productName: "Sony WH-1000XM5", merchant: "X", price: 349, currency: "USD" },
+      exaRequestId: "t",
+      retrievedAt: "2026-11-21T00:00:00.000Z",
+    };
+    return classifyHit(hit, candidate, new Set([url]));
+  };
+
+  it("treats any collections segment with no later products segment as a category page", () => {
+    expect(categoryOf("https://x.com/collections/a/products/b/collections/c")).toMatchObject({ kind: "evidence", category: "search-or-category" });
+    expect(categoryOf("https://x.com/collections/a")).toMatchObject({ category: "search-or-category" });
+    expect(categoryOf("https://x.com/collections/a/products/b")).toMatchObject({ kind: "merchant-offer" });
+  });
+});
+
+describe("character counts are code points", () => {
+  it("keeps a spec of 80 astral characters and drops one of 81", () => {
+    expect(normalizeKeySpecs(["😀".repeat(80), "😀".repeat(81)])).toEqual(["😀".repeat(80)]);
   });
 });

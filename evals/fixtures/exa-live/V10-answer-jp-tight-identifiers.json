@@ -1,0 +1,154 @@
+{
+  "_label": "LIVE EXA RESPONSE captured by the kensaku-v1-1 pre-approval spike. Real data, not a gold label.",
+  "id": "V10-answer-jp-tight-identifiers",
+  "request": {
+    "endpoint": "/answer",
+    "body": {
+      "query": "Kindle Paperwhite 2024 price in Japan",
+      "text": false,
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "comparison": {
+            "type": "string",
+            "description": "Short comparison with numbered citation markers like [1]."
+          },
+          "candidates": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "brand": {
+                  "type": "string"
+                },
+                "modelIdentifiers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Manufacturer model names or model numbers only (for example WH-1000XM5 or MX Master 3S). No features, specifications, colours, connectivity, or generation labels."
+                },
+                "keySpecs": {
+                  "type": "array",
+                  "maxItems": 5,
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Up to 5 short key specifications, each under 60 characters."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "One or two sentences on why this product fits the question, with numbered citation markers like [1]. Do not mention prices or currency amounts."
+                }
+              },
+              "required": [
+                "name",
+                "brand",
+                "modelIdentifiers",
+                "keySpecs",
+                "reason"
+              ]
+            }
+          }
+        },
+        "required": [
+          "comparison",
+          "candidates"
+        ]
+      },
+      "userLocation": "JP"
+    }
+  },
+  "requestedAt": "2026-11-21T03:22:02.545Z",
+  "receivedAt": "2026-11-21T03:22:04.244Z",
+  "httpStatus": 200,
+  "response": {
+    "requestId": "14f9c3b1254a495949c7d4f0af2f8387",
+    "answer": {
+      "candidates": [
+        {
+          "reason": "The Kindle Paperwhite (2024) is the 12th generation model, which is currently priced at 39,980 yen in Japan following a price adjustment for the series [1][3][7].",
+          "modelIdentifiers": [
+            "第12世代"
+          ],
+          "keySpecs": [
+            "7-inch display",
+            "16GB storage",
+            "IPX8 waterproof",
+            "Adjustable warm light",
+            "Up to 12 weeks battery life"
+          ],
+          "brand": "Amazon",
+          "name": "Kindle Paperwhite (2024年モデル)"
+        }
+      ],
+      "comparison": "While the Kindle Paperwhite (2024 model) originally launched at 27,980 yen [5][6], its price has increased to 39,980 yen as of November 2026, matching the price of the latest released generation [3][7]."
+    },
+    "citations": [
+      {
+        "id": "https://www.amazon.co.jp/-/en/Kindle-Paperwhite-7-inch-display-ereader-16GB-adjustable-warm-light-12-weeks-battery-life-black-non-ad/dp/B0CFPL6CFY",
+        "title": "Amazon.co.jp: Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラック",
+        "url": "https://www.amazon.co.jp/-/en/Kindle-Paperwhite-7-inch-display-ereader-16GB-adjustable-warm-light-12-weeks-battery-life-black-non-ad/dp/B0CFPL6CFY",
+        "author": "Visit the Amazon Kindle Store"
+      },
+      {
+        "id": "https://topics.smt.docomo.ne.jp/article/www_watch/trend/www_watch-2154084",
+        "title": "新Kindle出揃う　「価格勝負」から「薄くて上質・カラフル」に（Impress Watch）｜ｄメニューニュース（NTTドコモ）",
+        "url": "https://topics.smt.docomo.ne.jp/article/www_watch/trend/www_watch-2154084",
+        "publishedDate": "2026-11-05T19:15:41.000Z",
+        "author": "Impress Watch",
+        "image": "https://img.topics.smt.news.goo.ne.jp/picture/www_watch/m_www_watch-2154084.jpg"
+      },
+      {
+        "id": "https://ouchigadget.com/kindle-tanmatsu-sale/",
+        "title": "Kindle端末のセールはいつ来るか｜2026年の大型セール5回の実績日程と、10月29日時点で12モデル全部が定価だった実測 | オウチガジェット",
+        "url": "https://ouchigadget.com/kindle-tanmatsu-sale/",
+        "publishedDate": "2026-10-29T08:08:47.000Z",
+        "author": "この記事を書いた人 オウチガジェット編集部 Amazonデバイスの設定とトラブル解決をまとめています。",
+        "image": "https://ouchigadget.com/wp-content/uploads/2026/10/thumbnail-80.png"
+      },
+      {
+        "id": "https://www.itmedia.co.jp/pcuser/articles/2410/16/news193.html",
+        "title": "新型「Kindle Paperwhite」は7型に大画面化！　明るくてページめくりも早いが価格は約2.8万円に　シグネチャーエディションは約3.3万円 - ITmedia PC USER",
+        "url": "https://www.itmedia.co.jp/pcuser/articles/2410/16/news193.html",
+        "publishedDate": "2024-10-16T22:00:00.000Z",
+        "author": "[ ITmedia ]",
+        "image": "https://image.itmedia.co.jp/pcuser/articles/2410/16/cover_news193.jpg"
+      },
+      {
+        "id": "https://appllio.com/amazon-kindle-reader-select-guide",
+        "title": "【2026】Kindle端末のおすすめ機種は？ 比較と選び方 | アプリオ",
+        "url": "https://appllio.com/amazon-kindle-reader-select-guide",
+        "publishedDate": "2026-11-19T07:09:00.000Z",
+        "author": "戸田 覚",
+        "image": "https://appllio.com/sites/default/files/styles/cover_xl_1/public/2024/11/05/r-2411-kindle-review-top.jpg"
+      },
+      {
+        "id": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite+%E6%9C%AC%E4%BD%93/560313/",
+        "title": "【楽天市場】kindle paperwhite 本体（電子書籍リーダー本体｜スマートフォン・タブレット）の通販",
+        "url": "https://search.rakuten.co.jp/search/mall/kindle+paperwhite+%E6%9C%AC%E4%BD%93/560313/",
+        "image": "https://r.r10s.jp/com/img/logo/rakuten_group_red.svg"
+      },
+      {
+        "id": "https://note.com/solo_dev_jp/n/n93d3ccd267df",
+        "title": "【Amazonプライム感謝祭】 Kindle 2024が16,980円。2026年モデルとの違いと、初めての1台の選び方｜YASUO-JP",
+        "url": "https://note.com/solo_dev_jp/n/n93d3ccd267df",
+        "publishedDate": "2026-10-12T18:45:40.000Z",
+        "author": "YASUO-JP",
+        "image": "https://assets.st-note.com/production/uploads/images/323754599/rectangle_large_type_2_0508d2bf1a478fded7ad4999ddd06b91.jpeg?fit=bounds&quality=85&width=1280"
+      },
+      {
+        "id": "https://howmuchwhere.com/price/kindle-paperwhite/jp",
+        "title": "Kindle Paperwhite (16GB) Price in Japan (2026) — How Much Does It Cost? | HowMuchWhere",
+        "url": "https://howmuchwhere.com/price/kindle-paperwhite/jp"
+      }
+    ],
+    "costDollars": {
+      "total": 0.005
+    }
+  }
+}

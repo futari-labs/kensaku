@@ -8,7 +8,7 @@ import { classifyHit } from "../../src/core";
 import type { Candidate, Offer } from "../../src/core/types";
 import { parseSearchResponse } from "../../src/exa/parse";
 import { frozen } from "../exa/helpers";
-import { offersOf, revalidate } from "./revalidate";
+import { offersOf, revalidate, revalidateRun } from "./revalidate";
 import type { RecordedRun } from "./revalidate";
 
 const DIR = join(import.meta.dirname, "../../.futari/evidence/live");
@@ -33,9 +33,24 @@ describe.skipIf(files.length === 0)("live smoke revalidation (committed logs)", 
 });
 
 describe.skipIf(suiteFiles.length === 0)("EV-008 suite run logs (committed)", () => {
-  it.each(suiteFiles)("%s: every displayed offer in every query is reproduced from the recorded responses", (file) => {
+  // The MVP logs are history (EVALUATION_PLAN "Historical live logs"): under the v1.1 rules exactly one displayed offer
+  // changes class, Q5-O1 in run 1 (a Rakuten search page, rule 5b), and nothing else does.
+  it.each(suiteFiles)("%s: every displayed offer is reproduced, except Q5-O1 of run 1", (file) => {
     const run = JSON.parse(readFileSync(join(DIR, file), "utf8")) as { queries: RecordedRun[] };
-    for (const query of run.queries) expect(revalidate(query), query.queryId).toEqual([]);
+    const revalidated = run.queries.map((query) => ({ query, ...revalidateRun(query) }));
+    for (const { candidateProblems } of revalidated) expect(candidateProblems).toEqual([]);
+    const changed = revalidated.flatMap(({ query, offers }) => offers.filter((o) => !o.reproduced).map((o) => ({ queryId: query.queryId, ...o })));
+    if (!file.startsWith("ev-008-run-1-")) {
+      expect(changed).toEqual([]);
+      return;
+    }
+    expect(changed.map((o) => o.queryId)).toEqual(["Q5"]);
+    const [q5] = changed;
+    expect(q5!.offer.merchantHost).toBe("search.rakuten.co.jp");
+    expect(q5!.fromRun).toBe(true);
+    expect(q5!.now).toMatchObject({ kind: "evidence", category: "search-or-category" });
+    const q5Offers = offersOf(run.queries.find((q) => q.queryId === "Q5")!);
+    expect(q5Offers[0]!.offer.canonicalUrl).toBe(q5!.offer.canonicalUrl);
   });
 });
 

@@ -11,8 +11,16 @@ import type { RunOptions } from "../research/pipeline";
 import { parseChatBody, toChunks } from "./chat";
 import type { AppConfig } from "./config";
 import { hostOriginGuard } from "./guard";
+import { commerceRoutes } from "./commerce-routes";
+import type { CommerceDeps } from "./commerce-routes";
+import { SECURITY_HEADERS } from "./images";
+import type { ImageProxy } from "./images";
 
 export type LogLine = Record<string, unknown>;
+
+/** ARCHITECTURE, "Content-Security-Policy (v1.1)". Every response but `/api/image/:id`, which sends its own stricter one. */
+export const CONTENT_SECURITY_POLICY =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
 
 export interface AppDeps {
   config: AppConfig;
@@ -23,16 +31,30 @@ export interface AppDeps {
   log: (line: LogLine) => void;
   /** Pipeline knobs (timeouts, backoff); tests shorten them. */
   run?: Pick<RunOptions, "sleep" | "callTimeoutMs" | "runTimeoutMs">;
+  /** The image proxy behind `GET /api/image/:id`; without one the route does not exist. */
+  images?: ImageProxy;
+  /** The simulated cart and checkout (v1.2); without it the commerce routes do not exist and research offers are not registered. */
+  commerce?: CommerceDeps;
 }
+
+/** `/api/image` and everything under it: one policy of its own, the proxy's. */
+const isImagePath = (path: string): boolean => /^\/api\/image(\/|$)/.test(path);
 
 const jsonError = (kind: ApiErrorKind, message: string) => ({ kind, message });
 
 /** The Hono app. Everything it touches arrives through `deps`; it holds one run lock and nothing else. */
 export function createApp(deps: AppDeps): Hono {
-  const { config, ledger, clock, log } = deps;
+  const { config, ledger, clock, log, images, commerce } = deps;
   const app = new Hono();
   let running = false;
 
+  // Outermost, and set after next(), so the guard's 403 and the catch-all 404 on image paths carry the security headers too.
+  // The page policy goes on every other path, also outermost so the guard's 403 carries it.
+  app.use("*", async (c, next) => {
+    await next();
+    if (isImagePath(c.req.path)) for (const [name, value] of Object.entries(SECURITY_HEADERS)) c.res.headers.set(name, value);
+    else c.res.headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  });
   app.use("*", hostOriginGuard({ port: config.port, dev: config.dev }));
 
   app.get("/api/health", (c) => c.json({ ok: true, exaConfigured: config.exaConfigured, mode: config.mode }));
@@ -59,11 +81,13 @@ export function createApp(deps: AppDeps): Hono {
     const signal = c.req.raw.signal;
     const runId = randomUUID();
     const month = () => ({ monthRequests: ledger.read(clock()).requests, monthLimit: ledger.limits.requestLimit });
+    const registerImages = images?.registerImageCandidates.bind(images);
+    const registerOffers = commerce?.offers.register.bind(commerce.offers);
     const stream = createUIMessageStream<KensakuMessage>({
       execute: async ({ writer }) => {
         try {
           writer.write({ type: "start", messageId: runId });
-          for await (const event of runResearch({ question, market }, port, signal, { ...deps.run, runId, log })) {
+          for await (const event of runResearch({ question, market }, port, signal, { ...deps.run, runId, log, ...(registerImages && { registerImages }), ...(registerOffers && { registerOffers }) })) {
             if (signal.aborted) break;
             for (const chunk of toChunks(event, month)) writer.write(chunk);
           }
@@ -82,8 +106,17 @@ export function createApp(deps: AppDeps): Hono {
       },
       onError: () => "Unexpected server error.",
     });
-    return createUIMessageStreamResponse({ stream });
+    // The SDK encodes the stream as UTF-8 but sends `text/event-stream` without a charset, which Chromium's
+    // network layer (and so Playwright's `response.body()`) decodes as windows-1252.
+    return createUIMessageStreamResponse({ stream, headers: { "content-type": "text/event-stream; charset=utf-8" } });
   });
+
+  if (images) app.get("/api/image/:id", (c) => images.serve(c.req.param("id"), c.req.header("sec-fetch-site")));
+
+  if (commerce) {
+    app.route("/", commerceRoutes(commerce));
+    if (commerce.fakeHosted) app.route("/", commerce.fakeHosted);
+  }
 
   app.all("/api/*", (c) => c.json({ error: "not found" }, 404));
   app.use("/*", serveStatic({ root: "./dist" }));

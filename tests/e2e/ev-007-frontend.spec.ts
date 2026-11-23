@@ -55,7 +55,7 @@ const watchRunStates = (page: Page) =>
 const watched = (page: Page) => page.evaluate(() => (window as unknown as { __watched: { announced: string[]; cancelledAlert: boolean } }).__watched);
 
 // Item 1: primary journey.
-test("1. primary journey: stages in order, cited comparison, offer table fields, separate evidence, last-observed notice", async ({ page }) => {
+test("1. primary journey: stages in order, cited comparison, offer list fields in the product card, separate evidence, last-observed notice", async ({ page }) => {
   await page.goto("/");
   await ask(page);
 
@@ -87,17 +87,20 @@ test("1. primary journey: stages in order, cited comparison, offer table fields,
   // Fixture mode has no usage ledger, so the footer leaves out the monthly figure (it would read "0 of 400").
   await expect(page.getByTestId("usage")).not.toContainText("this month");
   await expect(page.getByTestId("last-observed-notice")).toContainText("last observed");
-  const row = page.getByTestId("offer-row").first();
-  await expect(row.locator("td").nth(0)).not.toBeEmpty();
-  await expect(row.locator("td").nth(1)).toHaveText(/\d[\d,]*(\.\d\d)? USD/);
-  await expect(row.locator("td").nth(2).locator('[data-slot="badge"]')).toHaveText(/In stock|Out of stock|Preorder|Availability unknown/);
-  await expect(row.locator("td").nth(3).locator("time")).toHaveAttribute("datetime", /^\d{4}-\d\d-\d\dT/);
+  const row = page.getByTestId("product").first().getByTestId("offer-row").first();
+  await expect(row.locator('[data-slot="item-title"]')).not.toBeEmpty();
+  await expect(row).toContainText(/\d[\d,]*(\.\d\d)? USD/);
+  await expect(row.locator('[data-slot="badge"]')).toHaveText(/In stock|Out of stock|Preorder|Availability unknown/);
+  await expect(row.locator("time")).toHaveAttribute("datetime", /^\d{4}-\d\d-\d\dT/);
   await expect(row.getByRole("link", { name: /View .* at / })).toHaveAttribute("href", /^https:\/\//);
-  await expect(page.getByRole("columnheader")).toHaveText(["Merchant", "Price", "Availability", "Retrieved", "Link"]);
 
+  // Evidence is its own labeled section: the product card's Research details, outside the offer list.
+  const details = page.getByRole("button", { name: /^Research details/ }).first();
+  await expect(details).toHaveAttribute("aria-expanded", "false");
+  await details.click();
   const evidence = page.getByTestId("evidence").first();
   await expect(evidence).toContainText("Research evidence (not merchant offers)");
-  expect(await page.getByTestId("offer-table").getByTestId("evidence").count()).toBe(0);
+  expect(await page.getByTestId("offers").getByTestId("evidence").count()).toBe(0);
 });
 
 // Item 2: states.
@@ -345,15 +348,18 @@ test.describe("4. market", () => {
       await ask(page);
       expect((await request).postDataJSON()).toMatchObject({ market });
       await finished(page);
-      const captions = await page.getByTestId("offer-table").locator("caption").allTextContents();
-      expect(captions[0]).toBe(`Prices in ${currency}`);
+      // The market's currency fills the card's main offer list; any other currency waits under Other markets.
+      const main = page.getByTestId("product").first().getByTestId("offers").getByTestId("offer-row");
+      expect(await main.count()).toBeGreaterThan(0);
+      for (const text of await main.allTextContents()) expect(text).toContain(currency);
+      await expect(page.getByTestId("product").first().getByTestId("price-summary")).toContainText(currency);
 
       await page.reload();
       await expect(page.getByTestId("market-select")).toContainText(label);
     });
   }
 
-  test("the page shows the server's group order: the market's currency first, whichever market is chosen", async ({ page }) => {
+  test("the page puts the market's currency in the main list and the rest under Other markets, whichever market is chosen", async ({ page }) => {
     // The server's own ordering is EV-003; this stands in for it to show the page keeps the order it receives and sends the market.
     const order = { US: ["USD", "SGD"], SG: ["SGD", "USD"], JP: ["JPY", "USD"] } as const;
     const offer = (currency: "USD" | "SGD" | "JPY", amount: number): Offer => ({
@@ -376,7 +382,13 @@ test.describe("4. market", () => {
     for (const [market, label] of [["US", /United States/], ["SG", /Singapore/], ["JP", /Japan/]] as const) {
       await chooseMarket(page, label);
       await ask(page, `widget ${market}`);
-      await expect(page.getByTestId("turn").last().getByTestId("offer-table").first().locator("caption")).toHaveText(`Prices in ${order[market][0]}`);
+      const [main, rest] = order[market];
+      const card = page.getByTestId("turn").last().getByTestId("product");
+      await expect(card.getByTestId("offers")).toContainText(main);
+      await expect(card.getByTestId("offers")).not.toContainText(rest);
+      await expect(card.getByRole("button", { name: /^Other markets/ })).toBeVisible();
+      await card.getByRole("button", { name: /^Other markets/ }).click();
+      await expect(card.getByTestId("other-markets")).toContainText(rest);
     }
   });
 });
@@ -438,7 +450,8 @@ test.describe("5. accessibility", () => {
       throw new Error(`focus never reached ${label}`);
     };
 
-    await page.goto("/?scenario=xm5-sg");
+    // The default market is US, so a US scenario puts its offers in the main list where the keyboard reaches them.
+    await page.goto("/?scenario=xm5-us");
     await tabTo(/^Question$/);
     await page.keyboard.type(Q1);
     await page.keyboard.press("Enter");
@@ -527,30 +540,29 @@ test.describe("5. accessibility", () => {
   });
 });
 
-// Item 6: layout.
-test("6. at 375 px there is no horizontal page scroll and the offer table scrolls within its container", async ({ page }) => {
+// Item 6: layout (v1.1: replaces "the offer table remains readable"; EV-015 check 1 holds the card sizes).
+test("6. at 375 px there is no horizontal page scroll and the card layout fits the page", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");
   await ask(page);
   await finished(page);
   const layout = await page.evaluate(() => {
-    const container = document.querySelector('[data-testid="offer-table"]')!.closest('[data-slot="table-container"]') as HTMLElement;
     const product = document.querySelector('[data-testid="product"]')!.getBoundingClientRect();
+    const image = document.querySelector('[data-testid="product"] [data-slot="aspect-ratio"]')!.getBoundingClientRect();
     return {
       pageScrollWidth: document.documentElement.scrollWidth,
       bodyScrollWidth: document.body.scrollWidth,
       innerWidth: window.innerWidth,
       productRight: product.right,
-      containerClient: container.clientWidth,
-      containerScroll: container.scrollWidth,
-      overflowX: getComputedStyle(container).overflowX,
+      productWidth: product.width,
+      imageWidth: image.width,
     };
   });
   expect(layout.pageScrollWidth).toBeLessThanOrEqual(layout.innerWidth);
   expect(layout.bodyScrollWidth).toBeLessThanOrEqual(layout.innerWidth);
   expect(layout.productRight).toBeLessThanOrEqual(layout.innerWidth);
-  expect(layout.containerScroll).toBeGreaterThan(layout.containerClient);
-  expect(["auto", "scroll"]).toContain(layout.overflowX);
+  expect(layout.imageWidth).toBeGreaterThanOrEqual(300);
+  expect(Math.abs(layout.imageWidth - layout.productWidth)).toBeLessThanOrEqual(2);
   await expect(page.getByTestId("offer-row").first().getByRole("link", { name: /View .* at / })).toBeAttached();
   await expect(page.getByTestId("market-select")).toBeVisible();
   await expect(question(page)).toBeVisible();

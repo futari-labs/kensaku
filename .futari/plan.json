@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "planId": "kensaku-mvp-v1",
+  "planId": "kensaku-v1-2",
   "projectName": "Kensaku",
   "repository": "futari-labs/kensaku",
-  "completionCondition": "JM-001 to JM-006 are merged into dev through one PR each with required checks green; on the final dev head CI passes EV-001 to EV-007 and EV-009 plus typecheck, lint, build, evals/harness.mjs, scripts/check-components.mjs and the Futari contract check; EV-008 passes locally under the thresholds in evals/cases/live-acceptance.json with its run log and owner audit committed under .futari/evidence/live/; and the owner records product acceptance in docs/futari/PROGRESS.md. Promotion to main and deployment are excluded.",
+  "completionCondition": "JM-201 to JM-205 are merged into dev through one PR each with the CI and Futari contract checks green on each PR head and CI green on dev after each merge; on the final dev head CI passes EV-001 to EV-007, EV-009 to EV-015 and EV-017 to EV-022 plus typecheck, lint, build, node evals/harness.mjs, scripts/check-components.mjs and the Futari contract check, and node evals/harness.mjs --strict --final exits 0 locally at that head; the JM-203 sandbox smoke passed; EV-023 passes locally under evals/cases/live-acceptance-v1-2.json with every run log and the owner's H1-H5 audit committed under .futari/evidence/live/; and the owner records v1.2 product acceptance in docs/futari/PROGRESS.md. Promotion to main, deployment, and live Stripe keys are excluded.",
   "maxParallelTasks": 2,
   "maxRepairAttemptsPerTask": 3,
   "liveEvaluationBudget": {
@@ -44,12 +44,20 @@
     "docs/futari/research/exa-2026-11-21.md",
     "docs/futari/research/references-2026-11-21.md",
     "docs/futari/research/github-2026-11-21.md",
+    "docs/futari/research/v1-1-spike-2026-11-21.md",
+    "docs/futari/archive/kensaku-mvp-v1/README.md",
+    "docs/futari/archive/kensaku-mvp-v1/plan.json",
+    "docs/futari/archive/kensaku-mvp-v1/approval.json",
     "evals/harness.mjs",
     "evals/cases/offer-classification.json",
     "evals/cases/ranking-currency.json",
     "evals/cases/citations.json",
     "evals/cases/live-acceptance.json",
     "evals/cases/citations-spaced.json",
+    "evals/cases/offer-classification-v1-1.json",
+    "evals/cases/image-selection.json",
+    "evals/cases/product-content.json",
+    "evals/cases/live-acceptance-v1-1.json",
     "evals/fixtures/exa-live/S1-headphones.json",
     "evals/fixtures/exa-live/S2-mouse.json",
     "evals/fixtures/exa-live/S3-espresso.json",
@@ -62,7 +70,31 @@
     "evals/fixtures/exa-live/A1-answer.json",
     "evals/fixtures/exa-live/A2-answer-schema.json",
     "evals/fixtures/exa-live/A3-answer-stream.json",
-    "evals/fixtures/exa-live/A4-answer-spaced-markers.json"
+    "evals/fixtures/exa-live/A4-answer-spaced-markers.json",
+    "evals/fixtures/exa-live/V1-answer-sg-extended.json",
+    "evals/fixtures/exa-live/V2-search-sg-xm5.json",
+    "evals/fixtures/exa-live/V3-search-sg-bambino.json",
+    "evals/fixtures/exa-live/V4-search-us-xm5-control.json",
+    "evals/fixtures/exa-live/V5-search-jp-kindle.json",
+    "evals/fixtures/exa-live/V6-search-sg-candidate-1.json",
+    "evals/fixtures/exa-live/V7-search-sg-candidate-2.json",
+    "evals/fixtures/exa-live/V8-answer-us-no-price-reason.json",
+    "evals/fixtures/exa-live/R1-Q5-offers-xm5.json",
+    "evals/fixtures/exa-live/R1-Q6-offers-paperwhite.json",
+    "evals/fixtures/exa-live/V9-answer-us-tight-identifiers.json",
+    "evals/fixtures/exa-live/V10-answer-jp-tight-identifiers.json",
+    "evals/fixtures/exa-live/R1-Q4-answer-bambino.json",
+    "evals/fixtures/history/mvp-history-xm5-sg.json",
+    "spikes/exa-v1-1/spike.mjs",
+    "spikes/exa-v1-1/image-probe.mjs",
+    "docs/futari/research/stripe-2026-11-23.md",
+    "docs/futari/archive/kensaku-v1-1/README.md",
+    "docs/futari/archive/kensaku-v1-1/plan.json",
+    "docs/futari/archive/kensaku-v1-1/approval.json",
+    "evals/cases/commerce-rules.json",
+    "evals/cases/checkout-session-request.json",
+    "evals/cases/webhook-events.json",
+    "evals/cases/live-acceptance-v1-2.json"
   ],
   "requirements": [
     {
@@ -80,7 +112,8 @@
       "acceptanceCriteria": [
         "Every rendered source link is a citation URL returned by Exa in this run.",
         "Out-of-range markers are removed and counted; paragraphs with no resolved marker are visibly flagged uncited.",
-        "All cases in evals/cases/citations.json and evals/cases/citations-spaced.json produce their expected results, including markers written with spaces such as [2, 5, 6] (CR-001)."
+        "All cases in evals/cases/citations.json and evals/cases/citations-spaced.json produce their expected results, including markers written with spaces such as [2, 5, 6] (CR-001).",
+        "(v1.1) Comparison text containing '{' or '}' is cut before the first such character and its citations resolved on the kept text; the UI notes \"Exa's answer ended in malformed output, which is not shown.\"; if no letter remains, the comparison is replaced by that note (D-042, EV-012 comparison cases)."
       ]
     },
     {
@@ -90,7 +123,8 @@
         "Every displayed offer has merchant host, positive price, supported ISO currency, canonical http(s) URL from this run, availability enum value, source exa, and retrievedAt.",
         "Aggregator, editorial, non-listing, price-less, and merchant-mismatch pages appear only in a separately labeled evidence section.",
         "Irrelevant products, unsupported currencies, URLs not from the run, and non-http URLs never appear as offers.",
-        "All 54 cases in evals/cases/offer-classification.json produce their labeled outcome, category, and offer fields."
+        "All 54 cases in evals/cases/offer-classification.json produce their labeled outcome, category, and offer fields, except that L29 and Y03 produce the superseding labels recorded in evals/cases/offer-classification-v1-1.json (D-031, D-032).",
+        "(v1.1) Marketplace and search-or-category pages also appear only as labeled evidence (REQ-016)."
       ]
     },
     {
@@ -117,7 +151,8 @@
         "No sequence of candidates, retries, or errors makes a sixth Exa call in one run.",
         "A repeated question within the TTL makes no Exa call and shows the original retrievedAt.",
         "Monthly request and cost limits block calls before they are made; a 402 or credit error blocks later calls until reset.",
-        "Each response's costDollars.total is added to the ledger and shown in the run's usage."
+        "Each response's costDollars.total is added to the ledger and shown in the run's usage.",
+        "(v1.1) Image fetching never takes a RequestBudget token, never calls Exa, and never writes the Exa ledger."
       ]
     },
     {
@@ -125,16 +160,20 @@
       "description": "Local and key safety: the server listens only on 127.0.0.1, rejects foreign Host or Origin, and the Exa key never leaves the server process.",
       "acceptanceCriteria": [
         "The listen address is hard-coded to 127.0.0.1; requests with a foreign Host or cross-origin Origin get 403.",
-        "A test key string is absent from a production build, server logs, .cache/, evals/fixtures/, API responses, and browser storage."
+        "A test key string is absent from a production build, server logs, .cache/ (including .cache/images/), evals/fixtures/, API responses, and browser storage.",
+        "(v1.1) Every server response except /api/image/:id carries the Content-Security-Policy in docs/futari/ARCHITECTURE.md 'Content-Security-Policy', so the browser loads scripts, styles, images, fonts and API calls only from 127.0.0.1; the Host/Origin guard also covers /api/image/:id.",
+        "(v1.2) The browser contacts no third party except the owner-initiated top-level navigation to a server-returned https://checkout.stripe.com/ URL and Stripe's redirect back (D-055); the Content-Security-Policy is unchanged; all commerce routes, including POST /api/stripe/webhook, sit behind the same Host/Origin guard.",
+        "(v1.2) STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET follow the same rule as the Exa key: absent from the build, logs, responses, .cache/, .data/, fixtures, and tracked files (REQ-023, EV-021)."
       ]
     },
     {
       "id": "REQ-008",
-      "description": "Live acceptance: the 6-query live suite across US, SG, and JP meets the agreed thresholds within the live usage limits before the MVP is declared complete.",
+      "description": "Live acceptance (v1.2, replaces the v1.1 8-query suite, D-044): the Stripe sandbox acceptance in evals/cases/live-acceptance-v1-2.json passes within the live limits before v1.2 is declared complete. The v1.1 EV-016 runs stay committed as history.",
       "acceptanceCriteria": [
-        "At least 4 of 6 queries show at least one merchant offer.",
-        "100% of displayed offers pass revalidation against the recorded Exa responses, and at least 90% pass the owner's audit rubric.",
-        "Zero fabricated offers and no unexpected error runs; at most 5 requests per query and $0.40 reported cost per suite run."
+        "Scenarios A1-A8 in evals/cases/live-acceptance-v1-2.json all pass in the last permitted run (at most 2 runs), except that A3 may be BLOCKED under the case file's blockedAllowances (CR-006, D-060): USD and SGD sandbox payments, and the JPY payment unless A3 is BLOCKED under blockedAllowances, marked paid only by verified webhooks; a declined card and a cancelled checkout end cancelled with the cart unchanged; a resent event is answered duplicate; superseded and cancelled sessions are expired at Stripe; unsigned or wrongly signed deliveries get 400.",
+        "Across the run: 0 orders paid without a verified completed or async-succeeded event, 0 live-mode objects, 0 duplicate paid transitions, 0 sessions whose amount or currency differs from the order, 0 charges outside the sandbox.",
+        "The owner answers yes to audit items H1-H5, recorded in .futari/evidence/live/ev-023-run-<n>-audit.md.",
+        "Exa use stays within 30 requests and $0.40 of reported cost plan-wide from free credits (smoke ≤ 5, EV-023 ≤ 25); Stripe use is sandbox only; the run log contains no key, secret, or card number."
       ]
     },
     {
@@ -143,32 +182,178 @@
       "acceptanceCriteria": [
         "After a reload the full conversation, including results, is restored.",
         "Clear history asks for confirmation, then empties the thread and removes kensaku.history.v1.",
-        "Invalid stored data is discarded with a visible notice."
+        "Invalid stored data is discarded with a visible notice.",
+        "(v1.1) The frozen MVP history payload evals/fixtures/history/mvp-history-xm5-sg.json, loaded unchanged, renders as v1.1 product cards with the image fallback and without key-spec or reason sections.",
+        "(v1.2) History stays at version 1; offers gain an optional id; offers without an id (history saved before v1.2) render with a disabled 'Ask again to buy' button and the rest of the card unchanged."
       ]
     },
     {
       "id": "REQ-010",
-      "description": "Frontend quality and components: the UI uses unmodified official AI Elements and shadcn/ui components, has a persistent market selector, and meets accessibility, layout, and owner visual review.",
+      "description": "Frontend quality and components: the UI uses unmodified official AI Elements and shadcn/ui components, has a persistent market selector, and meets accessibility, layout, and owner visual review. (v1.1: in both themes, with the image-first cards.) (v1.2: including the simulated cart, dialogs, and checkout return states.)",
       "acceptanceCriteria": [
         "scripts/check-components.mjs confirms every installed component file matches components.lock.json and components.json lists the @ai-elements registry.",
-        "axe reports zero serious or critical violations on empty, running, completed, and error states; the journey works by keyboard alone.",
+        "axe reports zero serious or critical violations on empty, running, completed, and error states; the journey works by keyboard alone. (v1.1) This holds in the dark and the light theme.",
         "At 375 px width there is no horizontal page scroll.",
-        "The owner records visual review in .futari/evidence/JM-005.md."
+        "The owner records visual review of the v1.1 cards on desktop and mobile widths in both themes in .futari/evidence/JM-105.md.",
+        "(v1.1) No new design system or hand-edited component is introduced, and the CSS variables in src/web/index.css are unchanged.",
+        "(v1.2) The cart sheet, currency-replace dialog, and every checkout return panel have zero serious or critical axe violations in both themes and work by keyboard alone; the only new component is the official shadcn sheet installed unmodified with the pinned CLI and recorded in components.lock.json.",
+        "(v1.2) The owner records visual review of the commerce UI on desktop and mobile widths in both themes in .futari/evidence/JM-204.md."
+      ]
+    },
+    {
+      "id": "REQ-011",
+      "description": "Theme: dark is the default for first-time visitors, an accessible toggle in the header switches between dark and light, the choice persists, and the first paint already uses the right theme.",
+      "acceptanceCriteria": [
+        "With no stored preference, the page renders dark regardless of the operating system's prefers-color-scheme.",
+        "A header button with an accessible name ('Switch to light theme' or 'Switch to dark theme') toggles the theme by mouse and keyboard and stores 'dark' or 'light' in localStorage kensaku.theme.v1; reloads keep the choice.",
+        "The theme class and color-scheme are set by a blocking script before the app bundle runs, so with the bundle delayed the page already shows the chosen theme; an invalid stored value or unavailable localStorage falls back to dark without an error.",
+        "Theming uses the shadcn/ui class-based .dark convention and the existing CSS variables in src/web/index.css only."
+      ]
+    },
+    {
+      "id": "REQ-012",
+      "description": "Image-first product cards: each recommended product gets its own generously sized card with a large image, name, price summary, key specifications, recommendation reason, and merchant offers, with research details available but collapsed.",
+      "acceptanceCriteria": [
+        "At 1280 px viewport width product cards sit two per row, each at least 480 px wide; at 375 px they sit one per row with no horizontal page scroll.",
+        "Each card's image is full-bleed: it spans the card's full width (no inner padding) at a 4:3 aspect ratio above the text; at 1280 px it is at least 360 px tall, and at 375 px it is at least 300 px wide (so at least 225 px tall).",
+        "A card shows, in order: product name (candidate brand and name), image with caption, price summary ('From <lowest listed price> <code>') from offers in the market's currency only, up to 5 key specifications, the cited recommendation reason, the merchant offer list, an 'Other markets' disclosure when other-currency offers exist, and a 'Research details' disclosure with evidence and rejected counts; the card reads key specs and the reason only from the normalized data-products entry fields, never from the raw candidate.",
+        "The product heading names the product, never a merchant; each offer row names its merchant host, merchant name, price with ISO currency code, availability, retrieval time, and a 'View offer' link, so a product with several merchants reads as one product with several offers.",
+        "Reason citations render with the AI Elements inline-citation component and resolve under the EV-004 rule after the leaked-structure cut (D-042); the comparison text and its Sources stay above the cards."
+      ]
+    },
+    {
+      "id": "REQ-013",
+      "description": "Real product images: images come only from the product pages of this run's merchant offers or from the manufacturer's page, under rules I1-I3, with loading states, attribution, and a graceful fallback; nothing is generated or invented.",
+      "acceptanceCriteria": [
+        "The pipeline selects up to 4 image candidates per product with rules I1 and I2 in evals/cases/image-selection.json, and the proxy accepts bytes only under rule I3; no image ever comes from aggregator, editorial, marketplace, search-or-category, merchant-mismatch, or rejected pages.",
+        "The card shows a skeleton while an image loads, tries candidates in order, and shows a 'No verified product image' fallback (no broken-image icon) when none loads.",
+        "The caption names the source page's host and its product title as Exa reported it (so a colour variant is named), and the image's alt text is '<brand> <name>, image from <host>'.",
+        "No image is generated, edited, or taken from a source outside this run's Exa results."
+      ]
+    },
+    {
+      "id": "REQ-014",
+      "description": "Image proxy safety and cache: the server fetches and serves only image URLs registered by a research run, blocks private networks, validates bytes, and caches bytes and metadata on disk.",
+      "acceptanceCriteria": [
+        "GET /api/image/:id serves only ids registered by a run (SHA-256 of the image URL); unknown or malformed ids get 404 without any outbound request; requests whose Sec-Fetch-Site header is present and not same-origin get 403, and every response carries Cross-Origin-Resource-Policy: same-origin.",
+        "Only http and https URLs on ports 80 or 443 are fetched; every connection, including each of at most 3 redirects, goes to an address that was resolved once for that hop and checked: IPv4 must be public unicast and IPv6 must be in 2000::/3 outside 2001::/32, 2001:db8::/32 and 2002::/16; URL hosts that are IP literals are checked the same way. The connection is made with node:http or node:https to the checked address.",
+        "Fetches send no cookies, credentials, or Referer, time out after 8 s, stop at 5 MiB, and accept only bytes passing rule I3; responses use the sniffed image type, X-Content-Type-Options: nosniff, and Content-Security-Policy: default-src 'none'.",
+        "Accepted bytes are reused for 7 days and then refetched while the registry entry exists; registry entries are pruned 30 days after their last registration, and bytes are evicted oldest-first above 500 MB in total; rule I3 rejections are cached for 24 hours and upstream failures for 10 minutes; image fetching never uses Exa or the Exa budget."
+      ]
+    },
+    {
+      "id": "REQ-015",
+      "description": "Market relevance and currency presentation: offer searches name the market, the card's main offer list shows only the selected market's currency, and other currencies are collapsed under 'Other markets'.",
+      "acceptanceCriteria": [
+        "The offer search query is '<brand> <name> price <United States|Singapore|Japan> buy' with userLocation set to the market.",
+        "A card's main offer list and price summary use only offers in the market's currency; offers in other supported currencies appear in a collapsed 'Other markets (may not ship to <market name>)' disclosure, and no conversion is ever shown.",
+        "When a product has no offer in the market's currency, the main list says 'No <market name> offers found' and the Other markets disclosure stays collapsed.",
+        "Prices show the amount with the ISO currency code (for example '289.00 SGD'); symbols such as '$' are never shown alone."
+      ]
+    },
+    {
+      "id": "REQ-016",
+      "description": "Non-merchant pages and currency symbols (CR-002 and v1.1 additions): search, category, editorial, and second-hand marketplace pages never appear as merchant offers, and unambiguous currency symbols are recognized.",
+      "acceptanceCriteria": [
+        "Classification applies the rule additions 4, 5, 5a, 5b, 5c and 7 recorded in evals/cases/offer-classification-v1-1.json ruleAdditions and docs/futari/ARCHITECTURE.md.",
+        "EV-011 passes all 79 cases in evals/cases/offer-classification-v1-1.json, including the run 1 Rakuten search page (Q5-O1, case N33).",
+        "EV-001 applies the L29 and Y03 supersessions and passes the remaining MVP cases with their original labels."
+      ]
+    },
+    {
+      "id": "REQ-017",
+      "description": "Registered offers and cart rules (D-046, D-048, D-054): only offers registered on the server by a research run can be added to the single, server-owned, one-currency cart, under the rules in evals/cases/commerce-rules.json.",
+      "acceptanceCriteria": [
+        "Every validated merchant offer in a run gets the deterministic offerId of evals/cases/commerce-rules.json rules.offerId, is registered in .cache/offers/<id>.json, and carries id in data-products.",
+        "POST /api/cart/items accepts only { offerId, quantity?, replace? } (strict); price, currency, and product data always come from the registry; unknown offerIds are refused.",
+        "Cart operations reproduce every outcome, error code, precedence, and resulting cart in evals/cases/commerce-rules.json (one currency, replace, quantity 1-10, 20 lines, Stripe minimums, total cap, out-of-stock refusal).",
+        "HTTP statuses follow docs/futari/ARCHITECTURE.md 'HTTP API' (v1.2); the cart persists across server restarts in .data/commerce/state.json."
+      ]
+    },
+    {
+      "id": "REQ-018",
+      "description": "Demo checkout price distinct from the last-observed price (D-045): the demo unit price is the observed price copied at add time, never refreshed, and always labeled separately.",
+      "acceptanceCriteria": [
+        "Each cart line stores demoUnitAmountMinor (the minor-unit form of the registered price, rules.minorUnits) and observed { amount, currency, retrievedAt, merchantHost } exactly as evals/cases/commerce-rules.json snapshotCases require.",
+        "Every cart line shows 'Demo checkout price <amount> <code>' and, in a separate element, 'Last observed <amount> <code> on <host>, <local date and time>'; totals are labeled 'Demo total'.",
+        "Each Stripe line item's description states that the demo price was copied from the price last observed on the merchant host at the stored time (EV-019)."
+      ]
+    },
+    {
+      "id": "REQ-019",
+      "description": "Stripe-hosted Checkout through the official Stripe Node SDK (D-052): stripe@23.1.0, apiVersion 2026-10-28.endive, the exact session request in evals/cases/checkout-session-request.json, no currency conversion.",
+      "acceptanceCriteria": [
+        "package.json pins stripe 23.1.0 exactly; src/commerce/stripe-port.ts is the only module that imports stripe and constructs it with apiVersion '2026-10-28.endive'.",
+        "buildCheckoutSessionRequest output deep-equals every case in evals/cases/checkout-session-request.json, and StripeCheckoutPort passes exactly those params and options to checkout.sessions.create.",
+        "The server returns the session url only if it starts with https://checkout.stripe.com/ and the session has livemode false; the client checks the prefix again and navigates with window.location.assign.",
+        "USD, SGD, and JPY sessions are created with the order's own currency and minor-unit amounts; no exchange rate or conversion exists anywhere (adaptive_pricing disabled)."
+      ]
+    },
+    {
+      "id": "REQ-020",
+      "description": "Verified webhooks and order state (D-047, D-057): orders change only through signature-verified Stripe events, the cancel route, and the supersede step, exactly as in evals/cases/webhook-events.json.",
+      "acceptanceCriteria": [
+        "POST /api/stripe/webhook verifies the Stripe-Signature over the raw body with stripe.webhooks.constructEvent and a 300 s tolerance; invalid, stale, missing, or tampered signatures get 400 and change nothing.",
+        "Live-mode events or objects get 400; processed event ids are stored and a repeat gets 200 duplicate; unknown orders and session, amount, or currency mismatches get 200 and change nothing.",
+        "State transitions, cart clearing, declinedAttempts, anomalies, and the cancel and checkout route behaviour match every case in evals/cases/webhook-events.json.",
+        "Only a verified checkout.session.completed with payment_status paid or a checkout.session.async_payment_succeeded sets an order paid."
+      ]
+    },
+    {
+      "id": "REQ-021",
+      "description": "Payment scenarios: successful, declined, cancelled, expired or superseded, and duplicate-webhook scenarios each end in their defined state, deterministically in CI and live in the sandbox.",
+      "acceptanceCriteria": [
+        "In CI, the fake hosted page drives success, decline then back, back without paying, and a duplicate delivery to the states and messages in docs/futari/EVALUATION_PLAN.md 'Commerce UI (EV-022)' checks 5-8.",
+        "In the sandbox, EV-023 scenarios A1-A8 pass."
+      ]
+    },
+    {
+      "id": "REQ-022",
+      "description": "Simulated labeling: every purchase is labeled as simulated, and nothing implies that a real merchant order was placed.",
+      "acceptanceCriteria": [
+        "The label strings in docs/futari/ARCHITECTURE.md 'Labels' (v1.2) appear on the cart, each line, the totals, the checkout button, the paid panel, and the order badges.",
+        "Stripe line item names start with 'Simulated: ' and descriptions say no order is placed with the merchant and no real payment is taken (EV-019).",
+        "None of 'Order confirmed', 'Order placed', 'Thank you for your order', 'Purchase complete', 'has shipped' appears in the UI (case-insensitive, EV-022 check 11); the owner audit H1-H5 passes (EV-023)."
+      ]
+    },
+    {
+      "id": "REQ-023",
+      "description": "Sandbox-only Stripe keys and secret handling (D-050): live keys and real payments are impossible, and credentials stay server-side and out of Git.",
+      "acceptanceCriteria": [
+        "The server refuses to start when STRIPE_SECRET_KEY contains _live_ or does not start with sk_test_, rk_test_, or rkcs_test_, or when STRIPE_WEBHOOK_SECRET lacks the whsec_ prefix; the error names the variable but never prints the value.",
+        "Checkout is enabled only when both values are present; GET /api/cart reports checkoutConfigured; GET /api/health is unchanged from v1.1 and says nothing about Stripe.",
+        "Any Stripe session with livemode true is refused (502, order failed, no url) and any event or object with livemode true gets 400.",
+        "No key or secret pattern ((sk|rk|rkcs|pk)_(test|live)_[A-Za-z0-9]{8,} or whsec_[A-Za-z0-9]{8,}) appears in tracked files, dist/, logs, API responses, .cache/, or .data/ (EV-021); .env.local and .data/ are gitignored."
+      ]
+    },
+    {
+      "id": "REQ-024",
+      "description": "Commerce UI: add-to-cart controls, the currency-replace dialog, the cart sheet, checkout return states, and the order list, built from unmodified official shadcn/ui components.",
+      "acceptanceCriteria": [
+        "Offer items in the main list and Other markets have 'Add to cart' with an aria-label naming product and host; disabled states and tooltips for offers without id ('Ask again to buy'), out-of-stock ('Out of stock'), invalid price ('Price can't be charged'), and below-minimum ('Below Stripe's minimum').",
+        "The header cart button shows the line count; the cart sheet shows the banner, lines with quantity controls, remove, clear, demo total, checkout, and the 10 newest orders with status badges.",
+        "The success, waiting, cancelled, unknown-checkout, checkout-failed, not-configured, and 'Checkout link expired' states show the texts in docs/futari/PRODUCT_SPEC.md '(v1.2) Simulated commerce journey'; the declined note is best-effort and appears only when Stripe reported a decline (R-30).",
+        "EV-022 checks 1-15 pass."
       ]
     }
   ],
   "evaluations": [
     {
       "id": "EV-001",
-      "requirementIds": ["REQ-003"],
+      "requirementIds": [
+        "REQ-003",
+        "REQ-016"
+      ],
       "description": "Merchant authenticity: classify all frozen cases (40 live Exa results, 14 synthetic) as merchant offer, labeled evidence, or rejected.",
       "kind": "deterministic",
-      "passRule": "54/54 cases in evals/cases/offer-classification.json match the labeled outcome and category, and for offers the labeled currency, amount, canonicalUrl and availability where given; the test asserts the evaluated case count equals the file's case count.",
-      "command": "pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts"
+      "passRule": "54/54 cases in evals/cases/offer-classification.json match the labeled outcome and category, and for offers the labeled currency, amount, canonicalUrl and availability where given; the test asserts the evaluated case count equals the file's case count. (v1.1) L29 and Y03 are compared with their superseding labels from evals/cases/offer-classification-v1-1.json, the test asserts that exactly those two ids were replaced, and node evals/harness.mjs --strict exits 0.",
+      "command": "pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts && node evals/harness.mjs --strict"
     },
     {
       "id": "EV-002",
-      "requirementIds": ["REQ-003"],
+      "requirementIds": [
+        "REQ-003"
+      ],
       "description": "Product relevance: identity matching rejects wrong and near-miss products and accepts every labeled right product.",
       "kind": "deterministic",
       "passRule": "100% of cases in evals/cases/offer-classification.json are classified irrelevant-product exactly when labeled so.",
@@ -176,7 +361,9 @@
     },
     {
       "id": "EV-003",
-      "requirementIds": ["REQ-004"],
+      "requirementIds": [
+        "REQ-004"
+      ],
       "description": "Currency grouping, market ordering, and deterministic ranking.",
       "kind": "deterministic",
       "passRule": "All 4 cases in evals/cases/ranking-currency.json match exactly, and the seeded 1,000-list property test finds no mixed-currency group and no lost or duplicated offers.",
@@ -184,7 +371,9 @@
     },
     {
       "id": "EV-004",
-      "requirementIds": ["REQ-002"],
+      "requirementIds": [
+        "REQ-002"
+      ],
       "description": "Citation resolution and URL provenance for comparisons and offers.",
       "kind": "deterministic",
       "passRule": "All 6 cases in evals/cases/citations.json and all 2 cases in evals/cases/citations-spaced.json match (the test asserts each file's evaluated case count equals its case count, and node evals/harness.mjs --strict exits 0); in fixture pipeline runs every rendered source URL is in the run's citations and every offer URL is in the run's search results.",
@@ -192,15 +381,20 @@
     },
     {
       "id": "EV-005",
-      "requirementIds": ["REQ-006"],
+      "requirementIds": [
+        "REQ-006"
+      ],
       "description": "Spend guard at two levels: unit (RequestBudget, cache, ledger limits, exhausted-credit stop; JM-003) and run (pipeline call counts, cached repeats, single-run lock; JM-004).",
       "kind": "deterministic",
-      "passRule": "Unit: a sixth token is refused, cache hits use no token and keep retrievedAt, limits block before calling, and a 402 or credit error blocks later calls. Run: every scripted scenario stays within 5 calls, a normal question uses at most 3, a cached repeat uses 0 with the original retrievedAt, and a concurrent second run gets 409.",
+      "passRule": "Unit: a sixth token is refused, cache hits use no token and keep retrievedAt, limits block before calling, and a 402 or credit error blocks later calls. Run: every scripted scenario stays within 5 calls, a normal question uses at most 3, a cached repeat uses 0 with the original retrievedAt, and a concurrent second run gets 409. (v1.1) A fixture run that loads every product image through /api/image/:id leaves RequestBudget.used and the monthly ledger identical to the same run without image loads.",
       "command": "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts"
     },
     {
       "id": "EV-006",
-      "requirementIds": ["REQ-001", "REQ-005"],
+      "requirementIds": [
+        "REQ-001",
+        "REQ-005"
+      ],
       "description": "UI message stream shape and failure states through the Hono app with scripted Exa behaviour.",
       "kind": "deterministic",
       "passRule": "For success, no candidates, no offers, 401, 402, 429, 500, and timeout scenarios, the stream has ordered progress parts, exactly one terminal state, the expected data-error kind and partial flag, and no fixture data in live mode; for a client abort, the Exa call is aborted, no parts follow, and a cancelled log line is written; after every scenario the run lock is released and the next request succeeds.",
@@ -208,71 +402,470 @@
     },
     {
       "id": "EV-007",
-      "requirementIds": ["REQ-001", "REQ-002", "REQ-003", "REQ-007", "REQ-009", "REQ-010"],
-      "description": "Frontend quality: Playwright journey, states, history, market, accessibility, layout, absence of the key from browser storage, and component integrity, plus owner visual review.",
+      "requirementIds": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-007",
+        "REQ-009",
+        "REQ-010",
+        "REQ-024"
+      ],
+      "description": "Frontend quality: Playwright journey, states, history, market, accessibility, layout, absence of the key from browser storage, and component integrity, plus owner visual review. (v1.1: amended for the product cards and the dark default, D-038.)",
       "kind": "deterministic plus human review",
-      "passRule": "All Playwright checks listed in docs/futari/EVALUATION_PLAN.md section Frontend quality pass, scripts/check-components.mjs exits 0, and the owner's visual review is recorded as accepted.",
+      "passRule": "All Playwright checks listed in docs/futari/EVALUATION_PLAN.md section 'Frontend quality (EV-007, amended)' pass, scripts/check-components.mjs exits 0, and the owner's visual review of v1.1 is recorded as accepted in .futari/evidence/JM-105.md. (v1.2) Its carried assertions stay unchanged when the Add to cart controls are added (R-37).",
       "command": "pnpm test:e2e && node scripts/check-components.mjs"
     },
     {
-      "id": "EV-008",
-      "requirementIds": ["REQ-008"],
-      "description": "Live acceptance of 6 queries across US, SG, and JP against the real Exa API with owner audit.",
-      "kind": "live integration plus human audit",
-      "passRule": "Thresholds in evals/cases/live-acceptance.json: at least 4/6 queries with a merchant offer, 100% revalidation, at least 90% owner audit pass, zero fabricated offers, no unexpected errors, at most 30 requests and $0.40 reported cost per suite run, at most 3 suite runs.",
-      "command": "pnpm live:acceptance"
-    },
-    {
       "id": "EV-009",
-      "requirementIds": ["REQ-007"],
+      "requirementIds": [
+        "REQ-007"
+      ],
       "description": "Loopback binding, Host and Origin guards, and absence of the key from every artifact.",
       "kind": "deterministic",
-      "passRule": "The running server listens on 127.0.0.1, foreign Host and Origin get 403, and a test key string is absent from a production build the test makes itself, from server logs of a fixture run, .cache/, evals/fixtures/, and API responses.",
+      "passRule": "The running server listens on 127.0.0.1, foreign Host and Origin get 403, and a test key string is absent from a production build the test makes itself, from server logs of a fixture run, .cache/, evals/fixtures/, and API responses. (v1.1) The key is also absent from .cache/images/ after a fixture run that loads images; GET / returns exactly the Content-Security-Policy in ARCHITECTURE; GET /api/image/:id with a foreign Host gets 403.",
       "command": "pnpm vitest run tests/evals/ev-009-key-safety.test.ts"
+    },
+    {
+      "id": "EV-010",
+      "requirementIds": [
+        "REQ-011",
+        "REQ-010"
+      ],
+      "description": "Theme: default, toggle, persistence, no flash, fallbacks, and accessibility in both themes (Playwright against pnpm start in fixture mode).",
+      "kind": "deterministic",
+      "passRule": "Every check in docs/futari/EVALUATION_PLAN.md 'Theme (EV-010)' passes in Chromium.",
+      "command": "pnpm exec playwright test tests/e2e/ev-010-theme.spec.ts"
+    },
+    {
+      "id": "EV-011",
+      "requirementIds": [
+        "REQ-016",
+        "REQ-003"
+      ],
+      "description": "Non-merchant pages and currency symbols: classifyHit on the 79 frozen v1.1 cases (41 live, 38 synthetic).",
+      "kind": "deterministic",
+      "passRule": "79/79 cases: outcome and category equal the label; for offers, currency and amount equal the label; the test loads evals/cases/offer-classification-v1-1.json unchanged and asserts the evaluated case count equals the file's case count.",
+      "command": "pnpm vitest run tests/evals/ev-011-page-classification.test.ts"
+    },
+    {
+      "id": "EV-012",
+      "requirementIds": [
+        "REQ-012",
+        "REQ-002"
+      ],
+      "description": "Product card content and leaked structured output: key specifications and cited reasons parsed from the extended /answer response (with backward compatibility), and the D-042 cut applied to reasons and comparisons.",
+      "kind": "deterministic",
+      "passRule": "For every candidate in evals/cases/product-content.json cases (6 answers, 17 candidates), keySpecs equal the expected list and the reason equals the expected renderedText, sources, unresolvedMarkers, uncitedParagraphs and truncated values, or is null where labeled; for every comparisonCases entry (6, two of them truncated), the comparison after the cut and resolveCitations equals the expected values; the test asserts all counts.",
+      "command": "pnpm vitest run tests/evals/ev-012-product-content.test.ts"
+    },
+    {
+      "id": "EV-013",
+      "requirementIds": [
+        "REQ-013"
+      ],
+      "description": "Product image selection: rules I1 (URL eligibility), I2 (eligible pages and order) and I3 (bytes verdict) on the frozen cases.",
+      "kind": "deterministic",
+      "passRule": "All 80 URL cases, 10 selection cases (exact ordered imageUrl and pageUrl lists; fixture cases classify hits with classifyHit from the real fixtures, synthetic cases from their inline hits) and 58 bytes cases equal their labels; the test asserts each section's case count.",
+      "command": "pnpm vitest run tests/evals/ev-013-image-selection.test.ts"
+    },
+    {
+      "id": "EV-014",
+      "requirementIds": [
+        "REQ-014",
+        "REQ-007"
+      ],
+      "description": "Image proxy safety and cache, with an injected resolver and fetcher (no internet in CI).",
+      "kind": "deterministic",
+      "passRule": "Every check in docs/futari/EVALUATION_PLAN.md 'Image proxy (EV-014)' passes.",
+      "command": "pnpm vitest run tests/evals/ev-014-image-proxy.test.ts"
+    },
+    {
+      "id": "EV-015",
+      "requirementIds": [
+        "REQ-012",
+        "REQ-013",
+        "REQ-015",
+        "REQ-009",
+        "REQ-010",
+        "REQ-002"
+      ],
+      "description": "Image-first product cards: layout, content, images, markets, research disclosure, history compatibility, the malformed-answer note, accessibility in both themes, and zero non-local browser requests (Playwright against pnpm start in fixture mode).",
+      "kind": "deterministic",
+      "passRule": "Every check in docs/futari/EVALUATION_PLAN.md 'Product cards (EV-015)' passes in Chromium.",
+      "command": "pnpm exec playwright test tests/e2e/ev-015-product-cards.spec.ts"
+    },
+    {
+      "id": "EV-017",
+      "requirementIds": [
+        "REQ-015",
+        "REQ-012"
+      ],
+      "description": "Request contract: the exact /answer request (outputSchema with keySpecs and reason) and offer search request built for each market.",
+      "kind": "deterministic",
+      "passRule": "buildAnswerRequest's outputSchema deep-equals request.body.outputSchema of the frozen fixture evals/fixtures/exa-live/V9-answer-us-tight-identifiers.json; buildSearchRequest for V2's and V3's candidates returns exactly their frozen request.body.query and userLocation with the MVP contents unchanged, and for a US and a JP candidate returns '<brand> <name> price United States buy' and '<brand> <name> price Japan buy'; the cache key differs from the key of the MVP query for the same candidate.",
+      "command": "pnpm vitest run tests/evals/ev-017-request-contract.test.ts"
+    },
+    {
+      "id": "EV-018",
+      "requirementIds": [
+        "REQ-017",
+        "REQ-018"
+      ],
+      "description": "Cart and demo price rules: offer ids, minor units, cart operations, and line snapshots against the frozen synthetic cases.",
+      "kind": "deterministic",
+      "passRule": "tests/evals/ev-018-commerce-rules.test.ts loads evals/cases/commerce-rules.json unchanged; offerId, toMinorUnits, applyCartOp, and the line snapshot reproduce all 4 id, 11 minor-unit, 34 cart, 6 version, and 2 snapshot cases exactly (outcome, code, details, resulting cart, unchanged cart, cart version); the test asserts each count.",
+      "command": "pnpm vitest run tests/evals/ev-018-commerce-rules.test.ts"
+    },
+    {
+      "id": "EV-019",
+      "requirementIds": [
+        "REQ-019",
+        "REQ-018",
+        "REQ-022"
+      ],
+      "description": "Checkout session request contract for stripe 23.1.0.",
+      "kind": "deterministic",
+      "passRule": "tests/evals/ev-019-checkout-request.test.ts loads evals/cases/checkout-session-request.json unchanged; buildCheckoutSessionRequest deep-equals all 4 cases' { params, options }; StripeCheckoutPort, with a stubbed SDK client, passes exactly those to checkout.sessions.create; the test asserts the count.",
+      "command": "pnpm vitest run tests/evals/ev-019-checkout-request.test.ts"
+    },
+    {
+      "id": "EV-020",
+      "requirementIds": [
+        "REQ-020",
+        "REQ-021"
+      ],
+      "description": "Webhook verification, dedupe, matching, order transitions, and the cancel and checkout routes, with real Stripe test signatures.",
+      "kind": "deterministic",
+      "passRule": "tests/evals/ev-020-webhooks.test.ts loads evals/cases/webhook-events.json unchanged and, through the Hono app with FakeCheckoutPort and signatures from stripe.webhooks.generateTestHeaderString, reproduces every delivery's status and outcome and every final state of all 30 webhook cases (including the restart case), and every step of all 19 route cases (including the concurrency cases X18 and X19); the test asserts both counts.",
+      "command": "pnpm vitest run tests/evals/ev-020-webhooks.test.ts"
+    },
+    {
+      "id": "EV-021",
+      "requirementIds": [
+        "REQ-023",
+        "REQ-007"
+      ],
+      "description": "Sandbox-only Stripe keys and absence of Stripe credentials from every artifact.",
+      "kind": "deterministic",
+      "passRule": "Checks 1-5 in docs/futari/EVALUATION_PLAN.md 'Stripe keys (EV-021)' pass: live and malformed keys refused without printing them; live-mode sessions and foreign urls refused; runtime-built fake credentials absent from logs, responses, .data/, .cache/offers/, and dist/ after a fixture purchase; no key pattern in tracked files; GET /api/cart reports checkoutConfigured while GET /api/health is unchanged.",
+      "command": "pnpm build && pnpm vitest run tests/evals/ev-021-stripe-keys.test.ts"
+    },
+    {
+      "id": "EV-022",
+      "requirementIds": [
+        "REQ-024",
+        "REQ-017",
+        "REQ-018",
+        "REQ-021",
+        "REQ-022",
+        "REQ-009",
+        "REQ-010",
+        "REQ-007"
+      ],
+      "description": "Simulated commerce UI end to end in fixture mode, with the fake hosted checkout page.",
+      "kind": "deterministic plus human review",
+      "passRule": "Checks 1-15 in docs/futari/EVALUATION_PLAN.md 'Commerce UI (EV-022)' pass in Chromium, including axe in both themes, keyboard-only use, required and forbidden label phrases, and zero non-local browser requests; scripts/check-components.mjs passes; owner visual review recorded in .futari/evidence/JM-204.md.",
+      "command": "pnpm exec playwright test tests/e2e/ev-022-commerce.spec.ts && node scripts/check-components.mjs"
+    },
+    {
+      "id": "EV-023",
+      "requirementIds": [
+        "REQ-008",
+        "REQ-019",
+        "REQ-020",
+        "REQ-021",
+        "REQ-022"
+      ],
+      "description": "Live Stripe sandbox acceptance: research in US, SG, and JP, then owner-performed hosted checkouts and agent-run API and webhook checks.",
+      "kind": "live integration plus human audit",
+      "passRule": "All thresholds in evals/cases/live-acceptance-v1-2.json are met under its runRules in the last permitted run, within its Exa and Stripe budget, with the run log and the owner's H1-H5 audit committed under .futari/evidence/live/.",
+      "command": "pnpm live:acceptance:v1-2"
     }
   ],
   "tasks": [
     {
-      "id": "JM-001",
-      "title": "Scaffold toolchain, install official components, and add deterministic CI",
-      "requirementIds": ["REQ-010"],
-      "evalIds": ["EV-007"],
+      "id": "JM-201",
+      "title": "Commerce core rules: offer ids, minor units, cart operations, order transitions, labels",
+      "milestone": "vertical-slice",
+      "requirementIds": [
+        "REQ-017",
+        "REQ-018"
+      ],
+      "evalIds": [
+        "EV-018"
+      ],
+      "dependsOn": [],
+      "allowedPaths": [
+        "src/core/commerce.ts",
+        "src/core/index.ts",
+        "src/core/types.ts",
+        "tests/core/commerce.test.ts",
+        "tests/evals/ev-018-commerce-rules.test.ts"
+      ],
+      "acceptanceCriteria": [
+        "src/core/commerce.ts exports offerId, toMinorUnits, applyCartOp, applyStripeEvent, and the label strings in docs/futari/ARCHITECTURE.md 'Labels' (v1.2), with the types in 'Simulated commerce (v1.2)' 'Data'; all pure and re-exported from src/core/index.ts.",
+        "src/core/types.ts gives Offer an optional id: string and no other change.",
+        "offerId, toMinorUnits, applyCartOp, and the line snapshot implement evals/cases/commerce-rules.json rules exactly; EV-018 passes with every count asserted.",
+        "applyStripeEvent(order, event) implements the 'transitions' rule of evals/cases/webhook-events.json (state changes, awaitingAsyncPayment, declinedAttempts, anomaly) as a pure function; tests/core/commerce.test.ts covers every transition row, including no-transition from each terminal state.",
+        "package.json and pnpm-lock.yaml are unchanged (runs in parallel with JM-202); EV-001 to EV-004 and EV-011 to EV-013 still pass."
+      ],
+      "verificationCommands": [
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm vitest run tests/evals/ev-018-commerce-rules.test.ts tests/core/commerce.test.ts",
+        "pnpm test",
+        "node evals/harness.mjs --strict"
+      ]
+    },
+    {
+      "id": "JM-202",
+      "title": "Stripe adapter: pinned SDK, CheckoutPort, session request, webhook verification, sandbox-only config",
+      "milestone": "vertical-slice",
+      "requirementIds": [
+        "REQ-019",
+        "REQ-023",
+        "REQ-018",
+        "REQ-022"
+      ],
+      "evalIds": [
+        "EV-019",
+        "EV-021"
+      ],
       "dependsOn": [],
       "allowedPaths": [
         "package.json",
         "pnpm-lock.yaml",
-        ".npmrc",
-        ".gitignore",
-        ".mcp.json",
-        "tsconfig.json",
-        "tsconfig.app.json",
-        "tsconfig.node.json",
-        "vite.config.ts",
-        "vitest.config.ts",
-        "playwright.config.ts",
-        "eslint.config.js",
-        "index.html",
-        "components.json",
-        "components.lock.json",
-        "scripts/check-components.mjs",
-        "src/web/components/",
-        "src/web/lib/",
-        "src/web/index.css",
-        "src/web/main.tsx",
-        "src/server/index.ts",
-        "src/core/types.ts",
-        "tests/smoke/",
-        "tests/e2e/",
-        ".github/workflows/ci.yml"
+        "src/commerce/port.ts",
+        "src/commerce/stripe-port.ts",
+        "src/commerce/fake-port.ts",
+        "src/commerce/session-request.ts",
+        "src/server/config.ts",
+        ".env.example",
+        "tests/commerce/",
+        "tests/server/config-guard.test.ts",
+        "tests/evals/ev-019-checkout-request.test.ts",
+        "tests/evals/ev-021-stripe-keys.test.ts"
       ],
       "acceptanceCriteria": [
-        "pnpm install --frozen-lockfile, pnpm typecheck, pnpm lint, pnpm test, and pnpm build succeed.",
-        "All runtime and dev dependencies named in docs/futari/ARCHITECTURE.md are installed with exact versions.",
-        "components.json lists the @ai-elements registry and aliases hooks to src/web/lib/hooks; .mcp.json pins shadcn@4.23.0; the shadcn CLI installed AI Elements conversation, message, prompt-input, suggestion, task, inline-citation, sources, shimmer and shadcn table, badge, select, alert-dialog, alert; components.lock.json records their SHA-256 hashes; scripts/check-components.mjs passes.",
-        "pnpm start serves the web shell and GET /api/health on 127.0.0.1:8787 only.",
-        ".github/workflows/ci.yml, named CI, runs install, typecheck, lint, test, build, test:e2e, evals/harness.mjs, and check-components on pull requests to dev and on pushes to dev, without secrets; pnpm test:e2e passes with a Playwright smoke spec in tests/e2e/ that loads the shell.",
-        ".gitignore also ignores .cache/, test-results/, and playwright-report/.",
-        "src/core/types.ts contains the type declarations from docs/futari/ARCHITECTURE.md 'Interfaces and data' verbatim, so JM-002 and JM-003 compile against the same types."
+        "package.json adds stripe at exactly 23.1.0 (pnpm-lock.yaml updated); no other dependency changes.",
+        "src/commerce/port.ts defines CheckoutPort, SessionResult, the typed errors, and its own CheckoutOrderInput (structural; it does not import JM-201 code); src/commerce/session-request.ts implements buildCheckoutSessionRequest; EV-019 passes.",
+        "src/commerce/stripe-port.ts is the only stripe importer: StripeCheckoutPort (apiVersion '2026-10-28.endive', timeout 10000 ms, maxNetworkRetries 0; any expire error surfaces as one typed stripe-error, because the shape for a non-open session is unknown until the JM-203 smoke; refuses livemode sessions and urls outside https://checkout.stripe.com/) and verifyWebhook(rawBody, header, secret) using stripe.webhooks.constructEvent with tolerance 300; src/commerce/fake-port.ts implements FakeCheckoutPort with recorded calls and the scripted outcomes the EV-020 route cases use: expire ok | ok-delayed | error; retrieve open | complete | expired | error; create ok | error | livemode | url:<value>.",
+        "src/server/config.ts parses STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET per D-050 into an optional ServerConfig.stripe { secretKey, webhookSecret } (present only when both are set); AppConfig is unchanged, so existing test helpers that build AppConfig literals still typecheck; .env.example documents both empty; EV-021 checks 1, 2, and 4 pass (checks 3 and 5 are completed by JM-203 in the same test file).",
+        "src/commerce/stripe-port.ts also exports signTestPayload(payload, secret, timestamp) wrapping stripe.webhooks.generateTestHeaderString, for tests and the test-only fake hosted page, so stripe stays imported in one module; the Stripe-facing label strings ('Simulated: ' prefix, descriptions) live in src/commerce/session-request.ts and are frozen by EV-019.",
+        "Never contact live Stripe; tests use FakeCheckoutPort or a stubbed SDK client and secrets built at runtime."
+      ],
+      "verificationCommands": [
+        "pnpm install --frozen-lockfile",
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm vitest run tests/evals/ev-019-checkout-request.test.ts tests/evals/ev-021-stripe-keys.test.ts tests/commerce",
+        "pnpm test",
+        "node evals/harness.mjs --strict"
+      ]
+    },
+    {
+      "id": "JM-203",
+      "title": "Commerce server slice: offer registry, store, cart and checkout routes, verified webhook, minimal UI, sandbox smoke",
+      "milestone": "vertical-slice",
+      "requirementIds": [
+        "REQ-017",
+        "REQ-019",
+        "REQ-020",
+        "REQ-021",
+        "REQ-023",
+        "REQ-007",
+        "REQ-001",
+        "REQ-005",
+        "REQ-006"
+      ],
+      "evalIds": [
+        "EV-018",
+        "EV-019",
+        "EV-020",
+        "EV-021",
+        "EV-005",
+        "EV-006",
+        "EV-009",
+        "EV-017"
+      ],
+      "dependsOn": [
+        "JM-201",
+        "JM-202"
+      ],
+      "allowedPaths": [
+        "src/commerce/",
+        "src/server/",
+        "src/research/pipeline.ts",
+        "src/research/events.ts",
+        "src/core/commerce.ts",
+        "src/web/app/",
+        "src/web/components/ui/sheet.tsx",
+        "components.json",
+        "components.lock.json",
+        "package.json",
+        "pnpm-lock.yaml",
+        ".gitignore",
+        "tests/server/",
+        "tests/commerce/",
+        "tests/research/",
+        "tests/evals/ev-020-webhooks.test.ts",
+        "tests/evals/ev-021-stripe-keys.test.ts",
+        "tests/evals/ev-009-key-safety.test.ts",
+        "tests/e2e/commerce-slice.spec.ts",
+        "tests/fixtures/",
+        "scripts/live-sandbox-smoke-v1-2.ts",
+        "scripts/live/",
+        ".futari/evidence/live/"
+      ],
+      "acceptanceCriteria": [
+        "The pipeline's validate stage assigns offerId to every merchant offer, registers snapshots through an injected registerOffers callback into .cache/offers/ (src/commerce/registry.ts), and includes id in data-products; EV-005, EV-006, and EV-017 stay green.",
+        "src/commerce/store.ts, service.ts, and webhook.ts implement .data/commerce/state.json (atomic, corrupt file disables commerce visibly), one serialized queue for every commerce mutation including its port calls (webhook-events.json rules.serialization), with a unit test that a port call exceeding the 10 s timeout yields 502 and frees the queue, the routes in ARCHITECTURE 'HTTP API' (v1.2), the checkout flow, cancel and supersede with the retrieve fallback, and the processed-id cap (30 days, 10000) with a unit test; createApp takes commerce as an optional dependency and GET /api/health is unchanged; .gitignore adds .data/; EV-020 passes; the cart routes reproduce EV-018's cases with the documented statuses (tests/server/).",
+        "src/commerce/fake-hosted.ts serves the test-only page (Pay, Decline, Back) and the test-only routes POST /__test/commerce/reset, /__test/commerce/checkout-configured { value }, /__test/commerce/withhold-webhooks { value }, and /__test/commerce/expire-open-order (sets the open order's expiresAt in the past) only when NODE_ENV=test and fixture mode (EV-022 isolation and checks 9-10); tests/e2e/commerce-slice.spec.ts runs research → add → checkout → fake page → signed webhook → paid with zero non-local requests.",
+        "Minimal UI in src/web/app/: Add to cart on offer items, a basic cart sheet (official shadcn sheet installed with the pinned CLI, recorded in components.lock.json) with lines, demo and observed prices, and checkout, and the checkout return panel with the paid and cancelled texts; carried EV-007 and EV-015 assertions unchanged.",
+        "EV-021 checks 3 and 5 are added and all of EV-021 passes; EV-009 still passes.",
+        "Sandbox smoke (docs/futari/EVALUATION_PLAN.md 'Slice smoke (JM-203, v1.2)') with the owner's sandbox key and Stripe CLI: USD, SGD, and JPY sessions created, retrieved, and expired; one owner-paid USD purchase marked paid only after the verified webhook; one owner decline with 4000 0000 0000 0002 then back (whether payment_intent.payment_failed arrives is recorded); one expire of an already-expired session with the real error shape recorded; one stripe events resend answered duplicate; ≤ 5 Exa requests; log committed under .futari/evidence/live/. A Stripe-fact miss (R-27, R-28) stops execution for a plan revision.",
+        "(CR-005) tests/evals/ev-009-key-safety.test.ts changes only the image-id collection regex in the image proxy test from /\"id\":\"([0-9a-f]{64})\"/g to /\"id\":\"([0-9a-f]{64})\",\"sourceHost\"/g, because offers now also carry 64-hex ids in data-products; every other line and assertion of the file, and EV-009's pass rule, stay unchanged."
+      ],
+      "verificationCommands": [
+        "pnpm install --frozen-lockfile",
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm vitest run tests/evals/ev-020-webhooks.test.ts tests/evals/ev-021-stripe-keys.test.ts tests/evals/ev-018-commerce-rules.test.ts tests/evals/ev-019-checkout-request.test.ts tests/evals/ev-017-request-contract.test.ts tests/evals/ev-005-spend-guard.test.ts tests/evals/ev-006-stream-failures.test.ts tests/evals/ev-009-key-safety.test.ts",
+        "pnpm test",
+        "pnpm build",
+        "pnpm test:e2e",
+        "node scripts/check-components.mjs",
+        "node evals/harness.mjs --strict"
+      ]
+    },
+    {
+      "id": "JM-204",
+      "title": "Commerce UI: cart sheet, currency dialog, return states, order list, accessibility, EV-022",
+      "milestone": "experience",
+      "requirementIds": [
+        "REQ-024",
+        "REQ-017",
+        "REQ-018",
+        "REQ-021",
+        "REQ-022",
+        "REQ-009",
+        "REQ-010",
+        "REQ-007",
+        "REQ-002",
+        "REQ-003",
+        "REQ-011",
+        "REQ-012",
+        "REQ-013",
+        "REQ-015"
+      ],
+      "evalIds": [
+        "EV-022",
+        "EV-007",
+        "EV-010",
+        "EV-015"
+      ],
+      "dependsOn": [
+        "JM-203"
+      ],
+      "allowedPaths": [
+        "src/web/",
+        "src/commerce/fake-hosted.ts",
+        "tests/e2e/",
+        "tests/fixtures/",
+        "components.json",
+        "components.lock.json",
+        "package.json",
+        "pnpm-lock.yaml",
+        "playwright.config.ts"
+      ],
+      "acceptanceCriteria": [
+        "The full UI in docs/futari/PRODUCT_SPEC.md '(v1.2) Simulated commerce journey' and ARCHITECTURE 'UI composition' and 'Labels' (v1.2): disabled reasons, currency-replace dialog, cart sheet with quantity controls, remove, clear, totals, order list, all return states including the 20 s webhook hint.",
+        "Only official shadcn/ui and AI Elements components, installed unmodified with the pinned CLI and recorded in components.lock.json; CSS variables unchanged.",
+        "EV-022 checks 1-15 pass; EV-007, EV-010, and EV-015 pass with their carried assertions unchanged.",
+        "The owner's visual review of the commerce UI on desktop and mobile widths in both themes is recorded in .futari/evidence/JM-204.md."
+      ],
+      "verificationCommands": [
+        "pnpm install --frozen-lockfile",
+        "pnpm typecheck",
+        "pnpm lint",
+        "pnpm test",
+        "pnpm build",
+        "pnpm exec playwright test tests/e2e/ev-022-commerce.spec.ts",
+        "pnpm test:e2e",
+        "node scripts/check-components.mjs",
+        "node evals/harness.mjs --strict"
+      ]
+    },
+    {
+      "id": "JM-205",
+      "title": "Live sandbox acceptance (EV-023), README setup, and full regression",
+      "milestone": "acceptance",
+      "requirementIds": [
+        "REQ-008",
+        "REQ-019",
+        "REQ-020",
+        "REQ-021",
+        "REQ-022",
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-004",
+        "REQ-005",
+        "REQ-006",
+        "REQ-007",
+        "REQ-011",
+        "REQ-012",
+        "REQ-013",
+        "REQ-014",
+        "REQ-015",
+        "REQ-016",
+        "REQ-023"
+      ],
+      "evalIds": [
+        "EV-023",
+        "EV-001",
+        "EV-002",
+        "EV-003",
+        "EV-004",
+        "EV-005",
+        "EV-006",
+        "EV-007",
+        "EV-009",
+        "EV-010",
+        "EV-011",
+        "EV-012",
+        "EV-013",
+        "EV-014",
+        "EV-015",
+        "EV-017",
+        "EV-018",
+        "EV-019",
+        "EV-020",
+        "EV-021",
+        "EV-022"
+      ],
+      "dependsOn": [
+        "JM-204"
+      ],
+      "allowedPaths": [
+        "scripts/live-acceptance-v1-2.ts",
+        "scripts/live/",
+        "package.json",
+        "README.md",
+        "src/commerce/",
+        "src/server/",
+        "src/research/pipeline.ts",
+        "src/web/app/",
+        "src/core/commerce.ts",
+        "tests/",
+        ".futari/evidence/live/"
+      ],
+      "acceptanceCriteria": [
+        "scripts/live-acceptance-v1-2.ts and the package.json script live:acceptance:v1-2 implement evals/cases/live-acceptance-v1-2.json: preconditions checked, plan-wide Exa counter in .cache/live/, agent scenarios A6-A8 automated, owner scenarios A1-A5 prompted step by step, Stripe session retrieves as audit, run log as specified; the script never automates the Stripe-hosted page.",
+        "EV-023 passes in at most 2 runs; every run log and the owner's H1-H5 audit are committed under .futari/evidence/live/ and summarized in .futari/evidence/JM-205.md.",
+        "README.md documents the owner's Stripe sandbox setup (EXECUTION_PLAN 'Owner prerequisites'), the stripe listen command, that checkout must be used at http://127.0.0.1:8787 with pnpm start (not localhost or pnpm dev, R-40), and that purchases are simulated.",
+        "On the final head, EV-001 to EV-007, EV-009 to EV-015, and EV-017 to EV-022 pass and node evals/harness.mjs --strict --final exits 0; fixes stay inside the allowed paths and keep frozen cases unchanged."
       ],
       "verificationCommands": [
         "pnpm install --frozen-lockfile",
@@ -282,187 +875,15 @@
         "pnpm build",
         "pnpm test:e2e",
         "node scripts/check-components.mjs",
-        "node evals/harness.mjs"
-      ],
-      "milestone": "vertical-slice"
-    },
-    {
-      "id": "JM-002",
-      "title": "Implement pure offer, identity, currency, ranking, and citation rules",
-      "requirementIds": ["REQ-002", "REQ-003", "REQ-004"],
-      "evalIds": ["EV-001", "EV-002", "EV-003", "EV-004"],
-      "dependsOn": ["JM-001"],
-      "allowedPaths": [
-        "src/core/",
-        "tests/core/",
-        "tests/evals/ev-001-merchant-authenticity.test.ts",
-        "tests/evals/ev-002-product-relevance.test.ts",
-        "tests/evals/ev-003-ranking-currency.test.ts",
-        "tests/evals/ev-004-citations.test.ts"
-      ],
-      "acceptanceCriteria": [
-        "src/core follows the file layout and exports the types and functions specified in docs/futari/ARCHITECTURE.md, with no I/O and no exa-js import; src/core/types.ts (created by JM-001) is not changed.",
-        "EV-001, EV-002, EV-003, and EV-004 pass, loading the frozen case files unchanged.",
-        "The citation fixture-run part of EV-004 is covered by JM-004; this task covers the six citation cases."
-      ],
-      "verificationCommands": [
-        "pnpm typecheck",
-        "pnpm vitest run tests/evals/ev-001-merchant-authenticity.test.ts",
-        "pnpm vitest run tests/evals/ev-002-product-relevance.test.ts",
-        "pnpm vitest run tests/evals/ev-003-ranking-currency.test.ts",
-        "pnpm vitest run tests/evals/ev-004-citations.test.ts",
-        "pnpm test"
-      ],
-      "milestone": "vertical-slice"
-    },
-    {
-      "id": "JM-003",
-      "title": "Implement Exa port, request budget, cache, usage ledger, and error mapping",
-      "requirementIds": ["REQ-006"],
-      "evalIds": ["EV-005"],
-      "dependsOn": ["JM-001"],
-      "allowedPaths": [
-        "src/exa/",
-        "tests/exa/",
-        "tests/fixtures/",
-        "tests/evals/ev-005-spend-guard.test.ts"
-      ],
-      "acceptanceCriteria": [
-        "src/exa/ follows the file layout in docs/futari/ARCHITECTURE.md (port.ts ExaPort, budget.ts RequestBudget, errors.ts ExaFailure, sdk-port.ts, fixture-port.ts, cache.ts, ledger.ts) with the signatures given there; ExaSdkPort is the only module importing exa-js; FixtureExaPort replays named scenarios from tests/fixtures/scenarios/, including baseline scenarios xm5-us, xm5-sg, and xm5-jp, with synthetic responses labeled synthetic.",
-        "RequestBudget makes a sixth call impossible by construction; the cache, ledger, and error mapping behave as specified in docs/futari/ARCHITECTURE.md.",
-        "The unit-level part of EV-005 passes with no network access; the run-level part is covered by JM-004."
-      ],
-      "verificationCommands": [
-        "pnpm typecheck",
-        "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts",
-        "pnpm test"
-      ],
-      "milestone": "vertical-slice"
-    },
-    {
-      "id": "JM-004",
-      "title": "Vertical slice: pipeline, streaming API, and minimal AI Elements chat UI with live smoke",
-      "requirementIds": ["REQ-001", "REQ-005", "REQ-006", "REQ-007"],
-      "evalIds": ["EV-006", "EV-009", "EV-004", "EV-005"],
-      "dependsOn": ["JM-002", "JM-003"],
-      "allowedPaths": [
-        "src/research/",
-        "src/server/",
-        "src/web/app/",
-        "src/web/main.tsx",
-        "src/core/",
-        "src/exa/",
-        "tests/core/",
-        "tests/exa/",
-        "tests/fixtures/",
-        "tests/research/",
-        "tests/server/",
-        "tests/evals/ev-004-citations.test.ts",
-        "tests/evals/ev-005-spend-guard.test.ts",
-        "tests/evals/ev-006-stream-failures.test.ts",
-        "tests/evals/ev-009-key-safety.test.ts",
-        "tests/e2e/",
-        "playwright.config.ts",
-        "vitest.config.ts",
-        "package.json",
-        "pnpm-lock.yaml",
-        ".futari/evidence/live/"
-      ],
-      "acceptanceCriteria": [
-        "runResearch executes the fixed stages with at most 5 Exa calls and yields typed RunEvents; POST /api/chat converts them to the UI message stream parts in docs/futari/ARCHITECTURE.md.",
-        "The server binds 127.0.0.1 only and enforces the Host and Origin guards; fixture mode requires NODE_ENV=test and shows a banner.",
-        "The UI, composed only from installed AI Elements and shadcn components, renders progress, cited comparison, offer table, and separate evidence for a fixture run in a Playwright test.",
-        "EV-004 (including fixture pipeline runs), the run-level part of EV-005, EV-006, and EV-009 pass, and EV-001 to EV-003 still pass after any src/core fix.",
-        "A live smoke of Q1 and Q2 makes at most 10 Exa requests in total; Q1 shows at least one merchant offer that passes revalidation; the Q2 outcome and whether /answer accepted userLocation are recorded; both logs are committed under .futari/evidence/live/ at or before the Tested-Commit."
-      ],
-      "verificationCommands": [
-        "pnpm typecheck",
-        "pnpm vitest run tests/evals/ev-004-citations.test.ts",
-        "pnpm vitest run tests/evals/ev-005-spend-guard.test.ts",
-        "pnpm vitest run tests/evals/ev-006-stream-failures.test.ts",
-        "pnpm vitest run tests/evals/ev-009-key-safety.test.ts",
-        "pnpm test",
-        "pnpm build",
-        "pnpm test:e2e"
-      ],
-      "milestone": "vertical-slice"
-    },
-    {
-      "id": "JM-005",
-      "title": "Complete the frontend: market selector, persistent history, all states, accessibility",
-      "requirementIds": ["REQ-009", "REQ-010", "REQ-007"],
-      "evalIds": ["EV-007"],
-      "dependsOn": ["JM-004"],
-      "allowedPaths": [
-        "src/web/",
-        "components.json",
-        "components.lock.json",
-        "tests/e2e/",
-        "tests/fixtures/",
-        "playwright.config.ts",
-        "vitest.config.ts",
-        "package.json",
-        "pnpm-lock.yaml"
-      ],
-      "acceptanceCriteria": [
-        "Market selector (US, SG, JP) persists and changes request market and group order.",
-        "History persists across reloads, clears with confirmation, and recovers from invalid stored data with a notice.",
-        "Every UI state in docs/futari/PRODUCT_SPEC.md is implemented.",
-        "Files under src/web/components/ change only through the shadcn CLI, with components.lock.json updated in the same commit.",
-        "EV-007 automated checks live in tests/e2e/ev-007-frontend.spec.ts (the path evals/harness.mjs checks) and pass, and the owner's visual review is recorded in .futari/evidence/JM-005.md."
-      ],
-      "verificationCommands": [
-        "pnpm typecheck",
-        "pnpm lint",
-        "pnpm test",
-        "pnpm build",
-        "pnpm test:e2e",
-        "node scripts/check-components.mjs"
-      ],
-      "milestone": "mvp"
-    },
-    {
-      "id": "JM-006",
-      "title": "Live acceptance suite, owner audit, and final integration on dev",
-      "requirementIds": ["REQ-008", "REQ-002"],
-      "evalIds": ["EV-008", "EV-004"],
-      "dependsOn": ["JM-005"],
-      "allowedPaths": [
-        "scripts/live-acceptance.ts",
-        "src/research/",
-        "src/exa/",
-        "src/core/",
-        "src/web/app/",
-        "tests/research/",
-        "tests/exa/",
-        "tests/core/",
-        "tests/evals/ev-004-citations.test.ts",
-        "tests/fixtures/",
-        "tests/e2e/",
-        "README.md",
-        "package.json",
-        "pnpm-lock.yaml",
-        ".futari/evidence/live/"
-      ],
-      "acceptanceCriteria": [
-        "src/core/citations.ts implements the amended marker rule in evals/cases/citations.json (CR-001, D-026), and tests/evals/ev-004-citations.test.ts loads evals/cases/citations.json and evals/cases/citations-spaced.json unchanged, asserting each file's evaluated case count; EV-004 passes all 8 cases and node evals/harness.mjs --strict exits 0. This lands before the EV-008 suite runs.",
-        "pnpm live:acceptance runs Q1-Q6 with a fresh cache within the live budget and writes a run log with every request, displayed offer, and reported cost under .futari/evidence/live/; every run log is committed at or before the Tested-Commit.",
-        "EV-008 thresholds are met under the runRules in evals/cases/live-acceptance.json, including the owner's audit of every displayed offer.",
-        "All deterministic suites, including EV-001 to EV-004 on the frozen cases, still pass after any fix made here.",
-        "README.md explains setup, EXA_ENV_FILE, pnpm start, limits, and data caveats."
-      ],
-      "verificationCommands": [
-        "pnpm typecheck",
-        "pnpm vitest run tests/evals/ev-004-citations.test.ts",
-        "pnpm test",
-        "pnpm build",
-        "pnpm test:e2e",
-        "node evals/harness.mjs --strict",
-        "pnpm live:acceptance"
-      ],
-      "milestone": "mvp"
+        "node evals/harness.mjs --strict --final",
+        "pnpm live:acceptance:v1-2"
+      ]
     }
   ],
-  "verticalSliceTaskIds": ["JM-001", "JM-002", "JM-003", "JM-004"],
+  "verticalSliceTaskIds": [
+    "JM-201",
+    "JM-202",
+    "JM-203"
+  ],
   "blockingQuestions": []
 }

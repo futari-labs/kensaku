@@ -1,0 +1,18 @@
+{
+  "name": "comparison-truncated",
+  "description": "US market, one candidate. The answer is the real V9 /answer response whose comparison and reason end in leaked structured output (D-042), so the comparison and the card reason are cut and show the malformed-answer note.",
+  "steps": [
+    {
+      "op": "answer",
+      "response": {
+        "ref": "evals/fixtures/exa-live/V9-answer-us-tight-identifiers.json"
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/S2-mouse.json"
+      }
+    }
+  ]
+}

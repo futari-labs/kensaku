@@ -45,6 +45,8 @@ export const ScenarioSchema = z.object({
   name: z.string().regex(/^[a-z0-9-]+$/),
   description: z.string(),
   steps: z.array(StepSchema),
+  /** Image URL (as in a frozen search result) to a bare file name under tests/fixtures/images/, for `FixtureImageFetch`. */
+  images: z.record(z.string(), z.string()).default({}),
 });
 
 export type Scenario = z.infer<typeof ScenarioSchema>;

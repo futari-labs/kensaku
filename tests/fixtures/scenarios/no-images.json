@@ -1,0 +1,36 @@
+{
+  "name": "no-images",
+  "description": "SG market, one candidate (the real V7 search for a Bose headphone). None of its page image URLs is mapped to a fixture image, and no other scenario maps them either, so every image candidate fails to load and the card shows the No verified product image panel.",
+  "steps": [
+    {
+      "op": "answer",
+      "label": "SYNTHETIC one-candidate answer with key specifications and a reason (for card layout only) composed with the real A1 comparison and citations; not a live Exa response",
+      "response": {
+        "ref": "evals/fixtures/exa-live/A1-answer.json",
+        "candidates": [
+          {
+            "name": "QuietComfort Headphones",
+            "brand": "Bose",
+            "modelIdentifiers": [
+              "QuietComfort Headphones"
+            ],
+            "keySpecs": [
+              "Active noise cancelling with Quiet and Aware modes",
+              "Up to 24 hours of battery life",
+              "Bluetooth 5.1",
+              "USB-C charging"
+            ],
+            "reason": "Comfortable over long flights and strong at cutting low-frequency noise [1][2]."
+          }
+        ]
+      }
+    },
+    {
+      "op": "search",
+      "response": {
+        "ref": "evals/fixtures/exa-live/V7-search-sg-candidate-2.json"
+      }
+    }
+  ],
+  "images": {}
+}
