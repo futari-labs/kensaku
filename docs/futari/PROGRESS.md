@@ -1,6 +1,23 @@
 # FutariLabs progress
 
-Phase: **v1.1 complete and accepted by the owner** (plan `kensaku-v1-1`, revision CR-003; final `dev` head `878c7cf`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).
+Phase: **v1.2 planning (unapproved)** — plan `kensaku-v1-2` (Stripe sandbox commerce) is being designed on branch `v1-2-plan`. v1.1 (plan `kensaku-v1-1`) is complete and accepted by the owner (2026-11-22, final `dev` head `fdb446a`); its contract is archived in `docs/futari/archive/kensaku-v1-1/`. The MVP plan `kensaku-mvp-v1` is complete and archived in `docs/futari/archive/kensaku-mvp-v1/`.
+
+(Previous phase line, kept for history: **v1.1 complete and accepted by the owner** (plan `kensaku-v1-1`, revision CR-003; final `dev` head `878c7cf`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).)
+
+## v1.2 planning session 2026-11-23
+
+- Started with `/futari:bootstrap` (no brief). Existing approval `kensaku-v1-1` verified (`plan-gate verify` PASS at `47f813d`); no new approval was created for it. The owner gave the v1.2 brief "Stripe Sandbox Commerce" on the native card.
+- Branch `v1-2-plan` from `dev` `fdb446a`, in the main checkout.
+- Research: `research/stripe-2026-11-23.md` (S1-S63) from official Stripe docs, the `stripe@23.1.0` package, and the Stripe CLI and stripe-mock sources. No Stripe API call and no key were used (owner brief).
+- Owner decisions on AskUserQuestion cards: copy observed price as demo price (D-045); one-currency cart (D-046); verified webhook only (D-047); agent API checks plus owner hosted-page steps (D-049); server-registered offers only (D-048); v1.1 limits plus ≤ 30 Exa requests / $0.40 (D-051).
+- Frozen v1.2 inputs (synthetic, assistant-proposed labels): `evals/cases/commerce-rules.json` (4 id, 11 minor-unit, 28 cart, 2 snapshot cases), `checkout-session-request.json` (3), `webhook-events.json` (24 webhook, 11 route cases), `live-acceptance-v1-2.json` (3 queries, 8 scenarios, audit H1-H5). `node evals/harness.mjs`: HARNESS OK; EV-018 to EV-023 NOT RUNNABLE until implemented; a three-point mutation check made the harness fail each time.
+- v1.1 contract archived byte-for-byte; the live `.futari/approval.json` is removed in the reviewed commit (D-044).
+- Open owner prerequisites before JM-203's sandbox smoke: Stripe sandbox, CLI login, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (EXECUTION_PLAN "Owner prerequisites"). The Stripe CLI is not installed on this machine yet.
+- Independent review of `2d268dc` (fable, read-only): CHANGES REQUIRED, 12 findings (1 blocking), every frozen label reproduced. All resolved in `c5967cd` (D-058). Re-review of `c5967cd`: CHANGES REQUIRED, text only (N1-N6), every label reproduced again; N1-N6 resolved in the reviewed commit. Details in REVIEW.md.
+- `node .futari/plan-gate.mjs check`: PASS; `node evals/harness.mjs`: HARNESS OK (34 cart, 11 minor-unit, 4 session-request, 30 webhook, 19 route cases, 8 live scenarios); `--strict --final` fails by design until EV-018 to EV-023 exist; pstack `check-playbooks.mjs`: compatible.
+- Approval: the owner (d3F0g) selected "Approve plan" on the native card for `kensaku-v1-2` at `f1abbc72a3a981f05fc2b1ba11e193fc88d86cf5`; the card stated that approving replaces the `kensaku-v1-1` baseline. Recorded in `ab45038` (`.futari/approval.json` only); `plan-gate verify`: PASS, snapshot `164b7bf02bd57c3a27d7cc34ed754d85f91e4e73ea69b0275f05e2133fe91fdc`.
+- Publication: with the owner's authorization, `v1-2-plan` was pushed and PR #30 opened into `dev`. `CI` passed. `Futari contract` fails by design at the `Futari-Plan` marker check, as PR #15 did (R-38).
+- Next step: the owner merges PR #30 personally with a merge commit. Then complete the Stripe owner prerequisites (EXECUTION_PLAN) before JM-203, and run `/futari:execute` from `dev`; it starts with JM-201 and JM-202.
 
 ## v1.1 planning session 2026-11-21
 

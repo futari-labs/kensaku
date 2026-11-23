@@ -169,3 +169,38 @@ Independent reviewer: a fresh opus subagent with no implementation authority. It
 Reviewer-confirmed facts: only EV-015 (REQ-002 and its description), JM-104 criterion 3, and a new JM-105 criterion changed in `plan.json`. No threshold, budget, permission, path, or protected-file change. The note text is byte-identical in all places. `comparison-truncated` is feasible from V9 and cuts to K01. `plan-gate check` passes.
 
 Delta re-review of `2df5496` by a fresh opus reviewer, read-only: **READY**. All four findings were resolved or correctly deferred. It confirmed the stubbed stream against JM-104's `toChunks` and pipeline on `86ac7ab`, the plan.json structural diff (only the stated changes), K01 alignment, and gate and harness passes. One new nit ("exactly the parts" omitted `start`, `data-usage`, `finish`) was fixed in the approval commit by listing them. That wording is the only change after the READY verdict.
+
+## Plan kensaku-v1-2: independent review
+
+Reviewer: fable, read-only, no implementation authority, given the artifacts and the checklist (not the author's conclusions). Reviewed commit `2d268dc`. Verdict: **CHANGES REQUIRED** (1 blocking, 6 major, 4 minor, 1 nit). The reviewer's own implementation of the written rules reproduced every frozen label (4 id, 11 minor-unit, 28 cart, 2 snapshot, 3 session-request, 24 webhook, 11 route); the archive is byte-identical; carried REQs and EVs change only where marked. Gate and harness passed.
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| 1 | Blocking | `checkoutConfigured` on `/api/health` breaks exact-shape assertions in `tests/smoke/server.test.ts:10` and `tests/e2e/slice.spec.ts:152`, outside JM-203's paths. | `/api/health` stays unchanged; `GET /api/cart` reports `checkoutConfigured` (REQ-023, EV-021 check 5, ARCHITECTURE, JM-203). |
+| 2 | Major | A required `AppConfig.checkoutConfigured` breaks typecheck of `tests/server/helpers.ts` and `tests/server/images/helpers.ts`. | `AppConfig` unchanged; optional `ServerConfig.stripe`; commerce is an optional `createApp` dependency (JM-202, JM-203, EXECUTION_PLAN shared files). |
+| 3 | Major | `expires_at` = now + 1800 sits exactly on Stripe's lower bound (S15). | + 3600 (60 minutes); cases, harness, D-052, spec updated; the smoke records acceptance. |
+| 4 | Major | `session-not-open` conflates completed and already expired; an abandoned order could stay open forever; R-31 claimed behaviour no rule defined. | After an expire error the service retrieves the session: expired → cancelled or superseded; complete → left for the webhook; other → 502. Route cases X02 (revised), X12-X16; smoke records the real expire error shape; "Checkout link expired" defined. |
+| 5 | Major | Concurrency across awaited port calls unspecified (manual-expire webhook racing cancel, double checkout). | One serialized queue for every commerce mutation, including port calls, port timeout 10 s (`rules.serialization`); cases X18 and X19. |
+| 6 | Major | EV-018 ambiguities: replace with same currency, `not-in-cart` precedence, invalid registered price, limits under replace, version on no-ops. | Rules rewritten (replace evaluates against an empty cart; per-operation precedence; `invalid-price`; version rule; duplicates note); cases C29-C34 and V01-V06. |
+| 7 | Major | Wrong implementations pass: constant `expires_at`, UTF-16 cut, description host source, session-id check only on completed, async amount, two paid events, missing metadata, livemode not recorded, persistence; `--strict` exits 0 with NOT RUNNABLE evals. | R04 (other clock with milliseconds, astral characters, differing hosts; description uses the observed snapshot); W25-W30; new `--final` harness mode required by the completion condition (`--strict` unchanged so the carried EV-001 command still works). Processed-id cap covered by a JM-203 unit test criterion. |
+| 8 | Minor | The decline note relies on an event research says not to depend on. | Note is best-effort in REQ-024, spec, and EV-022 check 6; one decline added to the JM-203 smoke. |
+| 9 | Minor | Top-level `currency` unsupported by research; `adaptive_pricing` and payload API version inferred; CLI `events resend` and `--print-secret` not researched. | Top-level `currency` dropped (S66); D-056 list extended; S64-S65 added (reviewer-verified). |
+| 10 | Minor | Cancel GET auto-posts cancel; `localhost`/dev origins vs fixed `127.0.0.1` return URLs. | Accepted as R-39; documented as R-40 with README and UI guidance (JM-205). CSRF, CSP, raw-body, and guard reasoning confirmed sound by the reviewer. |
+| 11 | Minor | EV-022 check 9 mechanism missing; fake page needs stripe signing; label duplication; JM-205 coverage and paths; wrong S-references. | Test-only `/__test/commerce/*` hooks in `fake-hosted.ts` (also reset between specs); `signTestPayload` exported from `stripe-port.ts`; Stripe-facing strings owned by `session-request.ts`; JM-205 gains EV-007, EV-018-EV-020, EV-022 and `src/research/pipeline.ts`; references corrected (S15, S32, S31, S55-S56). |
+| 12 | Nit | Same offer in two runs makes two lines; settlement-currency minimums; no card-only restriction. | Duplicates accepted and written into the rules; minimums noted in R-28; card-only not adopted (async rules already cover other methods). |
+
+Remaining uncertainties (accepted; all first observed in the JM-203 smoke with stop conditions, D-056): 127.0.0.1 redirect URLs, SGD/JPY presentment, the decline event, the expire error shape, behaviour without top-level `currency`, restricted-key permissions.
+
+### Re-review of `c5967cd`
+
+Same reviewer. Verdict: CHANGES REQUIRED (text only; no blockers). Its extended reference implementation agrees with every label (C01-C34, V01-V06, M, I, N, R01-R04, W01-W30, X01-X19); all 12 findings resolved; `--strict` exits 0 and `--strict --final` exits 1 as intended.
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| N1 | Minor | JM-202 and ARCHITECTURE still required a `session-not-open` error mapping. | Removed; one typed `stripe-error`; the fake's outcomes listed exactly as the route cases use them. |
+| N2 | Minor | "Port timeout 10 s" had no owner or test. | JM-202 builds the client with `timeout: 10000`, `maxNetworkRetries: 0`; JM-203 unit-tests that a timed-out port call returns 502 and frees the queue. |
+| N3 | Minor | `invalid-price` lacked an HTTP status and a disabled reason. | 422 in the HTTP API; "Price can't be charged" in REQ-024 and UI composition. |
+| N4 | Minor | "Checkout link expired" untested. | Test hook `/__test/commerce/expire-open-order`; EV-022 check 15. |
+| N5 | Nit | S66 over-labeled. | Split into VERIFIED and INFERRED; the smoke checks the inferred part. |
+| N6 | Nit | R-40 claimed a UI string; singular "another open order"; version on identical replace. | R-40 points to README only; "every other open order, oldest first"; a successful replace always increments the version. |
+
