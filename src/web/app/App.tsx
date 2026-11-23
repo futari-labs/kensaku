@@ -166,7 +166,6 @@ export function App() {
               <PromptInputTextarea placeholder="Ask about a product…" disabled={running || !ready} aria-label="Question" />
             </PromptInputBody>
             <PromptInputFooter>
-              {/* The group dims everything inside it while the textarea is disabled, so nothing but the Send button lives here during a run. */}
               <span className="text-xs text-muted-foreground">{running ? "" : "Enter to send, Shift+Enter for a new line"}</span>
               <PromptInputSubmit status={chat.status} aria-label="Send" disabled={running || !ready} />
             </PromptInputFooter>

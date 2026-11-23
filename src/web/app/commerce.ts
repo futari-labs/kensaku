@@ -31,7 +31,7 @@ const parseWith = <T>(schema: z.ZodType<T>) => (body: unknown): T | undefined =>
 };
 
 const cartReply = (body: unknown): Cart | undefined => parseWith(z.object({ cart: CartSchema }))(body)?.cart;
-const orderReply = (body: unknown): Order | undefined => parseWith(z.object({ order: OrderSchema }))(body)?.order;
+const orderReply = (body: unknown): OrderView | undefined => parseWith(z.object({ order: OrderSchema }))(body)?.order;
 
 export const fetchCart = () => call("GET", "/api/cart", parseWith(CartViewSchema));
 export const addToCart = (offerId: string, replace = false) => call("POST", "/api/cart/items", cartReply, { offerId, ...(replace && { replace }) });

@@ -1,6 +1,7 @@
+import { useId } from "react";
 import { MinusIcon, PlusIcon, ShoppingCartIcon, Trash2Icon } from "lucide-react";
 import { CART_TITLE, CHECKOUT_BUTTON_LABEL, MAX_LINE_QUANTITY, ORDER_BADGE_LABELS, SIMULATION_BANNER, demoPriceLabel, demoTotalLabel, formatMinor, observedPriceLabel } from "../../core/commerce";
-import type { CartLine, Order } from "../../core/commerce";
+import type { CartLine } from "../../core/commerce";
 import { Alert, AlertDescription } from "@/web/components/ui/alert";
 import { Badge } from "@/web/components/ui/badge";
 import { Button } from "@/web/components/ui/button";
@@ -8,7 +9,9 @@ import { ButtonGroup, ButtonGroupText } from "@/web/components/ui/button-group";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/web/components/ui/item";
 import { Separator } from "@/web/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/web/components/ui/sheet";
+import type { OrderView } from "./commerce";
 import { formatTime } from "./format";
+import { hostsOf, linkExpired } from "./returnView";
 import { noticeText, useCart } from "./useCart";
 
 function Line({ line }: { line: CartLine }) {
@@ -47,12 +50,8 @@ function Line({ line }: { line: CartLine }) {
   );
 }
 
-/** An open order past its expiry stays open in the store; the list says its link is dead (the next checkout supersedes it). */
-const linkExpired = ({ state, expiresAt }: Order): boolean => state === "open" && expiresAt !== null && Date.parse(expiresAt) <= Date.now();
-
-function OrderRow({ order }: { order: Order }) {
+function OrderRow({ order, now }: { order: OrderView; now: number }) {
   const count = order.lines.reduce((sum, line) => sum + line.quantity, 0);
-  const hosts = [...new Set(order.lines.map((line) => line.merchantHost))].join(", ");
   return (
     <Item variant="outline" size="sm" role="listitem" data-testid="order-row" data-state={order.state}>
       <ItemContent>
@@ -60,9 +59,9 @@ function OrderRow({ order }: { order: Order }) {
           <Badge variant="secondary">{ORDER_BADGE_LABELS[order.state]}</Badge>
         </ItemTitle>
         <ItemDescription className="line-clamp-none">
-          {count} {count === 1 ? "item" : "items"} from {hosts} · {formatMinor(order.totalMinor, order.currency)} {order.currency} · <time dateTime={order.createdAt}>{formatTime(order.createdAt)}</time>
+          {count} {count === 1 ? "item" : "items"} from {hostsOf(order.lines).join(", ")} · {formatMinor(order.totalMinor, order.currency)} {order.currency} · <time dateTime={order.createdAt}>{formatTime(order.createdAt)}</time>
         </ItemDescription>
-        {linkExpired(order) && <p className="text-xs text-muted-foreground">Checkout link expired</p>}
+        {linkExpired(order, now) && <p className="text-xs text-muted-foreground">Checkout link expired</p>}
       </ItemContent>
     </Item>
   );
@@ -73,6 +72,8 @@ export function CartSheet() {
   const lines = view?.cart.lines ?? [];
   const currency = view?.cart.currency;
   const configured = view?.checkoutConfigured ?? false;
+  const ordersHeadingId = useId();
+  const now = Date.now();
   return (
     <Sheet onOpenChange={(open) => open && void refresh()}>
       <SheetTrigger asChild>
@@ -109,13 +110,13 @@ export function CartSheet() {
             </ItemGroup>
           )}
           {orders.length > 0 && (
-            <section aria-labelledby="orders-heading" className="space-y-2" data-testid="orders">
-              <h3 id="orders-heading" className="text-sm font-semibold">
+            <section aria-labelledby={ordersHeadingId} className="space-y-2" data-testid="orders">
+              <h3 id={ordersHeadingId} className="text-sm font-semibold">
                 Recent simulated orders
               </h3>
-              <ItemGroup aria-labelledby="orders-heading">
+              <ItemGroup>
                 {orders.map((order) => (
-                  <OrderRow key={order.orderId} order={order} />
+                  <OrderRow key={order.orderId} order={order} now={now} />
                 ))}
               </ItemGroup>
             </section>
@@ -131,7 +132,7 @@ export function CartSheet() {
           <Button type="button" disabled={lines.length === 0 || !configured || busy} onClick={() => void checkout()}>
             {CHECKOUT_BUTTON_LABEL}
           </Button>
-          <Button type="button" variant="outline" disabled={lines.length === 0} onClick={() => void clear()}>
+          <Button type="button" variant="outline" disabled={lines.length === 0 || busy} onClick={() => void clear()}>
             Clear cart
           </Button>
           {!configured && <p className="text-xs text-muted-foreground">Stripe sandbox is not configured. See README.</p>}

@@ -48,20 +48,19 @@ async function run(page: Page, scenario: string, { market = "SG", theme = "dark"
 
 const boxOf = async (locator: ReturnType<Page["locator"]>) => (await locator.boundingBox())!;
 
-/** The first two cards' boxes, read again until two reads in a row agree, so a layout still settling (skeletons giving way to images) is not measured. */
 async function settledCardBoxes(page: Page) {
   let previous = "";
-  let boxes: Awaited<ReturnType<typeof boxOf>>[] = [];
+  let settled: [Awaited<ReturnType<typeof boxOf>>, Awaited<ReturnType<typeof boxOf>>] | undefined;
   await expect
     .poll(async () => {
-      boxes = await Promise.all([boxOf(cards(page).nth(0)), boxOf(cards(page).nth(1))]);
+      const boxes = await Promise.all([boxOf(cards(page).nth(0)), boxOf(cards(page).nth(1))] as const);
       const reading = JSON.stringify(boxes);
-      const agreed = reading === previous;
+      settled = reading === previous ? boxes : undefined;
       previous = reading;
-      return agreed;
+      return settled !== undefined;
     })
     .toBe(true);
-  return boxes as [(typeof boxes)[number], (typeof boxes)[number]];
+  return settled!;
 }
 
 /** One server-sent event of the UI message stream (the same helper shape as the EV-007 spec). */

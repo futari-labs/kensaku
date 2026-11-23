@@ -12,13 +12,27 @@ export interface CartNotice {
   details?: CurrencyMismatch;
 }
 
-const NOTICE_TEXT: Record<Exclude<CartNotice["code"], "currency-mismatch">, string> = {
+/** `corrupt`: the server answered 503 commerce-unavailable (its data file could not be read). `unreachable`: no usable answer. */
+export type CartUnavailable = "corrupt" | "unreachable";
+
+export type OfferBlockCode = Extract<CartErrorCode, "offer-not-registered" | "out-of-stock" | "invalid-price" | "below-minimum">;
+export type BuyBlockCode = OfferBlockCode | CartUnavailable;
+
+/** Why an offer cannot be added: `label` is the disabled button's text, `detail` explains it. A failed add shows the same `detail`. */
+export const BUY_BLOCK: Record<BuyBlockCode, { label: string; detail: string }> = {
+  "offer-not-registered": { label: "Ask again to buy", detail: "This offer was saved before the simulated cart existed. Ask the question again to make it buyable." },
+  "out-of-stock": { label: "Out of stock", detail: "The merchant listed this offer as out of stock." },
+  "invalid-price": { label: "Price can't be charged", detail: "This price is not a valid amount in its currency, so it cannot be simulated." },
+  "below-minimum": { label: "Below Stripe's minimum", detail: "Stripe's sandbox cannot charge an amount this small." },
+  corrupt: { label: "Cart disabled", detail: "Kensaku could not read its commerce data file. See the server log." },
+  unreachable: { label: "Cart disabled", detail: "Kensaku's server could not be reached." },
+};
+
+const isOfferBlock = (code: string): code is OfferBlockCode => code !== "corrupt" && code !== "unreachable" && Object.hasOwn(BUY_BLOCK, code);
+
+const NOTICE_TEXT: Record<Exclude<CartNotice["code"], "currency-mismatch" | OfferBlockCode>, string> = {
   "invalid-request": "That request could not be read.",
   "quantity-out-of-range": `Choose between 1 and ${MAX_LINE_QUANTITY}.`,
-  "offer-not-registered": "This offer is no longer available to buy. Ask again.",
-  "out-of-stock": "This offer is out of stock.",
-  "invalid-price": "This price can't be charged.",
-  "below-minimum": "This price is below Stripe's minimum.",
   "quantity-limit": `At most ${MAX_LINE_QUANTITY} of one offer.`,
   "line-limit": `At most ${MAX_LINES} different offers.`,
   "total-too-large": "The cart total would be too large.",
@@ -31,19 +45,17 @@ const NOTICE_TEXT: Record<Exclude<CartNotice["code"], "currency-mismatch">, stri
 };
 
 export function noticeText({ code, details }: CartNotice): string {
+  if (isOfferBlock(code)) return BUY_BLOCK[code].detail;
   if (code !== "currency-mismatch") return NOTICE_TEXT[code];
   return details ? `The cart holds ${details.cartCurrency} items. Clear it to add ${details.offerCurrency} items.` : "The cart holds items in another currency. Clear it first.";
 }
 
-const isNoticeCode = (code: string): code is CartNotice["code"] => code === "currency-mismatch" || Object.hasOwn(NOTICE_TEXT, code);
+const isNoticeCode = (code: string): code is CartNotice["code"] => code === "currency-mismatch" || isOfferBlock(code) || Object.hasOwn(NOTICE_TEXT, code);
 
 const noticeOf = (reply: Extract<Reply<unknown>, { ok: false }>): CartNotice => ({
   code: isNoticeCode(reply.code) ? reply.code : "unknown",
   ...(reply.details && { details: reply.details }),
 });
-
-/** `corrupt`: the server answered 503 commerce-unavailable (its data file could not be read). `unreachable`: no usable answer. */
-export type CartUnavailable = "corrupt" | "unreachable";
 
 export function useCartState(fixture: boolean) {
   const [view, setView] = useState<CartView | undefined>();
@@ -53,11 +65,10 @@ export function useCartState(fixture: boolean) {
   const [announcement, setAnnouncement] = useState("");
   const [busy, setBusy] = useState(false);
 
-  /** Reads the cart and the order list; the sheet calls it on open so a webhook that landed while it was closed shows. */
   const refresh = useCallback(async () => {
     const [cart, list] = await Promise.all([fetchCart(), fetchOrders()]);
     if (cart.ok) {
-      setView(cart.value);
+      setView((current) => (current && current.cart.version > cart.value.cart.version ? current : cart.value));
       setUnavailable(undefined);
     } else setUnavailable(cart.code === "commerce-unavailable" ? "corrupt" : "unreachable");
     if (list.ok) setOrders(list.value.orders);
@@ -88,16 +99,16 @@ export function useCartState(fixture: boolean) {
     [apply],
   );
 
-  const inSheet = useCallback(
+  const applyWithSheetNotice = useCallback(
     async (request: Promise<Reply<CartView["cart"]>>) => {
       const failure = await apply(request);
       setNotice(failure);
     },
     [apply],
   );
-  const setLineQuantity = useCallback((offerId: string, quantity: number) => inSheet(setQuantity(offerId, quantity)), [inSheet]);
-  const remove = useCallback((offerId: string) => inSheet(removeLine(offerId)), [inSheet]);
-  const clear = useCallback(() => inSheet(clearCart()), [inSheet]);
+  const setLineQuantity = useCallback((offerId: string, quantity: number) => applyWithSheetNotice(setQuantity(offerId, quantity)), [applyWithSheetNotice]);
+  const remove = useCallback((offerId: string) => applyWithSheetNotice(removeLine(offerId)), [applyWithSheetNotice]);
+  const clear = useCallback(() => applyWithSheetNotice(clearCart()), [applyWithSheetNotice]);
 
   const checkout = useCallback(async () => {
     setBusy(true);

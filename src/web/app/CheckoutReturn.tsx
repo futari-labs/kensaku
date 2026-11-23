@@ -41,7 +41,6 @@ function usePanel(params: Params): { view: ReturnView; waitedLong: boolean } {
     let stop = false;
     let long = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    // A timer of its own, so the hint does not wait for the next poll to answer.
     const hint = setTimeout(() => {
       long = true;
       setWaitedLong(true);
@@ -69,14 +68,14 @@ function Panel({ view, waitedLong }: { view: ReturnView; waitedLong: boolean }) 
       return null;
     case "confirming":
       return (
-        <Alert role="status" aria-live="polite" data-testid="checkout-return" data-state="confirming">
+        <Alert data-testid="checkout-return" data-state="confirming">
           <AlertTitle>Confirming simulated payment…</AlertTitle>
           {waitedLong && <AlertDescription>Still waiting for Stripe&apos;s confirmation. Is `stripe listen` running?</AlertDescription>}
         </Alert>
       );
     case "paid":
       return (
-        <Alert role="status" aria-live="polite" data-testid="checkout-return" data-state="paid">
+        <Alert data-testid="checkout-return" data-state="paid">
           <AlertTitle>
             <Badge variant="secondary">{ORDER_BADGE_LABELS.paid}</Badge>
           </AlertTitle>
@@ -85,21 +84,21 @@ function Panel({ view, waitedLong }: { view: ReturnView; waitedLong: boolean }) 
       );
     case "cancelled":
       return (
-        <Alert role="status" aria-live="polite" data-testid="checkout-return" data-state="cancelled">
+        <Alert data-testid="checkout-return" data-state="cancelled">
           <AlertTitle>Simulated checkout cancelled. Your cart is unchanged.</AlertTitle>
           {view.declined && <AlertDescription>The test card was declined.</AlertDescription>}
         </Alert>
       );
     case "cancel-failed":
       return (
-        <Alert role="status" aria-live="polite" data-testid="checkout-return" data-state="cancel-failed">
+        <Alert data-testid="checkout-return" data-state="cancel-failed">
           <AlertTitle>The simulated checkout is still open.</AlertTitle>
           <AlertDescription>Stripe could not confirm the cancellation, so the checkout link may still work. Your cart is unchanged.</AlertDescription>
         </Alert>
       );
     case "ended":
       return (
-        <Alert role="status" aria-live="polite" data-testid="checkout-return" data-state={view.state}>
+        <Alert data-testid="checkout-return" data-state={view.state}>
           <AlertTitle>
             <Badge variant="secondary">{ORDER_BADGE_LABELS[view.state]}</Badge>
           </AlertTitle>
@@ -108,14 +107,14 @@ function Panel({ view, waitedLong }: { view: ReturnView; waitedLong: boolean }) 
       );
     case "unknown":
       return (
-        <Alert role="status" aria-live="polite" data-testid="checkout-return" data-state="unknown">
+        <Alert data-testid="checkout-return" data-state="unknown">
           <AlertTitle>Unknown checkout</AlertTitle>
           <AlertDescription>This checkout does not match any order on this server.</AlertDescription>
         </Alert>
       );
     case "unreachable":
       return (
-        <Alert role="status" aria-live="polite" data-testid="checkout-return" data-state="unreachable">
+        <Alert data-testid="checkout-return" data-state="unreachable">
           <AlertTitle>Could not reach Kensaku&apos;s server to check the checkout.</AlertTitle>
         </Alert>
       );
@@ -132,7 +131,9 @@ export function CheckoutReturn({ params, onDismiss }: { params: Params; onDismis
 
   return (
     <div className="space-y-2">
-      <Panel view={view} waitedLong={waitedLong} />
+      <div role="status" aria-live="polite">
+        <Panel view={view} waitedLong={waitedLong} />
+      </div>
       <Button type="button" variant="ghost" size="sm" onClick={onDismiss}>
         Dismiss
       </Button>

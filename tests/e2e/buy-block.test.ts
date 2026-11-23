@@ -1,6 +1,11 @@
-// The reasons the commerce UI gives for a disabled "Add to cart" (PRODUCT_SPEC journey step 1), at the unit level.
 import { describe, expect, it } from "vitest";
 import { buyBlock } from "../../src/web/app/offers";
+import { BUY_BLOCK } from "../../src/web/app/useCart";
+
+const labelOf = (...args: Parameters<typeof buyBlock>) => {
+  const code = buyBlock(...args);
+  return code && BUY_BLOCK[code].label;
+};
 
 const base = { id: "a".repeat(64), availability: "in_stock", price: { amount: 198, currency: "USD" } } as const;
 
@@ -19,12 +24,12 @@ describe("buyBlock", () => {
     ["an unreadable store", base, "corrupt", "Cart disabled"],
     ["an unreachable server", base, "unreachable", "Cart disabled"],
   ] as const)("says why for %s", (_name, offer, unavailable, label) => {
-    expect(buyBlock(offer, unavailable)?.label).toBe(label);
+    expect(labelOf(offer, unavailable)).toBe(label);
   });
 
   it("puts the store before the offer, and a missing id before stock", () => {
-    expect(buyBlock({ ...base, id: undefined, availability: "out_of_stock" }, undefined)?.label).toBe("Ask again to buy");
-    expect(buyBlock({ ...base, id: undefined }, "corrupt")?.label).toBe("Cart disabled");
+    expect(labelOf({ ...base, id: undefined, availability: "out_of_stock" }, undefined)).toBe("Ask again to buy");
+    expect(labelOf({ ...base, id: undefined }, "corrupt")).toBe("Cart disabled");
   });
 
   it("accepts the smallest chargeable amount", () => {
