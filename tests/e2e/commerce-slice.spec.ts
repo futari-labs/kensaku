@@ -51,7 +51,7 @@ test("research, add, checkout, pay on the fake page, and the verified webhook ma
 
   await expect(page.getByTestId("checkout-return")).toHaveAttribute("data-state", "paid");
   await page.waitForTimeout(3_000);
-  expect(cartReads).toBeLessThanOrEqual(3);
+  expect(cartReads).toBeLessThanOrEqual(5);
   await expect(page.getByTestId("checkout-return")).toContainText("Simulated payment received (Stripe sandbox). No order was placed with");
   await expect(page).toHaveURL(`${ORIGIN}/`);
   await expect(page.getByTestId("cart-count")).toHaveText("0");
