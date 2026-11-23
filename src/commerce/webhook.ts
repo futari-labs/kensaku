@@ -7,7 +7,6 @@ import { verifyWebhook } from "./stripe-port";
 export const PROCESSED_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const PROCESSED_MAX = 10_000;
 
-/** Outcomes of an event that passed verification, every one of them a 200 that records the event id. */
 export type AppliedOutcome = "applied" | "duplicate" | "ignored-type" | "unknown-order" | "mismatch" | "no-transition";
 export type RejectedOutcome = "rejected-signature" | "invalid-payload" | "rejected-livemode";
 export type WebhookOutcome = AppliedOutcome | RejectedOutcome;
@@ -25,7 +24,6 @@ export interface WebhookReply {
   outcome: WebhookOutcome;
 }
 
-/** Adds the id, drops ids older than 30 days, then keeps the newest 10000. */
 export function recordProcessed(events: CommerceState["processedEvents"], id: string, now: Date): CommerceState["processedEvents"] {
   const cutoff = now.getTime() - PROCESSED_TTL_MS;
   const kept = [...events, { id, at: now.toISOString() }].filter((e) => Date.parse(e.at) >= cutoff);
@@ -41,7 +39,6 @@ const SESSION_TYPES: ReadonlySet<string> = new Set([
 const CARRIES_AMOUNT: ReadonlySet<string> = new Set(["checkout.session.completed", "checkout.session.async_payment_succeeded"]);
 const PAYMENT_INTENT_FAILED = "payment_intent.payment_failed";
 
-/** W-M2: the session must be the order's, and a payment's amount and currency must be the order's too. */
 function sessionMatches(order: Order, event: WebhookEvent): boolean {
   const { object } = event;
   if (object.id !== order.stripeSessionId) return false;
@@ -49,10 +46,6 @@ function sessionMatches(order: Order, event: WebhookEvent): boolean {
   return object.amount_total === order.totalMinor && object.currency === order.currency.toLowerCase();
 }
 
-/**
- * The state after one verified, test-mode event (EV-020 rules). Pure: the queue that calls it owns the
- * ordering, the store owns the write.
- */
 export function applyWebhookEvent(state: CommerceState, event: WebhookEvent, now: Date): WebhookResult {
   if (state.processedEvents.some((e) => e.id === event.id)) return { state, outcome: "duplicate" };
   const recorded = (outcome: Exclude<AppliedOutcome, "duplicate">, next: CommerceState, extra: Partial<WebhookResult> = {}): WebhookResult => ({
@@ -99,10 +92,6 @@ export interface WebhookInput {
   secret: string;
 }
 
-/**
- * Verify, refuse live mode, then hand the event to the commerce queue (`apply`, which dedupes, matches and
- * transitions). Rejections are 400 and never recorded. The reply carries an outcome and nothing of the order.
- */
 export async function handleWebhook(
   input: WebhookInput,
   apply: (event: WebhookEvent) => Promise<WebhookResult>,

@@ -31,14 +31,9 @@ const readSnapshot = (file: string): RegisteredOffer | undefined => {
   }
 };
 
-/**
- * Offer snapshots the browser may buy (D-048): `<dir>/<offerId>.json`. The id is a SHA-256 of the offer's
- * fields, so a snapshot never changes price; registering again only refreshes `registeredAt`.
- */
 export class OfferStore {
   constructor(private readonly options: { dir: string; clock: Clock }) {}
 
-  /** Writes a snapshot per offer that has an id, then prunes. An offer without an id is not buyable and is skipped. */
   register(offers: readonly Offer[], market: Market): void {
     const registeredAt = this.options.clock().toISOString();
     mkdirSync(this.options.dir, { recursive: true });
@@ -65,10 +60,8 @@ export class OfferStore {
     this.prune();
   }
 
-  /** The id comes from the browser, so it is checked before it becomes a file name. */
   get = (id: string): RegisteredOffer | undefined => (ID_PATTERN.test(id) ? readSnapshot(this.path(id)) : undefined);
 
-  /** Removes snapshots last registered more than 30 days ago. */
   prune(): void {
     const cutoff = this.options.clock().getTime() - OFFER_TTL_MS;
     let names: string[];

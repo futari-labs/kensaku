@@ -23,11 +23,8 @@ afterEach(() => {
 });
 
 export interface RigOptions {
-  /** A directory to reuse (a restart); default is a fresh temporary one. */
   dir?: string;
-  /** Written to the store before the app starts. */
   seed?: CommerceState;
-  /** The port the service uses; `undefined` means checkout is not configured. Default: a FakeCheckoutPort. */
   port?: CheckoutPort | undefined;
   portTimeoutMs?: number;
   secret?: string;
@@ -39,18 +36,14 @@ export interface Rig {
   harness: Harness;
   service: CommerceService;
   offers: OfferStore;
-  /** The fake port, whether or not the service uses it. */
   port: FakeCheckoutPort;
   logs: Record<string, unknown>[];
   request: (path: string, init?: { method?: string; body?: string; headers?: Record<string, string> }) => Promise<Response>;
   json: (method: string, path: string, body?: unknown) => Promise<{ status: number; body: Record<string, unknown> }>;
-  /** Posts a webhook body with the given Stripe-Signature header, or a valid one made for this rig's secret. */
   signed: (payload: string, header?: string) => Promise<Response>;
-  /** A new app and service over the same directory. */
   restart: (options?: Partial<RigOptions>) => Rig;
 }
 
-/** The real app, service, store, and registry over a temporary directory, with a fake Stripe port. */
 export function commerceRig(options: RigOptions = {}): Rig {
   const dir = options.dir ?? mkdtempSync(join(tmpdir(), "kensaku-commerce-"));
   if (options.dir === undefined) dirs.push(dir);
@@ -91,7 +84,6 @@ export function commerceRig(options: RigOptions = {}): Rig {
   };
 }
 
-/** A merchant offer with its id, as the pipeline registers it. */
 export function registrable(partial: Partial<Offer> & { id: string; price: Offer["price"] }): Offer {
   return {
     kind: "merchant-offer",

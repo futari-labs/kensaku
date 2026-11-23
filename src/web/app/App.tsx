@@ -59,7 +59,6 @@ const HISTORY_NOTICE = {
   newer: "The saved history was written by a newer version of Kensaku, so it was reset.",
 } as const;
 
-/** Read once when the page loads, then taken out of the address bar so a reload does not repeat the cancel or the poll. */
 const INITIAL_CHECKOUT_RETURN = readCheckoutReturn(window.location.search);
 if (INITIAL_CHECKOUT_RETURN) {
   const rest = new URLSearchParams(window.location.search);

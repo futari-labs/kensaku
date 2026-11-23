@@ -23,18 +23,12 @@ import type { CommerceDeps } from "./commerce-routes";
 import { FixtureImageFetch, ImageProxy, NetworkImageFetch } from "./images";
 import type { ServerConfig } from "./config";
 
-/** What tests and the dry-run smoke may set. Files default to `.cache/` and `.data/commerce/` (a temp directory in fixture mode). */
 export interface RuntimeOptions {
   cache?: string;
   commerce?: string;
-  /** The fake port a fixture runtime uses, when the caller needs to see or script its calls. */
   fakeCheckoutPort?: FakeCheckoutPort;
 }
 
-/**
- * What a fixture run stamps as `retrievedAt`. A fixed instant keeps an offer's id (a hash that includes `retrievedAt`)
- * the same on every replay of a scenario, so two runs of one scenario return identical offers.
- */
 const FIXTURE_OBSERVED_AT = "2026-11-23T00:00:00.000Z";
 
 export const DEFAULT_FIXTURE_SCENARIO = "xm5-us";
@@ -45,7 +39,6 @@ const unconfiguredPort: ExaPort = {
   searchOffers: () => Promise.reject(new ExaFailure("auth", "EXA_API_KEY is not set; add it to .env.local or EXA_ENV_FILE.")),
 };
 
-/** One JSON line to stdout. Every known key and secret is scrubbed from the line as a last defence. */
 function stdoutLogger(secrets: readonly (string | undefined)[]): (line: LogLine) => void {
   const known = secrets.filter((s): s is string => s !== undefined && s !== "");
   return (line) => {
@@ -79,8 +72,6 @@ export function createRuntime(config: ServerConfig, options?: RuntimeOptions): A
   const imageDir = join(storage, "images");
 
   if (config.mode === "fixture") {
-    // Fixture mode (so `NODE_ENV=test`, which `parseConfig` enforces) never contacts Stripe: a fake port, a secret
-    // built at runtime unless the test brought its own, and the test-only hosted page.
     const webhookSecret = config.stripe?.webhookSecret ?? `whsec_${randomBytes(24).toString("hex")}`;
     const service = new CommerceService({ store: commerceStore, offers, port: options?.fakeCheckoutPort ?? new FakeCheckoutPort(config.port), clock, log, serverPort: config.port });
     const commerce: CommerceDeps = { service, webhookSecret, fakeHosted: fakeHostedRoutes({ service, secret: webhookSecret, clock }) };

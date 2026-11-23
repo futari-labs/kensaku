@@ -10,10 +10,8 @@ const FAST_POLL_MS = 1_000;
 const SLOW_POLL_MS = 5_000;
 const HINT_AFTER_MS = 20_000;
 
-/** What the panel knows: waiting on Stripe's webhook, or an order it has read. */
 type Status = { kind: "loading" } | { kind: "unknown" } | { kind: "unreachable" } | { kind: "order"; order: OrderView; cancelFailed?: boolean };
 
-/** Polls the order until it leaves `open`, one second apart for 20 s and then every 5 s (the paid state comes only from the verified webhook). */
 function useOrderPoll(orderId: string, active: boolean): { order: OrderView | undefined; waitedLong: boolean } {
   const [order, setOrder] = useState<OrderView | undefined>();
   const [waitedLong, setWaitedLong] = useState(false);
@@ -39,7 +37,6 @@ function useOrderPoll(orderId: string, active: boolean): { order: OrderView | un
   return { order, waitedLong };
 }
 
-/** `checkSession` is false for a cancel that found its session completed: that page has no `session_id` to compare. */
 function Success({ params, checkSession, onSettled }: { params: Params; checkSession: boolean; onSettled: () => void }) {
   const { order, waitedLong } = useOrderPoll(params.orderId, true);
   const settled = order?.state === "paid";
@@ -93,7 +90,6 @@ function Cancelled({ params, onSettled }: { params: Params; onSettled: () => voi
       if (stop) return;
       if (reply.ok) return setStatus({ kind: "order", order: reply.value });
       if (reply.code === "order-not-found") return setStatus({ kind: "unknown" });
-      // Stripe says the session completed: the webhook, not this page, decides what happens next.
       if (reply.code === "already-completed") return setCompleted(true);
       const order = await fetchOrder(params.orderId);
       if (!stop) setStatus(order.ok ? { kind: "order", order: order.value, cancelFailed: true } : { kind: "unreachable" });
@@ -129,7 +125,6 @@ function Cancelled({ params, onSettled }: { params: Params; onSettled: () => voi
   );
 }
 
-/** The panel for `/?checkout=success|cancelled&order=…`. `onSettled` fires when the order is paid, so the page can reload its cart. */
 export function CheckoutReturn({ params, onSettled, onDismiss }: { params: Params; onSettled: () => void; onDismiss: () => void }) {
   return (
     <div className="space-y-2">

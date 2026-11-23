@@ -45,7 +45,6 @@ export const emptyState = (): CommerceState => ({ version: 1, cart: { version: 0
 
 export type LoadedState = { ok: true; state: CommerceState } | { ok: false; reason: string };
 
-/** The state lives in `<dir>/state.json`. */
 export class CommerceStore {
   private readonly file: string;
 
@@ -53,7 +52,6 @@ export class CommerceStore {
     this.file = join(dir, "state.json");
   }
 
-  /** A missing file is an empty state. A file that cannot be read, parsed, or validated is `ok: false` and is left untouched. */
   load(): LoadedState {
     let text: string;
     try {
@@ -72,7 +70,6 @@ export class CommerceStore {
     return parsed.success ? { ok: true, state: parsed.data } : { ok: false, reason: "state file does not match the expected shape" };
   }
 
-  /** Temporary file plus rename, so a crash leaves the old file or the new one, never half of one. */
   save(state: CommerceState): void {
     mkdirSync(this.dir, { recursive: true });
     const temp = `${this.file}.${process.pid}.tmp`;

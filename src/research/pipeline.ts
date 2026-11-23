@@ -100,7 +100,6 @@ function validate(
 ): ProductResult[] {
   const shown = new Set<string>();
   const products = classified.map((c) => {
-    // The id is what the cart accepts (D-048): the browser can name an offer but never describe one.
     const fresh = offersOf(c)
       .filter((offer) => !shown.has(offer.canonicalUrl))
       .map((offer): Offer => ({ ...offer, id: offerId(offer) }));

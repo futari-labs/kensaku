@@ -9,11 +9,9 @@ export interface CommerceDeps {
   service: CommerceService;
   /** Verifies webhook deliveries. Absent: the webhook route answers 503. */
   webhookSecret: string | undefined;
-  /** Test-only routes (`/__test/...`), present only in fixture mode under `NODE_ENV=test`. */
   fakeHosted?: Hono;
 }
 
-/** ARCHITECTURE, "HTTP API (v1.2)": the status of each EV-018 code. */
 const CART_STATUS = {
   "invalid-request": 400,
   "quantity-out-of-range": 400,
@@ -33,17 +31,14 @@ const CANCEL_STATUS = { "order-not-found": 404, "already-paid": 409, "already-co
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** The JSON body of a request, or undefined when it is missing or not an object. */
 async function bodyOf(c: Context): Promise<Record<string, unknown> | undefined> {
   const body: unknown = await c.req.json().catch(() => undefined);
   return isRecord(body) ? body : undefined;
 }
 
-/** Commerce routes: every one is JSON, and every one answers 503 `commerce-unavailable` when the state file was unreadable. */
 export function commerceRoutes({ service, webhookSecret }: CommerceDeps): Hono {
   const app = new Hono();
 
-  // Not `"*"`: this app is mounted on the root, and research must keep working when commerce is unavailable.
   for (const path of ["/api/cart", "/api/cart/*", "/api/checkout", "/api/orders", "/api/orders/*", "/api/stripe/*"]) {
     app.use(path, async (c, next) => {
       if (service.unavailableReason !== undefined) return c.json({ code: "commerce-unavailable" }, 503);
@@ -51,7 +46,6 @@ export function commerceRoutes({ service, webhookSecret }: CommerceDeps): Hono {
     });
   }
 
-  /** Runs the op that `parseCartOp` accepted, or answers its parse failure. */
   const cartOp = async (c: Context, raw: unknown) => {
     const parsed = parseCartOp(raw);
     if (!parsed.ok) return c.json({ code: parsed.code }, CART_STATUS[parsed.code]);
@@ -67,7 +61,6 @@ export function commerceRoutes({ service, webhookSecret }: CommerceDeps): Hono {
 
   app.post("/api/cart/items", async (c) => {
     const body = await bodyOf(c);
-    // `kind` is the route's to choose; a body that names one is not the documented request.
     if (body === undefined || Object.hasOwn(body, "kind")) return c.json({ code: "invalid-request" }, 400);
     return cartOp(c, { ...body, kind: "add" });
   });

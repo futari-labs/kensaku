@@ -23,7 +23,6 @@ export type CancelResult =
   | { ok: true; order: Order }
   | { ok: false; code: "order-not-found" | "already-paid" | "already-completed" | "cancel-failed" };
 
-/** What Stripe says about a session after an attempt to expire it. `unknown` covers an open session and a failed lookup. */
 type SessionFate = "expired" | "complete" | "unknown";
 
 export interface CommerceOptions {
@@ -33,7 +32,6 @@ export interface CommerceOptions {
   port: CheckoutPort | undefined;
   clock: Clock;
   log: (line: Record<string, unknown>) => void;
-  /** The port this server listens on, for the session's return URLs. */
   serverPort: number;
   portTimeoutMs?: number;
 }
@@ -53,7 +51,6 @@ const moved = (order: Order, to: OrderState, at: string, extra: Partial<Order> =
  * Reads see the last committed state and never wait.
  */
 export class CommerceService {
-  /** Set when the state file could not be read: every commerce route answers 503 and the file is left as found. */
   readonly unavailableReason: string | undefined;
   private state: CommerceState;
   private tail: Promise<unknown> = Promise.resolve();
@@ -73,7 +70,6 @@ export class CommerceService {
     return this.checkoutEnabled;
   }
 
-  /** Test hook: switches checkout off and back on. It cannot enable checkout without a port. */
   setCheckoutConfigured(value: boolean): void {
     this.checkoutEnabled = value && this.options.port !== undefined;
   }
@@ -114,7 +110,6 @@ export class CommerceService {
     this.commit({ ...this.state, orders: this.state.orders.map((o) => (o.orderId === updated.orderId ? updated : o)) });
   }
 
-  /** A Stripe call that gives up after the timeout, so a hung call cannot hold the queue. */
   private withTimeout<T>(call: () => Promise<T>): Promise<T> {
     let timer: NodeJS.Timeout | undefined;
     const timeout = new Promise<never>((_resolve, reject) => {
@@ -132,7 +127,6 @@ export class CommerceService {
     });
   }
 
-  /** Expires the order's session; if that errors, asks Stripe what the session is (D-057). */
   private async fateOfSession(order: Order): Promise<SessionFate> {
     const { port } = this.options;
     if (order.stripeSessionId === null || port === undefined) return "expired";
@@ -160,7 +154,6 @@ export class CommerceService {
       if (port === undefined || !this.checkoutEnabled) return fail("checkout-not-configured");
       if (this.state.cart.lines.length === 0) return fail("cart-empty");
 
-      // Every other open order is superseded first, oldest first.
       for (const prior of this.state.orders.filter((o) => o.state === "open")) {
         const fate = await this.fateOfSession(prior);
         if (fate === "unknown") return fail("checkout-failed", { orderId: prior.orderId, stage: "supersede" });
@@ -225,12 +218,10 @@ export class CommerceService {
     });
   }
 
-  /** A webhook delivery as received: verified, then applied on the queue. */
   deliver(input: WebhookInput): Promise<WebhookReply> {
     return handleWebhook(input, (event) => this.applyWebhook(event), this.options.log);
   }
 
-  /** Applies a verified event on the queue. */
   private applyWebhook(event: WebhookEvent): Promise<WebhookResult> {
     return this.enqueue(() => {
       const result = applyWebhookEvent(this.state, event, this.options.clock());
@@ -239,7 +230,6 @@ export class CommerceService {
     });
   }
 
-  /** Test hook: back to an empty cart and no orders, with checkout enabled again. */
   reset(): Promise<void> {
     return this.enqueue(() => {
       this.commit(emptyState());
@@ -247,7 +237,6 @@ export class CommerceService {
     });
   }
 
-  /** Test hook: the open order's expiry moves into the past. False when no order is open. */
   expireOpenOrder(): Promise<boolean> {
     return this.enqueue(() => {
       const open = this.state.orders.findLast((o) => o.state === "open");

@@ -27,10 +27,8 @@ describe("the Stripe call timeout", () => {
   it("answers 502 when a port call outlasts it, and frees the queue for the next operation", async () => {
     vi.useFakeTimers();
     const rig = commerceRig({ seed: withCart });
-    // The port never answers.
     rig.port.createSession = () => new Promise(() => {});
     const hung = rig.json("POST", "/api/checkout", {});
-    // A cart edit queued behind the hung checkout.
     const behind = rig.json("PATCH", `/api/cart/items/${ID}`, { quantity: 2 });
     await vi.advanceTimersByTimeAsync(PORT_TIMEOUT_MS - 1);
     expect(rig.service.orders()).toHaveLength(0);

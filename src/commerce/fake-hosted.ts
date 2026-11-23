@@ -9,7 +9,6 @@ import { signTestPayload } from "./stripe-port";
 
 export interface FakeHostedOptions {
   service: CommerceService;
-  /** The secret the app verifies deliveries with; the page signs with the same one. */
   secret: string;
   clock: Clock;
 }
@@ -20,7 +19,6 @@ const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, (ch) => `&
 
 const encoder = new TextEncoder();
 
-/** A Stripe event body as `stripe listen` would forward it, with the object fields the handler reads. */
 function eventBody(id: string, type: string, object: Record<string, unknown>, now: Date): string {
   return JSON.stringify({ id, object: "event", api_version: "2026-10-28.endive", created: Math.floor(now.getTime() / 1000), livemode: false, type, data: { object } });
 }
@@ -46,10 +44,6 @@ ${declined ? `<p role="alert">Your card was declined.</p>` : ""}
 </main></body></html>`;
 }
 
-/**
- * The test-only hosted page and hooks (ARCHITECTURE, `fake-hosted.ts`). The caller mounts it only in fixture mode
- * under `NODE_ENV=test`. Its webhooks go through `service.deliver`, so they are verified like any other delivery.
- */
 export function fakeHostedRoutes({ service, secret, clock }: FakeHostedOptions): Hono {
   const app = new Hono();
   let withhold = false;
@@ -81,7 +75,6 @@ export function fakeHostedRoutes({ service, secret, clock }: FakeHostedOptions):
   app.post("/__test/checkout/:id/pay", async (c) => {
     const order = service.orderBySession(c.req.param("id"));
     if (!order?.stripeSessionId) return c.text("Unknown session", 404);
-    // One event id per session, so paying twice replays the same delivery and the second is a duplicate.
     await deliver("checkout.session.completed", `evt_fake_completed_${order.stripeSessionId}`, sessionObject(order));
     return c.redirect(`/?checkout=success&order=${order.orderId}&session_id=${order.stripeSessionId}`, 303);
   });

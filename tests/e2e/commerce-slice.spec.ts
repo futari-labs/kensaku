@@ -2,13 +2,10 @@ import { expect, test } from "@playwright/test";
 import type { APIRequestContext, Page } from "@playwright/test";
 import { Q1 } from "../fixtures/questions";
 
-// The v1.2 vertical slice in fixture mode: research -> add -> checkout -> fake hosted page -> signed webhook -> paid.
-// The fake page stands in for Stripe; the only origin the browser ever talks to is the app's own.
 const ORIGIN = "http://127.0.0.1:8787";
 
 const reset = async (request: APIRequestContext) => expect((await request.post("/__test/commerce/reset")).status()).toBe(200);
 test.beforeEach(({ request }) => reset(request));
-// Leaves nothing behind for the specs that run after this one.
 test.afterEach(({ request }) => reset(request));
 
 const watchOrigins = (page: Page) => {

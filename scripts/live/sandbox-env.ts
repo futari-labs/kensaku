@@ -1,5 +1,3 @@
-// The two environments the sandbox smoke runs in: the live one (the owner's sandbox key, the running server, the
-// Stripe CLI) and the dry-run one (a fake port and an in-process fixture app, so the flow can be checked offline).
 import { execFile, execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -24,7 +22,6 @@ const REAL_SLEEP = (ms: number) => new Promise<void>((resolveSleep) => setTimeou
 
 const gitSha = (): string => execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 
-/** The offers of a chat stream, with the Exa requests its usage part reports. */
 function offersOfStream(body: string, market: RegisteredOffer["market"], at: string): { offers: RegisteredOffer[]; exaRequests: number } {
   const chunks = parseSse(body);
   const offers = (ofType(chunks, "data-products")[0]?.data ?? []).flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
@@ -46,14 +43,11 @@ function parseLogLines(text: string): WebhookLogLine[] {
 }
 
 export interface LiveOptions {
-  /** Offers registered by an earlier run (no Exa request). */
   offerIds: string[];
-  /** The server's stdout, saved to a file: the webhook outcomes of `stripe events resend` are read from it. */
   serverLog: string;
   ownerTimeoutMs: number;
 }
 
-/** Live: refuses to run without a sandbox key. The key reaches the Stripe SDK constructor and nothing else. */
 export function liveEnv(options: LiveOptions): SmokeEnv {
   loadKeyFile();
   let config: ServerConfig;
@@ -139,10 +133,8 @@ class DryPort extends FakeCheckoutPort {
   }
 }
 
-/** Dry-run: a fake port, an in-process fixture app, and a simulated owner. It makes no network request and starts nothing. */
 export function dryEnv(): SmokeEnv {
   const config = parseConfig({ NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", STRIPE_SECRET_KEY: `sk_test_${"0".repeat(20)}`, STRIPE_WEBHOOK_SECRET: `whsec_${"0".repeat(20)}` });
-  // The runtime's logger writes through console.log when a line is logged, so the capture lasts until `dispose`.
   const logged: string[] = [];
   const realLog = console.log;
   console.log = (...args: unknown[]) => void logged.push(args.map(String).join(" "));
@@ -171,9 +163,7 @@ export function dryEnv(): SmokeEnv {
     },
     ownerStep: async (step, done) => {
       const sessionId = await sessionOf(step.orderId);
-      // The first look, as in the live flow, is before the owner has done anything.
       await done();
-      // The owner's clicks, as the fake hosted page handles them.
       if (step.id === "purchase") await request("POST", `/__test/checkout/${sessionId}/pay`);
       else {
         await request("POST", `/__test/checkout/${sessionId}/decline`);
@@ -182,7 +172,6 @@ export function dryEnv(): SmokeEnv {
       return done();
     },
     resend: async (eventId) => {
-      // The same signed delivery again, as `stripe events resend` would forward it: the fake page's Pay replays one event id.
       const sessionId = eventId.replace("evt_fake_completed_", "");
       await request("POST", `/__test/checkout/${sessionId}/pay`);
       return { exitCode: 0, output: "dry-run: the same event was delivered again in process" };

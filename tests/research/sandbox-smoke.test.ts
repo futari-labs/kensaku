@@ -1,4 +1,3 @@
-// The pure parts of the JM-203 sandbox smoke, and its dry run (a fake port and an in-process app: no network).
 import { describe, expect, it } from "vitest";
 import { dryEnv, liveEnv } from "../../scripts/live/sandbox-env";
 import { evaluate, redact, runSmoke, SmokeAbort } from "../../scripts/live/sandbox-smoke";

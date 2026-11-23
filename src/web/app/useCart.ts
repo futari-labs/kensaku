@@ -23,7 +23,6 @@ const messageOf = (reply: Extract<Reply<unknown>, { ok: false }>): string =>
     ? `The cart holds ${reply.details.cartCurrency} items. Clear it to add ${reply.details.offerCurrency} items.`
     : (CART_ERROR[reply.code] ?? "Something went wrong with the simulated cart.");
 
-/** The server's cart as the page sees it. Every change goes to the server and the reply replaces what is shown. */
 export function useCartState(fixture: boolean) {
   const [view, setView] = useState<CartView | undefined>();
   const [unavailable, setUnavailable] = useState(false);
@@ -43,7 +42,6 @@ export function useCartState(fixture: boolean) {
     void refresh();
   }, [refresh]);
 
-  /** Runs a cart change; its reply is the new cart, or a refusal worth a sentence. */
   const change = useCallback(async (request: Promise<Reply<CartView["cart"]>>, announce?: string): Promise<boolean> => {
     const reply = await request;
     if (reply.ok) {
@@ -60,7 +58,6 @@ export function useCartState(fixture: boolean) {
   const setLineQuantity = useCallback((offerId: string, quantity: number) => change(setQuantity(offerId, quantity)), [change]);
   const remove = useCallback((offerId: string) => change(removeLine(offerId)), [change]);
 
-  /** Starts the sandbox checkout and, only for an allowed URL, leaves for it. */
   const checkout = useCallback(async () => {
     setBusy(true);
     setNotice(undefined);

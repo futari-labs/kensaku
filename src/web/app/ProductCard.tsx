@@ -62,7 +62,6 @@ function ProductImage({ label, candidates }: { label: string; candidates: ImageC
 
 const ADDED_FLASH_MS = 2_000;
 
-/** Why an offer cannot be bought, or undefined. An offer without an id predates v1.2 or came from a failed run (D-048). */
 function unbuyableReason({ id, availability }: Offer): string | undefined {
   if (id === undefined) return "Ask again to buy";
   if (availability === "out_of_stock") return "Out of stock";

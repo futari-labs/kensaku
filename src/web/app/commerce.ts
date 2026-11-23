@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { Cart, Order } from "../../core/commerce";
 
-// What the page reads of the commerce API (ARCHITECTURE, "HTTP API (v1.2)"). Parsed at the boundary; extra fields are kept out.
 const CurrencySchema = z.enum(["USD", "SGD", "JPY"]);
 const CartSchema = z.object({
   version: z.number(),
@@ -32,7 +31,6 @@ export type OrderView = z.infer<typeof OrderSchema>;
 
 export type Reply<T> = { ok: true; value: T } | { ok: false; status: number; code: string; details?: { cartCurrency: string; offerCurrency: string } };
 
-/** One request. A reply the page cannot read, or no reply at all, is `code: "unreadable"`. */
 async function call<T>(method: string, path: string, parse: (body: unknown) => T | undefined, body?: unknown): Promise<Reply<T>> {
   try {
     const res = await fetch(path, { method, ...(body !== undefined && { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }) });
@@ -65,7 +63,6 @@ export const cancelOrder = (id: string) => call("POST", `/api/orders/${encodeURI
 
 const STRIPE_CHECKOUT_PREFIX = "https://checkout.stripe.com/";
 
-/** D-055: the one place the page leaves for another origin. The test fake's path is accepted only in a fixture build. */
 export function isCheckoutUrl(url: string, fixture: boolean): boolean {
   return url.startsWith(STRIPE_CHECKOUT_PREFIX) || (fixture && url.startsWith(`${window.location.origin}/__test/checkout/`));
 }
@@ -76,7 +73,6 @@ export interface CheckoutReturn {
   sessionId: string | undefined;
 }
 
-/** `?checkout=success|cancelled&order=…&session_id=…`, or undefined when the page was not opened by a checkout redirect. */
 export function readCheckoutReturn(search: string): CheckoutReturn | undefined {
   const params = new URLSearchParams(search);
   const outcome = params.get("checkout");

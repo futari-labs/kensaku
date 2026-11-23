@@ -44,7 +44,6 @@ function Line({ line }: { line: CartLine }) {
   );
 }
 
-/** The header's cart button and the sheet it opens. */
 export function CartSheet() {
   const { view, unavailable, notice, busy, checkout } = useCart();
   const lines = view?.cart.lines ?? [];

@@ -1,4 +1,3 @@
-// (v1.2) The validate stage gives every merchant offer its id and registers the offers (D-048).
 import { describe, expect, it } from "vitest";
 import { offerId } from "../../src/core";
 import type { Candidate, Market, Offer, SearchHit } from "../../src/core/types";

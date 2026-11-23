@@ -64,7 +64,6 @@ async function call<T>(run: () => Promise<T>, observe?: (raw: StripeErrorShape) 
 }
 
 export class StripeCheckoutPort implements CheckoutPort {
-  /** `observe` sees the raw SDK error of a failed call (the sandbox smoke records the shape of a refused expire); the app never passes one. */
   constructor(
     private readonly client: StripeClientLike,
     private readonly observe?: (raw: StripeErrorShape) => void,

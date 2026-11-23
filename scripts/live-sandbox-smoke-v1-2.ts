@@ -45,7 +45,6 @@ try {
     : liveEnv({ offerIds: values["offer-id"] ?? [], serverLog: values["server-log"]!, ownerTimeoutMs: Number(values["timeout-minutes"]) * 60_000 });
   const evidence = await runSmoke(env);
   const text = `${JSON.stringify(evidence, null, 2)}\n`;
-  // The last guard: a recorded log holds nothing key-shaped.
   if (/(?:sk|rk|rkcs|pk)_(?:test|live)_\w{8,}|whsec_\w{8,}/.test(text)) throw new Error("the log holds a key-shaped value; refusing to write it");
 
   const failed = Object.entries(evidence.checks).filter(([, ok]) => !ok);

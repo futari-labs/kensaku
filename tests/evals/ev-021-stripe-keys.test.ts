@@ -134,7 +134,6 @@ function filesUnder(dir: string): string[] {
   });
 }
 
-/** `dist/` must exist and be newer than `src/`; the build is the artifact whose contents are checked. */
 function ensureFreshBuild(): void {
   const newest = (dir: string): number => filesUnder(dir).reduce((latest, f) => Math.max(latest, statSync(f).mtimeMs), 0);
   const built = join(ROOT, "dist/index.html");
@@ -144,7 +143,6 @@ function ensureFreshBuild(): void {
 }
 
 describe("EV-021 check 3: a fixture purchase leaves no key or secret anywhere", () => {
-  // Built at runtime and used as the configured sandbox credentials: no literal in this repository looks like one.
   const KEY = `sk_test_${randomBytes(16).toString("hex")}`;
   const SECRET = `whsec_${randomBytes(16).toString("hex")}`;
   const tmp = mkdtempSync(join(tmpdir(), "kensaku-ev021-"));
@@ -156,7 +154,6 @@ describe("EV-021 check 3: a fixture purchase leaves no key or secret anywhere", 
     const spy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => void logged.push(args.map(String).join(" ")));
     const seen: string[] = [];
     try {
-      // Fixture mode never contacts Stripe: the configured pair is what the server holds, and so what could leak.
       const config = parseConfig({ NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", KENSAKU_PORT: "8787", STRIPE_SECRET_KEY: KEY, STRIPE_WEBHOOK_SECRET: SECRET });
       const dirs = { cache: join(tmp, "cache"), commerce: join(tmp, "data", "commerce") };
       const app = createApp(createRuntime(config, dirs));
@@ -181,7 +178,6 @@ describe("EV-021 check 3: a fixture purchase leaves no key or secret anywhere", 
       const { stripeSessionId, totalMinor, currency } = (JSON.parse((await call("GET", `/api/orders/${first.orderId}`)).text) as { order: { stripeSessionId: string; totalMinor: number; currency: string } }).order;
       const completed = await send({ id: "evt_ev021_paid", type: "checkout.session.completed", data: { object: { id: stripeSessionId, object: "checkout.session", client_reference_id: first.orderId, status: "complete", payment_status: "paid", amount_total: totalMinor, currency: currency.toLowerCase(), livemode: false } } });
       expect(JSON.parse(completed.text)).toEqual({ outcome: "applied" });
-      // A rejected delivery and a cancel too: their replies and logs are inspected as well.
       await call("POST", "/api/stripe/webhook", "{}", { "stripe-signature": "t=1,v1=00" });
       await call("POST", "/api/cart/items", { offerId: offer!.id });
       const second = JSON.parse((await call("POST", "/api/checkout", {})).text) as { orderId: string };

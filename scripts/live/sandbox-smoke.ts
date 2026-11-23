@@ -1,6 +1,3 @@
-// The JM-203 sandbox smoke (docs/futari/EVALUATION_PLAN.md, "Slice smoke (JM-203, v1.2)"), as a flow over a `SmokeEnv`.
-// The live env talks to Stripe and the running server; the dry-run env is a fake port and an in-process app. Nothing
-// here reads an environment variable or prints a key: the env owns every outside effect, and `redact` guards what is recorded.
 import { buildCheckoutSessionRequest } from "../../src/commerce/session-request";
 import type { CheckoutOrderLine, CheckoutPort, SessionResult } from "../../src/commerce/port";
 import type { StripeErrorShape } from "../../src/commerce/stripe-port";
@@ -17,15 +14,12 @@ const KEY_LIKE = /(?:sk|rk|rkcs|pk)_(?:test|live)_\S*|whsec_\S*/g;
 const CARD_LIKE = /\b(?:\d[ -]?){13,19}\b/g;
 const BEARER = /Bearer\s+\S+/gi;
 
-/** Anything that could carry a key, a signing secret, a bearer token, or a card number becomes `[redacted]`. */
 export const redact = (text: string): string => text.replace(KEY_LIKE, "[redacted]").replace(BEARER, "[redacted]").replace(CARD_LIKE, "[redacted]");
 
 export interface OwnerStep {
   id: "purchase" | "decline";
   orderId: string;
-  /** What to tell the owner, line by line. */
   instructions: string[];
-  /** The hosted page, shown to the owner on the terminal and never recorded. */
   url: string;
 }
 
@@ -37,13 +31,9 @@ export interface WebhookLogLine {
 
 export interface SmokeEnv {
   mode: "live" | "dry-run";
-  /** The agent's own sessions go through this port. */
   port: CheckoutPort;
-  /** The raw SDK error of the most recent refused port call, when the port can say. */
   lastRawError(): StripeErrorShape | undefined;
-  /** The running server's JSON API. */
   api(method: string, path: string, body?: unknown): Promise<{ status: number; body: unknown }>;
-  /** One research run of Q1 through the server, or the offers already registered. Counts Exa requests. */
   offers(): Promise<{ offers: RegisteredOffer[]; exaRequests: number; source: "research" | "registered" }>;
   /** Tells the owner what to do and returns once `done()` is true or the step times out (false). */
   ownerStep(step: OwnerStep, done: () => Promise<boolean>): Promise<boolean>;
@@ -52,13 +42,11 @@ export interface SmokeEnv {
   now(): Date;
   sleep(ms: number): Promise<void>;
   gitSha(): string;
-  /** Undoes what the env set up (the dry run's console capture). */
   dispose?(): void;
 }
 
 export interface AgentSession {
   currency: Currency;
-  /** True when no registered offer in this currency existed, so a fixed test item was charged instead. */
   synthetic: boolean;
   sessionId: string;
   livemode: boolean;
@@ -94,7 +82,6 @@ export class SmokeAbort extends Error {}
 
 const ownerTimeoutNote = (what: string) => `${what}: the owner step timed out`;
 
-/** A fixed test item for a currency that research did not return an offer for. */
 function syntheticOffer(currency: Currency, nowIso: string): RegisteredOffer {
   const amount = currency === "JPY" ? 2000 : 20;
   return {
@@ -178,7 +165,6 @@ const orderOf = async (env: SmokeEnv, id: string): Promise<Order | undefined> =>
 };
 const cartLines = async (env: SmokeEnv): Promise<CartLine[]> => ((await env.api("GET", "/api/cart")).body as { cart: { lines: CartLine[] } }).cart.lines;
 
-/** Adds the offer, starts the checkout, and lets the owner act on the hosted page while the order is watched. */
 async function ownerCheckout(env: SmokeEnv, id: OwnerStep["id"], offer: RegisteredOffer, instructions: string[]) {
   const added = await env.api("POST", "/api/cart/items", { offerId: offer.id });
   if (added.status !== 200) throw new SmokeAbort(`could not add the ${offer.price.currency} offer to the cart (${added.status}): ${JSON.stringify(added.body)}`);
@@ -255,7 +241,6 @@ export async function runSmoke(env: SmokeEnv): Promise<SmokeEvidence> {
     cartUnchanged: linesAfterDecline.length >= 1,
   };
   if (!decline.completed) notes.push(ownerTimeoutNote("decline"));
-  // The smoke leaves the sandbox cart empty again.
   await env.api("DELETE", "/api/cart");
 
   const eventId = purchase.paidEventId ?? "";
@@ -294,7 +279,6 @@ export async function runSmoke(env: SmokeEnv): Promise<SmokeEvidence> {
   return evidence;
 }
 
-/** The pass rule of the slice smoke, one named check each. */
 export function evaluate(e: SmokeEvidence): Record<string, boolean> {
   const sessionOk = (s: AgentSession) =>
     s.sessionId !== "" &&

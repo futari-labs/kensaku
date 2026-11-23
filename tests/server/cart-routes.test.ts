@@ -7,7 +7,6 @@ import { readJson } from "../core/fixtures";
 import { commerceRig, registrable } from "../commerce/rig";
 import type { Rig } from "../commerce/rig";
 
-// The EV-018 cart cases, once more through the HTTP routes: the statuses are the documented ones (ARCHITECTURE, "HTTP API (v1.2)").
 interface OfferFixture {
   id?: string;
   canonicalUrl: string;

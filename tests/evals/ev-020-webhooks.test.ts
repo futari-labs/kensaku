@@ -57,7 +57,6 @@ const line = (offerId: string, unit: number): CartLine => ({
   demoUnitAmountMinor: unit,
   observed: { amount: unit / 100, currency: "USD", retrievedAt: NOW, merchantHost: "shop.example.com" },
 });
-// 32800 + 9999 = 42799, the base order's total.
 const LINES = [line("a", 32800), line("b", 9999)];
 
 function seed(options: { state?: OrderState; noOrder?: boolean; cartVersion: number; cartEmpty?: boolean }): CommerceState {
@@ -85,7 +84,6 @@ function seed(options: { state?: OrderState; noOrder?: boolean; cartVersion: num
   };
 }
 
-/** `object.livemode` sets a field of the event's data.object; any other key sets a field of the event itself. */
 function setPath(target: Record<string, unknown>, path: string, value: unknown): void {
   const [head, ...rest] = path.split(".");
   if (rest.length === 0) {
@@ -123,7 +121,6 @@ function post(rig: Rig, d: Delivery): Promise<Response> {
     missing: () => undefined,
   };
   const header = headers[d.signature ?? "valid"]();
-  // One changed byte after signing.
   const sent = d.signature === "tampered" ? payload.replace("evt_", "evt-") : payload;
   return rig.request("/api/stripe/webhook", { method: "POST", body: sent, ...(header !== undefined && { headers: { "stripe-signature": header } }) });
 }
@@ -157,7 +154,6 @@ describe("EV-020 webhook cases", () => {
   });
 });
 
-/** The script values the cases use, as the fake port's script. */
 const scriptOf = (port: Step["port"]): FakeScript => (port ?? {}) as FakeScript;
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 25));
@@ -217,7 +213,6 @@ describe("EV-020 route cases", () => {
           return { status: res.status, body: (await res.json()) as { outcome: string } };
         });
         await settle();
-        // The cancel is still waiting on Stripe, so the delivery waits behind it.
         expect(delivered).toBe(false);
         rig.port.releaseDelayed();
         const [cancelled, reply] = await Promise.all([cancel, delivery]);
