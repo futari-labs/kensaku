@@ -1,6 +1,6 @@
 # FutariLabs progress
 
-Phase: **v1.2 planning (unapproved)** — plan `kensaku-v1-2` (Stripe sandbox commerce) is being designed on branch `v1-2-plan`. v1.1 (plan `kensaku-v1-1`) is complete and accepted by the owner (2026-11-22, final `dev` head `fdb446a`); its contract is archived in `docs/futari/archive/kensaku-v1-1/`. The MVP plan `kensaku-mvp-v1` is complete and archived in `docs/futari/archive/kensaku-mvp-v1/`.
+Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) approved and merged into `dev` (PR #30, `59798be`); vertical slice in progress. v1.1 (plan `kensaku-v1-1`) is complete and accepted (2026-11-22) and archived in `docs/futari/archive/kensaku-v1-1/`; the MVP is archived in `docs/futari/archive/kensaku-mvp-v1/`.
 
 (Previous phase line, kept for history: **v1.1 complete and accepted by the owner** (plan `kensaku-v1-1`, revision CR-003; final `dev` head `878c7cf`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).)
 
@@ -18,6 +18,27 @@ Phase: **v1.2 planning (unapproved)** — plan `kensaku-v1-2` (Stripe sandbox co
 - Approval: the owner (d3F0g) selected "Approve plan" on the native card for `kensaku-v1-2` at `f1abbc72a3a981f05fc2b1ba11e193fc88d86cf5`; the card stated that approving replaces the `kensaku-v1-1` baseline. Recorded in `ab45038` (`.futari/approval.json` only); `plan-gate verify`: PASS, snapshot `164b7bf02bd57c3a27d7cc34ed754d85f91e4e73ea69b0275f05e2133fe91fdc`.
 - Publication: with the owner's authorization, `v1-2-plan` was pushed and PR #30 opened into `dev`. `CI` passed. `Futari contract` fails by design at the `Futari-Plan` marker check, as PR #15 did (R-38).
 - Next step: the owner merges PR #30 personally with a merge commit. Then complete the Stripe owner prerequisites (EXECUTION_PLAN) before JM-203, and run `/futari:execute` from `dev`; it starts with JM-201 and JM-202.
+
+## v1.2 execution session 2026-11-23
+
+- Started with `/futari:execute` (futari 1.0.2) after the owner merged contract PR #30 into `dev` with a merge commit (`59798be`). `node .futari/plan-gate.mjs verify`: PASS (snapshot `164b7bf0…` at `f1abbc7`); `planCommit` is reachable from `dev`.
+- pstack `pstack@pstack-claude` 0.9.145. `check-playbooks.mjs`: "Every project playbook matches this pstack's playbooks." Invoked `pstack:poteto-mode` with the Skill tool and loaded `.agents/playbooks/futari-approved-plan.md` (standalone).
+- Models per `.claude/pstack-models.md`: implementation workers `sonnet` (`pstack:poteto-agent`, each in its own worktree); no-comments and independent reviews `opus` (comment-sicko, thermos pair, then a fresh delta reviewer).
+- Issues #31-#35 created for JM-201..JM-205 with exact `Futari-Plan`/`Futari-Task` markers (no existing v1.2 issue matched).
+- Credentials (values not printed): `.env.local` holds a sandbox-prefixed `STRIPE_SECRET_KEY` (`sk_test_…`) and a `whsec_…` `STRIPE_WEBHOOK_SECRET`; the Stripe CLI is installed and paired with an account. Login to the sandbox is confirmed at the JM-203 smoke.
+- Process notes:
+  - EV-021 check 4's `.data/` assertion stays `it.todo` in JM-202, because the plan gives the `.gitignore` change to JM-203 with the store; JM-203 completes it.
+  - The coordinator once wrote into a worker's worktree while the resumed worker was still committing there; the changes did not overlap and both were tested together. Rule kept since: never write in a worktree a live agent holds.
+
+### v1.2 execution ledger
+
+| Task | Issue | Branch | PR | Tested revision | Status | Evidence / next action |
+| --- | --- | --- | --- | --- | --- | --- |
+| JM-201 | #31 | `jm-201-commerce-core` | (this PR) | `0d458b3` | merge-ready after CI | `.futari/evidence/JM-201.md` |
+| JM-202 | #32 | `jm-202-stripe-adapter` | — | — | review fix round | thermos APPROVE at `8b79cdb`; fixes for boundary event type, livemode contract, tests in progress |
+| JM-203 | #33 | — | — | — | pending | needs JM-201 and JM-202 merged |
+| JM-204 | #34 | — | — | — | pending | needs JM-203 |
+| JM-205 | #35 | — | — | — | pending | needs JM-204 |
 
 ## v1.1 planning session 2026-11-21
 
