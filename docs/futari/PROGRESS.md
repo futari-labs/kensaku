@@ -34,8 +34,8 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) appr
 
 | Task | Issue | Branch | PR | Tested revision | Status | Evidence / next action |
 | --- | --- | --- | --- | --- | --- | --- |
-| JM-201 | #31 | `jm-201-commerce-core` | (this PR) | `0d458b3` | merge-ready after CI | `.futari/evidence/JM-201.md` |
-| JM-202 | #32 | `jm-202-stripe-adapter` | — | — | review fix round | thermos APPROVE at `8b79cdb`; fixes for boundary event type, livemode contract, tests in progress |
+| JM-201 | #31 | `jm-201-commerce-core` | #36 | `0d458b3` | merged (`57370f8`) | `.futari/evidence/JM-201.md` |
+| JM-202 | #32 | `jm-202-stripe-adapter` | (this PR) | `9fcb8fb` | merge-ready after CI | `.futari/evidence/JM-202.md` |
 | JM-203 | #33 | — | — | — | pending | needs JM-201 and JM-202 merged |
 | JM-204 | #34 | — | — | — | pending | needs JM-203 |
 | JM-205 | #35 | — | — | — | pending | needs JM-204 |
