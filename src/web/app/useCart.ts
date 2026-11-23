@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { MAX_LINES, MAX_LINE_QUANTITY, cartTotalMinor } from "../../core/commerce";
 import type { CartErrorCode, CheckoutErrorCode, CurrencyMismatch } from "../../core/commerce";
 import { addToCart, clearCart, fetchCart, fetchOrders, isCheckoutUrl, removeLine, setQuantity, startCheckout } from "./commerce";
@@ -65,10 +65,13 @@ export function useCartState(fixture: boolean) {
   const [announcement, setAnnouncement] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const writes = useRef(0);
+
   const refresh = useCallback(async () => {
+    const writesBefore = writes.current;
     const [cart, list] = await Promise.all([fetchCart(), fetchOrders()]);
     if (cart.ok) {
-      setView((current) => (current && current.cart.version > cart.value.cart.version ? current : cart.value));
+      if (writes.current === writesBefore) setView(cart.value);
       setUnavailable(undefined);
     } else setUnavailable(cart.code === "commerce-unavailable" ? "corrupt" : "unreachable");
     if (list.ok) setOrders(list.value.orders);
@@ -80,6 +83,7 @@ export function useCartState(fixture: boolean) {
 
   /** Applies a cart reply. Resolves to the failure, or undefined on success. */
   const apply = useCallback(async (request: Promise<Reply<CartView["cart"]>>): Promise<CartNotice | undefined> => {
+    writes.current += 1;
     const reply = await request;
     if (!reply.ok) return noticeOf(reply);
     setView((current) => (current ? { ...current, cart: reply.value, totalMinor: cartTotalMinor(reply.value) } : current));

@@ -68,14 +68,14 @@ function Panel({ view, waitedLong }: { view: ReturnView; waitedLong: boolean }) 
       return null;
     case "confirming":
       return (
-        <Alert data-testid="checkout-return" data-state="confirming">
+        <Alert role="none" data-testid="checkout-return" data-state="confirming">
           <AlertTitle>Confirming simulated payment…</AlertTitle>
           {waitedLong && <AlertDescription>Still waiting for Stripe&apos;s confirmation. Is `stripe listen` running?</AlertDescription>}
         </Alert>
       );
     case "paid":
       return (
-        <Alert data-testid="checkout-return" data-state="paid">
+        <Alert role="none" data-testid="checkout-return" data-state="paid">
           <AlertTitle>
             <Badge variant="secondary">{ORDER_BADGE_LABELS.paid}</Badge>
           </AlertTitle>
@@ -84,21 +84,21 @@ function Panel({ view, waitedLong }: { view: ReturnView; waitedLong: boolean }) 
       );
     case "cancelled":
       return (
-        <Alert data-testid="checkout-return" data-state="cancelled">
+        <Alert role="none" data-testid="checkout-return" data-state="cancelled">
           <AlertTitle>Simulated checkout cancelled. Your cart is unchanged.</AlertTitle>
           {view.declined && <AlertDescription>The test card was declined.</AlertDescription>}
         </Alert>
       );
     case "cancel-failed":
       return (
-        <Alert data-testid="checkout-return" data-state="cancel-failed">
+        <Alert role="none" data-testid="checkout-return" data-state="cancel-failed">
           <AlertTitle>The simulated checkout is still open.</AlertTitle>
           <AlertDescription>Stripe could not confirm the cancellation, so the checkout link may still work. Your cart is unchanged.</AlertDescription>
         </Alert>
       );
     case "ended":
       return (
-        <Alert data-testid="checkout-return" data-state={view.state}>
+        <Alert role="none" data-testid="checkout-return" data-state={view.state}>
           <AlertTitle>
             <Badge variant="secondary">{ORDER_BADGE_LABELS[view.state]}</Badge>
           </AlertTitle>
@@ -107,14 +107,14 @@ function Panel({ view, waitedLong }: { view: ReturnView; waitedLong: boolean }) 
       );
     case "unknown":
       return (
-        <Alert data-testid="checkout-return" data-state="unknown">
+        <Alert role="none" data-testid="checkout-return" data-state="unknown">
           <AlertTitle>Unknown checkout</AlertTitle>
           <AlertDescription>This checkout does not match any order on this server.</AlertDescription>
         </Alert>
       );
     case "unreachable":
       return (
-        <Alert data-testid="checkout-return" data-state="unreachable">
+        <Alert role="none" data-testid="checkout-return" data-state="unreachable">
           <AlertTitle>Could not reach Kensaku&apos;s server to check the checkout.</AlertTitle>
         </Alert>
       );

@@ -319,6 +319,7 @@ test("5. Success: Pay returns to Confirming, then the verified webhook makes it 
   await api.pay(order!.stripeSessionId!);
 
   await expect(returnPanel(page)).toHaveAttribute("data-state", "paid");
+  await expect(page.locator('[role="status"][aria-live="polite"]').filter({ has: returnPanel(page) }).locator('[role="alert"]')).toHaveCount(0);
   const host = order!.lines[0]!.merchantHost;
   await expect(returnPanel(page)).toContainText(`Simulated payment received (Stripe sandbox). No order was placed with ${host}.`);
   await expect(page.getByTestId("cart-count")).toHaveText("0");
