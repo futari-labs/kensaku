@@ -132,7 +132,7 @@ describe("EV-009 running server", () => {
     const run = await request(port, { method: "POST", path: "/api/chat", headers: { ...own(), "content-type": "application/json", origin: `http://127.0.0.1:${port}` }, body: chat });
     expect(run.status).toBe(200);
     responses.push(run.body);
-    const ids = [...new Set([...run.body.matchAll(/"id":"([0-9a-f]{64})"/g)].map((m) => m[1]!))];
+    const ids = [...new Set([...run.body.matchAll(/"id":"([0-9a-f]{64})","sourceHost"/g)].map((m) => m[1]!))];
     expect(ids.length).toBe(6);
 
     const loaded: Reply[] = [];
