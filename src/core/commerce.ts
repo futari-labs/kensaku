@@ -103,6 +103,8 @@ const SHA256_K = Uint32Array.of(
   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 );
 
+type Words8 = [number, number, number, number, number, number, number, number];
+
 const rotr = (x: number, n: number): number => (x >>> n) | (x << (32 - n));
 
 /** Synchronous SHA-256 so src/core also bundles for the browser (it has no node:crypto types). */
@@ -115,7 +117,7 @@ function sha256Hex(text: string): string {
   view.setUint32(padded.length - 8, Math.floor((bytes.length * 8) / 2 ** 32));
   view.setUint32(padded.length - 4, (bytes.length * 8) >>> 0);
 
-  const h = Uint32Array.of(0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19);
+  let h: Words8 = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
   const w = new Uint32Array(64);
   for (let block = 0; block < padded.length; block += 64) {
     for (let i = 0; i < 16; i++) w[i] = view.getUint32(block + i * 4);
@@ -126,7 +128,7 @@ function sha256Hex(text: string): string {
       const s1 = rotr(w2, 17) ^ rotr(w2, 19) ^ (w2 >>> 10);
       w[i] = (w[i - 16]! + s0 + w[i - 7]! + s1) >>> 0;
     }
-    let [a, b, c, d, e, f, g, hh] = Array.from(h) as [number, number, number, number, number, number, number, number];
+    let [a, b, c, d, e, f, g, hh] = h;
     for (let i = 0; i < 64; i++) {
       const t1 = (hh + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + SHA256_K[i]! + w[i]!) >>> 0;
       const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
@@ -139,9 +141,8 @@ function sha256Hex(text: string): string {
       b = a;
       a = (t1 + t2) >>> 0;
     }
-    ([a, b, c, d, e, f, g, hh] as const).forEach((v, i) => {
-      h[i] = (h[i]! + v) >>> 0;
-    });
+    const [h0, h1, h2, h3, h4, h5, h6, h7] = h;
+    h = [h0 + a, h1 + b, h2 + c, h3 + d, h4 + e, h5 + f, h6 + g, h7 + hh].map((v) => v >>> 0) as Words8;
   }
   return Array.from(h, (v) => v.toString(16).padStart(8, "0")).join("");
 }
