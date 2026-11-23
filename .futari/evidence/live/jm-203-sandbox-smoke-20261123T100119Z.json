@@ -1,0 +1,119 @@
+{
+  "task": "JM-203",
+  "plan": "kensaku-v1-2",
+  "mode": "live",
+  "gitSha": "e9f5b90ac61beadcee1633f2b0e57775f1d6f3ab",
+  "startedAt": "2026-11-23T10:01:19.692Z",
+  "finishedAt": "2026-11-23T10:17:44.918Z",
+  "exa": {
+    "requests": 3,
+    "cap": 5,
+    "source": "research"
+  },
+  "agentSessions": [
+    {
+      "currency": "USD",
+      "syntheticSessionOnly": false,
+      "sessionId": "cs_test_a0ieSLK0mWxE10C3oywhozyQNwlaWAHT5oX6pFafPt6WW1vVylelcvci0l",
+      "livemode": false,
+      "urlHost": "checkout.stripe.com",
+      "requestHadTopLevelCurrency": false,
+      "expiresInSeconds": 3600,
+      "amountTotal": 19995,
+      "expectedAmountMinor": 19995,
+      "sessionCurrency": "usd",
+      "retrievedStatus": "open",
+      "statusAfterExpire": "expired"
+    },
+    {
+      "currency": "SGD",
+      "syntheticSessionOnly": true,
+      "syntheticReason": "Q1 yields no SGD/JPY registered offers within the 5-request smoke budget",
+      "sessionId": "cs_test_a07Y9jJADazyDAycljU3eJjhOgBPDM2Gadw11MCYy86s2Ruh63qqnuAUAg",
+      "livemode": false,
+      "urlHost": "checkout.stripe.com",
+      "requestHadTopLevelCurrency": false,
+      "expiresInSeconds": 3600,
+      "amountTotal": 2000,
+      "expectedAmountMinor": 2000,
+      "sessionCurrency": "sgd",
+      "retrievedStatus": "open",
+      "statusAfterExpire": "expired"
+    },
+    {
+      "currency": "JPY",
+      "syntheticSessionOnly": true,
+      "syntheticReason": "Q1 yields no SGD/JPY registered offers within the 5-request smoke budget",
+      "sessionId": "cs_test_a03E9FO7RM4K4FDGAo98KI5p0wjqchjABm1zPxFCRthXeTYQoIjcCSQhwe",
+      "livemode": false,
+      "urlHost": "checkout.stripe.com",
+      "requestHadTopLevelCurrency": false,
+      "expiresInSeconds": 3600,
+      "amountTotal": 2000,
+      "expectedAmountMinor": 2000,
+      "sessionCurrency": "jpy",
+      "retrievedStatus": "open",
+      "statusAfterExpire": "expired"
+    }
+  ],
+  "expireAgain": {
+    "sessionId": "cs_test_a0ieSLK0mWxE10C3oywhozyQNwlaWAHT5oX6pFafPt6WW1vVylelcvci0l",
+    "outcome": "error",
+    "portCode": "stripe-error",
+    "rawShape": {
+      "type": "StripeInvalidRequestError",
+      "statusCode": 400,
+      "message": "Only Checkout Sessions with a status in [\"open\"] can be expired. This Checkout Session has a status of `expired`."
+    },
+    "statusAfter": "expired"
+  },
+  "purchase": {
+    "orderId": "ord_d7062d8c-3f0a-47e5-b9f6-9814307c357c",
+    "sessionId": "cs_test_a0qXqCKRRzG3N90zwczL8PgGtSGqAywzI5kbBohl6zEYQbwi67iQbFv47i",
+    "completed": true,
+    "statesSeen": [
+      "open",
+      "paid"
+    ],
+    "finalState": "paid",
+    "paidEventId": "evt_1UeuHwEVa8GiEha4GsT7sq8T",
+    "amountMatchesSession": true,
+    "cartClearedAfter": true
+  },
+  "decline": {
+    "orderId": "ord_37a48b6b-0a98-479a-8b6f-b782ea60bad5",
+    "completed": true,
+    "finalState": "cancelled",
+    "declinedAttempts": 1,
+    "paymentFailedEventArrived": true,
+    "sessionStatusAfter": "expired",
+    "cartUnchanged": true
+  },
+  "resend": {
+    "eventId": "evt_1UeuHwEVa8GiEha4GsT7sq8T",
+    "exitCode": 0,
+    "output": "{\n  \"id\": \"evt_1UeuHwEVa8GiEha4GsT7sq8T\",\n  \"object\": \"event\",\n  \"api_version\": \"2026-11-18.endive\",\n  \"created\": 1795428956,\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_a0qXqCKRRzG3N90zwczL8PgGtSGqAywzI5kbBohl6zEYQbwi67iQbFv47i\",\n      \"object\": \"checkout.session\",\n      \"adaptive_pricing\": {\n        \"enabled\": false\n      },\n      \"after_expiration\": null,\n      \"allow_promotion_codes\": null,\n      \"allowed_payment_method_types\": null,\n      \"amount_subtotal\": 19995,\n      \"amount_total\": 19995,\n      \"automatic_tax\": {\n        \"address_collection_precision\": null,\n        \"enabled\": false,\n        \"liability\": null,\n        \"provider\": null,\n        \"status\": null\n      },\n      \"billing_address_collection\": null,\n      \"branding_settings\": {\n        \"background_color\": \"#ffffff\",\n        \"border_style\": \"rounded\",\n        \"button_color\": \"#0074d4\",\n        \"display_name\": \"kensaku-dev\",\n        \"font_family\": \"default\",\n        \"icon\": null,\n        \"logo\": null\n      },\n      \"cancel_url\": \"http://127.0.0.1:8787/?checkout=cancelled&order=ord_d7062d8c-3f0a-47e5-b9f6-9814307c357c\",\n      \"client_reference_id\": \"ord_d7062d8c-3f0a-47e5-b9f6-9814307c357c\",\n      \"client_secret\": null,\n      \"collected_information\": null,\n      \"consent\": null,\n      \"consent_collection\": null,\n      \"created\": 1795428090,\n      \"currency\": \"usd\",\n      \"currency_conversion\": null,\n      \"custom_fields\": [],\n      \"custom_text\": {\n        \"after_submit\": null,\n        \"shipping_address\": null,\n        \"submit\": null,\n        \"terms_of_service_acceptance\": null\n      },\n      \"customer\": null,\n      \"customer_account\": null,\n      \"customer_creation\": \"if_required\",\n      \"customer_details\": {\n        \"address\": {\n          \"city\": null,\n          \"country\": \"SG\",\n          \"line1\": null,\n          \"line2\": null,\n          \"postal_code\": null,\n          \"state\": null\n        },\n        \"business_name\": null,\n        \"email\": \"joqeewee@gmail.com\",\n        \"individual_name\": null,\n",
+    "serverOutcomes": [
+      "applied",
+      "duplicate"
+    ],
+    "duplicateAnswered": true,
+    "paidTransitionsAfter": 1
+  },
+  "checks": {
+    "usd, sgd and jpy sessions created, retrieved, expired": true,
+    "no live-mode session": true,
+    "exa requests within the cap": true,
+    "expire of an expired session recorded": true,
+    "purchase paid after a verified event": true,
+    "purchase amount equals the session": true,
+    "decline never paid and cancelled": true,
+    "decline session expired": true,
+    "resend answered duplicate, one paid transition": true
+  },
+  "pass": true,
+  "notes": [
+    "SGD: syntheticSessionOnly, a fixed test item was created, retrieved and expired but never paid",
+    "JPY: syntheticSessionOnly, a fixed test item was created, retrieved and expired but never paid"
+  ]
+}
