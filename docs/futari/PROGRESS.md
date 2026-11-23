@@ -28,6 +28,9 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) appr
 - Credentials (values not printed): `.env.local` holds a sandbox-prefixed `STRIPE_SECRET_KEY` (`sk_test_…`) and a `whsec_…` `STRIPE_WEBHOOK_SECRET`; the Stripe CLI is installed and paired with an account. Login to the sandbox is confirmed at the JM-203 smoke.
 - Process notes:
   - EV-021 check 4's `.data/` assertion stays `it.todo` in JM-202, because the plan gives the `.gitignore` change to JM-203 with the store; JM-203 completes it.
+  - `dev` CI failed once at `0b56670` on the carried ev-015 "375x812" layout test (two card boxes measured in parallel); the same commit passed on rerun. JM-204 may stabilize the measurement without changing the assertion.
+  - The JM-203 fix-round worker was interrupted twice by API 529 (overloaded) errors and resumed in its own worktree.
+  - Vertical slice gate: JM-203 live sandbox smoke 9/9 PASS on 2026-11-23 (log `jm-203-sandbox-smoke-20261123T100119Z.json`), with the owner performing the hosted-page steps. Exa used so far: 3 of 30.
   - The coordinator once wrote into a worker's worktree while the resumed worker was still committing there; the changes did not overlap and both were tested together. Rule kept since: never write in a worktree a live agent holds.
 
 ### CR-005: EV-009 image-id count and the Add-to-cart accessible name (plan revision of `kensaku-v1-2`)
@@ -36,15 +39,15 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) appr
 - Owner decision (AskUserQuestion, 2026-11-23): "Prepare CR-004 (Recommended)", renumbered CR-005 because CR-004 is the proposed post-v1.1 eBay revision recorded below. D-059.
 - Revision: JM-203 gains `tests/evals/ev-009-key-safety.test.ts` with one permitted edit (the regex) and a matching criterion; ARCHITECTURE's label wording. No other change.
 - Independent review of `ede511b` (opus, read-only): READY; one MINOR and two NITs resolved as wording.
-- Status: awaiting the owner's plan-revision approval card; nothing merges until the revised baseline is on `dev`.
+- Status: approved by the owner on the plan-revision card (snapshot `331cfd4b…` at `992d013`, record `3f42b46`); merged into `dev` by the owner as PR #38 (`e862e5b`). JM-203 then updated from `dev`.
 
 ### v1.2 execution ledger
 
 | Task | Issue | Branch | PR | Tested revision | Status | Evidence / next action |
 | --- | --- | --- | --- | --- | --- | --- |
 | JM-201 | #31 | `jm-201-commerce-core` | #36 | `0d458b3` | merged (`57370f8`) | `.futari/evidence/JM-201.md` |
-| JM-202 | #32 | `jm-202-stripe-adapter` | (this PR) | `9fcb8fb` | merge-ready after CI | `.futari/evidence/JM-202.md` |
-| JM-203 | #33 | — | — | — | pending | needs JM-201 and JM-202 merged |
+| JM-202 | #32 | `jm-202-stripe-adapter` | #37 | `9fcb8fb` | merged (`0b56670`) | `.futari/evidence/JM-202.md` |
+| JM-203 | #33 | `jm-203-commerce-slice` | (this PR) | `5506864` | merge-ready after CI | `.futari/evidence/JM-203.md`; live smoke 9/9 |
 | JM-204 | #34 | — | — | — | pending | needs JM-203 |
 | JM-205 | #35 | — | — | — | pending | needs JM-204 |
 
