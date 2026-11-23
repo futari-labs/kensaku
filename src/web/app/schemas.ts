@@ -19,6 +19,7 @@ const CurrencySchema = z.enum(CURRENCIES);
 const CandidateSchema = z.looseObject({ name: z.string(), brand: z.string(), modelIdentifiers: z.array(z.string()) }) satisfies z.ZodType<CandidateIdentity>;
 const OfferSchema = z.looseObject({
   kind: z.literal("merchant-offer"),
+  id: z.string().optional(),
   merchantHost: z.string(),
   merchantName: z.string(),
   canonicalUrl: z.string(),

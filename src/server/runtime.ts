@@ -1,7 +1,14 @@
+import { randomBytes } from "node:crypto";
 import { appendFileSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { FixtureCommerceService, fakeHostedRoutes } from "../commerce/fake-hosted";
+import { FakeCheckoutPort } from "../commerce/fake-port";
+import { OfferStore } from "../commerce/registry";
+import { CommerceService } from "../commerce/service";
+import { CommerceStore } from "../commerce/store";
+import { StripeCheckoutPort } from "../commerce/stripe-port";
 import { DiskCache } from "../exa/cache";
 import { systemClock } from "../exa/clock";
 import { ExaFailure } from "../exa/errors";
@@ -12,8 +19,19 @@ import type { ExaPort } from "../exa/port";
 import { ExaSdkPort } from "../exa/sdk-port";
 import type { AppDeps, LogLine } from "./app";
 import { appConfigOf } from "./config";
+import type { CommerceDeps } from "./commerce-routes";
 import { FixtureImageFetch, ImageProxy, NetworkImageFetch } from "./images";
 import type { ServerConfig } from "./config";
+
+export interface RuntimeOptions {
+  cacheDir?: string;
+  commerceDir?: string;
+  fakeCheckoutPort?: FakeCheckoutPort;
+  /** Receives every log line, already redacted; default is stdout. */
+  log?: (line: string) => void;
+}
+
+const FIXTURE_EXA_NOW = "2026-11-23T00:00:00.000Z";
 
 export const DEFAULT_FIXTURE_SCENARIO = "xm5-us";
 const FIXTURE_IMAGE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../tests/fixtures/images");
@@ -23,11 +41,11 @@ const unconfiguredPort: ExaPort = {
   searchOffers: () => Promise.reject(new ExaFailure("auth", "EXA_API_KEY is not set; add it to .env.local or EXA_ENV_FILE.")),
 };
 
-/** One JSON line to stdout. The key, if known, is scrubbed from the line as a last defence. */
-function stdoutLogger(secret: string | undefined): (line: LogLine) => void {
+function redactingLogger(secrets: readonly (string | undefined)[], write: (line: string) => void): (line: LogLine) => void {
+  const known = secrets.filter((s): s is string => s !== undefined && s !== "");
   return (line) => {
     const text = JSON.stringify({ ts: new Date().toISOString(), ...line });
-    console.log(secret ? text.replaceAll(secret, "[redacted]") : text);
+    write(known.reduce((out, secret) => out.replaceAll(secret, "[redacted]"), text));
   };
 }
 
@@ -43,16 +61,22 @@ function exchangeRecorder(path: string): NonNullable<PortOptions["onExchange"]> 
  * fixture run never touches `.cache/`, never serves another scenario's cached answer, and a scripted
  * 402 cannot block the next scenario (the ledger shown by `/api/usage` is a throwaway one).
  */
-export function createRuntime(config: ServerConfig): AppDeps {
+export function createRuntime(config: ServerConfig, options?: RuntimeOptions): AppDeps {
   const clock = systemClock;
-  const log = stdoutLogger(config.exaApiKey);
-  const storage = config.mode === "fixture" ? mkdtempSync(join(tmpdir(), "kensaku-fixture-")) : resolve(".cache");
+  const log = redactingLogger([config.exaApiKey, config.stripe?.secretKey, config.stripe?.webhookSecret], options?.log ?? ((line) => console.log(line)));
+  const fixtureRoot = config.mode === "fixture" ? mkdtempSync(join(tmpdir(), "kensaku-fixture-")) : undefined;
+  const storage = options?.cacheDir ?? fixtureRoot ?? resolve(".cache");
   const ledger = new UsageLedger({ dir: join(storage, "ledger"), ...config.limits });
+  const commerceStore = new CommerceStore(options?.commerceDir ?? (fixtureRoot ? join(fixtureRoot, "commerce") : resolve(".data/commerce")));
+  const offers = new OfferStore({ dir: join(storage, "offers"), clock });
   const onWarning = (note: string) => log({ event: "warning", note });
 
   const imageDir = join(storage, "images");
 
   if (config.mode === "fixture") {
+    const webhookSecret = config.stripe?.webhookSecret ?? `whsec_${randomBytes(24).toString("hex")}`;
+    const service = new FixtureCommerceService({ store: commerceStore, offers, port: options?.fakeCheckoutPort ?? new FakeCheckoutPort(config.port), clock, log, serverPort: config.port });
+    const commerce: CommerceDeps = { service, offers, webhookSecret, fakeHosted: fakeHostedRoutes({ service, secret: webhookSecret, clock }) };
     // Each scenario run adds the fixture file its image URLs map to; earlier scenarios' mappings stay.
     const fetcher = new FixtureImageFetch(FIXTURE_IMAGE_DIR);
     return {
@@ -61,8 +85,9 @@ export function createRuntime(config: ServerConfig): AppDeps {
       clock,
       log,
       images: new ImageProxy({ port: fetcher, clock, log, dir: imageDir }),
+      commerce,
       portFor: (scenario) => {
-        const exa = FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock, answerMarketMode: config.answerMarketMode, onWarning });
+        const exa = FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock: () => new Date(FIXTURE_EXA_NOW), answerMarketMode: config.answerMarketMode, onWarning });
         fetcher.add(exa.scenario.images);
         return exa;
       },
@@ -80,5 +105,7 @@ export function createRuntime(config: ServerConfig): AppDeps {
       })
     : unconfiguredPort;
   const images = new ImageProxy({ port: new NetworkImageFetch(), clock, log, dir: imageDir });
-  return { config: appConfigOf(config), ledger, clock, log, images, portFor: () => port };
+  const checkoutPort = config.stripe && StripeCheckoutPort.fromSecretKey(config.stripe.secretKey);
+  const service = new CommerceService({ store: commerceStore, offers, port: checkoutPort, checkoutConfigured: () => checkoutPort !== undefined, clock, log, serverPort: config.port });
+  return { config: appConfigOf(config), ledger, clock, log, images, commerce: { service, offers, webhookSecret: config.stripe?.webhookSecret }, portFor: () => port };
 }

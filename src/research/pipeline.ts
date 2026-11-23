@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { classifyHit, cutLeakedStructure, normalizeKeySpecs, rankImageCandidates, rankOffers, resolveCitations, resolveReason } from "../core";
+import { classifyHit, cutLeakedStructure, offerId, normalizeKeySpecs, rankImageCandidates, rankOffers, resolveCitations, resolveReason } from "../core";
 import type { Classified as ClassifiedHit } from "../core";
 import type { Candidate, Evidence, ImageCandidate, ImageSource, Market, Offer, RejectCategory, SearchHit } from "../core/types";
 import { RequestBudget, MAX_EXA_REQUESTS_PER_RUN } from "../exa/budget";
@@ -28,6 +28,8 @@ export interface RunOptions {
   clock?: () => number;
   /** Records a product's image sources with the image proxy and returns the candidates the browser gets. Default: no images. */
   registerImages?: (sources: ImageSource[]) => ImageCandidate[];
+  /** Records the validated offers (each already carrying its `id`) so the cart can later accept them. Default: none. */
+  registerOffers?: (offers: Offer[], market: Market) => void;
 }
 
 /** An Exa failure the user sees as an error. `budget_exhausted` is not one: it ends the offers stage early instead. */
@@ -94,11 +96,13 @@ function classifiedOf(searched: Searched): Classified {
 function validate(
   classified: Classified[],
   market: Market,
-  { citationUrls, registerImages }: { citationUrls: string[]; registerImages: (sources: ImageSource[]) => ImageCandidate[] },
+  { citationUrls, registerImages, registerOffers }: Pick<Required<RunOptions>, "registerImages" | "registerOffers"> & { citationUrls: string[] },
 ): ProductResult[] {
   const shown = new Set<string>();
-  return classified.map((c) => {
-    const fresh = offersOf(c).filter((offer) => !shown.has(offer.canonicalUrl));
+  const products = classified.map((c) => {
+    const fresh = offersOf(c)
+      .filter((offer) => !shown.has(offer.canonicalUrl))
+      .map((offer): Offer => ({ ...offer, id: offerId(offer) }));
     for (const offer of fresh) shown.add(offer.canonicalUrl);
     const { name, brand, modelIdentifiers, keySpecs, reason } = c.candidate;
     return {
@@ -113,6 +117,11 @@ function validate(
       ...(c.notSearched !== undefined && { notSearched: c.notSearched }),
     };
   });
+  registerOffers(
+    products.flatMap((p) => p.offerGroups.flatMap((g) => g.offers)),
+    market,
+  );
+  return products;
 }
 
 /**
@@ -128,6 +137,7 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     sleep = abortableSleep,
     clock = Date.now,
     registerImages = () => [],
+    registerOffers = () => {},
   } = options;
   const { question, market } = input;
   const budget = new RequestBudget(MAX_EXA_REQUESTS_PER_RUN);
@@ -216,7 +226,7 @@ export async function* runResearch(input: RunInput, port: ExaPort, signal: Abort
     const comparison: RunEvent = cited
       ? { type: "comparison", text: cited.renderedText, truncated: cut.truncated, sources: cited.citedSources.map((s) => ({ url: s.url, sourceId: s.numbers.join(",") })) }
       : { type: "comparison", text: null, truncated: true, sources: [] };
-    const validation = { citationUrls: answer.citationUrls, registerImages };
+    const validation = { citationUrls: answer.citationUrls, registerImages, registerOffers };
 
     // Stage 2: offers (1 request per candidate: 1 and 2, then 3 only if 1 and 2 found no merchant offer)
     const offersStage = startStage("offers");

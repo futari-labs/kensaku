@@ -10,7 +10,7 @@ import type {
   WebhookEvent,
 } from "./port";
 
-const STRIPE_API_VERSION = "2026-10-28.endive";
+export const STRIPE_API_VERSION = "2026-10-28.endive";
 const CHECKOUT_URL_PREFIX = "https://checkout.stripe.com/";
 const WEBHOOK_TOLERANCE_SECONDS = 300;
 const STATUSES: readonly SessionStatus[] = ["open", "complete", "expired"];
@@ -36,34 +36,56 @@ function toResult(session: Stripe.Checkout.Session): SessionResult {
   return { ...fields, status, url: session.url };
 }
 
-async function call<T>(run: () => Promise<T>): Promise<T> {
+/** What the SDK said about a failed call. The message can quote part of a key, so only a caller that redacts may keep it. */
+export interface StripeErrorShape {
+  type?: string;
+  code?: string;
+  statusCode?: number;
+  message?: string;
+}
+
+const shapeOf = (error: unknown): StripeErrorShape => {
+  const e = error as Record<string, unknown> | null;
+  return {
+    ...(typeof e?.type === "string" && { type: e.type }),
+    ...(typeof e?.code === "string" && { code: e.code }),
+    ...(typeof e?.statusCode === "number" && { statusCode: e.statusCode }),
+    ...(typeof e?.message === "string" && { message: e.message }),
+  };
+};
+
+async function call<T>(run: () => Promise<T>, observe?: (raw: StripeErrorShape) => void): Promise<T> {
   try {
     return await run();
   } catch (error) {
+    if (!(error instanceof CheckoutPortError)) observe?.(shapeOf(error));
     throw error instanceof CheckoutPortError ? error : new CheckoutPortError("stripe-error");
   }
 }
 
 export class StripeCheckoutPort implements CheckoutPort {
-  constructor(private readonly client: StripeClientLike) {}
+  constructor(
+    private readonly client: StripeClientLike,
+    private readonly observe?: (raw: StripeErrorShape) => void,
+  ) {}
 
   /** The key goes to the SDK constructor and nowhere else. */
-  static fromSecretKey(key: string): StripeCheckoutPort {
-    return new StripeCheckoutPort(new Stripe(key, { apiVersion: STRIPE_API_VERSION, timeout: 10000, maxNetworkRetries: 0 }));
+  static fromSecretKey(key: string, observe?: (raw: StripeErrorShape) => void): StripeCheckoutPort {
+    return new StripeCheckoutPort(new Stripe(key, { apiVersion: STRIPE_API_VERSION, timeout: 10000, maxNetworkRetries: 0 }), observe);
   }
 
   async createSession(params: CheckoutSessionParams, options: CheckoutSessionOptions): Promise<SessionResult> {
-    const result = await call(async () => toResult(await this.client.checkout.sessions.create(params, options)));
+    const result = await call(async () => toResult(await this.client.checkout.sessions.create(params, options)), this.observe);
     if (result.status !== "open") throw new CheckoutPortError("stripe-error");
     return result;
   }
 
   async expireSession(id: string): Promise<void> {
-    await call(() => this.client.checkout.sessions.expire(id));
+    await call(() => this.client.checkout.sessions.expire(id), this.observe);
   }
 
   retrieveSession(id: string): Promise<SessionResult> {
-    return call(async () => toResult(await this.client.checkout.sessions.retrieve(id)));
+    return call(async () => toResult(await this.client.checkout.sessions.retrieve(id)), this.observe);
   }
 }
 
@@ -99,6 +121,11 @@ export function verifyWebhook(rawBody: string | Uint8Array, header: string | und
   if (!parsed.success) throw new CheckoutPortError("invalid-payload");
   const { id, type, livemode, data } = parsed.data;
   return { id, type, livemode, object: data.object };
+}
+
+/** A sandbox event as Stripe sends it. The fake hosted page and the tests build their deliveries from this, so none of them can drift from the shape `verifyWebhook` reads. */
+export function stripeEventEnvelope(id: string, type: string, object: Record<string, unknown>, now: Date = new Date()): Record<string, unknown> {
+  return { id, object: "event", api_version: STRIPE_API_VERSION, created: Math.floor(now.getTime() / 1000), livemode: false, type, data: { object } };
 }
 
 export function signTestPayload(payload: string, secret: string, timestamp: number): string {
