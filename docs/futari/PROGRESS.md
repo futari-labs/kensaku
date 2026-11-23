@@ -43,10 +43,11 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` revision CR-005 on `dev`; vert
 
 ### CR-006: EV-023 A3 when Exa returns no JPY offer, and run 1's evidence (plan revision of `kensaku-v1-2`)
 
-- Observation (EV-023 run 1, 2026-11-23, code `c7ba58e`): A1, A2, A4, A5, A6, A7, A8 PASS; A3 BLOCKED (Q5 yielded 0 addable JPY offers; the re-ask was served from the research cache); every safety threshold 0; Exa plan-wide 12 of 30 requests, $0.165 of $0.40 (smoke counted at its $0.06 bound). The script's leak scan matched text it had copied from the case file (`sk_test_,` in the preconditions and the public Stripe test card numbers in the scenario steps), so it kept only a summary log.
+- Observation (EV-023 run 1, 2026-11-23, code `c7ba58e`; the script reported a dirty tree only because its own started-stub log was untracked, and the summary log lacks the dirty flag): A1, A2, A4, A5, A6, A7, A8 PASS; A3 BLOCKED (Q5 yielded 0 addable JPY offers; the re-ask was served from the research cache); every safety threshold 0; Exa plan-wide 12 of 30 requests, $0.165 of $0.40 (smoke counted at its $0.06 bound). The script's leak scan matched text it had copied from the case file (`sk_test_,` in the preconditions and the public Stripe test card numbers in the scenario steps), so it kept only a summary log.
 - Owner decision (AskUserQuestion, 2026-11-23): "Revise plan, rerun". D-060.
 - Revision: case file `blockedAllowances` for A3/Q5, the `scenariosPassing` exception, runRules and runLog notes; REQ-008 criterion 1; EVALUATION_PLAN EV-023 wording; D-060; R-41. No other change. JM-205 uses its third and last repair for the script fix.
-- Status: under independent review.
+- Independent review of `84fb935` (opus, read-only): CHANGES REQUIRED (2 MAJOR, 3 MINOR, wording only); it inspected Q5's 24 cached hits and found no priced XM5 JPY merchant listing, so run 1 hides no product defect. Resolved in the reviewed commit.
+- Status: awaiting the owner's plan-revision approval card.
 
 ### v1.2 execution ledger
 

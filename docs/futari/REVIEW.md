@@ -222,5 +222,15 @@ The three resolutions are wording only, applied after the READY verdict.
 
 Trigger: EV-023 run 1 ended BLOCKED (A3: no addable JPY offer from Q5) and a JM-205 leak-scan defect reduced its log to a summary. The owner selected "Revise plan, rerun" on 2026-11-23. Decision D-060.
 
-Independent review: pending.
+Independent review: a fresh opus reviewer, read-only, reviewed `84fb935`. Verdict: **CHANGES REQUIRED** (2 MAJOR, 3 MINOR; no blocking). It read Q5's three cached offer searches (24 hits): only `kakaku.com` (a comparison page, `isProductListing: false`) mentioned the XM5; the rest were category, guide, cart, or unrelated pages, so rejecting them was correct and run 1 hides no product defect. JPY coverage claims verified (EV-018 I04/M05/M07/C06/N02, EV-019 R02, JM-203 JPY session).
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| 1 | MAJOR | The allowance keyed on a count; a classification bug producing 0 would qualify. | The run log records each query's validated outcome summary; the allowance applies only when Q5's summary has no JPY merchant offer (case file `when`, D-060; implemented in JM-205's third repair). |
+| 2 | MAJOR | Inside the 6-hour cache window, run 2 re-serves run 1's Q5 results, so A3 is BLOCKED by construction; the text did not say so. | The case file and D-060 say so explicitly; the owner chose this option; the cached results were inspected above. |
+| 3 | MINOR | REQ-008 still promised "JPY sandbox payments marked paid"; no live paid JPY order would be observed. | REQ-008 criterion 1 qualifies the JPY payment; D-060 states the remaining coverage gap. |
+| 4 | MINOR | `researchChecks[0]` still said the owner decides for any BLOCKED scenario. | It now excepts A3/Q5, which the allowance decides. |
+| 5 | MINOR | Run 1 ran on a "dirty tree" and the summary lacks the dirty flag. | PROGRESS notes both (the dirt was the script's own untracked stub). |
+
+Evidence handling (reviewer item 4): run 1's terminal output is committed only with card numbers and Checkout URLs (whose fragments embed a `pk_test_` key) redacted; the server log has no key, secret, or card number; the `stripe listen` log is never committed (it holds the signing secret).
 
