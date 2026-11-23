@@ -31,13 +31,15 @@ const parseWith = <T>(schema: z.ZodType<T>) => (body: unknown): T | undefined =>
 };
 
 const cartReply = (body: unknown): Cart | undefined => parseWith(z.object({ cart: CartSchema }))(body)?.cart;
-const orderReply = (body: unknown): Order | undefined => parseWith(z.object({ order: OrderSchema }))(body)?.order;
+const orderReply = (body: unknown): OrderView | undefined => parseWith(z.object({ order: OrderSchema }))(body)?.order;
 
 export const fetchCart = () => call("GET", "/api/cart", parseWith(CartViewSchema));
 export const addToCart = (offerId: string, replace = false) => call("POST", "/api/cart/items", cartReply, { offerId, ...(replace && { replace }) });
 export const setQuantity = (offerId: string, quantity: number) => call("PATCH", `/api/cart/items/${encodeURIComponent(offerId)}`, cartReply, { quantity });
 export const removeLine = (offerId: string) => call("DELETE", `/api/cart/items/${encodeURIComponent(offerId)}`, cartReply);
+export const clearCart = () => call("DELETE", "/api/cart", cartReply);
 export const startCheckout = () => call("POST", "/api/checkout", parseWith(z.object({ orderId: z.string(), url: z.string() })), {});
+export const fetchOrders = () => call("GET", "/api/orders", parseWith(z.object({ orders: z.array(OrderSchema) })));
 export const fetchOrder = (id: string) => call("GET", `/api/orders/${encodeURIComponent(id)}`, orderReply);
 export const cancelOrder = (id: string) => call("POST", `/api/orders/${encodeURIComponent(id)}/cancel`, orderReply, {});
 

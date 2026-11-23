@@ -1,6 +1,8 @@
+import { MIN_UNIT_MINOR, toMinorUnits } from "../../core/commerce";
 import { MARKET_CURRENCY } from "../../core/currency";
 import type { Market, Offer, OfferGroup } from "../../core/types";
 import type { ProductResult } from "../../research/events";
+import type { BuyBlockCode, CartUnavailable } from "./useCart";
 
 /** What a card says about a product's offers. `lowest` counts every listed local offer, out-of-stock ones too. */
 export type OfferView =
@@ -24,4 +26,14 @@ export function offerView({ notSearched, offerGroups }: Pick<ProductResult, "not
     other,
     otherCount: other.reduce((n, g) => n + g.offers.length, 0),
   };
+}
+
+export function buyBlock({ id, availability, price }: Pick<Offer, "id" | "availability" | "price">, unavailable: CartUnavailable | undefined): BuyBlockCode | undefined {
+  if (unavailable !== undefined) return unavailable;
+  if (id === undefined) return "offer-not-registered";
+  if (availability === "out_of_stock") return "out-of-stock";
+  const minor = toMinorUnits(price.amount, price.currency);
+  if (minor === null) return "invalid-price";
+  if (minor < MIN_UNIT_MINOR) return "below-minimum";
+  return undefined;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { ChevronDownIcon, ImageOffIcon } from "lucide-react";
 import { segmentMarkers } from "../../core";
 import { MARKET_CURRENCY } from "../../core/currency";
@@ -12,13 +12,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/web/compo
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemHeader, ItemTitle } from "@/web/components/ui/item";
 import { Skeleton } from "@/web/components/ui/skeleton";
 import { cn } from "@/web/lib/utils";
+import { AddToCart } from "./AddToCart";
 import { CitedSegments, MalformedNote } from "./Citation";
 import { AVAILABILITY_LABEL, EVIDENCE_LABEL, formatPrice, formatTime, productTitle } from "./format";
 import { MARKET_NAME } from "./markets";
 import { offerView } from "./offers";
 import type { OfferView } from "./offers";
-import { noticeText, useCart } from "./useCart";
-import type { CartNotice, CartUnavailable } from "./useCart";
 
 const IMAGE_RATIO = 4 / 3;
 
@@ -58,46 +57,6 @@ function ProductImage({ label, candidates }: { label: string; candidates: ImageC
         {loaded && `Image: ${current.sourceHost} · ${current.sourceTitle}`}
       </figcaption>
     </figure>
-  );
-}
-
-const ADDED_FLASH_MS = 2_000;
-
-function unbuyableReason({ id, availability }: Offer, unavailable: CartUnavailable | undefined): string | undefined {
-  if (unavailable === "corrupt") return "Cart disabled: its data file could not be read";
-  if (id === undefined) return "Ask again to buy";
-  if (availability === "out_of_stock") return "Out of stock";
-  return undefined;
-}
-
-function AddToCart({ offer }: { offer: Offer }) {
-  const { add, unavailable } = useCart();
-  const [added, setAdded] = useState(false);
-  const [failure, setFailure] = useState<CartNotice | undefined>();
-  useEffect(() => {
-    if (!added) return;
-    const timer = setTimeout(() => setAdded(false), ADDED_FLASH_MS);
-    return () => clearTimeout(timer);
-  }, [added]);
-  const reason = unbuyableReason(offer, unavailable);
-  const label = reason ?? (added ? "Added" : "Add to cart");
-  // The visible text leads the accessible name (WCAG label in name).
-  const name = `${label}: ${offer.productName} from ${offer.merchantHost}${reason ? "" : " (simulated cart)"}`;
-  const onClick = async () => {
-    if (offer.id === undefined) return;
-    const result = await add(offer.id);
-    setFailure(result);
-    setAdded(result === undefined);
-  };
-  return (
-    <span className="flex flex-col items-end gap-1">
-      <Button type="button" size="sm" aria-label={name} disabled={reason !== undefined || unavailable !== undefined} onClick={() => void onClick()}>
-        {label}
-      </Button>
-      <span role="status" aria-live="polite" className={failure ? "max-w-48 text-right text-xs text-destructive" : "sr-only"} data-testid="add-error">
-        {failure && noticeText(failure)}
-      </span>
-    </span>
   );
 }
 

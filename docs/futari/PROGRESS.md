@@ -1,6 +1,6 @@
 # FutariLabs progress
 
-Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) approved and merged into `dev` (PR #30, `59798be`); vertical slice in progress. v1.1 (plan `kensaku-v1-1`) is complete and accepted (2026-11-22) and archived in `docs/futari/archive/kensaku-v1-1/`; the MVP is archived in `docs/futari/archive/kensaku-mvp-v1/`.
+Phase: **v1.2 execution** — plan `kensaku-v1-2` revision CR-005 on `dev`; vertical slice merged (JM-201..JM-203); JM-204 merge-ready; JM-205 next. v1.1 (plan `kensaku-v1-1`) is complete and accepted (2026-11-22) and archived in `docs/futari/archive/kensaku-v1-1/`; the MVP is archived in `docs/futari/archive/kensaku-mvp-v1/`.
 
 (Previous phase line, kept for history: **v1.1 complete and accepted by the owner** (plan `kensaku-v1-1`, revision CR-003; final `dev` head `878c7cf`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).)
 
@@ -47,8 +47,8 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) appr
 | --- | --- | --- | --- | --- | --- | --- |
 | JM-201 | #31 | `jm-201-commerce-core` | #36 | `0d458b3` | merged (`57370f8`) | `.futari/evidence/JM-201.md` |
 | JM-202 | #32 | `jm-202-stripe-adapter` | #37 | `9fcb8fb` | merged (`0b56670`) | `.futari/evidence/JM-202.md` |
-| JM-203 | #33 | `jm-203-commerce-slice` | (this PR) | `5506864` | merge-ready after CI | `.futari/evidence/JM-203.md`; live smoke 9/9 |
-| JM-204 | #34 | — | — | — | pending | needs JM-203 |
+| JM-203 | #33 | `jm-203-commerce-slice` | #39 | `5506864` | merged (`5f4d922`) | `.futari/evidence/JM-203.md`; live smoke 9/9 |
+| JM-204 | #34 | `jm-204-commerce-ui` | (this PR) | `29b5597` | merge-ready after CI | `.futari/evidence/JM-204.md`; owner accepted the UI |
 | JM-205 | #35 | — | — | — | pending | needs JM-204 |
 
 ## v1.1 planning session 2026-11-21
