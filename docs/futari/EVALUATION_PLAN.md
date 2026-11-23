@@ -316,7 +316,7 @@ Playwright against the `pnpm start`-equivalent fixture server (as EV-007), Chrom
 
 ### Live sandbox acceptance (EV-023)
 
-Defined in `evals/cases/live-acceptance-v1-2.json`: preconditions, the 3 queries (Q1, Q3, Q5 reused verbatim from v1.1), scenarios A1-A8 (A1-A5 by the owner on the Stripe-hosted page, A6-A8 by the agent), research checks, thresholds (8/8 scenarios; 0 paid without a verified event, 0 live-mode objects, 0 duplicate paid transitions, 0 amount mismatches; Exa within budget; owner audit H1-H5 all yes), the run log, and run rules (at most 2 runs). A miss caused by a Stripe fact that differs from research stops execution for a plan revision (D-056); an Exa outage or exhausted credits is BLOCKED.
+Defined in `evals/cases/live-acceptance-v1-2.json`: preconditions, the 3 queries (Q1, Q3, Q5 reused verbatim from v1.1), scenarios A1-A8 (A1-A5 by the owner on the Stripe-hosted page, A6-A8 by the agent), research checks, thresholds (8/8 scenarios, or 7/8 when only A3 is BLOCKED under the case file's `blockedAllowances` because Q5 yields no addable JPY offer (CR-006, D-060); 0 paid without a verified event, 0 live-mode objects, 0 duplicate paid transitions, 0 amount mismatches; Exa within budget; owner audit H1-H5 all yes), the run log, and run rules (at most 2 runs; run 1 ran on 2026-11-23 and its tooling-reduced log is accompanied by its terminal output and server log, CR-006). The run log refers to scenarios by id and never copies instruction text or test card numbers. A miss caused by a Stripe fact that differs from research stops execution for a plan revision (D-056); an Exa outage or exhausted credits is BLOCKED.
 
 ### Slice smoke (JM-203, v1.2)
 
