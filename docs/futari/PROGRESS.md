@@ -41,6 +41,13 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` revision CR-005 on `dev`; vert
 - Independent review of `ede511b` (opus, read-only): READY; one MINOR and two NITs resolved as wording.
 - Status: approved by the owner on the plan-revision card (snapshot `331cfd4b…` at `992d013`, record `3f42b46`); merged into `dev` by the owner as PR #38 (`e862e5b`). JM-203 then updated from `dev`.
 
+### CR-006: EV-023 A3 when Exa returns no JPY offer, and run 1's evidence (plan revision of `kensaku-v1-2`)
+
+- Observation (EV-023 run 1, 2026-11-23, code `c7ba58e`): A1, A2, A4, A5, A6, A7, A8 PASS; A3 BLOCKED (Q5 yielded 0 addable JPY offers; the re-ask was served from the research cache); every safety threshold 0; Exa plan-wide 12 of 30 requests, $0.165 of $0.40 (smoke counted at its $0.06 bound). The script's leak scan matched text it had copied from the case file (`sk_test_,` in the preconditions and the public Stripe test card numbers in the scenario steps), so it kept only a summary log.
+- Owner decision (AskUserQuestion, 2026-11-23): "Revise plan, rerun". D-060.
+- Revision: case file `blockedAllowances` for A3/Q5, the `scenariosPassing` exception, runRules and runLog notes; REQ-008 criterion 1; EVALUATION_PLAN EV-023 wording; D-060; R-41. No other change. JM-205 uses its third and last repair for the script fix.
+- Status: under independent review.
+
 ### v1.2 execution ledger
 
 | Task | Issue | Branch | PR | Tested revision | Status | Evidence / next action |

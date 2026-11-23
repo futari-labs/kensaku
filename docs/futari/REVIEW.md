@@ -217,3 +217,10 @@ Independent review: a fresh opus reviewer, read-only, reviewed `ede511b`. Verdic
 | 3 | NIT | The owner's card said "CR-004". | Noted here: the owner's "Prepare CR-004" selection is this revision, CR-005. |
 
 The three resolutions are wording only, applied after the READY verdict.
+
+## Plan revision CR-006 (EV-023 A3 without a JPY offer; run 1 evidence)
+
+Trigger: EV-023 run 1 ended BLOCKED (A3: no addable JPY offer from Q5) and a JM-205 leak-scan defect reduced its log to a summary. The owner selected "Revise plan, rerun" on 2026-11-23. Decision D-060.
+
+Independent review: pending.
+

@@ -31,7 +31,7 @@
     "Research output still meets the v1.1 behaviour for these queries: no displayed comparison or reason contains a brace; main offer list only in the market currency."
   ],
   "thresholds": {
-    "scenariosPassing": "8 of 8 (A1-A8).",
+    "scenariosPassing": "8 of 8 (A1-A8), or 7 of 8 when the only scenario that does not pass is A3 and it is BLOCKED under blockedAllowances (CR-006). A3 BLOCKED for any other reason, or any other scenario not passing, does not meet this threshold.",
     "paidWithoutVerifiedEvent": 0,
     "liveModeObjectsSeen": 0,
     "duplicatePaidTransitions": 0,
@@ -47,6 +47,9 @@
     "H4: Kensaku's cart, checkout return, and order list say 'Simulated' and never claim that a merchant order was placed.",
     "H5: Declined (A4) and cancelled (A5) returns show a clear, non-alarming status and the cart is still there."
   ],
-  "runLog": "scripts/live-acceptance-v1-2.ts writes .futari/evidence/live/ev-023-run-<n>-<UTC timestamp>.json with: git SHA and dirty flag, Exa requests and cost per query and plan-wide, each scenario's order id, Stripe session id, event ids received with their outcomes, order state transitions, session retrieve results, and PASS/FAIL/BLOCKED per scenario. Keys, webhook secrets, and full card numbers never appear in the log. The owner's answers to H1-H5 go to .futari/evidence/live/ev-023-run-<n>-audit.md.",
-  "runRules": "At most 2 runs. A run that fails a scenario because of a product defect is fixed and re-run within the Exa budget; a failure caused by a Stripe fact that differs from research (for example 127.0.0.1 redirect URLs refused, or SGD or JPY not presentable) stops execution for a plan revision."
+  "runLog": "scripts/live-acceptance-v1-2.ts writes .futari/evidence/live/ev-023-run-<n>-<UTC timestamp>.json with: git SHA and dirty flag, Exa requests and cost per query and plan-wide, each scenario's order id, Stripe session id, event ids received with their outcomes, order state transitions, session retrieve results, and PASS/FAIL/BLOCKED per scenario. Keys, webhook secrets, and full card numbers never appear in the log; the log never copies scenario instruction text or other free text from this file and refers to scenarios by id (CR-006). The owner's answers to H1-H5 go to .futari/evidence/live/ev-023-run-<n>-audit.md.",
+  "runRules": "At most 2 runs. A run that fails a scenario because of a product defect is fixed and re-run within the Exa budget; a failure caused by a Stripe fact that differs from research (for example 127.0.0.1 redirect URLs refused, or SGD or JPY not presentable) stops execution for a plan revision. Run 1 ran on 2026-11-23 (log ev-023-run-1-20261123T125703Z.json); a tooling defect reduced its log to a summary, so its terminal output and server log are committed beside it as supplementary evidence; run 2 is the last permitted run (CR-006).",
+  "blockedAllowances": [
+    { "scenario": "A3", "query": "Q5", "when": "Q5 yields no addable JPY offer after the permitted re-ask (a re-ask served from the 6-hour research cache counts as that re-ask).", "coverage": "JPY handling stays covered by EV-018 (JPY minor-unit and cart cases), EV-019 (JPY session request R02), and the JM-203 live sandbox smoke, which created, retrieved and expired a real JPY session.", "basis": "CR-006, DECISIONS D-060: owner decision after EV-023 run 1 on 2026-11-23." }
+  ]
 }
