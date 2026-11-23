@@ -190,3 +190,17 @@ Reviewer: fable, read-only, no implementation authority, given the artifacts and
 | 12 | Nit | Same offer in two runs makes two lines; settlement-currency minimums; no card-only restriction. | Duplicates accepted and written into the rules; minimums noted in R-28; card-only not adopted (async rules already cover other methods). |
 
 Remaining uncertainties (accepted; all first observed in the JM-203 smoke with stop conditions, D-056): 127.0.0.1 redirect URLs, SGD/JPY presentment, the decline event, the expire error shape, behaviour without top-level `currency`, restricted-key permissions.
+
+### Re-review of `c5967cd`
+
+Same reviewer. Verdict: CHANGES REQUIRED (text only; no blockers). Its extended reference implementation agrees with every label (C01-C34, V01-V06, M, I, N, R01-R04, W01-W30, X01-X19); all 12 findings resolved; `--strict` exits 0 and `--strict --final` exits 1 as intended.
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| N1 | Minor | JM-202 and ARCHITECTURE still required a `session-not-open` error mapping. | Removed; one typed `stripe-error`; the fake's outcomes listed exactly as the route cases use them. |
+| N2 | Minor | "Port timeout 10 s" had no owner or test. | JM-202 builds the client with `timeout: 10000`, `maxNetworkRetries: 0`; JM-203 unit-tests that a timed-out port call returns 502 and frees the queue. |
+| N3 | Minor | `invalid-price` lacked an HTTP status and a disabled reason. | 422 in the HTTP API; "Price can't be charged" in REQ-024 and UI composition. |
+| N4 | Minor | "Checkout link expired" untested. | Test hook `/__test/commerce/expire-open-order`; EV-022 check 15. |
+| N5 | Nit | S66 over-labeled. | Split into VERIFIED and INFERRED; the smoke checks the inferred part. |
+| N6 | Nit | R-40 claimed a UI string; singular "another open order"; version on identical replace. | R-40 points to README only; "every other open order, oldest first"; a successful replace always increments the version. |
+

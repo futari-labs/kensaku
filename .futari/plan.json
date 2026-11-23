@@ -330,10 +330,10 @@
       "id": "REQ-024",
       "description": "Commerce UI: add-to-cart controls, the currency-replace dialog, the cart sheet, checkout return states, and the order list, built from unmodified official shadcn/ui components.",
       "acceptanceCriteria": [
-        "Offer items in the main list and Other markets have 'Add to cart' with an aria-label naming product and host; disabled states and tooltips for offers without id ('Ask again to buy'), out-of-stock, and below-minimum.",
+        "Offer items in the main list and Other markets have 'Add to cart' with an aria-label naming product and host; disabled states and tooltips for offers without id ('Ask again to buy'), out-of-stock ('Out of stock'), invalid price ('Price can't be charged'), and below-minimum ('Below Stripe's minimum').",
         "The header cart button shows the line count; the cart sheet shows the banner, lines with quantity controls, remove, clear, demo total, checkout, and the 10 newest orders with status badges.",
         "The success, waiting, cancelled, unknown-checkout, checkout-failed, not-configured, and 'Checkout link expired' states show the texts in docs/futari/PRODUCT_SPEC.md '(v1.2) Simulated commerce journey'; the declined note is best-effort and appears only when Stripe reported a decline (R-30).",
-        "EV-022 checks 1-14 pass."
+        "EV-022 checks 1-15 pass."
       ]
     }
   ],
@@ -565,7 +565,7 @@
       ],
       "description": "Simulated commerce UI end to end in fixture mode, with the fake hosted checkout page.",
       "kind": "deterministic plus human review",
-      "passRule": "Checks 1-14 in docs/futari/EVALUATION_PLAN.md 'Commerce UI (EV-022)' pass in Chromium, including axe in both themes, keyboard-only use, required and forbidden label phrases, and zero non-local browser requests; scripts/check-components.mjs passes; owner visual review recorded in .futari/evidence/JM-204.md.",
+      "passRule": "Checks 1-15 in docs/futari/EVALUATION_PLAN.md 'Commerce UI (EV-022)' pass in Chromium, including axe in both themes, keyboard-only use, required and forbidden label phrases, and zero non-local browser requests; scripts/check-components.mjs passes; owner visual review recorded in .futari/evidence/JM-204.md.",
       "command": "pnpm exec playwright test tests/e2e/ev-022-commerce.spec.ts && node scripts/check-components.mjs"
     },
     {
@@ -650,7 +650,7 @@
       "acceptanceCriteria": [
         "package.json adds stripe at exactly 23.1.0 (pnpm-lock.yaml updated); no other dependency changes.",
         "src/commerce/port.ts defines CheckoutPort, SessionResult, the typed errors, and its own CheckoutOrderInput (structural; it does not import JM-201 code); src/commerce/session-request.ts implements buildCheckoutSessionRequest; EV-019 passes.",
-        "src/commerce/stripe-port.ts is the only stripe importer: StripeCheckoutPort (apiVersion '2026-10-28.endive'; maps 'session not open' expire errors to session-not-open; refuses livemode sessions and urls outside https://checkout.stripe.com/) and verifyWebhook(rawBody, header, secret) using stripe.webhooks.constructEvent with tolerance 300; src/commerce/fake-port.ts implements FakeCheckoutPort with scripted outcomes and recorded calls.",
+        "src/commerce/stripe-port.ts is the only stripe importer: StripeCheckoutPort (apiVersion '2026-10-28.endive', timeout 10000 ms, maxNetworkRetries 0; any expire error surfaces as one typed stripe-error, because the shape for a non-open session is unknown until the JM-203 smoke; refuses livemode sessions and urls outside https://checkout.stripe.com/) and verifyWebhook(rawBody, header, secret) using stripe.webhooks.constructEvent with tolerance 300; src/commerce/fake-port.ts implements FakeCheckoutPort with recorded calls and the scripted outcomes the EV-020 route cases use: expire ok | ok-delayed | error; retrieve open | complete | expired | error; create ok | error | livemode | url:<value>.",
         "src/server/config.ts parses STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET per D-050 into an optional ServerConfig.stripe { secretKey, webhookSecret } (present only when both are set); AppConfig is unchanged, so existing test helpers that build AppConfig literals still typecheck; .env.example documents both empty; EV-021 checks 1, 2, and 4 pass (checks 3 and 5 are completed by JM-203 in the same test file).",
         "src/commerce/stripe-port.ts also exports signTestPayload(payload, secret, timestamp) wrapping stripe.webhooks.generateTestHeaderString, for tests and the test-only fake hosted page, so stripe stays imported in one module; the Stripe-facing label strings ('Simulated: ' prefix, descriptions) live in src/commerce/session-request.ts and are frozen by EV-019.",
         "Never contact live Stripe; tests use FakeCheckoutPort or a stubbed SDK client and secrets built at runtime."
@@ -719,8 +719,8 @@
       ],
       "acceptanceCriteria": [
         "The pipeline's validate stage assigns offerId to every merchant offer, registers snapshots through an injected registerOffers callback into .cache/offers/ (src/commerce/registry.ts), and includes id in data-products; EV-005, EV-006, and EV-017 stay green.",
-        "src/commerce/store.ts, service.ts, and webhook.ts implement .data/commerce/state.json (atomic, corrupt file disables commerce visibly), one serialized queue for every commerce mutation including its port calls (webhook-events.json rules.serialization), the routes in ARCHITECTURE 'HTTP API' (v1.2), the checkout flow, cancel and supersede with the retrieve fallback, and the processed-id cap (30 days, 10000) with a unit test; createApp takes commerce as an optional dependency and GET /api/health is unchanged; .gitignore adds .data/; EV-020 passes; the cart routes reproduce EV-018's cases with the documented statuses (tests/server/).",
-        "src/commerce/fake-hosted.ts serves the test-only page (Pay, Decline, Back) and the test-only routes POST /__test/commerce/reset, /__test/commerce/checkout-configured { value }, and /__test/commerce/withhold-webhooks { value } only when NODE_ENV=test and fixture mode (EV-022 isolation and checks 9-10); tests/e2e/commerce-slice.spec.ts runs research → add → checkout → fake page → signed webhook → paid with zero non-local requests.",
+        "src/commerce/store.ts, service.ts, and webhook.ts implement .data/commerce/state.json (atomic, corrupt file disables commerce visibly), one serialized queue for every commerce mutation including its port calls (webhook-events.json rules.serialization), with a unit test that a port call exceeding the 10 s timeout yields 502 and frees the queue, the routes in ARCHITECTURE 'HTTP API' (v1.2), the checkout flow, cancel and supersede with the retrieve fallback, and the processed-id cap (30 days, 10000) with a unit test; createApp takes commerce as an optional dependency and GET /api/health is unchanged; .gitignore adds .data/; EV-020 passes; the cart routes reproduce EV-018's cases with the documented statuses (tests/server/).",
+        "src/commerce/fake-hosted.ts serves the test-only page (Pay, Decline, Back) and the test-only routes POST /__test/commerce/reset, /__test/commerce/checkout-configured { value }, /__test/commerce/withhold-webhooks { value }, and /__test/commerce/expire-open-order (sets the open order's expiresAt in the past) only when NODE_ENV=test and fixture mode (EV-022 isolation and checks 9-10); tests/e2e/commerce-slice.spec.ts runs research → add → checkout → fake page → signed webhook → paid with zero non-local requests.",
         "Minimal UI in src/web/app/: Add to cart on offer items, a basic cart sheet (official shadcn sheet installed with the pinned CLI, recorded in components.lock.json) with lines, demo and observed prices, and checkout, and the checkout return panel with the paid and cancelled texts; carried EV-007 and EV-015 assertions unchanged.",
         "EV-021 checks 3 and 5 are added and all of EV-021 passes; EV-009 still passes.",
         "Sandbox smoke (docs/futari/EVALUATION_PLAN.md 'Slice smoke (JM-203, v1.2)') with the owner's sandbox key and Stripe CLI: USD, SGD, and JPY sessions created, retrieved, and expired; one owner-paid USD purchase marked paid only after the verified webhook; one owner decline with 4000 0000 0000 0002 then back (whether payment_intent.payment_failed arrives is recorded); one expire of an already-expired session with the real error shape recorded; one stripe events resend answered duplicate; ≤ 5 Exa requests; log committed under .futari/evidence/live/. A Stripe-fact miss (R-27, R-28) stops execution for a plan revision."
@@ -780,7 +780,7 @@
       "acceptanceCriteria": [
         "The full UI in docs/futari/PRODUCT_SPEC.md '(v1.2) Simulated commerce journey' and ARCHITECTURE 'UI composition' and 'Labels' (v1.2): disabled reasons, currency-replace dialog, cart sheet with quantity controls, remove, clear, totals, order list, all return states including the 20 s webhook hint.",
         "Only official shadcn/ui and AI Elements components, installed unmodified with the pinned CLI and recorded in components.lock.json; CSS variables unchanged.",
-        "EV-022 checks 1-14 pass; EV-007, EV-010, and EV-015 pass with their carried assertions unchanged.",
+        "EV-022 checks 1-15 pass; EV-007, EV-010, and EV-015 pass with their carried assertions unchanged.",
         "The owner's visual review of the commerce UI on desktop and mobile widths in both themes is recorded in .futari/evidence/JM-204.md."
       ],
       "verificationCommands": [

@@ -312,6 +312,7 @@ Playwright against the `pnpm start`-equivalent fixture server (as EV-007), Chrom
 12. **Accessibility.** Keyboard only: open the sheet, change quantity, remove, check out; focus returns to the trigger on close. Axe: zero serious or critical violations with the sheet open and on each return panel, in both themes.
 13. **No third-party requests.** No browser request to a non-local origin during the whole test.
 14. **Regression.** EV-007, EV-010, and EV-015 pass with their carried assertions unchanged (R-37); `scripts/check-components.mjs` passes with the new `sheet`.
+15. **Expired link.** After `POST /__test/commerce/expire-open-order` on an open order, the order list shows "Checkout link expired" and the next checkout supersedes it.
 
 ### Live sandbox acceptance (EV-023)
 

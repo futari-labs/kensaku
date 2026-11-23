@@ -13,7 +13,9 @@ Phase: **v1.2 planning (unapproved)** — plan `kensaku-v1-2` (Stripe sandbox co
 - Frozen v1.2 inputs (synthetic, assistant-proposed labels): `evals/cases/commerce-rules.json` (4 id, 11 minor-unit, 28 cart, 2 snapshot cases), `checkout-session-request.json` (3), `webhook-events.json` (24 webhook, 11 route cases), `live-acceptance-v1-2.json` (3 queries, 8 scenarios, audit H1-H5). `node evals/harness.mjs`: HARNESS OK; EV-018 to EV-023 NOT RUNNABLE until implemented; a three-point mutation check made the harness fail each time.
 - v1.1 contract archived byte-for-byte; the live `.futari/approval.json` is removed in the reviewed commit (D-044).
 - Open owner prerequisites before JM-203's sandbox smoke: Stripe sandbox, CLI login, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (EXECUTION_PLAN "Owner prerequisites"). The Stripe CLI is not installed on this machine yet.
-- Next: independent review, then the approval card.
+- Independent review of `2d268dc` (fable, read-only): CHANGES REQUIRED, 12 findings (1 blocking), every frozen label reproduced. All resolved in `c5967cd` (D-058). Re-review of `c5967cd`: CHANGES REQUIRED, text only (N1-N6), every label reproduced again; N1-N6 resolved in the reviewed commit. Details in REVIEW.md.
+- `node .futari/plan-gate.mjs check`: PASS; `node evals/harness.mjs`: HARNESS OK (34 cart, 11 minor-unit, 4 session-request, 30 webhook, 19 route cases, 8 live scenarios); `--strict --final` fails by design until EV-018 to EV-023 exist; pstack `check-playbooks.mjs`: compatible.
+- Next: the owner's decision on the native approval card.
 
 ## v1.1 planning session 2026-11-21
 
