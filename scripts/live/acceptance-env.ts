@@ -1,35 +1,34 @@
-// The two environments of the EV-023 flow: the live one (real server, Stripe sandbox, owner) and the dry one (fake port,
-// fixture research, in-process app). The live env only verifies preconditions; the coordinator starts `stripe listen` and
-// `pnpm start` itself.
-import { createHash } from "node:crypto";
 import { execFile, execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { SessionResult } from "../../src/commerce/port";
 import { StripeCheckoutPort } from "../../src/commerce/stripe-port";
+import { ApiErrorBodySchema } from "../../src/research/events";
 import { parseConfig } from "../../src/server/config";
 import { createApp } from "../../src/server/app";
 import { createRuntime } from "../../src/server/runtime";
 import { parseSse } from "../../tests/server/sse";
-import { ofType } from "../../tests/server/sse";
-import { AcceptanceAbort } from "./acceptance";
-import type { AcceptanceEnv, AcceptanceStep, Precondition, ResearchRun } from "./acceptance";
+import { AcceptanceAbort, failedResearchRun, usageOfChunks } from "./acceptance";
+import type { AcceptanceEnv, AcceptanceStep, Precondition } from "./acceptance";
 import type { CaseQuery } from "./acceptance-log";
-import { acceptanceBudgetRefusal, addAcceptanceExaRequests, EXA_COUNTER_PATH, readExaCounter, RUN_EXA_MAX } from "./exa-counter";
-import type { ExaCounter } from "./exa-counter";
+import { EVIDENCE_DIR } from "./acceptance-log";
+import { acceptanceBudgetRefusal, addAcceptanceExaSpend, EXA_COUNTER_PATH, planUsage, readExaCounter, round6, usageFromEvidence } from "./exa-counter";
+import type { PlanUsage } from "./exa-counter";
 import { DryPort, gitSha, loadSandboxConfig, parseLogLines, REAL_SLEEP, resendWithStripeCli, waitForOwner } from "./sandbox-env";
 import { redact } from "./sandbox-smoke";
 
-const REQUIRED_LISTEN_EVENT = "checkout.session.completed";
+const SERVER_PORT = 8787;
 const WEBHOOK_PATH = "/api/stripe/webhook";
-const sha256 = (text: string): string => createHash("sha256").update(text).digest("hex");
+const WEBHOOK_URL = `http://127.0.0.1:${SERVER_PORT}${WEBHOOK_PATH}`;
+const FROZEN_LISTEN_EVENTS = [
+  "checkout.session.completed",
+  "checkout.session.expired",
+  "checkout.session.async_payment_succeeded",
+  "checkout.session.async_payment_failed",
+  "payment_intent.payment_failed",
+] as const;
 
 const gitDirty = (): boolean => execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim() !== "";
-
-const usageOf = (chunks: ReturnType<typeof parseSse>, fallback: number): Omit<ResearchRun, "chunks"> => {
-  const usage = ofType(chunks, "data-usage")[0]?.data;
-  return { requests: usage?.exaRequests ?? fallback, costDollars: usage?.costDollars ?? 0, cacheHits: usage?.cacheHits ?? 0 };
-};
 
 const chatBody = (query: CaseQuery, extra: Record<string, unknown> = {}) =>
   JSON.stringify({ messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: query.text }] }], market: query.market, ...extra });
@@ -40,42 +39,76 @@ function printOwnerStep(say: (line: string) => void, step: AcceptanceStep, timeo
   say(`Do: ${step.steps}`);
   say(`Expect: ${step.expect}`);
   say(`Kensaku's demo total for this cart: ${step.demoTotal}. Check it against the hosted page's total, the line item names (start with "Simulated:"), and the description (H1, H2).`);
-  say(`Use Kensaku at http://127.0.0.1:8787 in your browser; the order must leave "open" through Stripe, never through this terminal.`);
+  say(`Use Kensaku at http://127.0.0.1:${SERVER_PORT} in your browser; the order must leave "open" through Stripe, never through this terminal.`);
   say(`Waiting for the order to leave "open" (up to ${Math.round(timeoutMs / 60_000)} minutes)...`);
 }
 
 export interface LiveAcceptanceOptions {
   serverLogPath: string;
   ownerTimeoutMs: number;
-  /** Where the plan-wide Exa request counter lives; tests point it elsewhere. */
   exaCounterPath?: string;
-  /** The folder the server keeps its commerce state in, relative to the working directory. */
+  evidenceDir?: string;
   commerceDir?: string;
 }
 
-async function listenPrecondition(secret: string): Promise<Precondition[]> {
+export interface ListenVerdict {
+  ok: boolean;
+  matching: string[];
+  rest: { line: string; problems: string[] }[];
+}
+
+export function evaluateListenLines(lines: readonly string[]): ListenVerdict {
+  const judged = lines
+    .filter((line) => line.trim() !== "")
+    .map((line) => {
+      const subscribed = new Set((/--events[ =]+(\S+)/.exec(line)?.[1] ?? "").split(","));
+      const missing = FROZEN_LISTEN_EVENTS.filter((e) => !subscribed.has(e));
+      const problems = [
+        ...(line.includes(WEBHOOK_URL) ? [] : [`does not forward to ${WEBHOOK_URL}`]),
+        ...(missing.length === 0 ? [] : [`does not subscribe to ${missing.join(", ")}`]),
+        ...(/--live\b/.test(line) ? ["was started with --live"] : []),
+      ];
+      return { line, problems };
+    });
+  const matching = judged.filter((j) => j.problems.length === 0).map((j) => j.line);
+  const rest = judged.filter((j) => j.problems.length > 0);
+  return { ok: matching.length === 1, matching, rest };
+}
+
+export function serverLogListens(text: string): { ok: boolean; detail: string } {
+  const listening = text.split("\n").flatMap((line) => {
+    try {
+      const parsed = JSON.parse(line) as { event?: unknown; port?: unknown; mode?: unknown };
+      return parsed.event === "listening" ? [parsed] : [];
+    } catch {
+      return [];
+    }
+  });
+  const last = listening.at(-1);
+  if (!last) return { ok: false, detail: "the file holds no `listening` line: start the server with `pnpm start 2>&1 | tee <file>` and pass that file" };
+  const ok = last.port === SERVER_PORT && last.mode === "live";
+  return { ok, detail: ok ? `listening on port ${SERVER_PORT} in live mode` : `its last listening line says port ${String(last.port)}, mode ${String(last.mode)}; it must be port ${SERVER_PORT}, mode live` };
+}
+
+async function listenPrecondition(webhookSecret: string, scrub: (text: string) => string): Promise<Precondition> {
   const name = "stripe listen is running against the sandbox with the secret in .env.local";
   let printed: string | undefined;
   try {
     printed = /whsec_\S+/.exec(execFileSync("stripe", ["listen", "--print-secret"], { encoding: "utf8", timeout: 30_000, stdio: ["ignore", "pipe", "ignore"] }))?.[0];
   } catch {
-    return [{ name, ok: false, detail: "`stripe listen --print-secret` failed: is the Stripe CLI installed and logged in to the sandbox (`stripe login`)?" }];
+    return { name, ok: false, detail: "`stripe listen --print-secret` failed: is the Stripe CLI installed and logged in to the sandbox (`stripe login`)?" };
   }
-  const secretOk = printed !== undefined && sha256(printed) === sha256(secret);
-  const command = await new Promise<string>((done) => execFile("pgrep", ["-fl", "stripe listen"], (_error, stdout) => done(stdout)));
-  const running = command.trim() !== "";
-  const forwards = command.includes(`127.0.0.1:8787${WEBHOOK_PATH}`);
-  const live = /--live\b/.test(command);
-  const missingEvents = ["checkout.session.completed", "checkout.session.expired", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "payment_intent.payment_failed"].filter((e) => !command.includes(e));
+  const stdout = await new Promise<string>((done) => execFile("pgrep", ["-fl", "stripe listen"], (_error, out) => done(out)));
+  const verdict = evaluateListenLines(stdout.split("\n"));
   const problems = [
-    ...(secretOk ? [] : ["STRIPE_WEBHOOK_SECRET differs from `stripe listen --print-secret` (compared by hash)"]),
-    ...(running ? [] : ["no `stripe listen` process is running"]),
-    ...(running && !forwards ? [`it does not forward to http://127.0.0.1:8787${WEBHOOK_PATH}`] : []),
-    ...(live ? ["it was started with --live"] : []),
-    ...(running && missingEvents.includes(REQUIRED_LISTEN_EVENT) ? [`it does not listen for ${REQUIRED_LISTEN_EVENT}`] : []),
+    ...(printed === webhookSecret ? [] : ["STRIPE_WEBHOOK_SECRET differs from `stripe listen --print-secret`"]),
+    ...(verdict.ok ? [] : [verdict.matching.length > 1 ? "more than one listener forwards to this server" : "no single `stripe listen` process forwards to the server with all five events and without --live"]),
   ];
-  const detail = problems.length === 0 ? `secret hashes match; listener forwards to 127.0.0.1:8787${missingEvents.length > 0 ? ` (not subscribed to: ${missingEvents.join(", ")})` : " with all five events"}` : problems.join("; ");
-  return [{ name, ok: problems.length === 0, detail }];
+  const shown = [
+    `matching: ${verdict.matching.length === 0 ? "none" : verdict.matching.map(scrub).join(" | ")}`,
+    ...verdict.rest.map((r) => `not matching (${r.problems.join("; ")}): ${scrub(r.line)}`),
+  ];
+  return { name, ok: problems.length === 0, detail: `${problems.length === 0 ? "secret matches; one listener forwards to 127.0.0.1:8787 with all five events" : problems.join("; ")}. ${shown.join(". ")}` };
 }
 
 export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: string) => void = console.log): AcceptanceEnv {
@@ -83,10 +116,12 @@ export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: st
   if (!existsSync(options.serverLogPath)) throw new AcceptanceAbort(`--server-log ${options.serverLogPath} does not exist: start the server with its output saved there (\`pnpm start 2>&1 | tee <file>\`).`);
   const base = `http://127.0.0.1:${config.port}`;
   const counterPath = options.exaCounterPath ?? EXA_COUNTER_PATH;
+  const evidenceDir = options.evidenceDir ?? EVIDENCE_DIR;
   const commerceDir = resolve(options.commerceDir ?? ".data/commerce");
   const port = StripeCheckoutPort.fromSecretKey(config.stripe.secretKey);
   const secrets = [config.stripe.secretKey, config.stripe.webhookSecret];
   const scrub = (text: string) => secrets.reduce((out, s) => out.replaceAll(s, "[redacted]"), redact(text));
+  const usage = (): PlanUsage => planUsage(readExaCounter(counterPath), usageFromEvidence(evidenceDir));
 
   const api: AcceptanceEnv["api"] = async (method, path, body) => {
     const res = await fetch(`${base}${path}`, { method, headers: { "content-type": "application/json" }, ...(body !== undefined && { body: JSON.stringify(body) }), signal: AbortSignal.timeout(150_000) });
@@ -104,15 +139,19 @@ export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: st
       return res.status;
     },
     preconditions: async () => {
+      const keyKind = /^(?:sk|rk|rkcs)_test_/.exec(config.stripe.secretKey)?.[0];
       const checks: Precondition[] = [
-        { name: "STRIPE_SECRET_KEY is a sandbox key", ok: true, detail: "accepted by the server's own configuration check (sk_test_, rk_test_ or rkcs_test_)" },
-        ...(await listenPrecondition(config.stripe.webhookSecret)),
+        { name: "STRIPE_SECRET_KEY is a sandbox key", ok: keyKind !== undefined, detail: keyKind !== undefined ? `the loaded key starts ${keyKind}` : "the loaded key does not start sk_test_, rk_test_ or rkcs_test_" },
+        await listenPrecondition(config.stripe.webhookSecret, scrub),
       ];
+      const listens = serverLogListens(readFileSync(options.serverLogPath, "utf8"));
+      checks.push({ name: "--server-log holds this server's listening line (port 8787, live mode)", ok: listens.ok, detail: listens.detail });
       let server: Precondition = { name: "the server runs `pnpm start` in live mode at 127.0.0.1:8787 with checkout configured", ok: false, detail: "" };
       try {
         const health = (await api("GET", "/api/health")).body as { mode?: string; exaConfigured?: boolean };
         const cart = (await api("GET", "/api/cart")).body as { checkoutConfigured?: boolean; cart?: { lines: unknown[] } };
         const problems = [
+          ...(config.port === SERVER_PORT ? [] : [`KENSAKU_PORT is ${config.port}; EV-023 runs at ${SERVER_PORT}`]),
           ...(health.mode === "live" ? [] : [`the server reports mode ${String(health.mode)}, not live`]),
           ...(health.exaConfigured === true ? [] : ["the server has no EXA_API_KEY"]),
           ...(cart.checkoutConfigured === true ? [] : ["the server reports checkout is not configured"]),
@@ -129,26 +168,26 @@ export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: st
         ok: entries.length === 0 && apiEmpty,
         detail: entries.length === 0 && apiEmpty ? "no state file; the server's cart and orders are empty" : "found earlier state: stop the server, run `rm -rf .data/commerce`, start the server again, and re-run",
       });
-      const refusal = acceptanceBudgetRefusal(readExaCounter(counterPath));
-      checks.push({ name: "the plan-wide Exa counter has room", ok: refusal === undefined, detail: refusal ?? "room for at least one research run" });
+      const refusal = acceptanceBudgetRefusal(usage());
+      checks.push({ name: "the plan-wide Exa budget has room", ok: refusal === undefined, detail: refusal ?? "room for at least one research attempt" });
       return checks;
     },
-    exaRefusal: () => acceptanceBudgetRefusal(readExaCounter(counterPath)),
-    exaCounter: () => readExaCounter(counterPath),
+    planUsage: usage,
+    exaRefusal: () => acceptanceBudgetRefusal(usage()),
+    recordExaSpend: (spend) => void addAcceptanceExaSpend(counterPath, spend),
     research: async (query) => {
-      let spent = RUN_EXA_MAX;
       try {
         const res = await fetch(`${base}/api/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: chatBody(query), signal: AbortSignal.timeout(150_000) });
-        if (res.status !== 200) {
-          spent = 0;
-          throw new Error(`POST /api/chat answered ${res.status}; no Exa request is retried by this script`);
-        }
-        const chunks = parseSse(await res.text());
-        const run = { chunks, ...usageOf(chunks, RUN_EXA_MAX) };
-        spent = run.requests;
-        return run;
-      } finally {
-        if (spent > 0) addAcceptanceExaRequests(counterPath, spent);
+        const text = await res.text();
+        const chunks = parseSse(text);
+        if (res.status === 200) return { chunks, ...usageOfChunks(chunks) };
+        const apiError = ApiErrorBodySchema.safeParse(safeJson(text));
+        return {
+          ...failedResearchRun(`POST /api/chat answered ${res.status}; no Exa request is retried by this script`, chunks, res.status),
+          ...(apiError.success && { errorKind: apiError.data.kind }),
+        };
+      } catch (error) {
+        return failedResearchRun(`POST /api/chat failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     },
     ownerStep: async (step, done) => {
@@ -165,13 +204,20 @@ export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: st
   };
 }
 
+const safeJson = (text: string): unknown => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+};
+
 async function allEmptyOnServer(api: AcceptanceEnv["api"]): Promise<boolean> {
   const cart = (await api("GET", "/api/cart")).body as { cart: { lines: unknown[] } };
   const orders = (await api("GET", "/api/orders")).body as { orders: unknown[] };
   return cart.cart.lines.length === 0 && orders.orders.length === 0;
 }
 
-/** The dry port, which also reads a session as complete once the fake hosted page took its payment. */
 class CompletingPort extends DryPort {
   private readonly completed = new Set<string>();
 
@@ -187,7 +233,7 @@ class CompletingPort extends DryPort {
 
 const DRY_SCENARIO: Record<string, string> = { Q1: "xm5-us", Q3: "xm5-sg", Q5: "xm5-jp" };
 
-export function dryAcceptanceEnv(say: (line: string) => void = () => {}, scenarios: Record<string, string> = DRY_SCENARIO): AcceptanceEnv {
+export function dryAcceptanceEnv(say: (line: string) => void = () => {}, scenarios: Record<string, string> = DRY_SCENARIO, evidenceDir = EVIDENCE_DIR): AcceptanceEnv {
   const config = parseConfig({ NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", STRIPE_SECRET_KEY: `sk_test_${"0".repeat(20)}`, STRIPE_WEBHOOK_SECRET: `whsec_${"0".repeat(20)}` });
   const logged: string[] = [];
   const port = new CompletingPort(config.port);
@@ -195,7 +241,7 @@ export function dryAcceptanceEnv(say: (line: string) => void = () => {}, scenari
   const request = (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) =>
     app.request(path, { method, headers: { host: `127.0.0.1:${config.port}`, "content-type": "application/json", ...headers }, ...(body !== undefined && { body: typeof body === "string" ? body : JSON.stringify(body) }) });
   const sessionOf = async (orderId: string) => ((await (await request("GET", `/api/orders/${orderId}`)).json()) as { order: { stripeSessionId: string } }).order.stripeSessionId;
-  const counter: ExaCounter = { planRequests: 3, smokeRequests: 3 };
+  const usage: PlanUsage = usageFromEvidence(evidenceDir);
 
   return {
     mode: "dry-run",
@@ -207,15 +253,17 @@ export function dryAcceptanceEnv(say: (line: string) => void = () => {}, scenari
     },
     webhook: async (rawBody, signature) => (await request("POST", WEBHOOK_PATH, rawBody, signature !== undefined ? { "stripe-signature": signature } : {})).status,
     preconditions: async () => [{ name: "dry run", ok: true, detail: "fixture research, fake checkout port, in-process app; nothing leaves this process" }],
-    exaRefusal: () => acceptanceBudgetRefusal(counter),
-    exaCounter: () => counter,
+    planUsage: () => usage,
+    exaRefusal: () => acceptanceBudgetRefusal(usage),
+    recordExaSpend: (spend) => {
+      usage.planRequests += spend.requests;
+      usage.ev023Requests += spend.requests;
+      usage.planCostDollars = round6(usage.planCostDollars + spend.costDollars);
+    },
     research: async (query) => {
       const res = await request("POST", "/api/chat", JSON.parse(chatBody(query, { fixtureScenario: scenarios[query.id] })));
       const chunks = parseSse(await res.text());
-      const run = { chunks, ...usageOf(chunks, 0) };
-      counter.planRequests += run.requests;
-      counter.ev023Requests = (counter.ev023Requests ?? 0) + run.requests;
-      return run;
+      return { chunks, ...usageOfChunks(chunks) };
     },
     ownerStep: async (step, done) => {
       say(`  (dry run) owner action "${step.action}" for ${step.id}`);
@@ -224,8 +272,7 @@ export function dryAcceptanceEnv(say: (line: string) => void = () => {}, scenari
       if (step.action === "pay") {
         await request("POST", `/__test/checkout/${sessionId}/pay`);
         port.markComplete(sessionId);
-      }
-      else {
+      } else {
         if (step.action === "decline") await request("POST", `/__test/checkout/${sessionId}/decline`);
         await request("POST", `/api/orders/${step.orderId}/cancel`, {});
       }

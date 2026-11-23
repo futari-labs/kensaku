@@ -24,7 +24,7 @@ export const REAL_SLEEP = (ms: number) => new Promise<void>((resolveSleep) => se
 
 export const gitSha = (): string => execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 
-export function offersOfStream(body: string, market: RegisteredOffer["market"], at: string): { offers: RegisteredOffer[]; exaRequests: number } {
+function offersOfStream(body: string, market: RegisteredOffer["market"], at: string): { offers: RegisteredOffer[]; exaRequests: number } {
   const chunks = parseSse(body);
   const offers = (ofType(chunks, "data-products")[0]?.data ?? []).flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
   return {
@@ -46,7 +46,6 @@ export function parseLogLines(text: string): WebhookLogLine[] {
   });
 }
 
-/** `stripe events resend <id>` with the owner's CLI login; the output is scrubbed before it leaves this function. */
 export function resendWithStripeCli(eventId: string, scrub: (text: string) => string): Promise<{ exitCode: number | null; output: string }> {
   return new Promise((resolveResend) => {
     execFile("stripe", ["events", "resend", eventId], { timeout: 60_000 }, (error, stdout, stderr) => {
@@ -56,7 +55,6 @@ export function resendWithStripeCli(eventId: string, scrub: (text: string) => st
   });
 }
 
-/** Polls until `done()` is true (the owner finished a hosted-page step) or the timeout passes. */
 export async function waitForOwner(done: () => Promise<boolean>, timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -74,7 +72,6 @@ export interface LiveOptions {
   exaCounterPath?: string;
 }
 
-/** The server's own configuration read from the same env file: a Stripe sandbox key and signing secret in live Exa mode. */
 export function loadSandboxConfig(who: string): ServerConfig & { stripe: NonNullable<ServerConfig["stripe"]> } {
   loadKeyFile();
   let config: ServerConfig;

@@ -136,9 +136,47 @@ The MVP command `pnpm live:acceptance` (EV-008) is history and no longer exists.
 rm -rf .data/commerce && mkdir -p .cache/live && pnpm start 2>&1 | tee .cache/live/ev023-server.log
 # Terminal 3
 pnpm live:acceptance:v1-2 --server-log .cache/live/ev023-server.log
+# After the owner's H1 to H5 answers are in the audit sheet
+pnpm live:acceptance:v1-2 --finalize-audit .futari/evidence/live/ev-023-run-<n>-<UTC>.json
 ```
 
-- It first checks the preconditions in the case file (sandbox key, webhook secret equal to `stripe listen --print-secret` compared by hash, a live-mode server with checkout configured at `127.0.0.1:8787`, an empty `.data/commerce/`, room in the Exa counter `.cache/live/v1-2-exa-counter.json`) and stops before any request when one fails.
-- It researches the three queries (at most 5 Exa requests each, one re-ask per query, 25 for the run and 30 plan-wide), prints the Stripe page URL and the steps for each owner scenario, waits (20 minutes by default, `--timeout-minutes`) for the order to change state, then checks the outcome and retrieves the session from Stripe as an audit. Scenarios A6 to A8 (a resent event, two checkouts in a row, forged webhook bodies) run on their own.
-- It never clicks anything on the Stripe page. `pnpm live:acceptance:v1-2 --dry-run` runs the whole flow against a fake port and fixture research, with no network.
-- It writes `.futari/evidence/live/ev-023-run-<n>-<time>.json` and `ev-023-run-<n>-audit.md`, an empty sheet for your answers to the five audit questions. After they are recorded, `--finalize-audit <run log>` sets the audit threshold and the verdict in the log. At most 2 runs are allowed.
+`pnpm live:acceptance:v1-2 --dry-run` runs the whole flow against a fake port and fixture research. It uses no network and writes no file. It reads the committed logs in `.futari/evidence/live/` to compute plan-wide Exa usage.
+
+### Preconditions
+
+The script checks these and stops before any Exa request, and before it reserves a run, when one fails:
+
+- The loaded `STRIPE_SECRET_KEY` starts `sk_test_`, `rk_test_` or `rkcs_test_`.
+- `STRIPE_WEBHOOK_SECRET` equals `stripe listen --print-secret`.
+- One `stripe listen` process line forwards to `http://127.0.0.1:8787/api/stripe/webhook`, subscribes to all five frozen events, and has no `--live`. Each process line is judged alone. The script prints the matching and non-matching lines with secrets redacted.
+- The `--server-log` file holds this server's `listening` line with port 8787 and mode `live`.
+- The server answers at `127.0.0.1:8787` in live mode with an Exa key and checkout configured.
+- `.data/commerce/` is empty.
+- The plan-wide Exa budget has room for one more attempt.
+
+### What a run does
+
+The script researches Q1, Q3 and Q5. Each attempt may use at most 5 Exa requests, and each query gets one re-ask. The script prints the Stripe page URL and the steps for each owner scenario, then waits for the order to leave "open" (20 minutes by default, `--timeout-minutes`). It then checks the outcome and retrieves the session from Stripe as an audit. Scenarios A6 to A8 (a resent event, two checkouts in a row, forged webhook bodies) run on their own. The script never clicks anything on the Stripe page.
+
+Each scenario kind has a fixed list of gating checks that all start false. A check that never ran counts as failed, so an order the script cannot read after your step fails the scenario.
+
+### Exa budget
+
+The plan allows 30 Exa requests and $0.40 of reported cost in total, and 25 requests for EV-023. Plan-wide usage is the larger of two figures: the local counter `.cache/live/v1-2-exa-counter.json`, and the sum recovered from the committed logs in `.futari/evidence/live/`. The recovered sum counts the JM-203 smoke as 3 requests at an estimated $0.05, because that run did not record its cost. It adds the requests and cost of every `ev-023-run-*` log, including started and aborted ones.
+
+The script refuses an attempt when its worst case would pass a cap. The worst case is 5 requests and $0.06, because v1.1 averaged at most $0.0125 per request. A failed request, or a run with no cost in its usage data, counts at the worst case, never as zero. The script stops research on an HTTP 402 or a `credits_exhausted` error. The remaining scenarios are then BLOCKED.
+
+### Verdicts and exit codes
+
+| Verdict | Meaning | Run exit code |
+| --- | --- | --- |
+| `PENDING_AUDIT` | Every automatic check passed. The owner's H1 to H5 answers are still missing. | 0 |
+| `FAIL` | A scenario, a research check or a threshold failed, or the run aborted. | 1 (2 when aborted) |
+| `BLOCKED` | No check failed, but a scenario could not run, for example no addable offer after the re-ask, or exhausted credits. The owner decides. | 3 |
+| `PASS` | All checks passed and every H answer is `yes`. Only `--finalize-audit` prints it. | not applicable |
+
+A live run that exits 0 is not acceptance. Acceptance is the moment `--finalize-audit` prints `PASS`. The command reads the audit sheet, where each answer must be exactly `yes` or `no` (case and trailing punctuation do not matter), and anything else stays pending. It exits 0 for `PASS`, 3 for `BLOCKED` and 1 otherwise. Exit code 2 also means the script stopped before the run started.
+
+### Run logs
+
+Once the preconditions pass, and before any Exa request, the script writes `.futari/evidence/live/ev-023-run-<n>-<time>.json` with status `started`. That file counts as a run, so a crash or Ctrl-C never frees a third run (at most 2 are allowed). The final log replaces it. If anything throws late, the log still gets written with status `aborted` and the error in its notes. A leak-scan hit does not drop the log. The script writes a scrubbed copy and says why. The script also writes `ev-023-run-<n>-audit.md`, an empty sheet for your answers to the five audit questions.
