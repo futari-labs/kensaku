@@ -421,7 +421,7 @@ Fixed UI strings in `src/core/commerce.ts` (the Stripe-facing strings live in `s
 
 - Components: shadcn `sheet` (new, installed with the pinned CLI, unmodified) for the cart; existing `button`, `badge`, `alert`, `alert-dialog` (currency replace), `item`, `separator`, `button-group` (quantity −/+), `tooltip`. No custom component library (D-018).
 - Header: a cart button left of the theme toggle with the line count, `aria-label` "Open simulated cart, <n> items".
-- Offer items (main list and Other markets): "Add to cart" button with `aria-label` "Add <product> from <host> to simulated cart". Disabled with a tooltip for offers without an id ("Ask again to buy"), out-of-stock offers ("Out of stock"), prices that are not valid minor units ("Price can't be charged"), and below-minimum prices ("Below Stripe's minimum").
+- Offer items (main list and Other markets): "Add to cart" button with `aria-label` "Add to cart: <product> from <host> (simulated cart)" (CR-005: the accessible name must contain the visible text, axe `label-content-name-mismatch`). Disabled with a tooltip for offers without an id ("Ask again to buy"), out-of-stock offers ("Out of stock"), prices that are not valid minor units ("Price can't be charged"), and below-minimum prices ("Below Stripe's minimum").
 - After an add, the button's label changes to "Added" for 2 s and a polite live region announces "Added to simulated cart".
 - Checkout is disabled when `checkoutConfigured` is false, with the text "Stripe sandbox is not configured. See README."
 - Accessibility: keyboard-only operation, focus trapped in the sheet and returned to the trigger, `aria-live="polite"` for confirmation status, zero serious or critical axe violations in both themes.

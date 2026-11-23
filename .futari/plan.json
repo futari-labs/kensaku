@@ -711,6 +711,7 @@
         "tests/research/",
         "tests/evals/ev-020-webhooks.test.ts",
         "tests/evals/ev-021-stripe-keys.test.ts",
+        "tests/evals/ev-009-key-safety.test.ts",
         "tests/e2e/commerce-slice.spec.ts",
         "tests/fixtures/",
         "scripts/live-sandbox-smoke-v1-2.ts",
@@ -723,7 +724,8 @@
         "src/commerce/fake-hosted.ts serves the test-only page (Pay, Decline, Back) and the test-only routes POST /__test/commerce/reset, /__test/commerce/checkout-configured { value }, /__test/commerce/withhold-webhooks { value }, and /__test/commerce/expire-open-order (sets the open order's expiresAt in the past) only when NODE_ENV=test and fixture mode (EV-022 isolation and checks 9-10); tests/e2e/commerce-slice.spec.ts runs research → add → checkout → fake page → signed webhook → paid with zero non-local requests.",
         "Minimal UI in src/web/app/: Add to cart on offer items, a basic cart sheet (official shadcn sheet installed with the pinned CLI, recorded in components.lock.json) with lines, demo and observed prices, and checkout, and the checkout return panel with the paid and cancelled texts; carried EV-007 and EV-015 assertions unchanged.",
         "EV-021 checks 3 and 5 are added and all of EV-021 passes; EV-009 still passes.",
-        "Sandbox smoke (docs/futari/EVALUATION_PLAN.md 'Slice smoke (JM-203, v1.2)') with the owner's sandbox key and Stripe CLI: USD, SGD, and JPY sessions created, retrieved, and expired; one owner-paid USD purchase marked paid only after the verified webhook; one owner decline with 4000 0000 0000 0002 then back (whether payment_intent.payment_failed arrives is recorded); one expire of an already-expired session with the real error shape recorded; one stripe events resend answered duplicate; ≤ 5 Exa requests; log committed under .futari/evidence/live/. A Stripe-fact miss (R-27, R-28) stops execution for a plan revision."
+        "Sandbox smoke (docs/futari/EVALUATION_PLAN.md 'Slice smoke (JM-203, v1.2)') with the owner's sandbox key and Stripe CLI: USD, SGD, and JPY sessions created, retrieved, and expired; one owner-paid USD purchase marked paid only after the verified webhook; one owner decline with 4000 0000 0000 0002 then back (whether payment_intent.payment_failed arrives is recorded); one expire of an already-expired session with the real error shape recorded; one stripe events resend answered duplicate; ≤ 5 Exa requests; log committed under .futari/evidence/live/. A Stripe-fact miss (R-27, R-28) stops execution for a plan revision.",
+        "(CR-005) tests/evals/ev-009-key-safety.test.ts changes only the image-id collection regex in the image proxy test from /\"id\":\"([0-9a-f]{64})\"/g to /\"id\":\"([0-9a-f]{64})\",\"sourceHost\"/g, because offers now also carry 64-hex ids in data-products; every other line and assertion of the file, and EV-009's pass rule, stay unchanged."
       ],
       "verificationCommands": [
         "pnpm install --frozen-lockfile",

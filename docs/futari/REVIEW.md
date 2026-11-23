@@ -204,3 +204,9 @@ Same reviewer. Verdict: CHANGES REQUIRED (text only; no blockers). Its extended 
 | N5 | Nit | S66 over-labeled. | Split into VERIFIED and INFERRED; the smoke checks the inferred part. |
 | N6 | Nit | R-40 claimed a UI string; singular "another open order"; version on identical replace. | R-40 points to README only; "every other open order, oldest first"; a successful replace always increments the version. |
 
+
+## Plan revision CR-005 (EV-009 image-id count and Add-to-cart accessible name)
+
+Trigger: the JM-203 worker found that the carried EV-009 test counts every 64-hex `"id"` in the research stream (expects 6 image ids) while REQ-017/EV-018 add 64-hex offer ids there, and that the approved Add-to-cart `aria-label` fails axe `label-content-name-mismatch`. The owner selected "Prepare CR-004 (Recommended)" on 2026-11-23 (renumbered CR-005). Decision D-059.
+
+Independent review: pending.
