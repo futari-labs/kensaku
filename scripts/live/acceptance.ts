@@ -6,11 +6,12 @@ import { signTestPayload, stripeEventEnvelope } from "../../src/commerce/stripe-
 import { formatMinor, toMinorUnits, toRegisteredOffer } from "../../src/core/commerce";
 import type { Cart, CartLine, Order, RegisteredOffer } from "../../src/core/commerce";
 import type { Market } from "../../src/core/types";
+import type { ProductResult } from "../../src/research/events";
 import { buyBlock, offerView } from "../../src/web/app/offers";
 import { ofType } from "../../tests/server/sse";
 import type { Chunk } from "../../tests/server/sse";
 import { computeThresholds, isVerifiedPaidLine, runVerdict } from "./acceptance-log";
-import type { AcceptanceCase, Attempt, CaseQuery, CaseScenario, EventRecord, ResearchRecord, RunLog, ScenarioId, ScenarioRecord, SessionAudit } from "./acceptance-log";
+import type { AcceptanceCase, Attempt, BlockedReason, ProductSummary, CaseQuery, CaseScenario, EventRecord, ResearchRecord, RunLog, ScenarioId, ScenarioRecord, SessionAudit } from "./acceptance-log";
 import { RUN_EXA_MAX, round6, WORST_CASE_ATTEMPT_COST_DOLLARS } from "./exa-counter";
 import type { PlanUsage } from "./exa-counter";
 import { redact, SmokeAbort } from "./sandbox-smoke";
@@ -98,6 +99,21 @@ export interface ResearchAnalysis {
   addable: RegisteredOffer[];
   braces: string[];
   mainListOnlyMarketCurrency: boolean;
+  products: ProductSummary[];
+}
+
+/** Ids, counts and categories of what the stream's products hold in the query's currency; nothing else is copied. */
+export function summarizeProducts(products: readonly ProductResult[], currency: string): ProductSummary[] {
+  const tally = (keys: readonly string[]) => keys.reduce<Record<string, number>>((out, k) => ({ ...out, [k]: (out[k] ?? 0) + 1 }), {});
+  return products.map((p) => {
+    const local = p.offerGroups.filter((g) => g.currency === currency).flatMap((g) => g.offers);
+    return {
+      marketCurrencyOffers: { count: local.length, ids: local.flatMap((o) => o.id ?? []) },
+      otherCurrencyOffers: p.offerGroups.filter((g) => g.currency !== currency).reduce((n, g) => n + g.offers.length, 0),
+      evidence: tally(p.evidence.map((e) => e.category)),
+      rejected: { ...p.rejectedCounts },
+    };
+  });
 }
 
 export function analyzeResearch(chunks: readonly Chunk[], query: Pick<CaseQuery, "market" | "currency">, at: string): ResearchAnalysis {
@@ -114,6 +130,7 @@ export function analyzeResearch(chunks: readonly Chunk[], query: Pick<CaseQuery,
     addable: mainList.filter((o) => buyBlock(o, undefined) === undefined).flatMap((o) => toRegisteredOffer(o, market, at) ?? []),
     braces,
     mainListOnlyMarketCurrency: mainList.every((o) => o.price.currency === query.currency),
+    products: summarizeProducts(products, query.currency),
   };
 }
 
@@ -210,10 +227,20 @@ export async function scenario(spec: Spec, required: readonly string[], body: (r
   return rec;
 }
 
-const block = (rec: ScenarioRecord, reason: string) => {
+const block = (rec: ScenarioRecord, reason: string, code: BlockedReason) => {
   rec.verdict = "BLOCKED";
+  rec.blockedReason = code;
   rec.notes.push(`BLOCKED: ${reason}`);
 };
+
+export const marketOfferCount = (record: Pick<ResearchRecord, "products">): number => record.products.reduce((n, p) => n + p.marketCurrencyOffers.count, 0);
+
+/** Why research left a query with no addable offer. Only two finished asks whose data holds no market-currency merchant offer count as "no market offer after the re-ask". */
+export function noOfferReason(record: Pick<ResearchRecord, "creditsExhausted" | "attemptsAnalyzed" | "products">): BlockedReason {
+  if (record.creditsExhausted) return "credits-exhausted";
+  if (record.attemptsAnalyzed < 2) return "research-incomplete";
+  return marketOfferCount(record) === 0 ? "no-market-offer-after-reask" : "offers-not-addable";
+}
 
 async function ensureEmptyCart(env: AcceptanceEnv): Promise<void> {
   if ((await cartOf(env)).cart.lines.length > 0) await env.api("DELETE", "/api/cart");
@@ -240,13 +267,21 @@ interface Context {
   offers: ReadonlyMap<string, RegisteredOffer | undefined>;
   /** Queries whose research kept failing: their scenarios are not run, and the run is FAIL. */
   researchErrors: ReadonlyMap<string, string>;
+  research: ReadonlyMap<string, ResearchRecord>;
+  queries: ReadonlyMap<string, CaseQuery>;
   records: ReadonlyMap<ScenarioId, ScenarioRecord>;
 }
 
 /** The scenario has no offer to work with: not run because research failed (FAIL), or BLOCKED because no addable offer came back. */
 function withoutOffer(rec: ScenarioRecord, ctx: Context, queryId: string, blockedReason: string): void {
   const failure = ctx.researchErrors.get(queryId);
-  if (failure === undefined) return block(rec, blockedReason);
+  if (failure === undefined) {
+    const research = ctx.research.get(queryId);
+    block(rec, blockedReason, research ? noOfferReason(research) : "research-incomplete");
+    const query = research && ctx.queries.get(queryId);
+    if (research && query) rec.allowance = { id: `${rec.id}/${queryId}`, currency: query.currency, marketCurrencyMerchantOffers: marketOfferCount(research) };
+    return;
+  }
   rec.notes.push(`not run: research for ${queryId} failed: ${failure}`);
 }
 
@@ -312,7 +347,7 @@ const a6: Runner = ({ env, records }, def) =>
   scenario({ id: def.id, by: "agent" }, A6_CHECKS, async (rec) => {
     const a1 = records.get("A1");
     const paidEvent = a1?.events.find((e) => e.outcome === "applied" && e.to === "paid" && e.type === "checkout.session.completed");
-    if (!a1?.orderId || !paidEvent) return block(rec, "A1 recorded no applied checkout.session.completed event to resend");
+    if (!a1?.orderId || !paidEvent) return block(rec, "A1 recorded no applied checkout.session.completed event to resend", "missing-prerequisite");
     const orderId = a1.orderId;
     rec.orderId = orderId;
     rec.sessionId = a1.sessionId;
@@ -375,7 +410,7 @@ const a8: Runner = ({ env, records }, def) =>
   scenario({ id: def.id, by: "agent" }, A8_CHECKS, async (rec) => {
     const orderId = records.get("A7")?.orderId;
     const order = orderId ? await orderOf(env, orderId) : undefined;
-    if (!order?.stripeSessionId) return block(rec, "A7 produced no second order with a session");
+    if (!order?.stripeSessionId) return block(rec, "A7 produced no second order with a session", "missing-prerequisite");
     rec.orderId = order.orderId;
     rec.sessionId = order.stripeSessionId;
     const now = env.now();
@@ -423,6 +458,7 @@ const emptyResearch = (q: CaseQuery): ResearchRecord => ({
   requests: 0,
   costDollars: 0,
   addableOffers: 0,
+  products: [],
   creditsExhausted: false,
   checks: { addableOfferInMarketCurrency: false, noBraceInComparisonOrReason: false, mainListOnlyMarketCurrency: false },
   notes: [],
@@ -496,6 +532,7 @@ async function research(env: AcceptanceEnv, q: CaseQuery, perQuestionCap: number
     braceSeen ||= analysis.braces.length > 0;
     foreignCurrencyInMainList ||= !analysis.mainListOnlyMarketCurrency;
     record.addableOffers = analysis.addable.length;
+    record.products = analysis.products;
     chosen = analysis.addable[0];
     record.chosenOfferId = chosen?.id;
     record.checks = {
@@ -525,6 +562,7 @@ async function auditEnd(env: AcceptanceEnv, c: AcceptanceCase, researched: Resea
   const thresholds = computeThresholds({
     scenarios,
     scenariosTotal: c.scenarios.length,
+    allowances: c.blockedAllowances,
     orders,
     webhook: await env.webhookLog(),
     sessions,
@@ -564,18 +602,21 @@ export async function runAcceptance(env: AcceptanceEnv, c: AcceptanceCase, runNu
   try {
     const offers = new Map<string, RegisteredOffer | undefined>();
     const researchErrors = new Map<string, string>();
+    const researchRecords = new Map<string, ResearchRecord>();
     let exhausted = false;
     for (const q of c.queries) {
       if (exhausted) {
         const skipped = emptyResearch(q);
         skipped.notes.push("not asked: Exa credits are exhausted");
         researched.push(skipped);
+        researchRecords.set(q.id, skipped);
         offers.set(q.id, undefined);
         continue;
       }
       env.say(`researching ${q.id} (${q.market}): ${q.text}`);
       const { record, offer } = await research(env, q, cap, tracker);
       researched.push(record);
+      researchRecords.set(q.id, record);
       offers.set(q.id, offer);
       if (record.researchError !== undefined) researchErrors.set(q.id, record.researchError);
       exhausted = record.creditsExhausted;
@@ -585,7 +626,7 @@ export async function runAcceptance(env: AcceptanceEnv, c: AcceptanceCase, runNu
     const records = new Map<ScenarioId, ScenarioRecord>();
     for (const def of c.scenarios) {
       env.say(`\n=== ${def.id} (${def.by}${def.query ? `, ${def.query}` : ""}) ===`);
-      const record = await RUNNERS[def.id]({ env, offers, researchErrors, records }, def);
+      const record = await RUNNERS[def.id]({ env, offers, researchErrors, research: researchRecords, queries: new Map(c.queries.map((q) => [q.id, q])), records }, def);
       env.say(`${def.id}: ${record.verdict}`);
       records.set(def.id, record);
       scenarios.push(record);
@@ -608,6 +649,7 @@ export async function runAcceptance(env: AcceptanceEnv, c: AcceptanceCase, runNu
       thresholds: computeThresholds({
         scenarios,
         scenariosTotal: c.scenarios.length,
+        allowances: c.blockedAllowances,
         orders: [],
         webhook: [],
         sessions: [],

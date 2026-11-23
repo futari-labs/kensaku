@@ -11,8 +11,8 @@ export const EXA_REQUEST_CAP = SMOKE_EXA_CAP;
 const EXPECTED_EXPIRY_SECONDS = 3600;
 const EXPIRY_TOLERANCE_SECONDS = 120;
 
-/** The one shape of a Stripe key or signing secret. The redactor and the log writer both use it. */
-const KEY_SHAPED = /(?:sk|rk|rkcs|pk)_(?:test|live)_\S+|whsec_\S+/;
+/** The one shape of a Stripe key or signing secret: the EV-021 pattern, plus the masked form Stripe prints in errors (`sk_test_****abcd`). The redactor and the log writer both use it; prose such as "starts sk_test_, rk_test_" is not a key. */
+const KEY_SHAPED = /(?:sk|rk|rkcs|pk)_(?:test|live)_(?:[A-Za-z0-9]{8,}|\*+[A-Za-z0-9]*)|whsec_[A-Za-z0-9]{8,}/;
 export const holdsKey = (text: string): boolean => KEY_SHAPED.test(text);
 const CARD_LIKE = /\b(?:\d[ -]?){13,19}\b/g;
 const BEARER = /Bearer\s+\S+/gi;

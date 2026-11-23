@@ -1,13 +1,14 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { A6_CHECKS, AcceptanceAbort, analyzeResearch, failedResearchRun, PAY_CHECKS, runAcceptance, scenario, streamProblem, usageOfChunks } from "../../scripts/live/acceptance";
+import { A6_CHECKS, AcceptanceAbort, analyzeResearch, failedResearchRun, noOfferReason, PAY_CHECKS, runAcceptance, scenario, streamProblem, usageOfChunks } from "../../scripts/live/acceptance";
 import type { AcceptanceEnv, ResearchRun } from "../../scripts/live/acceptance";
 import { dryAcceptanceEnv, evaluateListenLines, probeServerLog, serverLogListens } from "../../scripts/live/acceptance-env";
 import {
   auditAllYes,
   checkCaseShape,
+  EVIDENCE_DIR,
   computeThresholds,
   leakProblems,
   loadCase,
@@ -22,6 +23,7 @@ import {
   withOwnerAudit,
 } from "../../scripts/live/acceptance-log";
 import type { RunLog, ScenarioRecord, Thresholds, ThresholdInput } from "../../scripts/live/acceptance-log";
+import { redact } from "../../scripts/live/sandbox-smoke";
 import { acceptanceBudgetRefusal, addAcceptanceExaSpend, addSmokeExaRequests, planUsage, readExaCounter, RUN_EXA_MAX, usageFromEvidence, WORST_CASE_ATTEMPT_COST_DOLLARS } from "../../scripts/live/exa-counter";
 import type { Order } from "../../src/core/commerce";
 import { MAX_EXA_REQUESTS_PER_RUN } from "../../src/exa/budget";
@@ -127,6 +129,7 @@ const paidLine = { eventId: "evt_1", type: "checkout.session.completed", outcome
 const input = (overrides: Partial<ThresholdInput> = {}): ThresholdInput => ({
   scenarios: Array.from({ length: 8 }, (_, i) => record(`A${i + 1}`, "PASS")),
   scenariosTotal: 8,
+  allowances: [],
   orders: [order({ orderId: "o1" })],
   webhook: [paidLine],
   sessions: [{ order: order({ orderId: "o1" }), session: session("o1") }],
@@ -141,6 +144,8 @@ describe("computeThresholds", () => {
     expect(computeThresholds(input())).toEqual({
       scenariosPassing: 8,
       scenariosTotal: 8,
+      scenariosPassingMet: true,
+      blockedAllowancesUsed: [],
       paidWithoutVerifiedEvent: 0,
       liveModeObjectsSeen: 0,
       duplicatePaidTransitions: 0,
@@ -213,7 +218,7 @@ describe("runVerdict", () => {
   });
 
   it("is BLOCKED when scenarios are blocked and none failed, and FAIL when something also failed", () => {
-    const blocked = { ...yes, scenariosPassing: 5 };
+    const blocked = { ...yes, scenariosPassing: 5, scenariosPassingMet: false };
     expect(runVerdict(blocked, true, 3)).toBe("BLOCKED");
     expect(runVerdict({ ...blocked, scenariosPassing: 4 }, true, 3)).toBe("FAIL");
     expect(runVerdict({ ...blocked, amountMismatches: 1 }, true, 3)).toBe("FAIL");
@@ -237,7 +242,7 @@ describe("withOwnerAudit", () => {
     const failed: RunLog = { ...base, thresholds: { ...base.thresholds, amountMismatches: 1 }, verdict: "FAIL" };
     expect(withOwnerAudit(failed, answers("yes")).verdict).toBe("FAIL");
     const blockedScenarios = base.scenarios.map((s, i) => (i < 2 ? { ...s, verdict: "BLOCKED" as const } : s));
-    const blocked: RunLog = { ...base, scenarios: blockedScenarios, thresholds: { ...base.thresholds, scenariosPassing: 6 }, verdict: "BLOCKED" };
+    const blocked: RunLog = { ...base, scenarios: blockedScenarios, thresholds: { ...base.thresholds, scenariosPassing: 6, scenariosPassingMet: false }, verdict: "BLOCKED" };
     expect(withOwnerAudit(blocked, answers("yes")).verdict).toBe("BLOCKED");
   });
 
@@ -285,6 +290,8 @@ describe("run numbering", () => {
     expect(nextRunNumber([])).toBe(1);
     expect(nextRunNumber(["ev-016-run-3-20261121T083658Z.json", "ev-023-run-1-audit.md"])).toBe(1);
     expect(nextRunNumber([log(1), "ev-023-run-1-audit.md"])).toBe(2);
+    expect(nextRunNumber(["ev-023-run-1-20261123T125703Z.json", "ev-023-run-1-audit.md", "ev-023-run-1-terminal.txt", "ev-023-run-1-server.log"])).toBe(2);
+    expect(() => nextRunNumber(["ev-023-run-1-20261123T125703Z.json", "ev-023-run-2-20261124T000000Z.json"])).toThrow(/at most 2 runs/);
     expect(() => nextRunNumber([log(1), log(2)])).toThrow(/at most 2 runs/);
   });
 
@@ -302,6 +309,13 @@ describe("leakProblems", () => {
     expect(leakProblems(`whsec_${"b".repeat(24)}`)).toHaveLength(1);
     for (const card of ["4242 4242 4242 4242", "4242424242424242", "4000-0000-0000-0002", "4000 0070 2000 0003", "4000 0039 2000 0003"]) expect(leakProblems(`card ${card}`)).toEqual(["a full card number"]);
     expect(leakProblems(`{"pan": 4242424242424242}`)).toEqual(["a full card number"]);
+  });
+
+  it("passes the prefixes the preconditions name in prose, and finds a key built at run time", () => {
+    expect(leakProblems("starts sk_test_, rk_test_, or rkcs_test_")).toEqual([]);
+    expect(leakProblems("the loaded key does not start sk_test_, rk_test_ or rkcs_test_; whsec_ is the signing secret")).toEqual([]);
+    for (const prefix of ["sk_test", "rk_live", "rkcs_test", "pk_test", "whsec"]) expect(leakProblems(`x ${prefix}_${"Ab3".repeat(4)} y`)).toEqual(["a key or signing secret"]);
+    expect(redact(`starts sk_test_, then sk_test_${"a".repeat(24)} and whsec_${"b".repeat(24)}`)).toBe("starts sk_test_, then [redacted] and [redacted]");
   });
 
   it("passes order ids, session ids, event ids, timestamps and amounts", () => {
@@ -510,6 +524,13 @@ describe("the frozen case", () => {
 });
 
 const caseFile = loadCase();
+/** Plan-wide usage as the plan stood before any EV-023 run: the committed JM-203 smoke log only, so committed run logs do not shift the figures. */
+const smokeOnlyEvidence = (): string => {
+  const dir = tmp();
+  const smoke = readdirSync(EVIDENCE_DIR).filter((f) => f.startsWith("jm-203-sandbox-smoke-"));
+  for (const f of smoke) copyFileSync(join(EVIDENCE_DIR, f), join(dir, f));
+  return dir;
+};
 const run = (env: AcceptanceEnv) => runAcceptance(env, caseFile, 0);
 const verdicts = (log: RunLog) => Object.fromEntries(log.scenarios.map((s) => [s.id, s.verdict]));
 
@@ -535,7 +556,7 @@ describe("the dry run", () => {
   });
 
   it("computes plan-wide usage from the committed JM-203 smoke log (3 requests, bounded at $0.06) plus the run's own spend", async () => {
-    const log = await run(dryAcceptanceEnv());
+    const log = await run(dryAcceptanceEnv(undefined, undefined, smokeOnlyEvidence()));
     expect(log.exa.ev023Requests).toBe(6);
     expect(log.exa.planRequestsAfter).toBe(9);
     expect(log.exa.planCostDollarsAfter).toBeCloseTo(0.06 + log.exa.ev023CostDollars, 6);
@@ -560,6 +581,18 @@ describe("the dry run", () => {
     expect(log.scenarios.filter((s) => s.verdict === "BLOCKED").map((s) => s.id)).toEqual(["A2", "A5"]);
     expect(log.scenarios.filter((s) => s.verdict === "FAIL")).toEqual([]);
     expect(log.verdict).toBe("BLOCKED");
+  });
+
+  it("writes a log with none of the case file's instruction text, preconditions, queries or card numbers", async () => {
+    const raw = JSON.parse(readFileSync(join(import.meta.dirname, "../../evals/cases/live-acceptance-v1-2.json"), "utf8")) as { preconditions: string[]; scenarios: { steps: string; expect: string }[]; queries: { text: string }[] };
+    const text = safeLogText(await run(dryAcceptanceEnv()));
+    const freeText = [...raw.preconditions, ...raw.scenarios.flatMap((s) => [s.steps, s.expect]), ...raw.queries.map((q) => q.text)];
+    expect(freeText.length).toBeGreaterThan(15);
+    for (const s of freeText) expect(text).not.toContain(s);
+    const cards = freeText.flatMap((s) => s.match(/\d{4}(?: \d{4}){3}/g) ?? []);
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) expect([text, text.replaceAll(" ", "")].some((t) => t.includes(card) || t.includes(card.replaceAll(" ", "")))).toBe(false);
+    expect(leakProblems(text)).toEqual([]);
   });
 
   it("starts no research and ends BLOCKED when the Exa budget has no room", async () => {
@@ -642,7 +675,7 @@ describe("the dry run", () => {
   });
 
   it("leaves the worst case recorded in the counter and the log when an attempt throws mid-way", async () => {
-    const env = dryAcceptanceEnv();
+    const env = dryAcceptanceEnv(undefined, undefined, smokeOnlyEvidence());
     const checkpoints: { ev023Requests: number; ev023CostDollars: number }[] = [];
     let counter = { requests: 0, costDollars: 0 };
     const log = await runAcceptance(
@@ -925,6 +958,109 @@ describe("a research failure is a failure, not BLOCKED", () => {
     expect(log.exa.perQuery[0]).toMatchObject({ creditsExhausted: true });
     expect(log.exa.perQuery[0]?.researchError).toBeUndefined();
     expect(log.verdict).toBe("BLOCKED");
+  });
+});
+
+describe("blockedAllowances (CR-006)", () => {
+  const allowance = { scenario: "A3" as const, query: "Q5", when: "Q5 yields no addable JPY offer after the permitted re-ask" };
+  const allowed = { ...caseFile, blockedAllowances: [allowance] };
+  const noJpy = { Q1: "xm5-us", Q3: "xm5-sg", Q5: "no-market-offers" };
+  const runCase = (c: typeof caseFile, env: AcceptanceEnv) => runAcceptance(env, c, 0);
+
+  it("loads a case file with no blockedAllowances as an empty list, and reads the field when present", () => {
+    expect(caseFile.blockedAllowances).toEqual(JSON.parse(readFileSync(join(import.meta.dirname, "../../evals/cases/live-acceptance-v1-2.json"), "utf8")).blockedAllowances?.map((a: typeof allowance) => ({ scenario: a.scenario, query: a.query, when: a.when })) ?? []);
+    const dir = tmp();
+    mkdirSync(join(dir, "evals/cases"), { recursive: true });
+    const raw = JSON.parse(readFileSync(join(import.meta.dirname, "../../evals/cases/live-acceptance-v1-2.json"), "utf8"));
+    writeFileSync(join(dir, "evals/cases/live-acceptance-v1-2.json"), JSON.stringify({ ...raw, blockedAllowances: [{ ...allowance, coverage: "c", basis: "b" }] }));
+    expect(loadCase(dir).blockedAllowances).toEqual([allowance]);
+  });
+
+  it("meets the scenarios threshold and ends PENDING_AUDIT when A3 is blocked by no JPY offer and the allowance covers it", async () => {
+    const log = await runCase(allowed, dryAcceptanceEnv(undefined, noJpy));
+    expect(verdicts(log)).toMatchObject({ A1: "PASS", A2: "PASS", A3: "BLOCKED", A4: "PASS", A8: "PASS" });
+    expect(log.scenarios.find((s) => s.id === "A3")?.blockedReason).toBe("no-market-offer-after-reask");
+    expect(log.exa.perQuery.find((q) => q.id === "Q5")?.attempts).toHaveLength(2);
+    expect(log.scenarios.find((s) => s.id === "A3")?.allowance).toEqual({ id: "A3/Q5", currency: "JPY", marketCurrencyMerchantOffers: 0 });
+    expect(log.thresholds).toMatchObject({ scenariosPassing: 7, scenariosTotal: 8, scenariosPassingMet: true, blockedAllowancesUsed: ["A3/Q5"] });
+    expect(log.verdict).toBe("PENDING_AUDIT");
+    expect(withOwnerAudit(log, { H1: "yes", H2: "yes", H3: "yes", H4: "yes", H5: "yes" }).verdict).toBe("PASS");
+    expect(withOwnerAudit(log, { H1: "yes", H2: "yes", H3: "no", H4: "yes", H5: "yes" }).verdict).toBe("FAIL");
+  });
+
+  it("stays BLOCKED for the same run without the allowance", async () => {
+    const log = await runCase(caseFile, dryAcceptanceEnv(undefined, noJpy));
+    expect(log.thresholds).toMatchObject({ scenariosPassingMet: false, blockedAllowancesUsed: [] });
+    expect(log.verdict).toBe("BLOCKED");
+  });
+
+  it("stays BLOCKED when A3 is blocked by a budget refusal before the first Q5 ask, or before the re-ask", async () => {
+    for (const refuseAfter of [2, 3]) {
+      const env = dryAcceptanceEnv(undefined, noJpy);
+      let asks = 0;
+      const log = await runCase(allowed, { ...env, research: async (q) => (asks++, env.research(q)), exaRefusal: () => (asks >= refuseAfter ? "the plan has already spent 28 of its 30 live Exa requests." : undefined) });
+      expect(log.scenarios.find((s) => s.id === "A3")).toMatchObject({ verdict: "BLOCKED", blockedReason: "research-incomplete" });
+      expect(log.thresholds).toMatchObject({ scenariosPassingMet: false, blockedAllowancesUsed: [] });
+      expect(log.verdict).toBe("BLOCKED");
+    }
+  });
+
+  it("stays BLOCKED when A3 is blocked by exhausted credits or a server-side monthly limit", async () => {
+    for (const marker of [{ errorKind: "credits_exhausted", httpStatus: 402 }, { errorKind: "monthly_limit", httpStatus: 429 }]) {
+      const env = dryAcceptanceEnv();
+      const log = await runCase(allowed, { ...env, research: async (q) => (q.id === "Q5" ? { ...failedResearchRun("x"), ...marker } : env.research(q)) });
+      expect(log.scenarios.find((s) => s.id === "A3")?.verdict).toBe("BLOCKED");
+      expect(log.thresholds.scenariosPassingMet).toBe(false);
+      expect(log.verdict).toBe("BLOCKED");
+    }
+  });
+
+  it("is FAIL, not covered, when Q5 research failed", async () => {
+    const env = dryAcceptanceEnv();
+    const log = await runCase(allowed, { ...env, research: async (q) => (q.id === "Q5" ? failedResearchRun("POST /api/chat answered 500", [], 500) : env.research(q)) });
+    expect(log.scenarios.find((s) => s.id === "A3")?.verdict).toBe("FAIL");
+    expect(log.verdict).toBe("FAIL");
+  });
+
+  it("stays BLOCKED when A2 is blocked and only A3 has an allowance, even with A3 blocked too", async () => {
+    for (const scenarios of [{ ...noJpy, Q5: "xm5-jp", Q3: "no-market-offers" }, { ...noJpy, Q3: "no-market-offers" }]) {
+      const log = await runCase(allowed, dryAcceptanceEnv(undefined, scenarios));
+      expect(log.scenarios.find((s) => s.id === "A2")).toMatchObject({ verdict: "BLOCKED", blockedReason: "no-market-offer-after-reask" });
+      expect(log.thresholds.scenariosPassingMet).toBe(false);
+      expect(log.verdict).toBe("BLOCKED");
+    }
+  });
+
+  it("records each product's validated outcome as ids, counts and categories only", async () => {
+    const log = await runCase(allowed, dryAcceptanceEnv(undefined, { ...noJpy, Q5: "xm5-jp" }));
+    const q5 = log.exa.perQuery.find((q) => q.id === "Q5");
+    expect(q5?.products.length).toBeGreaterThan(0);
+    expect(q5?.products.reduce((n, p) => n + p.marketCurrencyOffers.count, 0)).toBe(q5?.products.flatMap((p) => p.marketCurrencyOffers.ids).length);
+    for (const p of q5?.products ?? []) expect(Object.keys(p).sort()).toEqual(["evidence", "marketCurrencyOffers", "otherCurrencyOffers", "rejected"]);
+    expect(JSON.stringify(q5?.products)).not.toMatch(/https?:|\.com/);
+    const noOffer = await runCase(allowed, dryAcceptanceEnv(undefined, noJpy));
+    expect(noOffer.exa.perQuery.find((q) => q.id === "Q5")?.products.some((p) => p.otherCurrencyOffers + Object.keys(p.evidence).length > 0)).toBe(true);
+  });
+
+  it("names the reason from the evidence: offers the cart refuses are not 'no market offer'", () => {
+    const product = (count: number) => [{ marketCurrencyOffers: { count, ids: [] }, otherCurrencyOffers: 0, evidence: {}, rejected: {} }];
+    expect(noOfferReason({ creditsExhausted: false, attemptsAnalyzed: 2, products: product(0) })).toBe("no-market-offer-after-reask");
+    expect(noOfferReason({ creditsExhausted: false, attemptsAnalyzed: 2, products: product(1) })).toBe("offers-not-addable");
+    expect(noOfferReason({ creditsExhausted: false, attemptsAnalyzed: 1, products: product(0) })).toBe("research-incomplete");
+    expect(noOfferReason({ creditsExhausted: true, attemptsAnalyzed: 1, products: [] })).toBe("credits-exhausted");
+  });
+
+  it("does not cover A3 whose recorded check shows a JPY merchant offer", () => {
+    const blocked = (offers: number): ScenarioRecord => ({ ...record("A3", "BLOCKED"), query: "Q5", blockedReason: "no-market-offer-after-reask", allowance: { id: "A3/Q5", currency: "JPY", marketCurrencyMerchantOffers: offers } });
+    const rest = [1, 2, 4, 5, 6, 7, 8].map((n) => record(`A${n}`, "PASS"));
+    expect(computeThresholds(input({ scenarios: [blocked(0), ...rest], allowances: [allowance] })).scenariosPassingMet).toBe(true);
+    expect(computeThresholds(input({ scenarios: [blocked(1), ...rest], allowances: [allowance] })).scenariosPassingMet).toBe(false);
+  });
+
+  it("does not let the allowance cover a failed A3", () => {
+    const failedA3 = { ...record("A3", "FAIL"), query: "Q5" };
+    const rest = Array.from({ length: 7 }, (_, i) => record(`A${[1, 2, 4, 5, 6, 7, 8][i]}`, "PASS"));
+    expect(computeThresholds(input({ scenarios: [failedA3, ...rest], allowances: [allowance] })).scenariosPassingMet).toBe(false);
   });
 });
 

@@ -34,11 +34,14 @@ const CaseSchema = z.object({
   queries: z.array(z.object({ id: z.string(), market: z.enum(["US", "SG", "JP"]), currency: z.enum(["USD", "SGD", "JPY"]), text: z.string() })),
   budget: z.object({ exa: z.object({ planWideMaxRequests: z.number(), planWideMaxCostDollars: z.number(), ev023MaxRequests: z.number(), perQuestionCap: z.number() }) }),
   scenarios: z.array(z.object({ id: z.enum(SCENARIO_IDS), by: z.enum(["owner", "agent"]), query: z.string().optional(), steps: z.string(), expect: z.string() })),
+  /** CR-006: a scenario that may be BLOCKED without failing the scenarios threshold. Absent in case files that predate it. */
+  blockedAllowances: z.array(z.object({ scenario: z.enum(SCENARIO_IDS), query: z.string(), when: z.string() })).default([]),
   ownerAudit: z.array(z.string()).length(AUDIT_IDS.length),
 });
 export type AcceptanceCase = z.infer<typeof CaseSchema>;
 export type CaseQuery = AcceptanceCase["queries"][number];
 export type CaseScenario = AcceptanceCase["scenarios"][number];
+export type BlockedAllowance = AcceptanceCase["blockedAllowances"][number];
 
 export const REPO_ROOT = join(import.meta.dirname, "../..");
 export const EVIDENCE_DIR = join(REPO_ROOT, ".futari/evidence/live");
@@ -75,11 +78,22 @@ export type SessionAudit = z.infer<typeof SessionAuditSchema>;
 const EventRecordSchema = z.object({ eventId: z.string(), type: z.string(), outcome: z.string(), to: z.string().optional() });
 export type EventRecord = z.infer<typeof EventRecordSchema>;
 
+/**
+ * Why a scenario is BLOCKED, so a blockedAllowance is judged on evidence. Only `no-market-offer-after-reask` can be covered:
+ * research finished both permitted asks and the last one's validated data holds no merchant offer in the market currency at all.
+ * `offers-not-addable` is the same run with offers present that the cart refuses (out of stock, below the minimum): a defect to look at, not an allowance.
+ */
+export const BLOCKED_REASONS = ["no-market-offer-after-reask", "offers-not-addable", "credits-exhausted", "research-incomplete", "missing-prerequisite"] as const;
+export type BlockedReason = (typeof BLOCKED_REASONS)[number];
+
 const ScenarioRecordSchema = z.object({
   id: z.string(),
   by: z.enum(["owner", "agent"]),
   query: z.string().optional(),
   verdict: ScenarioVerdictSchema,
+  blockedReason: z.enum(BLOCKED_REASONS).optional(),
+  /** Set with `blockedReason` when research left the scenario without an offer: the query's market-currency merchant offer count from the validated data, ids and counts only. */
+  allowance: z.object({ id: z.string(), currency: z.string(), marketCurrencyMerchantOffers: z.number() }).optional(),
   orderId: z.string().optional(),
   sessionId: z.string().optional(),
   events: z.array(EventRecordSchema),
@@ -96,6 +110,15 @@ export type Attempt = z.infer<typeof AttemptSchema>;
 
 const ResearchChecksSchema = z.object({ addableOfferInMarketCurrency: z.boolean(), noBraceInComparisonOrReason: z.boolean(), mainListOnlyMarketCurrency: z.boolean() });
 
+/** One product's validated outcome from the stream's data-products: ids, counts and categories only, never a URL, title or free text. */
+const ProductSummarySchema = z.object({
+  marketCurrencyOffers: z.object({ count: z.number(), ids: z.array(z.string()) }),
+  otherCurrencyOffers: z.number(),
+  evidence: z.record(z.string(), z.number()),
+  rejected: z.record(z.string(), z.number()),
+});
+export type ProductSummary = z.infer<typeof ProductSummarySchema>;
+
 const ResearchRecordSchema = z.object({
   id: z.string(),
   market: z.string(),
@@ -105,6 +128,8 @@ const ResearchRecordSchema = z.object({
   requests: z.number(),
   costDollars: z.number(),
   addableOffers: z.number(),
+  /** The products of the last analyzed attempt (the cached or fresh data the allowance is judged on). */
+  products: z.array(ProductSummarySchema),
   chosenOfferId: z.string().optional(),
   creditsExhausted: z.boolean(),
   /** Set when research kept failing for a reason other than exhausted credits or a budget refusal: a defect, so the run is FAIL. */
@@ -117,6 +142,10 @@ export type ResearchRecord = z.infer<typeof ResearchRecordSchema>;
 const ThresholdsSchema = z.object({
   scenariosPassing: z.number(),
   scenariosTotal: z.number(),
+  /** All scenarios PASS, or every one that does not is BLOCKED and covered by a blockedAllowance (CR-006). */
+  scenariosPassingMet: z.boolean(),
+  /** The allowances that covered a BLOCKED scenario, as `<scenario>/<query>`. */
+  blockedAllowancesUsed: z.array(z.string()),
   paidWithoutVerifiedEvent: z.number(),
   liveModeObjectsSeen: z.number(),
   duplicatePaidTransitions: z.number(),
@@ -189,6 +218,7 @@ export const isVerifiedPaidLine = (line: WebhookLogLine, orderId: string): boole
 export interface ThresholdInput {
   scenarios: readonly ScenarioRecord[];
   scenariosTotal: number;
+  allowances: readonly BlockedAllowance[];
   orders: readonly Order[];
   webhook: readonly WebhookLogLine[];
   sessions: readonly { order: Pick<Order, "orderId" | "currency" | "totalMinor">; session: SessionAudit }[];
@@ -201,9 +231,15 @@ export function computeThresholds(input: ThresholdInput): Thresholds {
   const paidTransitions = (order: Order) => order.transitions.filter((t) => t.to === "paid").length;
   const paid = input.orders.filter((o) => paidTransitions(o) > 0);
   const { exa } = input;
+  const notPassing = input.scenarios.filter((s) => s.verdict !== "PASS");
+  const covering = (s: ScenarioRecord) =>
+    input.allowances.find((a) => a.scenario === s.id && a.query === s.query && s.verdict === "BLOCKED" && s.blockedReason === "no-market-offer-after-reask" && s.allowance?.id === `${a.scenario}/${a.query}` && s.allowance.marketCurrencyMerchantOffers === 0);
+  const covered = notPassing.flatMap((s) => covering(s) ?? []);
   return {
     scenariosPassing: input.scenarios.filter((s) => s.verdict === "PASS").length,
     scenariosTotal: input.scenariosTotal,
+    scenariosPassingMet: input.scenariosTotal > 0 && input.scenarios.length === input.scenariosTotal && covered.length === notPassing.length,
+    blockedAllowancesUsed: covered.map((a) => `${a.scenario}/${a.query}`),
     paidWithoutVerifiedEvent: paid.filter((o) => !input.webhook.some((line) => isVerifiedPaidLine(line, o.orderId))).length,
     liveModeObjectsSeen: input.sessions.filter((s) => s.session.livemode).length + input.webhook.filter((l) => l.outcome === "rejected-livemode").length,
     duplicatePaidTransitions: input.orders.reduce((n, o) => n + Math.max(0, paidTransitions(o) - 1), 0),
@@ -231,7 +267,7 @@ export function runVerdict(t: Thresholds, researchChecksPass: boolean, blockedSc
     !t.exaWithinBudget ||
     t.ownerAuditAllYes === false;
   if (failed) return "FAIL";
-  if (blockedScenarios > 0) return "BLOCKED";
+  if (!t.scenariosPassingMet) return "BLOCKED";
   return t.ownerAuditAllYes === "PENDING" ? "PENDING_AUDIT" : "PASS";
 }
 

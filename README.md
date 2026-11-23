@@ -176,6 +176,8 @@ The script refuses an attempt when its worst case would pass a cap. The worst ca
 | `BLOCKED` | No check failed, but a scenario could not run, for example no addable offer after the re-ask, or exhausted credits. The owner decides. | 3 |
 | `PASS` | All checks passed and every H answer is `yes`. Only `--finalize-audit` prints it. | not applicable |
 
+The case file may list `blockedAllowances` (CR-006). An allowance covers a BLOCKED scenario only when research finished both permitted asks for its query and the last ask's validated data holds no merchant offer in the market currency. The run log records that count on the scenario (`allowance`) and the per-product outcome of each query (`products`: ids, counts and categories, never URLs or titles), and the thresholds name the allowance used (`blockedAllowancesUsed`). A scenario blocked for any other reason, such as a budget refusal or exhausted credits, is not covered. The run log never copies scenario instructions, card numbers, preconditions or other free text from the case file.
+
 A live run that exits 0 is not acceptance. Acceptance is the moment `--finalize-audit` prints `PASS`. The command reads the audit sheet, where each answer must be exactly `yes` or `no` (case and trailing punctuation do not matter), and anything else stays pending. It exits 0 for `PASS`, 3 for `BLOCKED` and 1 otherwise. Exit code 2 also means the script stopped before the run started.
 
 ### Run logs

@@ -165,7 +165,7 @@ export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: st
     preconditions: async () => {
       const keyKind = /^(?:sk|rk|rkcs)_test_/.exec(config.stripe.secretKey)?.[0];
       const checks: Precondition[] = [
-        { name: "STRIPE_SECRET_KEY is a sandbox key", ok: keyKind !== undefined, detail: keyKind !== undefined ? `the loaded key starts ${keyKind}` : "the loaded key does not start sk_test_, rk_test_ or rkcs_test_" },
+        { name: "STRIPE_SECRET_KEY is a sandbox key", ok: keyKind !== undefined, detail: keyKind !== undefined ? "the loaded key has a sandbox prefix" : "the loaded key has no sandbox prefix" },
         await listenPrecondition(config.stripe.webhookSecret, scrub),
       ];
       const listens = serverLogListens(readFileSync(options.serverLogPath, "utf8"));
