@@ -23,7 +23,7 @@ export interface ServerConfig {
   limits: Limits;
   /** File that receives each Exa request and raw response as JSON lines (live smoke only). */
   exchangeLog: string | undefined;
-  stripe?: { secretKey: string; webhookSecret: string };
+  stripe: { secretKey: string; webhookSecret: string } | undefined;
 }
 
 /** What the app needs to know about its own configuration. Never carries the key. */
@@ -80,7 +80,7 @@ export function parseConfig(env: Record<string, string | undefined>): ServerConf
     exaApiKey: e.KENSAKU_EXA_MODE === "live" ? e.EXA_API_KEY : undefined,
     limits: limitsFromEnv(env),
     exchangeLog: e.KENSAKU_EXCHANGE_LOG,
-    ...(stripe && { stripe }),
+    stripe,
   };
 }
 

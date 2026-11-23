@@ -35,7 +35,8 @@ export type SessionStatus = "open" | "complete" | "expired";
 
 interface SessionFields {
   id: string;
-  livemode: boolean;
+  /** The port refuses live sessions, so a result is always sandbox. */
+  livemode: false;
   amountTotal: number | null;
   currency: string | null;
 }
@@ -44,7 +45,25 @@ export type SessionResult =
   | (SessionFields & { status: "open"; url: string })
   | (SessionFields & { status: "complete" | "expired"; url: null });
 
-export type CheckoutPortErrorCode = "stripe-error" | "livemode-refused" | "unsafe-url" | "invalid-signature";
+export type CheckoutPortErrorCode = "stripe-error" | "livemode-refused" | "unsafe-url" | "invalid-signature" | "invalid-payload";
+
+/** The slice of a Stripe event the webhook handler reads. */
+export interface WebhookEvent {
+  id: string;
+  type: string;
+  livemode: boolean;
+  object: {
+    id?: string;
+    object?: string;
+    client_reference_id?: string | null;
+    status?: string | null;
+    payment_status?: string | null;
+    amount_total?: number | null;
+    currency?: string | null;
+    livemode?: boolean;
+    metadata?: Record<string, string> | null;
+  };
+}
 
 /** Carries a code only: never the SDK's message, which can quote part of a key. */
 export class CheckoutPortError extends Error {

@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CheckoutPortError } from "../../src/commerce/port";
 import { StripeCheckoutPort } from "../../src/commerce/stripe-port";
-import type { StripeClientLike } from "../../src/commerce/stripe-port";
 import { ConfigError, parseConfig } from "../../src/server/config";
 import { liveSecretKey, testSecretKey, testWebhookSecret } from "../commerce/keys";
+import { options, params, stubClient, stubSession } from "../commerce/stub-client";
 
 const ROOT = join(import.meta.dirname, "../..");
 
@@ -59,21 +59,8 @@ describe("EV-021 check 1: parseConfig refuses non-sandbox Stripe values", () => 
 });
 
 describe("EV-021 check 2: StripeCheckoutPort refuses live sessions and foreign URLs", () => {
-  const session = (overrides: Record<string, unknown>) => ({
-    id: "cs_test_stub",
-    url: "https://checkout.stripe.com/c/pay/cs_test_stub",
-    status: "open",
-    livemode: false,
-    amount_total: 100,
-    currency: "usd",
-    ...overrides,
-  });
   const portFor = (overrides: Record<string, unknown>) =>
-    new StripeCheckoutPort(testSecretKey(), () => ({
-      checkout: { sessions: { create: async () => session(overrides), expire: async () => ({}), retrieve: async () => session(overrides) } },
-    }) as unknown as StripeClientLike);
-  const params = { mode: "payment" } as never;
-  const options = { idempotencyKey: "k" };
+    new StripeCheckoutPort(stubClient({ create: async () => stubSession(overrides), retrieve: async () => stubSession(overrides) }));
 
   it("refuses livemode: true with an error and no url", async () => {
     const outcome = await portFor({ livemode: true })
@@ -92,6 +79,15 @@ describe("EV-021 check 2: StripeCheckoutPort refuses live sessions and foreign U
     await expect(portFor({ url }).retrieveSession("cs_test_stub")).rejects.toMatchObject({ code: "unsafe-url" });
   });
 
+  it("refuses livemode: true on retrieveSession", async () => {
+    await expect(portFor({ livemode: true }).retrieveSession("cs_test_stub")).rejects.toMatchObject({ code: "livemode-refused" });
+  });
+
+  it("treats an open session with a null url as stripe-error", async () => {
+    await expect(portFor({ url: null }).createSession(params, options)).rejects.toMatchObject({ code: "stripe-error" });
+    await expect(portFor({ url: null }).retrieveSession("cs_test_stub")).rejects.toMatchObject({ code: "stripe-error" });
+  });
+
   it("accepts a sandbox session with a checkout.stripe.com url", async () => {
     await expect(portFor({}).createSession(params, options)).resolves.toMatchObject({ id: "cs_test_stub", status: "open", livemode: false, amountTotal: 100, currency: "usd" });
   });
@@ -101,10 +97,14 @@ describe("EV-021 check 4: no key-shaped value in tracked files", () => {
   const PATTERN = /(sk|rk|rkcs|pk)_(test|live)_[A-Za-z0-9]{8,}|whsec_[A-Za-z0-9]{8,}/;
   const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8" }).split("\0").filter(Boolean);
 
-  it("matches the pattern in no tracked file", () => {
+  it("matches the pattern in no tracked file, binaries included", () => {
     const hits = tracked.filter((file) => {
-      const content = readFileSync(join(ROOT, file));
-      return !content.includes(0) && PATTERN.test(content.toString("utf8"));
+      const path = join(ROOT, file);
+      if (!existsSync(path)) {
+        console.warn(`EV-021 check 4: skipping ${file}, deleted in the working copy`);
+        return false;
+      }
+      return PATTERN.test(readFileSync(path).toString("latin1"));
     });
     expect(hits).toEqual([]);
   });

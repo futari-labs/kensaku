@@ -4,8 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { CheckoutOrderInput, CheckoutSessionOptions, CheckoutSessionParams } from "../../src/commerce/port";
 import { buildCheckoutSessionRequest } from "../../src/commerce/session-request";
 import { StripeCheckoutPort } from "../../src/commerce/stripe-port";
-import type { StripeClientLike } from "../../src/commerce/stripe-port";
-import { testSecretKey } from "../commerce/keys";
+import { stubClient, stubSession } from "../commerce/stub-client";
 
 interface Case {
   id: string;
@@ -26,19 +25,14 @@ describe("EV-019 checkout session request", () => {
 
   it("StripeCheckoutPort passes exactly the built params and options to sessions.create", async () => {
     const seen: { params: unknown; options: unknown }[] = [];
-    const client = {
-      checkout: {
-        sessions: {
-          create: async (params: unknown, options: unknown) => {
-            seen.push({ params, options });
-            return { id: "cs_test_stub", url: "https://checkout.stripe.com/c/pay/cs_test_stub", status: "open", livemode: false, amount_total: 1, currency: "usd" };
-          },
-          expire: async () => ({}),
-          retrieve: async () => ({}),
+    const port = new StripeCheckoutPort(
+      stubClient({
+        create: async (params, options) => {
+          seen.push({ params, options });
+          return stubSession();
         },
-      },
-    } as unknown as StripeClientLike;
-    const port = new StripeCheckoutPort(testSecretKey(), () => client);
+      }),
+    );
     for (const c of cases) {
       const request = buildCheckoutSessionRequest(c.input.order, { port: c.input.port, now: new Date(c.input.now) });
       await port.createSession(request.params, request.options);
