@@ -35,7 +35,8 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) appr
 - Observation (JM-203 worker, branch `jm-203-commerce-slice` at `8664ad3`): `tests/evals/ev-009-key-safety.test.ts:136` collects every `"id":"<64-hex>"` in the research stream and expects 6 image ids; with offer ids in `data-products` (REQ-017, EV-018) it finds 13. The file is outside JM-203's paths, and the worker's edit was refused. Separately, the approved Add-to-cart `aria-label` fails axe `label-content-name-mismatch` in EV-007.
 - Owner decision (AskUserQuestion, 2026-11-23): "Prepare CR-004 (Recommended)", renumbered CR-005 because CR-004 is the proposed post-v1.1 eBay revision recorded below. D-059.
 - Revision: JM-203 gains `tests/evals/ev-009-key-safety.test.ts` with one permitted edit (the regex) and a matching criterion; ARCHITECTURE's label wording. No other change.
-- Status: under independent review; JM-203 code review and the sandbox smoke continue; nothing merges until the revised baseline is on `dev`.
+- Independent review of `ede511b` (opus, read-only): READY; one MINOR and two NITs resolved as wording.
+- Status: awaiting the owner's plan-revision approval card; nothing merges until the revised baseline is on `dev`.
 
 ### v1.2 execution ledger
 

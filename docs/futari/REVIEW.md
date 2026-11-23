@@ -204,9 +204,16 @@ Same reviewer. Verdict: CHANGES REQUIRED (text only; no blockers). Its extended 
 | N5 | Nit | S66 over-labeled. | Split into VERIFIED and INFERRED; the smoke checks the inferred part. |
 | N6 | Nit | R-40 claimed a UI string; singular "another open order"; version on identical replace. | R-40 points to README only; "every other open order, oldest first"; a successful replace always increments the version. |
 
-
 ## Plan revision CR-005 (EV-009 image-id count and Add-to-cart accessible name)
 
 Trigger: the JM-203 worker found that the carried EV-009 test counts every 64-hex `"id"` in the research stream (expects 6 image ids) while REQ-017/EV-018 add 64-hex offer ids there, and that the approved Add-to-cart `aria-label` fails axe `label-content-name-mismatch`. The owner selected "Prepare CR-004 (Recommended)" on 2026-11-23 (renumbered CR-005). Decision D-059.
 
-Independent review: pending.
+Independent review: a fresh opus reviewer, read-only, reviewed `ede511b`. Verdict: **READY**. It captured the JM-203 research stream (13 distinct 64-hex ids: 6 image candidates, 7 offers) and confirmed the new regex matches exactly the 6 image ids (`src/server/images.ts:72` builds `{ id, sourceHost, sourceTitle }`); with only that edit EV-009 passed 6/6 on `8664ad3`; EV-009's pass rule is byte-identical; the plan.json diff touches only JM-203 (one path, one criterion); `plan-gate check` and the harness pass.
+
+| # | Severity | Finding | Resolution |
+| --- | --- | --- | --- |
+| 1 | MINOR | The label rule covered only the default state; "Added" and disabled reasons are also visible text. | ARCHITECTURE: the accessible name starts with the visible text in every state (examples given). JM-203's code already does this. |
+| 2 | NIT | Reason cited only axe. | D-059 names WCAG 2.5.3 (Label in Name). |
+| 3 | NIT | The owner's card said "CR-004". | Noted here: the owner's "Prepare CR-004" selection is this revision, CR-005. |
+
+The three resolutions are wording only, applied after the READY verdict.
