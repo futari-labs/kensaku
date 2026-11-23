@@ -11,6 +11,8 @@ import type { RunOptions } from "../research/pipeline";
 import { parseChatBody, toChunks } from "./chat";
 import type { AppConfig } from "./config";
 import { hostOriginGuard } from "./guard";
+import { commerceRoutes } from "./commerce-routes";
+import type { CommerceDeps } from "./commerce-routes";
 import { SECURITY_HEADERS } from "./images";
 import type { ImageProxy } from "./images";
 
@@ -31,6 +33,8 @@ export interface AppDeps {
   run?: Pick<RunOptions, "sleep" | "callTimeoutMs" | "runTimeoutMs">;
   /** The image proxy behind `GET /api/image/:id`; without one the route does not exist. */
   images?: ImageProxy;
+  /** The simulated cart and checkout (v1.2); without it the commerce routes do not exist and research offers are not registered. */
+  commerce?: CommerceDeps;
 }
 
 /** `/api/image` and everything under it: one policy of its own, the proxy's. */
@@ -40,7 +44,7 @@ const jsonError = (kind: ApiErrorKind, message: string) => ({ kind, message });
 
 /** The Hono app. Everything it touches arrives through `deps`; it holds one run lock and nothing else. */
 export function createApp(deps: AppDeps): Hono {
-  const { config, ledger, clock, log, images } = deps;
+  const { config, ledger, clock, log, images, commerce } = deps;
   const app = new Hono();
   let running = false;
 
@@ -78,11 +82,12 @@ export function createApp(deps: AppDeps): Hono {
     const runId = randomUUID();
     const month = () => ({ monthRequests: ledger.read(clock()).requests, monthLimit: ledger.limits.requestLimit });
     const registerImages = images?.registerImageCandidates.bind(images);
+    const registerOffers = commerce?.service.registerOffers.bind(commerce.service);
     const stream = createUIMessageStream<KensakuMessage>({
       execute: async ({ writer }) => {
         try {
           writer.write({ type: "start", messageId: runId });
-          for await (const event of runResearch({ question, market }, port, signal, { ...deps.run, runId, log, ...(registerImages && { registerImages }) })) {
+          for await (const event of runResearch({ question, market }, port, signal, { ...deps.run, runId, log, ...(registerImages && { registerImages }), ...(registerOffers && { registerOffers }) })) {
             if (signal.aborted) break;
             for (const chunk of toChunks(event, month)) writer.write(chunk);
           }
@@ -107,6 +112,11 @@ export function createApp(deps: AppDeps): Hono {
   });
 
   if (images) app.get("/api/image/:id", (c) => images.serve(c.req.param("id"), c.req.header("sec-fetch-site")));
+
+  if (commerce) {
+    app.route("/", commerceRoutes(commerce));
+    if (commerce.fakeHosted) app.route("/", commerce.fakeHosted);
+  }
 
   app.all("/api/*", (c) => c.json({ error: "not found" }, 404));
   app.use("/*", serveStatic({ root: "./dist" }));

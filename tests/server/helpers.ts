@@ -1,5 +1,6 @@
 import { createApp } from "../../src/server/app";
 import type { AppDeps, LogLine } from "../../src/server/app";
+import type { CommerceDeps } from "../../src/server/commerce-routes";
 import type { AppConfig } from "../../src/server/config";
 import { FixtureExaPort } from "../../src/exa/fixture-port";
 import type { ExaPort } from "../../src/exa/port";
@@ -27,6 +28,7 @@ export interface HarnessOptions {
   portFor?: AppDeps["portFor"];
   limits?: { requestLimit?: number; costLimit?: number };
   run?: AppDeps["run"];
+  commerce?: CommerceDeps;
 }
 
 export function harness(options: HarnessOptions = {}): Harness {
@@ -41,6 +43,7 @@ export function harness(options: HarnessOptions = {}): Harness {
     clock,
     log: (line) => logs.push(line),
     run: { sleep: () => Promise.resolve(), ...options.run },
+    ...(options.commerce && { commerce: options.commerce }),
     portFor:
       options.portFor ??
       ((scenario) => {
