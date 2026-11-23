@@ -86,28 +86,19 @@ const webhookEventSchema = z.object({
   }),
 });
 
-function parseWebhookBody(rawBody: string | Uint8Array): WebhookEvent {
-  let json: unknown;
+/** Signature failures are invalid-signature; a correctly signed body that is not an event is invalid-payload. */
+export function verifyWebhook(rawBody: string | Uint8Array, header: string | undefined, secret: string): WebhookEvent {
+  if (!header) throw new CheckoutPortError("invalid-signature");
+  let event: unknown;
   try {
-    json = JSON.parse(typeof rawBody === "string" ? rawBody : new TextDecoder().decode(rawBody));
-  } catch {
-    throw new CheckoutPortError("invalid-payload");
+    event = Stripe.webhooks.constructEvent(rawBody, header, secret, WEBHOOK_TOLERANCE_SECONDS);
+  } catch (error) {
+    throw new CheckoutPortError(error instanceof Stripe.errors.StripeSignatureVerificationError ? "invalid-signature" : "invalid-payload");
   }
-  const parsed = webhookEventSchema.safeParse(json);
+  const parsed = webhookEventSchema.safeParse(event);
   if (!parsed.success) throw new CheckoutPortError("invalid-payload");
   const { id, type, livemode, data } = parsed.data;
   return { id, type, livemode, object: data.object };
-}
-
-/** Checks the signature over the raw bytes first, so a signed body that is not an event is invalid-payload. */
-export function verifyWebhook(rawBody: string | Uint8Array, header: string, secret: string): WebhookEvent {
-  try {
-    if (!Stripe.webhooks.signature) throw new Error("missing signature helper");
-    Stripe.webhooks.signature.verifyHeader(rawBody, header, secret, WEBHOOK_TOLERANCE_SECONDS);
-  } catch {
-    throw new CheckoutPortError("invalid-signature");
-  }
-  return parseWebhookBody(rawBody);
 }
 
 export function signTestPayload(payload: string, secret: string, timestamp: number): string {

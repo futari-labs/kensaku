@@ -1,7 +1,7 @@
 import { CheckoutPortError } from "./port";
 import type { CheckoutPort, CheckoutSessionOptions, CheckoutSessionParams, SessionResult, SessionStatus } from "./port";
 
-/** `url:<value>` deliberately returns a url the real port would refuse, for client-side url checks. */
+/** `url:<value>` deliberately returns any url: the fake checks no urls; only the live port refuses non-Stripe ones. */
 export type CreateScript = "ok" | "error" | "livemode" | `url:${string}`;
 export type ExpireScript = "ok" | "ok-delayed" | "error";
 export type RetrieveScript = "open" | "complete" | "expired" | "error";

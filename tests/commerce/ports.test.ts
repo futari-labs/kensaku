@@ -39,7 +39,7 @@ describe("verifyWebhook", () => {
     expect(() => verifyWebhook(payload, sign(payload, now() - 400), secret)).toThrow(code("invalid-signature"));
     expect(() => verifyWebhook(payload + " ", sign(payload), secret)).toThrow(code("invalid-signature"));
     expect(() => verifyWebhook(payload, "", secret)).toThrow(code("invalid-signature"));
-    expect(() => verifyWebhook(payload, undefined as never, secret)).toThrow(code("invalid-signature"));
+    expect(() => verifyWebhook(payload, undefined, secret)).toThrow(code("invalid-signature"));
   });
 
   it("accepts a timestamp inside the 300 s tolerance", () => {
