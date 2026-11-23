@@ -83,9 +83,9 @@ describe("the plan-wide Exa counter", () => {
 
   it("starts at zero, persists what the smoke spends, and keeps EV-023's share", () => {
     const file = counterFile();
-    expect(readExaCounter(file)).toEqual({ planRequests: 0, smokeRequests: 0 });
-    expect(addSmokeExaRequests(file, 2)).toEqual({ planRequests: 2, smokeRequests: 2 });
-    expect(JSON.parse(readFileSync(file, "utf8"))).toEqual({ planRequests: 2, smokeRequests: 2 });
+    expect(readExaCounter(file)).toEqual({ planRequests: 0, smokeRequests: 0, ev023Requests: 0, planCostDollars: 0 });
+    expect(addSmokeExaRequests(file, 2)).toEqual({ planRequests: 2, smokeRequests: 2, ev023Requests: 0, planCostDollars: 0 });
+    expect(JSON.parse(readFileSync(file, "utf8"))).toEqual({ planRequests: 2, smokeRequests: 2, ev023Requests: 0, planCostDollars: 0 });
     rmSync(join(file, ".."), { recursive: true, force: true });
   });
 

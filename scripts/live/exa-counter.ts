@@ -1,31 +1,46 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { z } from "zod";
+import { MAX_EXA_REQUESTS_PER_RUN } from "../../src/exa/budget";
 import { writeJsonAtomic } from "../../src/exa/files";
+import { MAX_CALL_COST_DOLLARS } from "../../src/exa/ledger";
 
-/** Exa requests across the whole kensaku-v1-2 plan. The JM-203 smoke and EV-023 (`pnpm live:acceptance:v1-2`) both add to it. */
 export const EXA_COUNTER_PATH = resolve(".cache/live/v1-2-exa-counter.json");
 export const SMOKE_EXA_CAP = 5;
 export const PLAN_EXA_CAP = 30;
-/** What one Q1 research run may spend: the per-query cap of the live plan. */
-export const RUN_EXA_MAX = 5;
+export const PLAN_COST_CAP_DOLLARS = 0.4;
+export const EV023_EXA_CAP = 25;
+export const round6 = (n: number): number => Math.round(n * 1e6) / 1e6;
 
-const CounterSchema = z.object({ planRequests: z.number().int().nonnegative(), smokeRequests: z.number().int().nonnegative() });
+/** What the server's own code allows one research run: its request cap, and the most one request may cost. */
+export const RUN_EXA_MAX = MAX_EXA_REQUESTS_PER_RUN;
+export const WORST_CASE_ATTEMPT_COST_DOLLARS = round6(RUN_EXA_MAX * MAX_CALL_COST_DOLLARS);
+/** The JM-203 smoke recorded no cost, so each of its requests counts at the most one request may cost. */
+export const smokeCostBoundDollars = (requests: number): number => round6(requests * MAX_CALL_COST_DOLLARS);
+
+const Count = z.number().int().nonnegative();
+const Dollars = z.number().nonnegative();
+const CounterSchema = z.object({ planRequests: Count, smokeRequests: Count, ev023Requests: Count.default(0), planCostDollars: Dollars.default(0) });
 export type ExaCounter = z.infer<typeof CounterSchema>;
+
+export interface PlanUsage {
+  planRequests: number;
+  planCostDollars: number;
+  ev023Requests: number;
+}
 
 export function readExaCounter(path: string): ExaCounter {
   let text: string;
   try {
     text = readFileSync(path, "utf8");
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { planRequests: 0, smokeRequests: 0 };
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return CounterSchema.parse({ planRequests: 0, smokeRequests: 0 });
     throw error;
   }
   return CounterSchema.parse(JSON.parse(text));
 }
 
-/** The reason a research run may not start, or undefined when its worst case fits both caps. */
-export function exaBudgetRefusal(counter: ExaCounter): string | undefined {
+export function exaBudgetRefusal(counter: Pick<ExaCounter, "planRequests" | "smokeRequests">): string | undefined {
   if (counter.smokeRequests + RUN_EXA_MAX > SMOKE_EXA_CAP) return `the smoke has already spent ${counter.smokeRequests} of its ${SMOKE_EXA_CAP} Exa requests; reuse offers with --offer-id.`;
   if (counter.planRequests + RUN_EXA_MAX > PLAN_EXA_CAP) return `the plan has already spent ${counter.planRequests} of its ${PLAN_EXA_CAP} live Exa requests.`;
   return undefined;
@@ -33,7 +48,59 @@ export function exaBudgetRefusal(counter: ExaCounter): string | undefined {
 
 export function addSmokeExaRequests(path: string, requests: number): ExaCounter {
   const before = readExaCounter(path);
-  const after = { planRequests: before.planRequests + requests, smokeRequests: before.smokeRequests + requests };
+  const after = { ...before, planRequests: before.planRequests + requests, smokeRequests: before.smokeRequests + requests };
   writeJsonAtomic(path, after);
   return after;
+}
+
+/** Adds a change to the counter. A positive change reserves an attempt's worst case; a negative one settles it to the actual spend. */
+export function addAcceptanceExaSpend(path: string, spend: { requests: number; costDollars: number }): ExaCounter {
+  const before = readExaCounter(path);
+  const after = {
+    ...before,
+    planRequests: Math.max(0, before.planRequests + spend.requests),
+    ev023Requests: Math.max(0, before.ev023Requests + spend.requests),
+    planCostDollars: Math.max(0, round6(before.planCostDollars + spend.costDollars)),
+  };
+  writeJsonAtomic(path, after);
+  return after;
+}
+
+const SMOKE_LOG = /^jm-203-sandbox-smoke-.*\.json$/;
+const RUN_LOG = /^ev-023-run-\d+-\d{8}T\d{6}Z\.json$/;
+const SmokeLogSchema = z.object({ exa: z.object({ requests: Count }) });
+const RunLogSpendSchema = z.object({ exa: z.object({ ev023Requests: Count, ev023CostDollars: Dollars }).partial().optional() });
+
+export function usageFromEvidence(dir: string): PlanUsage {
+  const usage: PlanUsage = { planRequests: 0, planCostDollars: 0, ev023Requests: 0 };
+  if (!existsSync(dir)) return usage;
+  for (const file of readdirSync(dir).sort()) {
+    const read = () => JSON.parse(readFileSync(join(dir, file), "utf8")) as unknown;
+    if (SMOKE_LOG.test(file)) {
+      const { requests } = SmokeLogSchema.parse(read()).exa;
+      usage.planRequests += requests;
+      usage.planCostDollars += smokeCostBoundDollars(requests);
+    } else if (RUN_LOG.test(file)) {
+      const spent = RunLogSpendSchema.parse(read()).exa;
+      usage.planRequests += spent?.ev023Requests ?? 0;
+      usage.ev023Requests += spent?.ev023Requests ?? 0;
+      usage.planCostDollars += spent?.ev023CostDollars ?? 0;
+    }
+  }
+  return { ...usage, planCostDollars: round6(usage.planCostDollars) };
+}
+
+export function planUsage(counter: ExaCounter, evidence: PlanUsage): PlanUsage {
+  return {
+    planRequests: Math.max(counter.planRequests, evidence.planRequests),
+    planCostDollars: round6(Math.max(counter.planCostDollars, evidence.planCostDollars)),
+    ev023Requests: Math.max(counter.ev023Requests, evidence.ev023Requests),
+  };
+}
+
+export function acceptanceBudgetRefusal(usage: PlanUsage): string | undefined {
+  if (usage.ev023Requests + RUN_EXA_MAX > EV023_EXA_CAP) return `EV-023 has already spent ${usage.ev023Requests} of its ${EV023_EXA_CAP} Exa requests.`;
+  if (usage.planRequests + RUN_EXA_MAX > PLAN_EXA_CAP) return `the plan has already spent ${usage.planRequests} of its ${PLAN_EXA_CAP} live Exa requests.`;
+  if (usage.planCostDollars + WORST_CASE_ATTEMPT_COST_DOLLARS > PLAN_COST_CAP_DOLLARS) return `the plan has already spent $${usage.planCostDollars} of its $${PLAN_COST_CAP_DOLLARS} live Exa budget.`;
+  return undefined;
 }

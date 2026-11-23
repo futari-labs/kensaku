@@ -1,0 +1,108 @@
+Supplementary evidence for EV-023 run 1 (2026-11-23, git c7ba58e, JM-205), recorded under CR-006 and decision D-060. This is the terminal output of `pnpm live:acceptance:v1-2 --server-log .cache/live/ev023-server.log --timeout-minutes 30`. Run 1's JSON log was reduced to a summary because the log writer's leak scan matched key-prefix wording the script itself wrote ("sk_test_," in a precondition detail), so this file and ev-023-run-1-server.log beside it hold the detail the log could not. Every run of digits that could be a card number, and every key- or whsec-shaped string, is replaced by [redacted] with the scripts' own redaction, every Stripe Checkout URL is replaced by [checkout-url-redacted] (its fragment decodes to JSON that holds a publishable key), and the leak scan over both files finds nothing. The terminal text is otherwise unchanged. The run exited 3: A1, A2, A4 to A8 PASS and A3 BLOCKED because Q5 yielded no addable JPY offer.
+
+---
+
+
+> kensaku@0.0.0 live:acceptance:v1-2 /Users/josiahwong/Documents/kensaku/.claude/worktrees/jm-205-fix
+> tsx scripts/live-acceptance-v1-2.ts --server-log .cache/live/ev023-server.log --timeout-minutes 30
+
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+EV-023 case file: evals/cases/live-acceptance-v1-2.json (8 scenarios, 3 queries)
+EV-023 run 1 of at most 2.
+reserved run 1: .futari/evidence/live/ev-023-run-1-20261123T125703Z.json
+researching Q1 (US): Sony WH-1000XM5 headphones: where can I buy them and are they worth it?
+  Q1: 2 Exa request(s), 2 addable USD offer(s)
+researching Q3 (SG): Sony WH-1000XM5 price in Singapore
+  Q3: 3 Exa request(s), 4 addable SGD offer(s)
+researching Q5 (JP): ソニー WH-1000XM5 はどこで買うのがいい？
+  Q5: 4 Exa request(s), 0 addable JPY offer(s)
+
+=== A1 (owner, Q1) ===
+
+== Owner step A1 (order ord_cafbabb4-f9c3-43e4-9cab-d222fe583cc2) ==
+Open this Stripe-hosted page in your browser:
+[checkout-url-redacted]
+Do: Add the first addable USD merchant offer to the cart, quantity 1. Check out. On the Stripe-hosted page pay with card [redacted], any future expiry, any CVC.
+Expect: Order state paid set by a verified checkout.session.completed event; Kensaku shows 'Simulated payment received'; cart cleared; Stripe session amount_total equals the cart's demo total.
+Kensaku's demo total for this cart: 199.95 USD. Check it against the hosted page's total, the line item names (start with "Simulated:"), and the description (H1, H2).
+Use Kensaku at http://127.0.0.1:8787 in your browser; the order must leave "open" through Stripe, never through this terminal.
+Waiting for the order to leave "open" (up to 30 minutes)...
+A1: PASS
+
+=== A2 (owner, Q3) ===
+
+== Owner step A2 (order ord_f6f48673-a75b-41f6-9501-f08cfcbe129e) ==
+Open this Stripe-hosted page in your browser:
+[checkout-url-redacted]
+Do: Add the first addable SGD offer. Check out. Pay with [redacted] (or the Singapore card [redacted]if 4242 is refused for SGD).
+Expect: paid via verified webhook; session currency sgd; amount_total equals demo total in cents.
+Kensaku's demo total for this cart: 298.00 SGD. Check it against the hosted page's total, the line item names (start with "Simulated:"), and the description (H1, H2).
+Use Kensaku at http://127.0.0.1:8787 in your browser; the order must leave "open" through Stripe, never through this terminal.
+Waiting for the order to leave "open" (up to 30 minutes)...
+A2: PASS
+
+=== A3 (owner, Q5) ===
+A3: BLOCKED
+
+=== A4 (owner, Q1) ===
+
+== Owner step A4 (order ord_a0303cb4-31c7-4778-a523-f60689c27f28) ==
+Open this Stripe-hosted page in your browser:
+[checkout-url-redacted]
+Do: Add a USD offer and check out. Enter the generic decline card [redacted]. After the decline message, use the hosted page's back link to return to Kensaku.
+Expect: Never paid; after return the order is cancelled and the cart is unchanged; Kensaku shows the decline note when declinedAttempts >= 1. Whether payment_intent.payment_failed arrives is recorded (R-30) but does not gate.
+Kensaku's demo total for this cart: 199.95 USD. Check it against the hosted page's total, the line item names (start with "Simulated:"), and the description (H1, H2).
+Use Kensaku at http://127.0.0.1:8787 in your browser; the order must leave "open" through Stripe, never through this terminal.
+Waiting for the order to leave "open" (up to 30 minutes)...
+A4: PASS
+
+=== A5 (owner, Q3) ===
+
+== Owner step A5 (order ord_4b052dd8-ac1c-497c-9c13-bd051be52519) ==
+Open this Stripe-hosted page in your browser:
+[checkout-url-redacted]
+Do: Add an SGD offer, check out, and on the hosted page use the back link without entering a card.
+Expect: Order cancelled; the agent then retrieves the session through the API and finds status expired; cart unchanged.
+Kensaku's demo total for this cart: 298.00 SGD. Check it against the hosted page's total, the line item names (start with "Simulated:"), and the description (H1, H2).
+Use Kensaku at http://127.0.0.1:8787 in your browser; the order must leave "open" through Stripe, never through this terminal.
+Waiting for the order to leave "open" (up to 30 minutes)...
+A5: PASS
+
+=== A6 (agent) ===
+A6: PASS
+
+=== A7 (agent) ===
+A7: PASS
+
+=== A8 (agent) ===
+A8: PASS
+
+run 1 (live, complete) at c7ba58ea2dc95362dcee2494efadca3d256b90a9 (dirty tree)
+  A1: PASS
+  A2: PASS
+  A3: BLOCKED {"failed":["ownerCompletedStep","orderFound","orderPaid","paidByVerifiedCompletedEvent","exactlyOnePaidTransition","sessionCompleteWithDemoTotal","sessionAmountEqualsObservedOffer","sessionCurrencyMatches","cartCleared"],"notes":["BLOCKED: no addable offer for Q5"]}
+  A4: PASS
+  A5: PASS
+  A6: PASS
+  A7: PASS
+  A8: PASS
+  Q1: 2 Exa request(s), $0.02, 2 addable offer(s), checks {"addableOfferInMarketCurrency":true,"noBraceInComparisonOrReason":true,"mainListOnlyMarketCurrency":true}
+  Q3: 3 Exa request(s), $0.035, 4 addable offer(s), checks {"addableOfferInMarketCurrency":true,"noBraceInComparisonOrReason":true,"mainListOnlyMarketCurrency":true}
+  Q5: 4 Exa request(s), $0.05, 0 addable offer(s), checks {"addableOfferInMarketCurrency":false,"noBraceInComparisonOrReason":true,"mainListOnlyMarketCurrency":true}
+  thresholds: {"scenariosPassing":7,"scenariosTotal":8,"paidWithoutVerifiedEvent":0,"liveModeObjectsSeen":0,"duplicatePaidTransitions":0,"amountMismatches":0,"stripeChargesOutsideSandbox":0,"exaWithinBudget":true,"ownerAuditAllYes":"PENDING"}
+  Exa: EV-023 9 of 25, plan-wide 12 of 30 requests and $0.165 of $0.4
+  verdict: BLOCKED
+
+wrote .futari/evidence/live/ev-023-run-1-20261123T125703Z.json
+wrote .futari/evidence/live/ev-023-run-1-audit.md
+
+Owner audit (H1-H5). Ask the owner each question and record yes or no in the audit sheet:
+  H1: On each Stripe-hosted page (A1-A5), every line item name starts with 'Simulated:' and the description says no order is placed with the merchant.
+  H2: On each hosted page the total equals the 'Demo total' Kensaku showed in the cart.
+  H3: In Kensaku, every cart line shows the 'Demo checkout price' separately from the 'Last observed' merchant price with host and time.
+  H4: Kensaku's cart, checkout return, and order list say 'Simulated' and never claim that a merchant order was placed.
+  H5: Declined (A4) and cancelled (A5) returns show a clear, non-alarming status and the cart is still there.
+
+A live run that exits 0 is not acceptance. Then run: pnpm live:acceptance:v1-2 --finalize-audit .futari/evidence/live/ev-023-run-1-20261123T125703Z.json
+ ELIFECYCLE  Command failed with exit code 3.
+exit=3

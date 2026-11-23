@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "live:acceptance:v1-1": "pnpm build && tsx scripts/live-acceptance-v1-1.ts",
+    "live:acceptance:v1-2": "tsx scripts/live-acceptance-v1-2.ts",
     "check:components": "node scripts/check-components.mjs"
   },
   "dependencies": {

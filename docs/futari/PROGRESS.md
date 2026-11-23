@@ -47,7 +47,7 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` revision CR-005 on `dev`; vert
 - Owner decision (AskUserQuestion, 2026-11-23): "Revise plan, rerun". D-060.
 - Revision: case file `blockedAllowances` for A3/Q5, the `scenariosPassing` exception, runRules and runLog notes; REQ-008 criterion 1; EVALUATION_PLAN EV-023 wording; D-060; R-41. No other change. JM-205 uses its third and last repair for the script fix.
 - Independent review of `84fb935` (opus, read-only): CHANGES REQUIRED (2 MAJOR, 3 MINOR, wording only); it inspected Q5's 24 cached hits and found no priced XM5 JPY merchant listing, so run 1 hides no product defect. Resolved in the reviewed commit.
-- Status: awaiting the owner's plan-revision approval card.
+- Status: approved by the owner on the plan-revision card (snapshot `1a52fb3e…` at `f190051`, record `e67ee08`); merged into `dev` by the owner as PR #41 (`6340bb2`). JM-205 then updated from `dev`; EV-023 run 2 (the last) PASSED on 2026-11-23 with the owner's H1-H5 audit all yes.
 
 ### v1.2 execution ledger
 
@@ -56,8 +56,8 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` revision CR-005 on `dev`; vert
 | JM-201 | #31 | `jm-201-commerce-core` | #36 | `0d458b3` | merged (`57370f8`) | `.futari/evidence/JM-201.md` |
 | JM-202 | #32 | `jm-202-stripe-adapter` | #37 | `9fcb8fb` | merged (`0b56670`) | `.futari/evidence/JM-202.md` |
 | JM-203 | #33 | `jm-203-commerce-slice` | #39 | `5506864` | merged (`5f4d922`) | `.futari/evidence/JM-203.md`; live smoke 9/9 |
-| JM-204 | #34 | `jm-204-commerce-ui` | (this PR) | `29b5597` | merge-ready after CI | `.futari/evidence/JM-204.md`; owner accepted the UI |
-| JM-205 | #35 | — | — | — | pending | needs JM-204 |
+| JM-204 | #34 | `jm-204-commerce-ui` | #40 | `29b5597` | merged (`5906471`) | `.futari/evidence/JM-204.md`; owner accepted the UI |
+| JM-205 | #35 | `jm-205-live-acceptance` | (this PR) | `04cd952` | merge-ready after CI | `.futari/evidence/JM-205.md`; EV-023 run 2 PASS |
 
 ## v1.1 planning session 2026-11-21
 

@@ -1,0 +1,685 @@
+{
+  "task": "JM-205",
+  "plan": "kensaku-v1-2",
+  "evaluation": "EV-023",
+  "status": "complete",
+  "mode": "live",
+  "run": 2,
+  "gitSha": "2a75ea666efdd3b1d9b389f91e49ed3b2088e0b8",
+  "gitDirty": true,
+  "startedAt": "2026-11-23T13:56:15.478Z",
+  "finishedAt": "2026-11-23T14:03:56.082Z",
+  "preconditions": [
+    {
+      "name": "STRIPE_SECRET_KEY is a sandbox key",
+      "ok": true,
+      "detail": "the loaded key has a sandbox prefix"
+    },
+    {
+      "name": "stripe listen is running against the sandbox with the secret in .env.local",
+      "ok": true,
+      "detail": "secret matches; one listener forwards to 127.0.0.1:8787 with all five events. matching: 4541 stripe listen --events checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,payment_intent.payment_failed --forward-to http://127.0.0.1:8787/api/stripe/webhook"
+    },
+    {
+      "name": "--server-log holds this server's listening line (port 8787, live mode)",
+      "ok": true,
+      "detail": "listening on port 8787 in live mode"
+    },
+    {
+      "name": "the server runs `pnpm start` in live mode at 127.0.0.1:8787 with checkout configured",
+      "ok": true,
+      "detail": "live mode, Exa key set, checkout configured"
+    },
+    {
+      "name": "--server-log is written by the running server",
+      "ok": true,
+      "detail": "the running server's request showed up in the file"
+    },
+    {
+      "name": ".data/commerce/ is empty at the start of the run",
+      "ok": true,
+      "detail": "no state file; the server's cart and orders are empty"
+    },
+    {
+      "name": "the plan-wide Exa budget has room",
+      "ok": true,
+      "detail": "room for at least one research attempt"
+    }
+  ],
+  "exa": {
+    "perQuery": [
+      {
+        "id": "Q1",
+        "market": "US",
+        "currency": "USD",
+        "attempts": [
+          {
+            "requests": 0,
+            "costDollars": 0,
+            "costKnown": true,
+            "cacheHits": 2
+          }
+        ],
+        "attemptsAnalyzed": 1,
+        "requests": 0,
+        "costDollars": 0,
+        "addableOffers": 2,
+        "products": [
+          {
+            "marketCurrencyOffers": {
+              "count": 2,
+              "ids": [
+                "5d94a216e2df6d728e9f21e8840375b30d090f9fa35a534503dd4c94c6dcaef8",
+                "b7b1d867101684e6ab8f45fe9b6c6df48ac54906272f3e78cab513f22f762c3c"
+              ]
+            },
+            "otherCurrencyOffers": 0,
+            "evidence": {
+              "not-a-listing": 1,
+              "editorial": 2,
+              "merchant-no-price": 1,
+              "merchant-mismatch": 2
+            },
+            "rejected": {
+              "irrelevant-product": 0,
+              "unsupported-currency": 0,
+              "url-not-from-run": 0,
+              "invalid-url": 0
+            }
+          }
+        ],
+        "chosenOfferId": "5d94a216e2df6d728e9f21e8840375b30d090f9fa35a534503dd4c94c6dcaef8",
+        "creditsExhausted": false,
+        "checks": {
+          "addableOfferInMarketCurrency": true,
+          "noBraceInComparisonOrReason": true,
+          "mainListOnlyMarketCurrency": true
+        },
+        "notes": []
+      },
+      {
+        "id": "Q3",
+        "market": "SG",
+        "currency": "SGD",
+        "attempts": [
+          {
+            "requests": 0,
+            "costDollars": 0,
+            "costKnown": true,
+            "cacheHits": 3
+          }
+        ],
+        "attemptsAnalyzed": 1,
+        "requests": 0,
+        "costDollars": 0,
+        "addableOffers": 4,
+        "products": [
+          {
+            "marketCurrencyOffers": {
+              "count": 1,
+              "ids": [
+                "12efd78ebd1104f101531b751cfd0efd96f54cceefaf197fbc56ebbe5fbc1e1a"
+              ]
+            },
+            "otherCurrencyOffers": 0,
+            "evidence": {},
+            "rejected": {
+              "irrelevant-product": 7,
+              "unsupported-currency": 0,
+              "url-not-from-run": 0,
+              "invalid-url": 0
+            }
+          },
+          {
+            "marketCurrencyOffers": {
+              "count": 3,
+              "ids": [
+                "01d94f54dce887e311dbb2ccdbe3ebf2b3984264b850deb939e9e5ecb4cf7626",
+                "02a0813e9e1087002d19fc5a87b95ffba6ac46a7fadbf9e1383202ae40bbb07d",
+                "23f9a6885fa3fe217647e9507cb10c6ffd443754aec72a344f2d198f64b3f074"
+              ]
+            },
+            "otherCurrencyOffers": 0,
+            "evidence": {},
+            "rejected": {
+              "irrelevant-product": 5,
+              "unsupported-currency": 0,
+              "url-not-from-run": 0,
+              "invalid-url": 0
+            }
+          },
+          {
+            "marketCurrencyOffers": {
+              "count": 0,
+              "ids": []
+            },
+            "otherCurrencyOffers": 0,
+            "evidence": {},
+            "rejected": {
+              "irrelevant-product": 0,
+              "unsupported-currency": 0,
+              "url-not-from-run": 0,
+              "invalid-url": 0
+            }
+          }
+        ],
+        "chosenOfferId": "12efd78ebd1104f101531b751cfd0efd96f54cceefaf197fbc56ebbe5fbc1e1a",
+        "creditsExhausted": false,
+        "checks": {
+          "addableOfferInMarketCurrency": true,
+          "noBraceInComparisonOrReason": true,
+          "mainListOnlyMarketCurrency": true
+        },
+        "notes": []
+      },
+      {
+        "id": "Q5",
+        "market": "JP",
+        "currency": "JPY",
+        "attempts": [
+          {
+            "requests": 0,
+            "costDollars": 0,
+            "costKnown": true,
+            "cacheHits": 4
+          },
+          {
+            "requests": 0,
+            "costDollars": 0,
+            "costKnown": true,
+            "cacheHits": 4
+          }
+        ],
+        "attemptsAnalyzed": 2,
+        "requests": 0,
+        "costDollars": 0,
+        "addableOffers": 0,
+        "products": [
+          {
+            "marketCurrencyOffers": {
+              "count": 0,
+              "ids": []
+            },
+            "otherCurrencyOffers": 0,
+            "evidence": {},
+            "rejected": {
+              "irrelevant-product": 8,
+              "unsupported-currency": 0,
+              "url-not-from-run": 0,
+              "invalid-url": 0
+            }
+          },
+          {
+            "marketCurrencyOffers": {
+              "count": 0,
+              "ids": []
+            },
+            "otherCurrencyOffers": 0,
+            "evidence": {
+              "aggregator": 1
+            },
+            "rejected": {
+              "irrelevant-product": 7,
+              "unsupported-currency": 0,
+              "url-not-from-run": 0,
+              "invalid-url": 0
+            }
+          },
+          {
+            "marketCurrencyOffers": {
+              "count": 0,
+              "ids": []
+            },
+            "otherCurrencyOffers": 0,
+            "evidence": {},
+            "rejected": {
+              "irrelevant-product": 8,
+              "unsupported-currency": 0,
+              "url-not-from-run": 0,
+              "invalid-url": 0
+            }
+          }
+        ],
+        "creditsExhausted": false,
+        "checks": {
+          "addableOfferInMarketCurrency": false,
+          "noBraceInComparisonOrReason": true,
+          "mainListOnlyMarketCurrency": true
+        },
+        "notes": [
+          "attempt 1 yielded no addable JPY offer; asking once more",
+          "attempt 2 yielded no addable JPY offer"
+        ]
+      }
+    ],
+    "ev023Requests": 0,
+    "ev023CostDollars": 0,
+    "planRequestsAfter": 12,
+    "planCostDollarsAfter": 0.165,
+    "caps": {
+      "ev023": 25,
+      "planWide": 30,
+      "planWideCostDollars": 0.4,
+      "perQuery": 5
+    }
+  },
+  "scenarios": [
+    {
+      "id": "A1",
+      "by": "owner",
+      "query": "Q1",
+      "verdict": "PASS",
+      "orderId": "ord_9f78cdcb-b9f5-42c8-b13e-083a08103a40",
+      "sessionId": "cs_test_a0xUSjaaqCaWohOSXefagQTDfQtMhl2OYZARHfI7KvFhre80k3LUvYuQN7",
+      "events": [
+        {
+          "eventId": "evt_1UexlYEVa8GiEha41Y6Wksfq",
+          "type": "checkout.session.completed",
+          "outcome": "applied",
+          "to": "paid"
+        }
+      ],
+      "transitions": [
+        {
+          "from": null,
+          "to": "open",
+          "at": "2026-11-23T13:56:16.434Z"
+        },
+        {
+          "from": "open",
+          "to": "paid",
+          "at": "2026-11-23T13:58:44.701Z"
+        }
+      ],
+      "retrieves": [
+        {
+          "label": "audit after the owner step",
+          "sessionId": "cs_test_a0xUSjaaqCaWohOSXefagQTDfQtMhl2OYZARHfI7KvFhre80k3LUvYuQN7",
+          "status": "complete",
+          "amountTotal": 19995,
+          "currency": "usd",
+          "livemode": false
+        }
+      ],
+      "checks": {
+        "ownerCompletedStep": true,
+        "orderFound": true,
+        "orderPaid": true,
+        "paidByVerifiedCompletedEvent": true,
+        "exactlyOnePaidTransition": true,
+        "sessionCompleteWithDemoTotal": true,
+        "sessionAmountEqualsObservedOffer": true,
+        "sessionCurrencyMatches": true,
+        "cartCleared": true
+      },
+      "observations": {},
+      "notes": []
+    },
+    {
+      "id": "A2",
+      "by": "owner",
+      "query": "Q3",
+      "verdict": "PASS",
+      "orderId": "ord_444377e8-d005-475b-bc8e-6f4d257c8bf9",
+      "sessionId": "cs_test_a0Vu7umjZsszlSrp0T2ikItELR24jXavGhKVIXpQRWIEM3YJelf3ewCnOw",
+      "events": [
+        {
+          "eventId": "evt_1UexnUEVa8GiEha4bMnPqYt2",
+          "type": "checkout.session.completed",
+          "outcome": "applied",
+          "to": "paid"
+        }
+      ],
+      "transitions": [
+        {
+          "from": null,
+          "to": "open",
+          "at": "2026-11-23T13:58:45.819Z"
+        },
+        {
+          "from": "open",
+          "to": "paid",
+          "at": "2026-11-23T14:00:44.645Z"
+        }
+      ],
+      "retrieves": [
+        {
+          "label": "audit after the owner step",
+          "sessionId": "cs_test_a0Vu7umjZsszlSrp0T2ikItELR24jXavGhKVIXpQRWIEM3YJelf3ewCnOw",
+          "status": "complete",
+          "amountTotal": 29800,
+          "currency": "sgd",
+          "livemode": false
+        }
+      ],
+      "checks": {
+        "ownerCompletedStep": true,
+        "orderFound": true,
+        "orderPaid": true,
+        "paidByVerifiedCompletedEvent": true,
+        "exactlyOnePaidTransition": true,
+        "sessionCompleteWithDemoTotal": true,
+        "sessionAmountEqualsObservedOffer": true,
+        "sessionCurrencyMatches": true,
+        "cartCleared": true
+      },
+      "observations": {},
+      "notes": []
+    },
+    {
+      "id": "A3",
+      "by": "owner",
+      "query": "Q5",
+      "verdict": "BLOCKED",
+      "blockedReason": "no-market-offer-after-reask",
+      "allowance": {
+        "id": "A3/Q5",
+        "currency": "JPY",
+        "marketCurrencyMerchantOffers": 0
+      },
+      "events": [],
+      "transitions": [],
+      "retrieves": [],
+      "checks": {
+        "ownerCompletedStep": false,
+        "orderFound": false,
+        "orderPaid": false,
+        "paidByVerifiedCompletedEvent": false,
+        "exactlyOnePaidTransition": false,
+        "sessionCompleteWithDemoTotal": false,
+        "sessionAmountEqualsObservedOffer": false,
+        "sessionCurrencyMatches": false,
+        "cartCleared": false
+      },
+      "observations": {},
+      "notes": [
+        "BLOCKED: no addable offer for Q5"
+      ]
+    },
+    {
+      "id": "A4",
+      "by": "owner",
+      "query": "Q1",
+      "verdict": "PASS",
+      "orderId": "ord_079b5e4c-2229-4b49-b848-ff9927ad14b7",
+      "sessionId": "cs_test_a0ZcD7GIzkmt2O7PMsf1KQYnTpEtkwpkDFBqgoRpDcVyGXwOkwQSHbt5Ok",
+      "events": [
+        {
+          "eventId": "evt_3UexpKEVa8GiEha40KwYv8qC",
+          "type": "payment_intent.payment_failed",
+          "outcome": "applied",
+          "to": "open"
+        },
+        {
+          "eventId": "evt_1UexpPEVa8GiEha4QzGmNRMP",
+          "type": "checkout.session.expired",
+          "outcome": "no-transition"
+        }
+      ],
+      "transitions": [
+        {
+          "from": null,
+          "to": "open",
+          "at": "2026-11-23T14:00:46.833Z"
+        },
+        {
+          "from": "open",
+          "to": "cancelled",
+          "at": "2026-11-23T14:02:43.615Z"
+        }
+      ],
+      "retrieves": [
+        {
+          "label": "audit after the owner step",
+          "sessionId": "cs_test_a0ZcD7GIzkmt2O7PMsf1KQYnTpEtkwpkDFBqgoRpDcVyGXwOkwQSHbt5Ok",
+          "status": "expired",
+          "amountTotal": 19995,
+          "currency": "usd",
+          "livemode": false
+        }
+      ],
+      "checks": {
+        "ownerCompletedStep": true,
+        "orderFound": true,
+        "orderCancelled": true,
+        "neverPaid": true,
+        "sessionExpired": true,
+        "cartUnchanged": true
+      },
+      "observations": {
+        "paymentFailedEventArrived": true,
+        "declinedAttempts": 1
+      },
+      "notes": []
+    },
+    {
+      "id": "A5",
+      "by": "owner",
+      "query": "Q3",
+      "verdict": "PASS",
+      "orderId": "ord_0e7a3fd8-cad0-4902-8968-7c51c811c08a",
+      "sessionId": "cs_test_a0iZAkAF0cOE6rvaesQTdEsRPoGEqK51nI0IMFQBJ8KHoNRUmJuaC5rnPi",
+      "events": [],
+      "transitions": [
+        {
+          "from": null,
+          "to": "open",
+          "at": "2026-11-23T14:02:45.850Z"
+        },
+        {
+          "from": "open",
+          "to": "cancelled",
+          "at": "2026-11-23T14:03:52.255Z"
+        }
+      ],
+      "retrieves": [
+        {
+          "label": "audit after the owner step",
+          "sessionId": "cs_test_a0iZAkAF0cOE6rvaesQTdEsRPoGEqK51nI0IMFQBJ8KHoNRUmJuaC5rnPi",
+          "status": "expired",
+          "amountTotal": 29800,
+          "currency": "sgd",
+          "livemode": false
+        }
+      ],
+      "checks": {
+        "ownerCompletedStep": true,
+        "orderFound": true,
+        "orderCancelled": true,
+        "neverPaid": true,
+        "sessionExpired": true,
+        "cartUnchanged": true
+      },
+      "observations": {},
+      "notes": []
+    },
+    {
+      "id": "A6",
+      "by": "agent",
+      "verdict": "PASS",
+      "orderId": "ord_9f78cdcb-b9f5-42c8-b13e-083a08103a40",
+      "sessionId": "cs_test_a0xUSjaaqCaWohOSXefagQTDfQtMhl2OYZARHfI7KvFhre80k3LUvYuQN7",
+      "events": [
+        {
+          "eventId": "evt_1UexlYEVa8GiEha41Y6Wksfq",
+          "type": "checkout.session.completed",
+          "outcome": "applied",
+          "to": "paid"
+        },
+        {
+          "eventId": "evt_1UexlYEVa8GiEha41Y6Wksfq",
+          "type": "checkout.session.completed",
+          "outcome": "duplicate"
+        }
+      ],
+      "transitions": [
+        {
+          "from": null,
+          "to": "open",
+          "at": "2026-11-23T13:56:16.434Z"
+        },
+        {
+          "from": "open",
+          "to": "paid",
+          "at": "2026-11-23T13:58:44.701Z"
+        }
+      ],
+      "retrieves": [],
+      "checks": {
+        "resendExitedZero": true,
+        "duplicateLineAddedOnce": true,
+        "serverAnsweredDuplicate": true,
+        "exactlyOnePaidTransition": true,
+        "noOtherOrderChanged": true
+      },
+      "observations": {
+        "eventId": "evt_1UexlYEVa8GiEha41Y6Wksfq",
+        "serverOutcomes": [
+          "applied",
+          "duplicate"
+        ],
+        "duplicatesBefore": 0,
+        "resendOutput": "{\n  \"id\": \"evt_1UexlYEVa8GiEha41Y6Wksfq\",\n  \"object\": \"event\",\n  \"api_version\": \"2026-11-18.endive\",\n  \"created\": 1795442324,\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_a0xUSjaaqCaWohOSXefagQTDfQtMhl2OYZARHfI7KvFhre80k3LUvYuQN7\",\n      \"object\": \"checkout.session\",\n      \"adaptive_pricing\": {\n        \"enabled\": false\n      },\n      \"after_expiration\": null,\n      \"allow_promotion_codes\": null,\n      \"allowed_payment_method_types\": null,\n      \"amount_subtotal\": 19995,\n      \"amount_total\":"
+      },
+      "notes": []
+    },
+    {
+      "id": "A7",
+      "by": "agent",
+      "query": "Q1",
+      "verdict": "PASS",
+      "orderId": "ord_0688fef3-0625-45bb-af86-66272a8bc407",
+      "sessionId": "cs_test_a0DZfoE1E0mfDwvawwnvOquvF3s12LSsJfQmsc2ArJbAAWPuPWgGYY0NSv",
+      "events": [
+        {
+          "eventId": "evt_1UexqZEVa8GiEha4C1DWwmMK",
+          "type": "checkout.session.expired",
+          "outcome": "no-transition"
+        }
+      ],
+      "transitions": [
+        {
+          "from": null,
+          "to": "open",
+          "at": "2026-11-23T14:03:54.328Z"
+        },
+        {
+          "from": "open",
+          "to": "cancelled",
+          "at": "2026-11-23T14:03:55.491Z"
+        }
+      ],
+      "retrieves": [
+        {
+          "label": "first order's session after the second checkout",
+          "sessionId": "cs_test_a0Gm3GKbXNE1FGWylVmN4N63d3a6fbAZZxTDx3jVupXS3YXYUELzXXN3HD",
+          "status": "expired",
+          "amountTotal": 19995,
+          "currency": "usd",
+          "livemode": false
+        },
+        {
+          "label": "second order's session while open",
+          "sessionId": "cs_test_a0DZfoE1E0mfDwvawwnvOquvF3s12LSsJfQmsc2ArJbAAWPuPWgGYY0NSv",
+          "status": "open",
+          "amountTotal": 19995,
+          "currency": "usd",
+          "livemode": false
+        },
+        {
+          "label": "second order's session after cancel",
+          "sessionId": "cs_test_a0DZfoE1E0mfDwvawwnvOquvF3s12LSsJfQmsc2ArJbAAWPuPWgGYY0NSv",
+          "status": "expired",
+          "amountTotal": 19995,
+          "currency": "usd",
+          "livemode": false
+        }
+      ],
+      "checks": {
+        "firstCheckoutStarted": true,
+        "secondCheckoutStarted": true,
+        "firstOrderSuperseded": true,
+        "firstSessionExpired": true,
+        "secondOrderOpen": true,
+        "cancelAnswered200": true,
+        "secondOrderCancelled": true,
+        "secondSessionExpired": true
+      },
+      "observations": {
+        "firstOrderId": "ord_32283909-69f0-4165-8347-ad795037264c",
+        "firstSessionId": "cs_test_a0Gm3GKbXNE1FGWylVmN4N63d3a6fbAZZxTDx3jVupXS3YXYUELzXXN3HD",
+        "firstOrderTransitions": [
+          {
+            "from": null,
+            "to": "open",
+            "at": "2026-11-23T14:03:53.621Z"
+          },
+          {
+            "from": "open",
+            "to": "expired",
+            "at": "2026-11-23T14:03:54.327Z"
+          }
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "A8",
+      "by": "agent",
+      "verdict": "PASS",
+      "orderId": "ord_0688fef3-0625-45bb-af86-66272a8bc407",
+      "sessionId": "cs_test_a0DZfoE1E0mfDwvawwnvOquvF3s12LSsJfQmsc2ArJbAAWPuPWgGYY0NSv",
+      "events": [],
+      "transitions": [
+        {
+          "from": null,
+          "to": "open",
+          "at": "2026-11-23T14:03:54.328Z"
+        },
+        {
+          "from": "open",
+          "to": "cancelled",
+          "at": "2026-11-23T14:03:55.491Z"
+        }
+      ],
+      "retrieves": [],
+      "checks": {
+        "unsignedRejected400": true,
+        "wrongSecretRejected400": true,
+        "orderStillCancelled": true
+      },
+      "observations": {
+        "unsignedStatus": 400,
+        "wrongSecretStatus": 400,
+        "orderStateBefore": "cancelled",
+        "orderStateAfter": "cancelled"
+      },
+      "notes": []
+    }
+  ],
+  "researchChecksPass": true,
+  "thresholds": {
+    "scenariosPassing": 7,
+    "scenariosTotal": 8,
+    "scenariosPassingMet": true,
+    "blockedAllowancesUsed": [
+      "A3/Q5"
+    ],
+    "paidWithoutVerifiedEvent": 0,
+    "liveModeObjectsSeen": 0,
+    "duplicatePaidTransitions": 0,
+    "amountMismatches": 0,
+    "stripeChargesOutsideSandbox": 0,
+    "exaWithinBudget": true,
+    "ownerAuditAllYes": true
+  },
+  "ownerAudit": {
+    "H1": "yes",
+    "H2": "yes",
+    "H3": "yes",
+    "H4": "yes",
+    "H5": "yes"
+  },
+  "verdict": "PASS",
+  "notes": []
+}
