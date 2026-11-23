@@ -151,27 +151,28 @@ The script checks these and stops before any Exa request, and before it reserves
 - One `stripe listen` process line forwards to `http://127.0.0.1:8787/api/stripe/webhook`, subscribes to all five frozen events, and has no `--live`. Each process line is judged alone. The script prints the matching and non-matching lines with secrets redacted.
 - The `--server-log` file holds this server's `listening` line with port 8787 and mode `live`.
 - The server answers at `127.0.0.1:8787` in live mode with an Exa key and checkout configured.
+- The `--server-log` file is written by that server. The script sends one harmless request (a cart removal of an offer that is not there), then requires a new `cart` line in the file within 5 seconds. A stale file, or one from another server, is refused.
 - `.data/commerce/` is empty.
 - The plan-wide Exa budget has room for one more attempt.
 
 ### What a run does
 
-The script researches Q1, Q3 and Q5. Each attempt may use at most 5 Exa requests, and each query gets one re-ask. The script prints the Stripe page URL and the steps for each owner scenario, then waits for the order to leave "open" (20 minutes by default, `--timeout-minutes`). It then checks the outcome and retrieves the session from Stripe as an audit. Scenarios A6 to A8 (a resent event, two checkouts in a row, forged webhook bodies) run on their own. The script never clicks anything on the Stripe page.
+The script researches Q1, Q3 and Q5. Each attempt may use at most 5 Exa requests, and each query gets one re-ask. A research attempt that fails for any reason other than exhausted credits or a budget refusal (a non-200 answer from `/api/chat`, a fetch error, a stream with no products) is re-asked once. If it fails again, the run is FAIL, not BLOCKED, and the scenarios that needed that query are recorded as not run because of the research failure. The script prints the Stripe page URL and the steps for each owner scenario, then waits for the order to leave "open" (20 minutes by default, `--timeout-minutes`). It then checks the outcome and retrieves the session from Stripe as an audit. Scenarios A6 to A8 (a resent event, two checkouts in a row, forged webhook bodies) run on their own. The script never clicks anything on the Stripe page.
 
 Each scenario kind has a fixed list of gating checks that all start false. A check that never ran counts as failed, so an order the script cannot read after your step fails the scenario.
 
 ### Exa budget
 
-The plan allows 30 Exa requests and $0.40 of reported cost in total, and 25 requests for EV-023. Plan-wide usage is the larger of two figures: the local counter `.cache/live/v1-2-exa-counter.json`, and the sum recovered from the committed logs in `.futari/evidence/live/`. The recovered sum counts the JM-203 smoke as 3 requests at an estimated $0.05, because that run did not record its cost. It adds the requests and cost of every `ev-023-run-*` log, including started and aborted ones.
+The plan allows 30 Exa requests and $0.40 of reported cost in total, and 25 requests for EV-023. Plan-wide usage is the larger of two figures: the local counter `.cache/live/v1-2-exa-counter.json`, and the sum recovered from the committed logs in `.futari/evidence/live/`. The recovered sum counts the JM-203 smoke as 3 requests at a bound of $0.06 (3 x $0.02, the most one request may cost), because that run did not record its cost. It adds the requests and cost of every `ev-023-run-*` log, including started and aborted ones.
 
-The script refuses an attempt when its worst case would pass a cap. The worst case is 5 requests and $0.06, because v1.1 averaged at most $0.0125 per request. A failed request, or a run with no cost in its usage data, counts at the worst case, never as zero. The script stops research on an HTTP 402 or a `credits_exhausted` error. The remaining scenarios are then BLOCKED.
+The script refuses an attempt when its worst case would pass a cap. The worst case is 5 requests and $0.10, taken from the server's own limits (5 requests per run, at most $0.02 per request). A failed request, or a run with no cost in its usage data, counts at the worst case, never as zero. The script adds the worst case to the counter and to the run's started log before each attempt, then replaces it with the actual spend when the attempt returns, so an interrupted attempt still counts. The script stops research on an HTTP 402 or a `credits_exhausted` error, and on the server's own monthly limit. The remaining scenarios are then BLOCKED.
 
 ### Verdicts and exit codes
 
 | Verdict | Meaning | Run exit code |
 | --- | --- | --- |
 | `PENDING_AUDIT` | Every automatic check passed. The owner's H1 to H5 answers are still missing. | 0 |
-| `FAIL` | A scenario, a research check or a threshold failed, or the run aborted. | 1 (2 when aborted) |
+| `FAIL` | A scenario, a research check or a threshold failed, research kept failing after its re-ask, or the run aborted. | 1 (2 when aborted) |
 | `BLOCKED` | No check failed, but a scenario could not run, for example no addable offer after the re-ask, or exhausted credits. The owner decides. | 3 |
 | `PASS` | All checks passed and every H answer is `yes`. Only `--finalize-audit` prints it. | not applicable |
 
@@ -179,4 +180,4 @@ A live run that exits 0 is not acceptance. Acceptance is the moment `--finalize-
 
 ### Run logs
 
-Once the preconditions pass, and before any Exa request, the script writes `.futari/evidence/live/ev-023-run-<n>-<time>.json` with status `started`. That file counts as a run, so a crash or Ctrl-C never frees a third run (at most 2 are allowed). The final log replaces it. If anything throws late, the log still gets written with status `aborted` and the error in its notes. A leak-scan hit does not drop the log. The script writes a scrubbed copy and says why. The script also writes `ev-023-run-<n>-audit.md`, an empty sheet for your answers to the five audit questions.
+Once the preconditions pass, and before any Exa request, the script writes `.futari/evidence/live/ev-023-run-<n>-<time>.json` with status `started`. That file counts as a run, so a crash or Ctrl-C never frees a third run (at most 2 are allowed). The started log carries the run's current Exa totals and is rewritten whenever they change. The final log replaces it. If anything throws late, the log still gets written with status `aborted` and the error in its notes. A leak-scan hit does not drop the log. The script writes a scrubbed copy and says why. The script also writes `ev-023-run-<n>-audit.md`, an empty sheet for your answers to the five audit questions.

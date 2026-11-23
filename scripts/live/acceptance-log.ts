@@ -107,6 +107,8 @@ const ResearchRecordSchema = z.object({
   addableOffers: z.number(),
   chosenOfferId: z.string().optional(),
   creditsExhausted: z.boolean(),
+  /** Set when research kept failing for a reason other than exhausted credits or a budget refusal: a defect, so the run is FAIL. */
+  researchError: z.string().optional(),
   checks: ResearchChecksSchema,
   notes: z.array(z.string()),
 });
@@ -171,6 +173,8 @@ export interface RunStub {
   run: number;
   gitSha: string;
   startedAt: string;
+  /** This run's Exa spend so far, an attempt's worst case included while it is in flight, so evidence recovery counts an interrupted attempt. */
+  exa: { ev023Requests: number; ev023CostDollars: number };
   notes: string[];
 }
 
@@ -287,9 +291,10 @@ export function auditAllYes(answers: Record<AuditId, AuditAnswer>): boolean | "P
   return values.every((a) => a === "yes") ? true : "PENDING";
 }
 
-const CARD_RUN = /\b\d(?:[ -]?\d){12,18}\b/g;
+const CARD_RUN = /\b\d(?:[ .-]?\d){12,18}\b/g;
 const ORDER_ID = /ord_[0-9a-f-]+/g;
-const DECIMAL_NUMBER = /-?\d+\.\d+(?:[eE][+-]?\d+)?/g;
+// One whole numeric token: not glued to dotted digit groups ("4242.4242.4242.4242") or to a spaced group ("1.4242 4242 4242 4242").
+const DECIMAL_NUMBER = /(?<![\d.][ -]?)(?<![\w.])-?\d+\.\d+(?:[eE][+-]?\d+)?(?!\w|\.\d|[ -]\d)/g;
 
 function luhnValid(digits: string): boolean {
   let sum = 0;
@@ -301,13 +306,21 @@ function luhnValid(digits: string): boolean {
   return sum % 10 === 0;
 }
 
+/** Any 13 to 19 digit stretch of the run passes the Luhn check, so a stray digit group beside a card number cannot hide it. */
+function anyLuhnWindow(digits: string): boolean {
+  for (let length = 13; length <= Math.min(19, digits.length); length++) {
+    for (let start = 0; start + length <= digits.length; start++) if (luhnValid(digits.slice(start, start + length))) return true;
+  }
+  return false;
+}
+
 export function leakProblems(text: string): string[] {
   const problems: string[] = [];
   if (holdsKey(text)) problems.push("a key or signing secret");
   const withoutBenign = text.replace(ORDER_ID, "ord").replace(DECIMAL_NUMBER, "num");
   for (const match of withoutBenign.matchAll(CARD_RUN)) {
     const digits = match[0].replace(/\D/g, "");
-    if (digits.length >= 13 && digits.length <= 19 && luhnValid(digits)) problems.push("a full card number");
+    if (anyLuhnWindow(digits)) problems.push("a full card number");
   }
   return problems;
 }

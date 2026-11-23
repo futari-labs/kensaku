@@ -2,9 +2,9 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { A6_CHECKS, AcceptanceAbort, analyzeResearch, failedResearchRun, PAY_CHECKS, runAcceptance, scenario, usageOfChunks } from "../../scripts/live/acceptance";
+import { A6_CHECKS, AcceptanceAbort, analyzeResearch, failedResearchRun, PAY_CHECKS, runAcceptance, scenario, streamProblem, usageOfChunks } from "../../scripts/live/acceptance";
 import type { AcceptanceEnv, ResearchRun } from "../../scripts/live/acceptance";
-import { dryAcceptanceEnv, evaluateListenLines, serverLogListens } from "../../scripts/live/acceptance-env";
+import { dryAcceptanceEnv, evaluateListenLines, probeServerLog, serverLogListens } from "../../scripts/live/acceptance-env";
 import {
   auditAllYes,
   checkCaseShape,
@@ -22,8 +22,10 @@ import {
   withOwnerAudit,
 } from "../../scripts/live/acceptance-log";
 import type { RunLog, ScenarioRecord, Thresholds, ThresholdInput } from "../../scripts/live/acceptance-log";
-import { acceptanceBudgetRefusal, addAcceptanceExaSpend, addSmokeExaRequests, planUsage, readExaCounter, usageFromEvidence } from "../../scripts/live/exa-counter";
+import { acceptanceBudgetRefusal, addAcceptanceExaSpend, addSmokeExaRequests, planUsage, readExaCounter, RUN_EXA_MAX, usageFromEvidence, WORST_CASE_ATTEMPT_COST_DOLLARS } from "../../scripts/live/exa-counter";
 import type { Order } from "../../src/core/commerce";
+import { MAX_EXA_REQUESTS_PER_RUN } from "../../src/exa/budget";
+import { MAX_CALL_COST_DOLLARS } from "../../src/exa/ledger";
 import { ofType, parseSse } from "../server/sse";
 import type { Chunk } from "../server/sse";
 
@@ -44,14 +46,14 @@ describe("the Exa counter and the plan-wide budget", () => {
     expect(JSON.parse(readFileSync(file, "utf8"))).toEqual({ planRequests: 8, smokeRequests: 3, ev023Requests: 5, planCostDollars: 0.045 });
   });
 
-  it("recovers plan-wide usage from the committed logs: the smoke at a documented $0.05 estimate plus every EV-023 run log, stubs included", () => {
+  it("recovers plan-wide usage from the committed logs: the smoke at a bound of 3 x $0.02 plus every EV-023 run log, stubs included", () => {
     const dir = tmp();
     writeFileSync(join(dir, "jm-203-sandbox-smoke-20261123T100119Z.json"), JSON.stringify({ exa: { requests: 3, cap: 5, source: "research" } }));
-    expect(usageFromEvidence(dir)).toEqual({ planRequests: 3, planCostDollars: 0.05, ev023Requests: 0 });
+    expect(usageFromEvidence(dir)).toEqual({ planRequests: 3, planCostDollars: 0.06, ev023Requests: 0 });
     writeFileSync(join(dir, "ev-023-run-1-20261124T000000Z.json"), JSON.stringify({ exa: { ev023Requests: 6, ev023CostDollars: 0.102 } }));
-    writeFileSync(join(dir, "ev-023-run-2-20261124T010000Z.json"), renderStub({ mode: "live", run: 2, gitSha: "abc", startedAt: "2026-11-24T01:00:00.000Z" }));
+    writeFileSync(join(dir, "ev-023-run-2-20261124T010000Z.json"), renderStub({ mode: "live", run: 2, gitSha: "abc", startedAt: "2026-11-24T01:00:00.000Z", exa: { ev023Requests: 5, ev023CostDollars: 0.1 } }));
     writeFileSync(join(dir, "ev-023-run-2-audit.md"), "not a log");
-    expect(usageFromEvidence(dir)).toEqual({ planRequests: 9, planCostDollars: 0.152, ev023Requests: 6 });
+    expect(usageFromEvidence(dir)).toEqual({ planRequests: 14, planCostDollars: 0.262, ev023Requests: 11 });
     expect(usageFromEvidence(join(dir, "missing"))).toEqual({ planRequests: 0, planCostDollars: 0, ev023Requests: 0 });
   });
 
@@ -67,13 +69,25 @@ describe("the Exa counter and the plan-wide budget", () => {
     expect(planUsage({ ...counter, planRequests: 12, planCostDollars: 0.2, ev023Requests: 9 }, { planRequests: 9, planCostDollars: 0.152, ev023Requests: 6 })).toEqual({ planRequests: 12, planCostDollars: 0.2, ev023Requests: 9 });
   });
 
-  it("refuses an attempt whose worst case (5 requests, $0.06) would pass 25 for EV-023, 30 plan-wide or $0.40", () => {
-    expect(acceptanceBudgetRefusal({ planRequests: 3, planCostDollars: 0.05, ev023Requests: 0 })).toBeUndefined();
+  it("takes the worst case of an attempt from the server's own constants: 5 requests at $0.02 is $0.10", () => {
+    expect([RUN_EXA_MAX, WORST_CASE_ATTEMPT_COST_DOLLARS]).toEqual([MAX_EXA_REQUESTS_PER_RUN, 0.1]);
+    expect(WORST_CASE_ATTEMPT_COST_DOLLARS).toBeCloseTo(MAX_EXA_REQUESTS_PER_RUN * MAX_CALL_COST_DOLLARS, 9);
+  });
+
+  it("refuses an attempt whose worst case (5 requests, $0.10) would pass 25 for EV-023, 30 plan-wide or $0.40", () => {
+    expect(acceptanceBudgetRefusal({ planRequests: 3, planCostDollars: 0.06, ev023Requests: 0 })).toBeUndefined();
     expect(acceptanceBudgetRefusal({ planRequests: 25, planCostDollars: 0.1, ev023Requests: 20 })).toBeUndefined();
     expect(acceptanceBudgetRefusal({ planRequests: 25, planCostDollars: 0.1, ev023Requests: 21 })).toMatch(/EV-023 has already spent 21 of its 25/);
     expect(acceptanceBudgetRefusal({ planRequests: 26, planCostDollars: 0.1, ev023Requests: 0 })).toMatch(/plan has already spent 26 of its 30/);
-    expect(acceptanceBudgetRefusal({ planRequests: 10, planCostDollars: 0.34, ev023Requests: 7 })).toBeUndefined();
-    expect(acceptanceBudgetRefusal({ planRequests: 10, planCostDollars: 0.341, ev023Requests: 7 })).toMatch(/\$0\.341 of its \$0\.4/);
+    expect(acceptanceBudgetRefusal({ planRequests: 10, planCostDollars: 0.3, ev023Requests: 7 })).toBeUndefined();
+    expect(acceptanceBudgetRefusal({ planRequests: 10, planCostDollars: 0.301, ev023Requests: 7 })).toMatch(/\$0\.301 of its \$0\.4/);
+  });
+
+  it("settles a reserved worst case down to the actual spend, and never below zero", () => {
+    const file = join(tmp(), "counter.json");
+    addAcceptanceExaSpend(file, { requests: 5, costDollars: 0.1 });
+    expect(addAcceptanceExaSpend(file, { requests: -2, costDollars: -0.06 })).toMatchObject({ planRequests: 3, ev023Requests: 3, planCostDollars: 0.04 });
+    expect(addAcceptanceExaSpend(file, { requests: -9, costDollars: -9 })).toMatchObject({ planRequests: 0, planCostDollars: 0 });
   });
 });
 
@@ -298,6 +312,11 @@ describe("leakProblems", () => {
   it("passes decimal fractions that float arithmetic leaves behind", () => {
     expect(leakProblems(`{"costDollars": 0.045000000000000005, "total": 0.027000000000000003}`)).toEqual([]);
     expect(leakProblems("cost 0.045000000000000005 then card 4242 4242 4242 4242")).toEqual(["a full card number"]);
+    expect(leakProblems(JSON.stringify({ costDollars: [0.045000000000000005, 0.1], ev023CostDollars: 0.027000000000000003 }, null, 2))).toEqual([]);
+  });
+
+  it("does not let a decimal hide a card number behind dotted or spaced digit groups", () => {
+    for (const evasion of ["4242.4242.4242.4242", "1.4242 4242 4242 4242", "4242 4242 4242 4242 1.5", `{"note": "4242.4242.4242.4242"}`, "x 4000.0000.0000.0002 y"]) expect(leakProblems(evasion)).toEqual(["a full card number"]);
   });
 });
 
@@ -397,10 +416,10 @@ describe("analyzeResearch", () => {
 
 describe("what research reports", () => {
   it("counts a missing usage chunk or missing cost at the worst case, never zero", () => {
-    expect(usageOfChunks([])).toEqual({ requests: 5, costDollars: 0.06, costKnown: false, cacheHits: 0 });
+    expect(usageOfChunks([])).toEqual({ requests: 5, costDollars: 0.1, costKnown: false, cacheHits: 0 });
     const usage: Chunk = { type: "data-usage", id: "usage", data: { exaRequests: 2, cacheHits: 1, costDollars: 0.045000000000000005, monthRequests: 2, monthLimit: 100 } };
     expect(usageOfChunks([usage])).toEqual({ requests: 2, costDollars: 0.045, costKnown: true, cacheHits: 1 });
-    expect(failedResearchRun("POST /api/chat answered 500", [], 500)).toMatchObject({ requests: 5, costDollars: 0.06, costKnown: false, httpStatus: 500 });
+    expect(failedResearchRun("POST /api/chat answered 500", [], 500)).toMatchObject({ requests: 5, costDollars: 0.1, costKnown: false, httpStatus: 500 });
     expect(failedResearchRun("x", parseSse(`data: ${JSON.stringify(usage)}\n\n`))).toMatchObject({ requests: 2, costDollars: 0.045, costKnown: true });
   });
 });
@@ -436,6 +455,32 @@ describe("the preconditions", () => {
     expect(serverLogListens(line(9000, "live")).ok).toBe(false);
     expect(serverLogListens("no listening line here\n").ok).toBe(false);
     expect(serverLogListens(`${line(8787, "live")}\n${line(9000, "live")}`).ok).toBe(false);
+  });
+});
+
+describe("the server log is tied to the running server", () => {
+  const cartLine = JSON.stringify({ ts: "2026-11-24T00:00:00.000Z", event: "cart", op: "remove", result: "not-in-cart" });
+  const listening = JSON.stringify({ event: "listening", host: "127.0.0.1", port: 8787, mode: "live" });
+
+  it("accepts a file that gains a cart line after the probe request", async () => {
+    let text = `${listening}\n`;
+    const result = await probeServerLog({ read: () => text, probe: async () => void (text += `${cartLine}\n`), sleep: async () => {} });
+    expect(result.ok).toBe(true);
+  });
+
+  it("refuses a stale file the running server never writes to, even one that holds earlier cart lines", async () => {
+    const stale = `${listening}\n${cartLine}\n`;
+    let sleeps = 0;
+    const result = await probeServerLog({ read: () => stale, probe: async () => {}, sleep: async () => void (sleeps += 1) });
+    expect(result).toMatchObject({ ok: false, detail: expect.stringMatching(/stale or belongs to another server/) });
+    expect(sleeps).toBe(20);
+  });
+
+  it("accepts a line that lands a moment after the probe", async () => {
+    let text = listening;
+    let polls = 0;
+    const result = await probeServerLog({ read: () => ((polls += 1) === 4 ? (text += `\n${cartLine}`) : text), probe: async () => {}, sleep: async () => {} });
+    expect(result.ok).toBe(true);
   });
 });
 
@@ -489,11 +534,11 @@ describe("the dry run", () => {
     expect(a8?.observations).toMatchObject({ unsignedStatus: 400, wrongSecretStatus: 400, orderStateAfter: "cancelled" });
   });
 
-  it("computes plan-wide usage from the committed JM-203 smoke log (3 requests, $0.05) plus the run's own spend", async () => {
+  it("computes plan-wide usage from the committed JM-203 smoke log (3 requests, bounded at $0.06) plus the run's own spend", async () => {
     const log = await run(dryAcceptanceEnv());
     expect(log.exa.ev023Requests).toBe(6);
     expect(log.exa.planRequestsAfter).toBe(9);
-    expect(log.exa.planCostDollarsAfter).toBeCloseTo(0.05 + log.exa.ev023CostDollars, 6);
+    expect(log.exa.planCostDollarsAfter).toBeCloseTo(0.06 + log.exa.ev023CostDollars, 6);
   });
 
   it("uses real registered SGD and JPY offers for A2 and A3, never synthetic items", async () => {
@@ -556,16 +601,71 @@ describe("the dry run", () => {
         return env.research(q);
       },
     };
-    await runAcceptance(probed, caseFile, 0, (startedAt) => order.push(`reserve ${startedAt.slice(0, 2)}`));
-    expect(order.slice(0, 3)).toEqual(["preconditions", "reserve 20", "research Q1"]);
+    await runAcceptance(probed, caseFile, 0, ({ startedAt }) => order.push(`reserve ${startedAt.slice(0, 2)}`));
+    expect(order.slice(0, 3)).toEqual(["preconditions", "reserve 20", "reserve 20"]);
+    expect(order.indexOf("research Q1")).toBeGreaterThan(order.indexOf("reserve 20"));
   });
 
   it("records spend through the env for every attempt, so the counter sees what each attempt cost", async () => {
     const env = dryAcceptanceEnv();
     const spends: { requests: number; costDollars: number }[] = [];
     await run({ ...env, recordExaSpend: (s) => (spends.push(s), env.recordExaSpend(s)) });
-    expect(spends).toHaveLength(3);
+    expect(spends).toHaveLength(6);
+    expect(spends.filter((s) => s.requests === 5 && s.costDollars === 0.1)).toHaveLength(3);
     expect(spends.reduce((n, s) => n + s.requests, 0)).toBe(6);
+  });
+
+  it("reserves each attempt's worst case in the counter and the log before it runs, and replaces it with the actual spend after", async () => {
+    const env = dryAcceptanceEnv();
+    const checkpoints: { ev023Requests: number; ev023CostDollars: number }[] = [];
+    let counter = { requests: 0, costDollars: 0 };
+    const seenDuring: unknown[] = [];
+    await runAcceptance(
+      {
+        ...env,
+        recordExaSpend: (s) => {
+          counter = { requests: counter.requests + s.requests, costDollars: Math.round((counter.costDollars + s.costDollars) * 1e6) / 1e6 };
+          env.recordExaSpend(s);
+        },
+        research: async (q) => {
+          if (q.id === "Q1") seenDuring.push({ counter: { ...counter }, log: checkpoints.at(-1) });
+          return env.research(q);
+        },
+      },
+      caseFile,
+      0,
+      ({ exa }) => checkpoints.push(exa),
+    );
+    expect(seenDuring[0]).toEqual({ counter: { requests: 5, costDollars: 0.1 }, log: { ev023Requests: 5, ev023CostDollars: 0.1 } });
+    expect(counter.requests).toBe(6);
+    expect(checkpoints.at(-1)).toEqual({ ev023Requests: 6, ev023CostDollars: counter.costDollars });
+  });
+
+  it("leaves the worst case recorded in the counter and the log when an attempt throws mid-way", async () => {
+    const env = dryAcceptanceEnv();
+    const checkpoints: { ev023Requests: number; ev023CostDollars: number }[] = [];
+    let counter = { requests: 0, costDollars: 0 };
+    const log = await runAcceptance(
+      {
+        ...env,
+        recordExaSpend: (s) => {
+          counter = { requests: counter.requests + s.requests, costDollars: Math.round((counter.costDollars + s.costDollars) * 1e6) / 1e6 };
+          env.recordExaSpend(s);
+        },
+        research: async (q) => {
+          if (q.id === "Q1") throw new Error("socket hang up");
+          return env.research(q);
+        },
+      },
+      caseFile,
+      0,
+      ({ exa }) => checkpoints.push(exa),
+    );
+    const q1 = log.exa.perQuery[0];
+    expect(q1?.attempts).toEqual([expect.objectContaining({ requests: 5, costDollars: 0.1, costKnown: false }), expect.objectContaining({ requests: 5, costDollars: 0.1 })]);
+    expect(counter.requests).toBe(10 + 2 + 2);
+    expect(checkpoints.at(-1)?.ev023Requests).toBe(counter.requests);
+    expect(log.exa.ev023Requests).toBe(counter.requests);
   });
 
   it("writes the log with status aborted and the error when the final audit throws", async () => {
@@ -757,6 +857,77 @@ describe("what makes scenarios and the run FAIL", () => {
   });
 });
 
+describe("a research failure is a failure, not BLOCKED", () => {
+  const failing = (q: { id: string }, counts: { Q5: number }, until = Infinity) => {
+    if (q.id !== "Q5") return undefined;
+    counts.Q5 += 1;
+    return counts.Q5 <= until ? failedResearchRun("POST /api/chat answered 500", [], 500) : undefined;
+  };
+
+  it("fails the run when Q5 answers 500 twice, and records A3 as not run because of the research failure", async () => {
+    const env = dryAcceptanceEnv();
+    const counts = { Q5: 0 };
+    const log = await run({ ...env, research: async (q) => failing(q, counts) ?? env.research(q) });
+    expect(counts.Q5).toBe(2);
+    const q5 = log.exa.perQuery.find((q) => q.id === "Q5");
+    expect(q5?.researchError).toMatch(/answered 500/);
+    expect(q5?.attempts).toHaveLength(2);
+    const a3 = log.scenarios.find((s) => s.id === "A3");
+    expect(a3?.verdict).toBe("FAIL");
+    expect(a3?.notes.join(" ")).toMatch(/not run: research for Q5 failed/);
+    expect(log.researchChecksPass).toBe(false);
+    expect(log.verdict).toBe("FAIL");
+  });
+
+  it("re-asks once after a 500 and proceeds when the second attempt succeeds", async () => {
+    const env = dryAcceptanceEnv();
+    const counts = { Q5: 0 };
+    const log = await run({ ...env, research: async (q) => failing(q, counts, 1) ?? env.research(q) });
+    const q5 = log.exa.perQuery.find((q) => q.id === "Q5");
+    expect(q5?.attempts).toHaveLength(2);
+    expect(q5?.researchError).toBeUndefined();
+    expect(q5?.checks.addableOfferInMarketCurrency).toBe(true);
+    expect(log.scenarios.find((s) => s.id === "A3")?.verdict).toBe("PASS");
+    expect(log.verdict).toBe("PENDING_AUDIT");
+  });
+
+  it("fails on a fetch error and on a malformed stream the same way", async () => {
+    for (const bad of [failedResearchRun("POST /api/chat failed: fetch failed"), { chunks: [], requests: 1, costDollars: 0.01, costKnown: true, cacheHits: 0 }]) {
+      const env = dryAcceptanceEnv();
+      const log = await run({ ...env, research: async (q) => (q.id === "Q1" ? bad : env.research(q)) });
+      expect(log.exa.perQuery[0]?.researchError).toBeDefined();
+      expect(log.exa.perQuery[0]?.attempts).toHaveLength(2);
+      expect(log.verdict).toBe("FAIL");
+    }
+  });
+
+  it("reads a stream without products as malformed, and one with an error and no products as that error", () => {
+    expect(streamProblem([])).toMatch(/malformed/);
+    expect(streamProblem([{ type: "data-error", id: "error", data: { kind: "upstream", message: "m", partial: false } }])).toMatch(/upstream error/);
+    expect(streamProblem(parseSse(`data: ${JSON.stringify({ type: "data-products", id: "p", data: [] })}\n\n`))).toBeUndefined();
+  });
+
+  it("keeps a server-side monthly limit a budget refusal: BLOCKED, never a research error", async () => {
+    const env = dryAcceptanceEnv();
+    const log = await run({ ...env, research: async (q) => (q.id === "Q1" ? { ...failedResearchRun("x", [], 429), errorKind: "monthly_limit" } : env.research(q)) });
+    expect(log.exa.perQuery[0]?.researchError).toBeUndefined();
+    expect(log.exa.perQuery[0]?.attempts).toHaveLength(1);
+    expect(log.scenarios.find((s) => s.id === "A1")?.verdict).toBe("BLOCKED");
+  });
+
+  it("keeps credits_exhausted BLOCKED even after an earlier failed attempt", async () => {
+    const env = dryAcceptanceEnv();
+    let calls = 0;
+    const log = await run({
+      ...env,
+      research: async (q) => (q.id === "Q1" ? (calls += 1) === 1 ? failedResearchRun("POST /api/chat answered 500", [], 500) : { ...failedResearchRun("x", [], 402), errorKind: "credits_exhausted" } : env.research(q)),
+    });
+    expect(log.exa.perQuery[0]).toMatchObject({ creditsExhausted: true });
+    expect(log.exa.perQuery[0]?.researchError).toBeUndefined();
+    expect(log.verdict).toBe("BLOCKED");
+  });
+});
+
 describe("exhausted Exa credits", () => {
   const exhausted = (): ResearchRun => ({
     chunks: [{ type: "data-error", id: "error", data: { kind: "credits_exhausted", message: "Exa reports that credits are exhausted.", partial: false } }],
@@ -799,7 +970,7 @@ describe("exhausted Exa credits", () => {
     const env = dryAcceptanceEnv();
     const spends: { requests: number; costDollars: number }[] = [];
     await run({ ...env, recordExaSpend: (s) => (spends.push(s), env.recordExaSpend(s)), research: async (q) => (q.id === "Q1" ? failedResearchRun("POST /api/chat answered 500", [], 500) : env.research(q)) });
-    expect(spends[0]).toEqual({ requests: 5, costDollars: 0.06 });
+    expect(spends.slice(0, 2)).toEqual([{ requests: 5, costDollars: 0.1 }, { requests: 0, costDollars: 0 }]);
   });
 
   it("reads the usage and error chunks the way the live stream writes them", () => {

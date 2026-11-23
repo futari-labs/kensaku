@@ -1,18 +1,22 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { z } from "zod";
+import { MAX_EXA_REQUESTS_PER_RUN } from "../../src/exa/budget";
 import { writeJsonAtomic } from "../../src/exa/files";
+import { MAX_CALL_COST_DOLLARS } from "../../src/exa/ledger";
 
 export const EXA_COUNTER_PATH = resolve(".cache/live/v1-2-exa-counter.json");
 export const SMOKE_EXA_CAP = 5;
 export const PLAN_EXA_CAP = 30;
 export const PLAN_COST_CAP_DOLLARS = 0.4;
 export const EV023_EXA_CAP = 25;
-export const RUN_EXA_MAX = 5;
-export const WORST_CASE_ATTEMPT_COST_DOLLARS = 0.06;
-export const JM203_SMOKE_COST_ESTIMATE_DOLLARS = 0.05;
-
 export const round6 = (n: number): number => Math.round(n * 1e6) / 1e6;
+
+/** What the server's own code allows one research run: its request cap, and the most one request may cost. */
+export const RUN_EXA_MAX = MAX_EXA_REQUESTS_PER_RUN;
+export const WORST_CASE_ATTEMPT_COST_DOLLARS = round6(RUN_EXA_MAX * MAX_CALL_COST_DOLLARS);
+/** The JM-203 smoke recorded no cost, so each of its requests counts at the most one request may cost. */
+export const smokeCostBoundDollars = (requests: number): number => round6(requests * MAX_CALL_COST_DOLLARS);
 
 const Count = z.number().int().nonnegative();
 const Dollars = z.number().nonnegative();
@@ -49,13 +53,14 @@ export function addSmokeExaRequests(path: string, requests: number): ExaCounter 
   return after;
 }
 
+/** Adds a change to the counter. A positive change reserves an attempt's worst case; a negative one settles it to the actual spend. */
 export function addAcceptanceExaSpend(path: string, spend: { requests: number; costDollars: number }): ExaCounter {
   const before = readExaCounter(path);
   const after = {
     ...before,
-    planRequests: before.planRequests + spend.requests,
-    ev023Requests: before.ev023Requests + spend.requests,
-    planCostDollars: round6(before.planCostDollars + spend.costDollars),
+    planRequests: Math.max(0, before.planRequests + spend.requests),
+    ev023Requests: Math.max(0, before.ev023Requests + spend.requests),
+    planCostDollars: Math.max(0, round6(before.planCostDollars + spend.costDollars)),
   };
   writeJsonAtomic(path, after);
   return after;
@@ -72,8 +77,9 @@ export function usageFromEvidence(dir: string): PlanUsage {
   for (const file of readdirSync(dir).sort()) {
     const read = () => JSON.parse(readFileSync(join(dir, file), "utf8")) as unknown;
     if (SMOKE_LOG.test(file)) {
-      usage.planRequests += SmokeLogSchema.parse(read()).exa.requests;
-      usage.planCostDollars += JM203_SMOKE_COST_ESTIMATE_DOLLARS;
+      const { requests } = SmokeLogSchema.parse(read()).exa;
+      usage.planRequests += requests;
+      usage.planCostDollars += smokeCostBoundDollars(requests);
     } else if (RUN_LOG.test(file)) {
       const spent = RunLogSpendSchema.parse(read()).exa;
       usage.planRequests += spent?.ev023Requests ?? 0;

@@ -62,6 +62,7 @@ export interface AcceptanceEnv {
   preconditions(): Promise<Precondition[]>;
   planUsage(): PlanUsage;
   exaRefusal(): string | undefined;
+  /** Adds a change to the plan's Exa spend: an attempt's worst case before it starts, then the actual minus that worst case after it returns. */
   recordExaSpend(spend: Spend): void;
   research(query: CaseQuery): Promise<ResearchRun>;
   ownerStep(step: AcceptanceStep, done: () => Promise<boolean>): Promise<boolean>;
@@ -237,18 +238,28 @@ async function startCheckout(env: AcceptanceEnv, rec: ScenarioRecord, offer: Reg
 interface Context {
   env: AcceptanceEnv;
   offers: ReadonlyMap<string, RegisteredOffer | undefined>;
+  /** Queries whose research kept failing: their scenarios are not run, and the run is FAIL. */
+  researchErrors: ReadonlyMap<string, string>;
   records: ReadonlyMap<ScenarioId, ScenarioRecord>;
+}
+
+/** The scenario has no offer to work with: not run because research failed (FAIL), or BLOCKED because no addable offer came back. */
+function withoutOffer(rec: ScenarioRecord, ctx: Context, queryId: string, blockedReason: string): void {
+  const failure = ctx.researchErrors.get(queryId);
+  if (failure === undefined) return block(rec, blockedReason);
+  rec.notes.push(`not run: research for ${queryId} failed: ${failure}`);
 }
 
 type Runner = (ctx: Context, def: CaseScenario) => Promise<ScenarioRecord>;
 
 const ownerRunner =
   (action: AcceptanceStep["action"]): Runner =>
-  ({ env, offers }, def) =>
+  (ctx, def) =>
     scenario({ id: def.id, by: "owner", ...(def.query !== undefined && { query: def.query }) }, action === "pay" ? PAY_CHECKS : CANCEL_CHECKS, async (rec) => {
+      const { env } = ctx;
       if (def.query === undefined) throw new Error(`${def.id} names no research query`);
-      const offer = offers.get(def.query);
-      if (!offer) return block(rec, `no addable offer for ${def.query}`);
+      const offer = ctx.offers.get(def.query);
+      if (!offer) return withoutOffer(rec, ctx, def.query, `no addable offer for ${def.query}`);
       const started = await startCheckout(env, rec, offer);
       if (!started) return;
       const before = await cartOf(env);
@@ -322,10 +333,11 @@ const a6: Runner = ({ env, records }, def) =>
     rec.checks.noOtherOrderChanged = (await others()) === othersBefore;
   });
 
-const a7: Runner = ({ env, offers }, def) =>
+const a7: Runner = (ctx, def) =>
   scenario({ id: def.id, by: "agent", query: "Q1" }, A7_CHECKS, async (rec) => {
-    const offer = offers.get("Q1");
-    if (!offer) return block(rec, "no addable USD offer from Q1");
+    const { env } = ctx;
+    const offer = ctx.offers.get("Q1");
+    if (!offer) return withoutOffer(rec, ctx, "Q1", "no addable USD offer from Q1");
     const first = await startCheckout(env, rec, offer);
     if (!first) return;
     rec.checks.firstCheckoutStarted = true;
@@ -418,38 +430,66 @@ const emptyResearch = (q: CaseQuery): ResearchRecord => ({
 
 const errorText = (error: unknown): string => redact(error instanceof Error ? error.message : String(error));
 
-const exhaustedCredits = (run: ResearchRun): boolean => run.httpStatus === 402 || run.errorKind === "credits_exhausted" || ofType(run.chunks, "data-error").some((c) => c.data.kind === "credits_exhausted");
+const errorKindOf = (run: ResearchRun): string | undefined => run.errorKind ?? ofType(run.chunks, "data-error")[0]?.data.kind;
 
-async function research(env: AcceptanceEnv, q: CaseQuery, perQuestionCap: number): Promise<{ record: ResearchRecord; offer: RegisteredOffer | undefined }> {
+const exhaustedCredits = (run: ResearchRun): boolean => run.httpStatus === 402 || errorKindOf(run) === "credits_exhausted" || ofType(run.chunks, "data-error").some((c) => c.data.kind === "credits_exhausted");
+
+/** The server's own ledger refused the run: a budget refusal, not a research failure. */
+const refusedByLedger = (run: ResearchRun): boolean => errorKindOf(run) === "monthly_limit" || ofType(run.chunks, "data-error").some((c) => c.data.kind === "monthly_limit");
+
+/** A 200 whose stream holds neither products nor an error cannot be read as research: it is a failure, not "no offer". */
+export function streamProblem(chunks: readonly Chunk[]): string | undefined {
+  if (ofType([...chunks], "data-products").length > 0) return undefined;
+  const error = ofType([...chunks], "data-error")[0]?.data;
+  return error ? `the stream ended with a ${error.kind} error and no products` : "the stream holds no products chunk (malformed or empty stream)";
+}
+
+interface SpendTracker {
+  /** Applies a change to the plan's spend and records it in the run's checkpoint. */
+  add(change: Spend): void;
+}
+
+const WORST_CASE: Spend = { requests: RUN_EXA_MAX, costDollars: WORST_CASE_ATTEMPT_COST_DOLLARS };
+
+async function research(env: AcceptanceEnv, q: CaseQuery, perQuestionCap: number, tracker: SpendTracker): Promise<{ record: ResearchRecord; offer: RegisteredOffer | undefined }> {
   const record = emptyResearch(q);
   let chosen: RegisteredOffer | undefined;
   let braceSeen = false;
   let foreignCurrencyInMainList = false;
+  let failure: string | undefined;
   for (let attempt = 1; attempt <= 2; attempt++) {
     const refusal = env.exaRefusal();
     if (refusal) {
       record.notes.push(`no research run started: ${refusal}`);
       break;
     }
+    tracker.add(WORST_CASE);
     let run: ResearchRun;
     try {
       run = await env.research(q);
     } catch (error) {
       run = failedResearchRun(`research attempt ${attempt} threw: ${errorText(error)}`);
     }
-    env.recordExaSpend({ requests: run.requests, costDollars: run.costDollars });
+    tracker.add({ requests: run.requests - WORST_CASE.requests, costDollars: round6(run.costDollars - WORST_CASE.costDollars) });
     const spent: Attempt = { requests: run.requests, costDollars: run.costDollars, costKnown: run.costKnown, cacheHits: run.cacheHits };
     record.attempts.push(spent);
     if (!run.costKnown) record.notes.push(`attempt ${attempt} reported no cost; counted at the worst case of $${WORST_CASE_ATTEMPT_COST_DOLLARS}`);
     if (run.requests > perQuestionCap) record.notes.push(`attempt ${attempt} used ${run.requests} requests, over the cap of ${perQuestionCap}`);
     if (exhaustedCredits(run)) {
+      failure = undefined;
       record.creditsExhausted = true;
       record.notes.push(`attempt ${attempt} stopped: Exa credits are exhausted (402); research stops and the owner decides`);
       break;
     }
-    if (run.failure !== undefined) {
-      record.notes.push(`research attempt ${attempt} failed: ${redact(run.failure)}`);
+    if (refusedByLedger(run)) {
+      failure = undefined;
+      record.notes.push(`attempt ${attempt} stopped: the server's own Exa limit refused the run`);
       break;
+    }
+    failure = run.failure ?? streamProblem(run.chunks);
+    if (failure !== undefined) {
+      record.notes.push(`research attempt ${attempt} failed: ${redact(failure)}${attempt === 1 ? "; asking once more" : ""}`);
+      continue;
     }
     const analysis = analyzeResearch(run.chunks, q, env.now().toISOString());
     record.attemptsAnalyzed += 1;
@@ -467,13 +507,14 @@ async function research(env: AcceptanceEnv, q: CaseQuery, perQuestionCap: number
     if (chosen) break;
     record.notes.push(`attempt ${attempt} yielded no addable ${q.currency} offer${attempt === 1 ? "; asking once more" : ""}`);
   }
+  if (failure !== undefined) record.researchError = redact(failure);
   record.requests = record.attempts.reduce((n, a) => n + a.requests, 0);
   record.costDollars = round6(record.attempts.reduce((n, a) => n + a.costDollars, 0));
   return { record, offer: chosen };
 }
 
 const researchChecksPass = (records: readonly ResearchRecord[]): boolean =>
-  records.every((r) => r.attemptsAnalyzed === 0 || (r.checks.noBraceInComparisonOrReason && r.checks.mainListOnlyMarketCurrency));
+  records.every((r) => r.researchError === undefined && (r.attemptsAnalyzed === 0 || (r.checks.noBraceInComparisonOrReason && r.checks.mainListOnlyMarketCurrency)));
 
 async function auditEnd(env: AcceptanceEnv, c: AcceptanceCase, researched: ResearchRecord[], scenarios: ScenarioRecord[], caps: RunLog["exa"]["caps"]) {
   const orders = await allOrders(env);
@@ -494,12 +535,24 @@ async function auditEnd(env: AcceptanceEnv, c: AcceptanceCase, researched: Resea
   return { thresholds, usage, orderCount: orders.length };
 }
 
-export async function runAcceptance(env: AcceptanceEnv, c: AcceptanceCase, runNumber: number, reserve: (startedAt: string) => void = () => {}): Promise<RunLog> {
+/** The started stub: called once the preconditions pass, and again with the run's current Exa totals whenever they change. */
+export type Checkpoint = (state: { startedAt: string; exa: { ev023Requests: number; ev023CostDollars: number } }) => void;
+
+export async function runAcceptance(env: AcceptanceEnv, c: AcceptanceCase, runNumber: number, checkpoint: Checkpoint = () => {}): Promise<RunLog> {
   const startedAt = env.now().toISOString();
   const preconditions = await env.preconditions();
   const failed = preconditions.filter((p) => !p.ok);
   if (failed.length > 0) throw new AcceptanceAbort(`preconditions failed:\n${failed.map((p) => `  - ${p.name}: ${p.detail}`).join("\n")}`);
-  reserve(startedAt);
+  const inFlight = { requests: 0, costDollars: 0 };
+  const tracker: SpendTracker = {
+    add: (change) => {
+      env.recordExaSpend(change);
+      inFlight.requests += change.requests;
+      inFlight.costDollars = round6(inFlight.costDollars + change.costDollars);
+      checkpoint({ startedAt, exa: { ev023Requests: inFlight.requests, ev023CostDollars: inFlight.costDollars } });
+    },
+  };
+  checkpoint({ startedAt, exa: { ev023Requests: 0, ev023CostDollars: 0 } });
 
   const cap = c.budget.exa.perQuestionCap;
   const caps = { ev023: c.budget.exa.ev023MaxRequests, planWide: c.budget.exa.planWideMaxRequests, planWideCostDollars: c.budget.exa.planWideMaxCostDollars, perQuery: cap };
@@ -510,6 +563,7 @@ export async function runAcceptance(env: AcceptanceEnv, c: AcceptanceCase, runNu
 
   try {
     const offers = new Map<string, RegisteredOffer | undefined>();
+    const researchErrors = new Map<string, string>();
     let exhausted = false;
     for (const q of c.queries) {
       if (exhausted) {
@@ -520,17 +574,18 @@ export async function runAcceptance(env: AcceptanceEnv, c: AcceptanceCase, runNu
         continue;
       }
       env.say(`researching ${q.id} (${q.market}): ${q.text}`);
-      const { record, offer } = await research(env, q, cap);
+      const { record, offer } = await research(env, q, cap, tracker);
       researched.push(record);
       offers.set(q.id, offer);
+      if (record.researchError !== undefined) researchErrors.set(q.id, record.researchError);
       exhausted = record.creditsExhausted;
-      env.say(`  ${q.id}: ${record.requests} Exa request(s), ${record.addableOffers} addable ${q.currency} offer(s)`);
+      env.say(`  ${q.id}: ${record.requests} Exa request(s), ${record.addableOffers} addable ${q.currency} offer(s)${record.researchError === undefined ? "" : `, research FAILED: ${record.researchError}`}`);
     }
 
     const records = new Map<ScenarioId, ScenarioRecord>();
     for (const def of c.scenarios) {
       env.say(`\n=== ${def.id} (${def.by}${def.query ? `, ${def.query}` : ""}) ===`);
-      const record = await RUNNERS[def.id]({ env, offers, records }, def);
+      const record = await RUNNERS[def.id]({ env, offers, researchErrors, records }, def);
       env.say(`${def.id}: ${record.verdict}`);
       records.set(def.id, record);
       scenarios.push(record);

@@ -92,10 +92,12 @@ async function main(): Promise<number> {
   const run = nextRunNumber(existsSync(EVIDENCE_DIR) ? readdirSync(EVIDENCE_DIR) : []);
   console.log(`EV-023 run ${run} of at most 2.`);
 
-  const log = await runAcceptance(env, c, run, (startedAt) => {
+  let reserved = false;
+  const log = await runAcceptance(env, c, run, ({ startedAt, exa }) => {
     const file = logFileName(run, startedAt);
-    writeChecked(join(EVIDENCE_DIR, file), renderStub({ mode: "live", run, gitSha: gitSha(), startedAt }));
-    console.log(`reserved run ${run}: .futari/evidence/live/${file}`);
+    writeChecked(join(EVIDENCE_DIR, file), renderStub({ mode: "live", run, gitSha: gitSha(), startedAt, exa }));
+    if (!reserved) console.log(`reserved run ${run}: .futari/evidence/live/${file}`);
+    reserved = true;
   });
   summarize(log);
 

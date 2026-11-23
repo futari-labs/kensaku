@@ -1,5 +1,6 @@
 import { execFile, execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { resolve } from "node:path";
 import type { SessionResult } from "../../src/commerce/port";
 import { StripeCheckoutPort } from "../../src/commerce/stripe-port";
@@ -90,6 +91,29 @@ export function serverLogListens(text: string): { ok: boolean; detail: string } 
   return { ok, detail: ok ? `listening on port ${SERVER_PORT} in live mode` : `its last listening line says port ${String(last.port)}, mode ${String(last.mode)}; it must be port ${SERVER_PORT}, mode live` };
 }
 
+const cartLogLines = (text: string): number =>
+  text.split("\n").filter((line) => {
+    try {
+      return (JSON.parse(line) as { event?: unknown }).event === "cart";
+    } catch {
+      return false;
+    }
+  }).length;
+
+/**
+ * Ties the --server-log file to the server that answers: one request the server logs (a cart removal of an offer
+ * that is not there; it changes nothing), then the file must hold a new `cart` line within a few seconds.
+ */
+export async function probeServerLog(io: { read(): string; probe(): Promise<unknown>; sleep(ms: number): Promise<void> }, polls = 20, everyMs = 250): Promise<{ ok: boolean; detail: string }> {
+  const before = cartLogLines(io.read());
+  await io.probe();
+  for (let i = 0; i <= polls; i++) {
+    if (cartLogLines(io.read()) > before) return { ok: true, detail: "the running server's request showed up in the file" };
+    if (i < polls) await io.sleep(everyMs);
+  }
+  return { ok: false, detail: `a request to the running server left no new line in the file within ${Math.round((polls * everyMs) / 1000)} seconds: the file is stale or belongs to another server; restart the server with \`pnpm start 2>&1 | tee <file>\` and pass that file` };
+}
+
 async function listenPrecondition(webhookSecret: string, scrub: (text: string) => string): Promise<Precondition> {
   const name = "stripe listen is running against the sandbox with the secret in .env.local";
   let printed: string | undefined;
@@ -161,6 +185,13 @@ export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: st
         server = { ...server, detail: `nothing answered at ${base}: start it with pnpm start (saving its output to the --server-log file)` };
       }
       checks.push(server);
+      if (server.ok) {
+        const tied = await probeServerLog({ read: () => readFileSync(options.serverLogPath, "utf8"), probe: () => api("DELETE", `/api/cart/items/server-log-probe-${randomBytes(4).toString("hex")}`), sleep: REAL_SLEEP }).catch((error: unknown) => ({
+          ok: false,
+          detail: `the probe request failed: ${scrub(error instanceof Error ? error.message : String(error))}`,
+        }));
+        checks.push({ name: "--server-log is written by the running server", ok: tied.ok, detail: tied.detail });
+      }
       const entries = existsSync(commerceDir) ? readdirSync(commerceDir) : [];
       const apiEmpty = await allEmptyOnServer(api).catch(() => false);
       checks.push({
