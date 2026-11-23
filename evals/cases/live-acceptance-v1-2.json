@@ -1,0 +1,52 @@
+{
+  "_about": "Frozen definition of EV-023, the kensaku-v1-2 live sandbox acceptance (plan kensaku-v1-2). It runs locally only, never in CI. The agent-run steps use the owner's Stripe sandbox credentials and Stripe CLI login; the hosted-page steps are performed by the owner in a browser (D-049). Questions are reused verbatim from evals/cases/live-acceptance-v1-1.json.",
+  "preconditions": [
+    "STRIPE_SECRET_KEY in the ignored .env.local is a sandbox key (starts sk_test_, rk_test_, or rkcs_test_); the server refuses to start otherwise (REQ-023).",
+    "STRIPE_WEBHOOK_SECRET in .env.local equals the secret printed by `stripe listen --print-secret` for the same sandbox.",
+    "`stripe listen --events checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,payment_intent.payment_failed --forward-to http://127.0.0.1:8787/api/stripe/webhook` is running and logged in to the sandbox (not --live).",
+    "The server runs with `pnpm start` in live Exa mode on 127.0.0.1:8787, with an empty .data/commerce/ directory at the start of a run.",
+    "EXA_API_KEY is the free-plan key; the plan-wide Exa counter (.cache/live/v1-2-exa-counter.json, ignored) has room for the run's maximum."
+  ],
+  "queries": [
+    { "id": "Q1", "market": "US", "currency": "USD", "text": "Sony WH-1000XM5 headphones: where can I buy them and are they worth it?" },
+    { "id": "Q3", "market": "SG", "currency": "SGD", "text": "Sony WH-1000XM5 price in Singapore" },
+    { "id": "Q5", "market": "JP", "currency": "JPY", "text": "ソニー WH-1000XM5 はどこで買うのがいい？" }
+  ],
+  "budget": {
+    "exa": { "planWideMaxRequests": 30, "planWideMaxCostDollars": 0.4, "smokeMaxRequests": 5, "ev023MaxRequests": 25, "perQuestionCap": 5, "stopOn": ["402", "credits exhausted", "plan-wide counter reached"] },
+    "stripe": { "mode": "sandbox only", "maxSpend": 0, "liveKeysAllowed": false }
+  },
+  "scenarios": [
+    { "id": "A1", "by": "owner", "query": "Q1", "steps": "Add the first addable USD merchant offer to the cart, quantity 1. Check out. On the Stripe-hosted page pay with card 4242 4242 4242 4242, any future expiry, any CVC.", "expect": "Order state paid set by a verified checkout.session.completed event; Kensaku shows 'Simulated payment received'; cart cleared; Stripe session amount_total equals the cart's demo total." },
+    { "id": "A2", "by": "owner", "query": "Q3", "steps": "Add the first addable SGD offer. Check out. Pay with 4242 4242 4242 4242 (or the Singapore card 4000 0070 2000 0003 if 4242 is refused for SGD).", "expect": "paid via verified webhook; session currency sgd; amount_total equals demo total in cents." },
+    { "id": "A3", "by": "owner", "query": "Q5", "steps": "Add the first addable JPY offer. Check out. Pay with 4242 4242 4242 4242 (or the Japan card 4000 0039 2000 0003 if 4242 is refused for JPY).", "expect": "paid via verified webhook; session currency jpy; amount_total equals the observed yen amount (zero-decimal)." },
+    { "id": "A4", "by": "owner", "query": "Q1", "steps": "Add a USD offer and check out. Enter the generic decline card 4000 0000 0000 0002. After the decline message, use the hosted page's back link to return to Kensaku.", "expect": "Never paid; after return the order is cancelled and the cart is unchanged; Kensaku shows the decline note when declinedAttempts >= 1. Whether payment_intent.payment_failed arrives is recorded (R-30) but does not gate." },
+    { "id": "A5", "by": "owner", "query": "Q3", "steps": "Add an SGD offer, check out, and on the hosted page use the back link without entering a card.", "expect": "Order cancelled; the agent then retrieves the session through the API and finds status expired; cart unchanged." },
+    { "id": "A6", "by": "agent", "steps": "Run `stripe events resend <id>` for A1's checkout.session.completed event id taken from the server's webhook log.", "expect": "Server answers 200 duplicate; A1's order has exactly one paid transition; no other order changes." },
+    { "id": "A7", "by": "agent", "steps": "Through the local API: put one registered offer in the cart, POST /api/checkout twice in a row.", "expect": "The first order becomes expired (reason superseded) and a retrieve of its session through the API shows status expired; the second order is open. Then cancel the second order through POST /api/orders/:id/cancel: cancelled, session expired." },
+    { "id": "A8", "by": "agent", "steps": "POST a checkout.session.completed body for A7's second order to http://127.0.0.1:8787/api/stripe/webhook without a Stripe-Signature header, then with a signature made with a different secret.", "expect": "400 both times; the order stays cancelled." }
+  ],
+  "researchChecks": [
+    "For each query, at least one offer in the market's currency is registered and addable (button enabled). If a query yields none, it may be re-asked once within the Exa budget; if it still yields none, the dependent scenario is BLOCKED, not FAIL, and the owner decides (revisit trigger).",
+    "Research output still meets the v1.1 behaviour for these queries: no displayed comparison or reason contains a brace; main offer list only in the market currency."
+  ],
+  "thresholds": {
+    "scenariosPassing": "8 of 8 (A1-A8).",
+    "paidWithoutVerifiedEvent": 0,
+    "liveModeObjectsSeen": 0,
+    "duplicatePaidTransitions": 0,
+    "amountMismatches": "0 sessions whose amount_total or currency differs from the order.",
+    "stripeChargesOutsideSandbox": 0,
+    "exaWithinBudget": true,
+    "ownerAuditAllYes": true
+  },
+  "ownerAudit": [
+    "H1: On each Stripe-hosted page (A1-A5), every line item name starts with 'Simulated:' and the description says no order is placed with the merchant.",
+    "H2: On each hosted page the total equals the 'Demo total' Kensaku showed in the cart.",
+    "H3: In Kensaku, every cart line shows the 'Demo checkout price' separately from the 'Last observed' merchant price with host and time.",
+    "H4: Kensaku's cart, checkout return, and order list say 'Simulated' and never claim that a merchant order was placed.",
+    "H5: Declined (A4) and cancelled (A5) returns show a clear, non-alarming status and the cart is still there."
+  ],
+  "runLog": "scripts/live-acceptance-v1-2.ts writes .futari/evidence/live/ev-023-run-<n>-<UTC timestamp>.json with: git SHA and dirty flag, Exa requests and cost per query and plan-wide, each scenario's order id, Stripe session id, event ids received with their outcomes, order state transitions, session retrieve results, and PASS/FAIL/BLOCKED per scenario. Keys, webhook secrets, and full card numbers never appear in the log. The owner's answers to H1-H5 go to .futari/evidence/live/ev-023-run-<n>-audit.md.",
+  "runRules": "At most 2 runs. A run that fails a scenario because of a product defect is fixed and re-run within the Exa budget; a failure caused by a Stripe fact that differs from research (for example 127.0.0.1 redirect URLs refused, or SGD or JPY not presentable) stops execution for a plan revision."
+}

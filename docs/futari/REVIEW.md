@@ -169,3 +169,7 @@ Independent reviewer: a fresh opus subagent with no implementation authority. It
 Reviewer-confirmed facts: only EV-015 (REQ-002 and its description), JM-104 criterion 3, and a new JM-105 criterion changed in `plan.json`. No threshold, budget, permission, path, or protected-file change. The note text is byte-identical in all places. `comparison-truncated` is feasible from V9 and cuts to K01. `plan-gate check` passes.
 
 Delta re-review of `2df5496` by a fresh opus reviewer, read-only: **READY**. All four findings were resolved or correctly deferred. It confirmed the stubbed stream against JM-104's `toChunks` and pipeline on `86ac7ab`, the plan.json structural diff (only the stated changes), K01 alignment, and gate and harness passes. One new nit ("exactly the parts" omitted `start`, `data-usage`, `finish`) was fixed in the approval commit by listing them. That wording is the only change after the READY verdict.
+
+## Plan kensaku-v1-2: independent review
+
+Pending. The reviewer reads the committed draft of `v1-2-plan` without implementation authority; findings and resolutions are recorded here before the approval card.

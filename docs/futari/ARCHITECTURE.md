@@ -1,6 +1,6 @@
 # Architecture
 
-Status: proposed for approval with plan `kensaku-v1-1`. This document keeps the MVP architecture (built and accepted under `kensaku-mvp-v1`) and marks every v1.1 change with **(v1.1)**. Evidence: `docs/futari/research/exa-2026-11-21.md` (Exa capabilities and the MVP spike), `docs/futari/research/references-2026-11-21.md` (reference projects, AI Elements), and `docs/futari/research/v1-1-spike-2026-11-21.md` (Singapore query, extended answer schema, image probe).
+Status: proposed for approval with plan `kensaku-v1-2`. This document keeps the MVP and v1.1 architecture (built and accepted under `kensaku-mvp-v1` and `kensaku-v1-1`), marks v1.1 changes **(v1.1)**, and adds the v1.2 simulated commerce in "Simulated commerce (v1.2)" and "Vertical slice (v1.2)"; other v1.2 amendments are marked **(v1.2)**. Evidence: `docs/futari/research/exa-2026-11-21.md`, `references-2026-11-21.md`, `v1-1-spike-2026-11-21.md`, and (v1.2) `stripe-2026-11-23.md`.
 
 ## Chosen design
 
@@ -28,7 +28,7 @@ Browser (127.0.0.1)                         Node 22 process (127.0.0.1:8787)
                                             └──────────────────────────────────────────┘
 ```
 
-(v1.1) The browser never contacts a third party: the Content-Security-Policy allows only `'self'`, and product images arrive through `/api/image/:id`.
+(v1.1) The browser never contacts a third party: the Content-Security-Policy allows only `'self'`, and product images arrive through `/api/image/:id`. **(v1.2)** One exception: the owner-initiated top-level navigation to Stripe-hosted Checkout and Stripe's redirect back (D-055).
 
 | Module | Responsibility | State it owns |
 | --- | --- | --- |
@@ -160,6 +160,8 @@ Every response from the Hono server, except `/api/image/:id`, which sends its ow
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'
 ```
+
+**(v1.2)** The policy is unchanged. Navigating to Stripe-hosted Checkout uses `window.location.assign`, a top-level navigation that `form-action` and `connect-src` do not govern (D-055).
 
 `style-src 'unsafe-inline'` is needed only for inline `style` attributes set by React components (for example motion and Radix positioning); no inline script is allowed. The theme bootstrap is therefore an external file. `pnpm dev` (Vite) is not covered; the tests run against `pnpm start`.
 
@@ -302,6 +304,8 @@ History (D-016): the client stores `{ version: 1, messages, savedAt }` in `local
 | AI Elements | registry.ai-sdk.dev, 30 components | registry JSON read |
 | vitest / @playwright/test / @axe-core/playwright | 5.1.1 / 1.65.1 / 4.14.0 | npm |
 | zod / typescript | 4.6.7 / 7.0.2 | npm |
+| (v1.2) stripe | 23.1.0 (API `2026-10-28.endive`, Node ≥ 20) | npm registry and package tarball read (research S1-S5); added by JM-202 |
+| (v1.2) Stripe CLI | current release, installed by the owner | research S52-S58; not a package dependency |
 
 **(v1.1)** No new runtime package is planned: image sniffing, the address policy, and the theme are small hand-written modules. JM-105 adds the shadcn registry items `card`, `aspect-ratio`, `skeleton`, and `item` with the pinned shadcn CLI 4.23.0. All four are listed in the `@shadcn` registry (checked with the shadcn MCP on 2026-11-21). If one pulls a new Radix package, JM-105 owns the `package.json` and lockfile change. The exa-js SDK passes the result `image` field through. The spike called the REST API directly, so JM-104's live smoke confirms this through `ExaSdkPort` (risk R-22).
 
@@ -317,6 +321,116 @@ History (D-016): the client stores `{ version: 1, messages, savedAt }` in `local
 - No deployment, auth, or remote storage (D-010).
 - **(v1.1)** `.cache/images/` (gitignored with `.cache/`) holds image metadata and bytes. Deleting it is always safe: cards fall back until the next run registers images again. The live acceptance script starts each suite run with an empty image cache.
 - **(v1.1)** Outbound traffic: Exa (as in the MVP) plus plain GETs to merchant and manufacturer image hosts named in this run's Exa results. There are no other hosts and no browser-side third-party requests.
+- **(v1.2)** The server also calls `api.stripe.com` through the SDK (session create, retrieve, expire) when checkout is configured; webhooks arrive from the local Stripe CLI. `.data/commerce/` (new, gitignored) holds the simulated cart and orders; `.cache/offers/` holds offer snapshots. Deleting either resets the simulation. `README.md` documents the Stripe sandbox setup (EXECUTION_PLAN "Owner prerequisites").
+
+## Simulated commerce (v1.2)
+
+Evidence: `docs/futari/research/stripe-2026-11-23.md` (S1-S63, read from official docs, the `stripe@23.1.0` package, and the Stripe CLI source; no live Stripe call was made during planning, D-056). Decisions D-044 to D-057.
+
+```
+Browser (127.0.0.1)                    Node process (127.0.0.1:8787)                        Stripe sandbox
+ Add to cart ── POST /api/cart/items ─▶ cart service ── offer registry (.cache/offers/)
+ Checkout ───── POST /api/checkout ───▶ order + buildCheckoutSessionRequest ─ StripeCheckoutPort ─▶ sessions.create
+            ◀─ { orderId, url } ───────
+ location.assign(url) ─────────────────────────────────────────────────────────────────────────▶ hosted Checkout page
+ ◀──────────── redirect to success_url / cancel_url ───────────────────────────────────────────── (owner pays or goes back)
+ poll GET /api/orders/:id ────────────▶ commerce store (.data/commerce/state.json)
+                                       POST /api/stripe/webhook ◀── stripe listen ◀──────────── event deliveries
+                                         constructEvent(raw body) → dedupe → applyStripeEvent
+```
+
+### Modules
+
+| Module | Responsibility | State |
+| --- | --- | --- |
+| `src/core/commerce.ts` | Pure rules: `offerId`, `toMinorUnits`, `applyCartOp` (EV-018 rules), `applyStripeEvent` (EV-020 transitions), simulated-label strings. No I/O. | None |
+| `src/commerce/port.ts` | `CheckoutPort { createSession(params, options): Promise<SessionResult>; expireSession(id): Promise<void>; retrieveSession(id): Promise<SessionResult> }` with `SessionResult { id, url, status, livemode, amountTotal, currency }` and typed errors (`session-not-open`, `stripe-error`). | None |
+| `src/commerce/stripe-port.ts` | `StripeCheckoutPort`: the only importer of `stripe`. Builds the client with the pinned `apiVersion`, maps errors, refuses `livemode` results and non-`https://checkout.stripe.com/` URLs. Also exports `verifyWebhook(rawBody, header, secret)` wrapping `stripe.webhooks.constructEvent` (offline, tolerance 300 s). | None |
+| `src/commerce/fake-port.ts` | `FakeCheckoutPort` for tests: records calls, scripted outcomes (ok, error, livemode, session-not-open, custom url), and returns `http://127.0.0.1:<port>/__test/checkout/<id>` URLs. | In memory |
+| `src/commerce/session-request.ts` | `buildCheckoutSessionRequest(order, { port, now })`: pure; output frozen by EV-019. | None |
+| `src/commerce/store.ts` | Load, validate (zod), and atomically save `.data/commerce/state.json`; one serialized writer queue. | `.data/commerce/state.json` |
+| `src/commerce/registry.ts` | `registerOffers(offers)` writes `.cache/offers/<id>.json` snapshots; `getOffer(id)`; prune after 30 days without registration. | `.cache/offers/` |
+| `src/commerce/service.ts` | Cart operations, checkout, cancel, order reads; composes core rules, store, registry, and port. | Through the store |
+| `src/commerce/webhook.ts` | The webhook handler: verify, livemode check, dedupe, match, `applyStripeEvent`, cart clearing, logging. | Through the store |
+| `src/commerce/fake-hosted.ts` | Test-only routes `GET /__test/checkout/:id` with buttons "Pay", "Decline", and "Back", which sign and post webhooks with the test secret and redirect to the success or cancel URL. Mounted only when `NODE_ENV=test` and fixture mode. | None |
+| `src/server/` | Mounts the commerce routes behind the existing Host/Origin guard; `/api/health` adds `checkoutConfigured`. | — |
+| `src/web/app/` | Add-to-cart buttons, cart sheet, currency-replace dialog, checkout return panel, order list (EV-022). | Reads server state only |
+
+### Data
+
+```ts
+// src/core/commerce.ts
+type OrderState = "open" | "paid" | "cancelled" | "expired" | "payment_failed" | "failed";
+interface RegisteredOffer { id: string; canonicalUrl: string; merchantHost: string; merchantName: string; productName: string;
+  price: { amount: number; currency: Currency }; availability: Availability; exaRequestId: string; retrievedAt: string;
+  market: Market; registeredAt: string }
+interface CartLine { offerId: string; productName: string; merchantHost: string; quantity: number; demoUnitAmountMinor: number;
+  observed: { amount: number; currency: Currency; retrievedAt: string; merchantHost: string } }
+interface Cart { version: number; currency: Currency | null; lines: CartLine[] }   // version increments on every successful change
+interface Order { orderId: string; state: OrderState; reason?: "superseded"; anomaly?: string; currency: Currency;
+  lines: CartLine[]; totalMinor: number; cartVersion: number; stripeSessionId: string | null; expiresAt: string | null;
+  declinedAttempts: number; awaitingAsyncPayment: boolean; createdAt: string; updatedAt: string;
+  transitions: { at: string; from: OrderState | null; to: OrderState; eventId?: string }[] }
+interface CommerceState { version: 1; cart: Cart; orders: Order[]; processedEvents: { id: string; at: string }[] }
+```
+
+`orderId` is `ord_` plus a random UUID. Orders are kept (simulated data, small); the UI lists the 10 newest.
+
+The stream's `Offer` gains an optional `id` (the EV-018 `offerId`). JM-203 computes it in the pipeline's validate stage, registers the offer snapshot through an injected `registerOffers` callback (as `registerImages` works), and includes `id` in `data-products`. The field is optional, so `kensaku.history.v1` stays version 1 and older history still validates (D-040); offers without an id are not buyable (D-048).
+
+### HTTP API (all JSON, behind the Host/Origin guard)
+
+| Route | Body | Result |
+| --- | --- | --- |
+| `GET /api/cart` | — | `{ cart, totalMinor, checkoutConfigured }` |
+| `POST /api/cart/items` | `{ offerId, quantity?, replace? }` (strict) | 200 `{ cart }`; 400/404/409/422 `{ code, details? }` with the EV-018 codes: `invalid-request` and `quantity-out-of-range` 400; `offer-not-registered` 404; `currency-mismatch` 409; `out-of-stock`, `below-minimum`, `quantity-limit`, `line-limit`, `total-too-large` 422 |
+| `PATCH /api/cart/items/:offerId` | `{ quantity }` | as above; `not-in-cart` 404 |
+| `DELETE /api/cart/items/:offerId` | — | 200 `{ cart }`; `not-in-cart` 404 |
+| `DELETE /api/cart` | — | 200 empty cart |
+| `POST /api/checkout` | `{}` | 200 `{ orderId, url }`; 400 `cart-empty`; 503 `checkout-not-configured`; 502 `checkout-failed` (EV-020 `checkout` rule) |
+| `GET /api/orders` | — | the 10 newest orders (no Stripe ids beyond the session id) |
+| `GET /api/orders/:id` | — | one order; 404 |
+| `POST /api/orders/:id/cancel` | `{}` | EV-020 `cancel` rule |
+| `POST /api/stripe/webhook` | raw Stripe event | EV-020 rules; reads the raw body before any JSON parsing |
+
+The webhook route has no `Origin` (server-to-server through the CLI), so the existing guard passes it as long as `Host` is `127.0.0.1:<port>` (R-29). It never returns details of the order, only `{ outcome }`.
+
+### Checkout flow
+
+1. "Checkout in Stripe sandbox" posts `/api/checkout`. The service supersedes any open order (expire, D-057), creates the order (state `open`, the cart's lines and version copied), and calls `createSession` with the EV-019 request. A failure stores the order as `failed` and returns 502; the cart is untouched.
+2. The client checks that the URL starts with `https://checkout.stripe.com/` (or, only in the fixture build used by tests, the local fake path) and calls `window.location.assign(url)`. The CSP is unchanged because a top-level navigation is not governed by `form-action` or `connect-src` (D-055).
+3. Success: Stripe redirects to `/?checkout=success&order=<id>&session_id=<cs_…>`. The app shows the checkout return panel, verifies `session_id` equals the order's `stripeSessionId` (otherwise "Unknown checkout"), and polls `GET /api/orders/:id` every second. It shows "Confirming simulated payment…" until the order is paid; after 20 s it adds "Still waiting for Stripe's confirmation. Is `stripe listen` running?" and keeps polling at 5 s.
+4. Cancel or decline: Stripe's back link goes to `/?checkout=cancelled&order=<id>`. The app calls `POST /api/orders/:id/cancel` and shows "Simulated checkout cancelled. Your cart is unchanged." plus "The test card was declined." when `declinedAttempts ≥ 1`.
+5. Webhook: verified events drive the state per EV-020; paid clears the cart only if its version still matches.
+6. The app removes the `checkout`, `order`, and `session_id` query parameters with `history.replaceState` after reading them.
+
+### Labels (REQ-022)
+
+Fixed strings in `src/core/commerce.ts`, used by the UI and the session request:
+
+- Cart title "Simulated cart" and banner "Simulated purchase in a Stripe sandbox. No order is placed with any merchant and no real money moves."
+- Per line: "Demo checkout price <amount> <code>" and, in muted text, "Last observed <amount> <code> on <host>, <local date and time>".
+- Totals: "Demo total <amount> <code>". Button: "Checkout in Stripe sandbox".
+- Paid: "Simulated payment received (Stripe sandbox). No order was placed with <host list>."
+- Order badges: Simulated · Paid / Open / Cancelled / Expired / Payment failed / Failed.
+- Never used anywhere in the UI: "Order confirmed", "Order placed", "Thank you for your order", "Purchase complete", "has shipped" (EV-022 checks).
+
+### UI composition
+
+- Components: shadcn `sheet` (new, installed with the pinned CLI, unmodified) for the cart; existing `button`, `badge`, `alert`, `alert-dialog` (currency replace), `item`, `separator`, `button-group` (quantity −/+), `tooltip`. No custom component library (D-018).
+- Header: a cart button left of the theme toggle with the line count, `aria-label` "Open simulated cart, <n> items".
+- Offer items (main list and Other markets): "Add to cart" button with `aria-label` "Add <product> from <host> to simulated cart". Disabled with a tooltip for offers without an id ("Ask again to buy"), out-of-stock offers ("Out of stock"), and below-minimum prices ("Below Stripe's minimum").
+- After an add, the button's label changes to "Added" for 2 s and a polite live region announces "Added to simulated cart".
+- Checkout is disabled when `checkoutConfigured` is false, with the text "Stripe sandbox is not configured. See README."
+- Accessibility: keyboard-only operation, focus trapped in the sheet and returned to the trigger, `aria-live="polite"` for confirmation status, zero serious or critical axe violations in both themes.
+
+### Configuration and keys
+
+`parseConfig` adds `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` (both optional, read from the same env file as `EXA_API_KEY`: `.env.local`, or the path in `EXA_ENV_FILE`). Rules (D-050): a key containing `_live_` or not starting with `sk_test_`, `rk_test_`, or `rkcs_test_` → `ConfigError` naming the variable, never its value; a webhook secret without `whsec_` → `ConfigError`; checkout is configured only when both are present. `AppConfig` gains only `checkoutConfigured: boolean`. The key reaches only the `Stripe` constructor; the secret only `verifyWebhook`. Fixture mode (`NODE_ENV=test`) uses `FakeCheckoutPort` and a test secret built at runtime; live Stripe is never contacted from tests.
+
+### Observability
+
+One JSON log line per commerce action: `cart` (op, result code), `checkout` (orderId, sessionId, result), `webhook` (eventId, type, outcome, orderId, from → to), `cancel`. Never keys, secrets, signature headers, card data, or full Stripe payloads.
 
 ## Alternatives and decisions
 
@@ -336,8 +450,26 @@ History (D-016): the client stores `{ version: 1, messages, savedAt }` in `local
 | (v1.1) Excluding all offers outside the market currency | Rejected (owner, D-030) | It hides useful listings. They stay under a collapsed "Other markets". |
 | (v1.1) shadcn ThemeProvider with a "system" option | Not adopted | The owner wants dark for every first-time visitor. The provider's effect-based class update also flashes. The same class convention with a blocking script meets both requirements. |
 | (v1.1) Inline theme script with a CSP hash | Rejected | An external `public/theme-init.js` keeps `script-src 'self'` simple and stays correct if the script changes. |
+| (v1.2) Stripe Elements or embedded Checkout | Rejected | Needs `js.stripe.com` scripts and frames, which breaks the `'self'`-only CSP and the "no third-party requests" rule; the owner asked for Stripe-hosted Checkout. |
+| (v1.2) Payment Links or pre-created Products and Prices | Rejected | Prices come from each run's offers; inline `price_data` avoids creating catalog objects per offer. |
+| (v1.2) Cart in browser `localStorage` | Rejected | Webhooks change orders while the browser is away, and the server must decide prices from its registry (D-048, D-053). |
+| (v1.2) SQLite (`node:sqlite`) for orders | Rejected | Still experimental in Node 22 and unnecessary for one local user and a few dozen orders; one atomically written JSON file is enough (D-053). |
+| (v1.2) Confirming payment by retrieving the session on the success page | Rejected (owner, D-047) | A second writer of the paid state; the verified webhook is the only source. Agents still use retrieve in EV-023 as an audit, not to change state. |
+| (v1.2) `stripe-mock` in CI | Rejected | Stateless, hard-coded responses, no test-card errors; its own README recommends custom mocks (research S59-S61). |
+| (v1.2) Playwright on the Stripe-hosted page | Rejected (owner, D-049) | Bot defenses and no stability promise; the owner performs those steps. |
 
-## Vertical slice (v1.1)
+## Vertical slice (v1.2)
+
+The v1.2 slice (JM-201 commerce rules ∥ JM-202 Stripe adapter, then JM-203 server and minimal UI) proves the full purchase path through real boundaries before UI polish:
+
+browser "Add to cart" on a live research result → `/api/cart/items` with a registry-checked offer → `/api/checkout` → `StripeCheckoutPort` → Stripe sandbox `sessions.create` → hosted Checkout page → owner pays with a test card → redirect to 127.0.0.1 → `stripe listen` → `/api/stripe/webhook` verified → order paid → the return panel shows the simulated payment.
+
+Acceptance:
+
+- In CI: an end-to-end Playwright test in fixture mode runs research → add → checkout → fake hosted page → signed webhook → paid, with zero requests to non-local origins.
+- Locally (JM-203 sandbox smoke, ≤ 5 Exa requests, Q1): agent-run session create in USD, SGD, and JPY and expire (checks R-27, R-28, and the key permissions); one owner-paid USD purchase with 4242 marked paid only after the verified webhook; one `stripe events resend` duplicate answered `duplicate`. Logs are committed under `.futari/evidence/live/`. A failure caused by a Stripe fact (R-27, R-28) stops execution for a plan revision.
+
+## Vertical slice (v1.1, completed)
 
 The v1.1 slice (JM-101 core rules, then JM-103 image proxy, then JM-104 pipeline and minimal UI) proves the riskiest new path through real boundaries before any card polish:
 

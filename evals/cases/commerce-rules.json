@@ -1,0 +1,83 @@
+{
+  "_label": "SYNTHETIC CASES authored for plan kensaku-v1-2 (EV-018). Offer snapshots are invented but shaped like real Kensaku offers; no case comes from a live Stripe or Exa response. Frozen at approval.",
+  "rules": {
+    "offerId": "Lowercase hex SHA-256 of the UTF-8 string canonicalUrl + '\\n' + price.currency + '\\n' + String(price.amount) + '\\n' + exaRequestId + '\\n' + retrievedAt. Because the price is part of the id, a registered snapshot can never change price.",
+    "minorUnits": "USD and SGD: amount * 100, which must be within 1e-6 of an integer; the result is that integer. JPY: the amount must be an integer and is used as is (zero-decimal). Any other currency, a non-finite amount, or an amount <= 0 is invalid.",
+    "minimum": "A unit amount below the Stripe minimum (USD 50 minor units, SGD 50 minor units, JPY 50) cannot be added: below-minimum.",
+    "maximum": "The cart total in minor units (sum of unit minor amount * quantity) may not exceed 99999999: total-too-large. The operation that would exceed it fails and leaves the cart unchanged.",
+    "eligibility": "add takes only { offerId, quantity?, replace? }. Any other field (for example price, currency, amount) fails the strict request schema: invalid-request. An offerId with no registry entry: offer-not-registered. A registered offer with availability out_of_stock: out-of-stock. in_stock, preorder, and unknown are addable.",
+    "currency": "The cart holds one currency (null when empty). Adding an offer in another currency without replace: true fails with currency-mismatch and reports { cartCurrency, offerCurrency }; the cart is unchanged. With replace: true the cart is emptied and holds only the new line.",
+    "quantity": "quantity is an integer from 1 to 10 (default 1); otherwise quantity-out-of-range. Adding an offer already in the cart adds to its quantity; a result above 10 fails with quantity-limit and leaves the line unchanged. setQuantity sets the exact value (1-10) for a line in the cart; a line not in the cart: not-in-cart. remove deletes a line; not-in-cart if absent. clear empties the cart and sets currency to null.",
+    "lines": "At most 20 distinct lines. Adding a 21st distinct offer fails with line-limit.",
+    "snapshot": "Each line stores demoUnitAmountMinor (from minorUnits of the registered price) and observed { amount, currency, retrievedAt, merchantHost } copied from the registry at add time. Nothing in the cart is ever read from the browser except offerId and quantity.",
+    "errorPrecedence": "invalid-request, quantity-out-of-range, offer-not-registered, out-of-stock, below-minimum, currency-mismatch, quantity-limit, line-limit, total-too-large. The first that applies is reported.",
+    "generatedOffers": "A case with startGenerated seeds the cart with count distinct registered offers: canonicalUrl https://gen.example.com/p/<n> for n = 1..count, price { amount, currency } as given, exaRequestId req_gen, retrievedAt 2026-11-23T00:00:00.000Z, availability in_stock, merchantHost gen.example.com, quantity 1 each."
+  },
+  "offers": {
+    "US-A": { "id": "23626184db0838b787ee0788353cd969ee6acc783e65c40b6cf76bdf05fbb042", "canonicalUrl": "https://www.bestbuy.com/site/sony-wh1000xm5/6505727.p", "merchantHost": "bestbuy.com", "merchantName": "Best Buy", "productName": "Sony WH-1000XM5 Wireless Noise Canceling Headphones", "price": { "amount": 328, "currency": "USD" }, "availability": "in_stock", "exaRequestId": "req_us_1", "retrievedAt": "2026-11-23T02:00:00.000Z" },
+    "US-B": { "id": "b127ac442782e631fcf09957d7474749701b52355ccfdbe749efdd4ce8e8afd2", "canonicalUrl": "https://electronics.example.com/p/mx-master-3s", "merchantHost": "electronics.example.com", "merchantName": "Example Electronics", "productName": "Logitech MX Master 3S", "price": { "amount": 99.99, "currency": "USD" }, "availability": "unknown", "exaRequestId": "req_us_1", "retrievedAt": "2026-11-23T02:00:00.000Z" },
+    "SG-A": { "id": "cf092bb044a3815fb0a6c0a6445e4dd2ccdad5cbd0784c98713313b0718ef033", "canonicalUrl": "https://www.harveynorman.com.sg/sony-wh-1000xm5", "merchantHost": "harveynorman.com.sg", "merchantName": "Harvey Norman", "productName": "Sony WH-1000XM5 Wireless Noise Cancelling Headphones", "price": { "amount": 289, "currency": "SGD" }, "availability": "in_stock", "exaRequestId": "req_sg_1", "retrievedAt": "2026-11-23T03:00:00.000Z" },
+    "JP-A": { "id": "9786f20c446d67cbff5321a60f103a2ee0e1742b97c513a595b20d880873a482", "canonicalUrl": "https://www.yodobashi.com/product/100000001007282131/", "merchantHost": "yodobashi.com", "merchantName": "ヨドバシカメラ", "productName": "ソニー WH-1000XM5", "price": { "amount": 39980, "currency": "JPY" }, "availability": "preorder", "exaRequestId": "req_jp_1", "retrievedAt": "2026-11-23T04:00:00.000Z" },
+    "US-OOS": { "canonicalUrl": "https://shop.example.com/p/oos", "merchantHost": "shop.example.com", "merchantName": "Example Shop", "productName": "Sony WH-1000XM5", "price": { "amount": 299, "currency": "USD" }, "availability": "out_of_stock", "exaRequestId": "req_us_2", "retrievedAt": "2026-11-23T02:00:00.000Z" },
+    "US-CHEAP": { "canonicalUrl": "https://shop.example.com/p/cable", "merchantHost": "shop.example.com", "merchantName": "Example Shop", "productName": "USB-C Cable", "price": { "amount": 0.49, "currency": "USD" }, "availability": "in_stock", "exaRequestId": "req_us_2", "retrievedAt": "2026-11-23T02:00:00.000Z" },
+    "US-MIN": { "canonicalUrl": "https://shop.example.com/p/sticker", "merchantHost": "shop.example.com", "merchantName": "Example Shop", "productName": "Sticker", "price": { "amount": 0.5, "currency": "USD" }, "availability": "in_stock", "exaRequestId": "req_us_2", "retrievedAt": "2026-11-23T02:00:00.000Z" },
+    "JP-CHEAP": { "canonicalUrl": "https://shop.example.jp/p/eraser", "merchantHost": "shop.example.jp", "merchantName": "Example JP", "productName": "消しゴム", "price": { "amount": 49, "currency": "JPY" }, "availability": "in_stock", "exaRequestId": "req_jp_2", "retrievedAt": "2026-11-23T04:00:00.000Z" },
+    "US-HUGE": { "canonicalUrl": "https://shop.example.com/p/studio-rig", "merchantHost": "shop.example.com", "merchantName": "Example Shop", "productName": "Studio Rig", "price": { "amount": 600000, "currency": "USD" }, "availability": "in_stock", "exaRequestId": "req_us_2", "retrievedAt": "2026-11-23T02:00:00.000Z" },
+    "SG-CENTS": { "canonicalUrl": "https://shop.example.sg/p/case", "merchantHost": "shop.example.sg", "merchantName": "Example SG", "productName": "Headphone Case", "price": { "amount": 19.9, "currency": "SGD" }, "availability": "in_stock", "exaRequestId": "req_sg_2", "retrievedAt": "2026-11-23T03:00:00.000Z" }
+  },
+  "registered": ["US-A", "US-B", "SG-A", "JP-A", "US-OOS", "US-CHEAP", "US-MIN", "JP-CHEAP", "US-HUGE", "SG-CENTS"],
+  "unregisteredOfferId": "0000000000000000000000000000000000000000000000000000000000000000",
+  "offerIdCases": [
+    { "id": "I01", "offer": "US-A", "rationale": "Digest over the five fields joined by newlines, integer USD amount." },
+    { "id": "I02", "offer": "US-B", "rationale": "String(99.99) is '99.99'." },
+    { "id": "I03", "offer": "SG-A", "rationale": "SGD offer." },
+    { "id": "I04", "offer": "JP-A", "rationale": "JPY offer with non-ASCII merchant name, which is not part of the id." }
+  ],
+  "minorUnitCases": [
+    { "id": "M01", "amount": 328, "currency": "USD", "expected": 32800 },
+    { "id": "M02", "amount": 99.99, "currency": "USD", "expected": 9999 },
+    { "id": "M03", "amount": 19.9, "currency": "SGD", "expected": 1990, "rationale": "19.9 * 100 is 1989.9999999999998 in binary floating point; must give 1990, not 1989." },
+    { "id": "M04", "amount": 0.1, "currency": "SGD", "expected": 10 },
+    { "id": "M05", "amount": 39980, "currency": "JPY", "expected": 39980, "rationale": "JPY is zero-decimal: no multiplication." },
+    { "id": "M06", "amount": 1.005, "currency": "USD", "expected": "invalid", "rationale": "Three decimal places." },
+    { "id": "M07", "amount": 100.5, "currency": "JPY", "expected": "invalid", "rationale": "JPY must be an integer." },
+    { "id": "M08", "amount": 0, "currency": "USD", "expected": "invalid" },
+    { "id": "M09", "amount": -5, "currency": "SGD", "expected": "invalid" },
+    { "id": "M10", "amount": 10, "currency": "EUR", "expected": "invalid" },
+    { "id": "M11", "amount": 1.1, "currency": "USD", "expected": 110, "rationale": "1.1 * 100 is 110.00000000000001." }
+  ],
+  "cartCases": [
+    { "id": "C01", "start": [], "op": { "kind": "add", "offer": "US-A" }, "expected": { "outcome": "ok", "cart": { "currency": "USD", "lines": [{ "offer": "US-A", "quantity": 1, "demoUnitAmountMinor": 32800 }], "totalMinor": 32800 } }, "rationale": "First add sets the currency and copies the snapshot." },
+    { "id": "C02", "start": [{ "offer": "US-A", "quantity": 1 }], "op": { "kind": "add", "offer": "US-A", "quantity": 2 }, "expected": { "outcome": "ok", "cart": { "currency": "USD", "lines": [{ "offer": "US-A", "quantity": 3, "demoUnitAmountMinor": 32800 }], "totalMinor": 98400 } }, "rationale": "Re-adding increments quantity." },
+    { "id": "C03", "start": [{ "offer": "US-A", "quantity": 1 }], "op": { "kind": "add", "offer": "US-B" }, "expected": { "outcome": "ok", "cart": { "currency": "USD", "lines": [{ "offer": "US-A", "quantity": 1, "demoUnitAmountMinor": 32800 }, { "offer": "US-B", "quantity": 1, "demoUnitAmountMinor": 9999 }], "totalMinor": 42799 } }, "rationale": "Lines keep insertion order; availability unknown is addable." },
+    { "id": "C04", "start": [{ "offer": "US-A", "quantity": 1 }], "op": { "kind": "add", "offer": "SG-A" }, "expected": { "outcome": "error", "code": "currency-mismatch", "details": { "cartCurrency": "USD", "offerCurrency": "SGD" }, "cartUnchanged": true }, "rationale": "One-currency cart (D-046)." },
+    { "id": "C05", "start": [{ "offer": "US-A", "quantity": 2 }, { "offer": "US-B", "quantity": 1 }], "op": { "kind": "add", "offer": "SG-A", "replace": true }, "expected": { "outcome": "ok", "cart": { "currency": "SGD", "lines": [{ "offer": "SG-A", "quantity": 1, "demoUnitAmountMinor": 28900 }], "totalMinor": 28900 } }, "rationale": "replace: true empties the cart first." },
+    { "id": "C06", "start": [], "op": { "kind": "add", "offer": "JP-A" }, "expected": { "outcome": "ok", "cart": { "currency": "JPY", "lines": [{ "offer": "JP-A", "quantity": 1, "demoUnitAmountMinor": 39980 }], "totalMinor": 39980 } }, "rationale": "JPY zero-decimal; preorder is addable." },
+    { "id": "C07", "start": [], "op": { "kind": "add", "offerId": "UNREGISTERED" }, "expected": { "outcome": "error", "code": "offer-not-registered", "cartUnchanged": true }, "rationale": "Only server-registered offers (D-048). UNREGISTERED means the file's unregisteredOfferId." },
+    { "id": "C08", "start": [], "op": { "kind": "add", "offer": "US-A", "extraFields": { "price": { "amount": 1, "currency": "USD" } } }, "expected": { "outcome": "error", "code": "invalid-request", "cartUnchanged": true }, "rationale": "The browser can never supply a price." },
+    { "id": "C09", "start": [], "op": { "kind": "add", "offer": "US-OOS" }, "expected": { "outcome": "error", "code": "out-of-stock", "cartUnchanged": true }, "rationale": "Out-of-stock offers are not addable." },
+    { "id": "C10", "start": [], "op": { "kind": "add", "offer": "US-CHEAP" }, "expected": { "outcome": "error", "code": "below-minimum", "cartUnchanged": true }, "rationale": "49 cents is below the 50-cent minimum." },
+    { "id": "C11", "start": [], "op": { "kind": "add", "offer": "US-MIN" }, "expected": { "outcome": "ok", "cart": { "currency": "USD", "lines": [{ "offer": "US-MIN", "quantity": 1, "demoUnitAmountMinor": 50 }], "totalMinor": 50 } }, "rationale": "Exactly the minimum is allowed." },
+    { "id": "C12", "start": [], "op": { "kind": "add", "offer": "JP-CHEAP" }, "expected": { "outcome": "error", "code": "below-minimum", "cartUnchanged": true }, "rationale": "49 yen is below the 50-yen minimum." },
+    { "id": "C13", "start": [], "op": { "kind": "add", "offer": "US-A", "quantity": 0 }, "expected": { "outcome": "error", "code": "quantity-out-of-range", "cartUnchanged": true } },
+    { "id": "C14", "start": [], "op": { "kind": "add", "offer": "US-A", "quantity": 11 }, "expected": { "outcome": "error", "code": "quantity-out-of-range", "cartUnchanged": true } },
+    { "id": "C15", "start": [], "op": { "kind": "add", "offer": "US-A", "quantity": 2.5 }, "expected": { "outcome": "error", "code": "quantity-out-of-range", "cartUnchanged": true } },
+    { "id": "C16", "start": [{ "offer": "US-A", "quantity": 9 }], "op": { "kind": "add", "offer": "US-A", "quantity": 2 }, "expected": { "outcome": "error", "code": "quantity-limit", "cartUnchanged": true }, "rationale": "9 + 2 exceeds 10." },
+    { "id": "C17", "start": [{ "offer": "US-A", "quantity": 3 }], "op": { "kind": "setQuantity", "offer": "US-A", "quantity": 10 }, "expected": { "outcome": "ok", "cart": { "currency": "USD", "lines": [{ "offer": "US-A", "quantity": 10, "demoUnitAmountMinor": 32800 }], "totalMinor": 328000 } } },
+    { "id": "C18", "start": [{ "offer": "US-A", "quantity": 3 }], "op": { "kind": "setQuantity", "offer": "US-B", "quantity": 1 }, "expected": { "outcome": "error", "code": "not-in-cart", "cartUnchanged": true } },
+    { "id": "C19", "start": [{ "offer": "US-A", "quantity": 1 }, { "offer": "US-B", "quantity": 1 }], "op": { "kind": "remove", "offer": "US-A" }, "expected": { "outcome": "ok", "cart": { "currency": "USD", "lines": [{ "offer": "US-B", "quantity": 1, "demoUnitAmountMinor": 9999 }], "totalMinor": 9999 } } },
+    { "id": "C20", "start": [{ "offer": "US-A", "quantity": 1 }], "op": { "kind": "remove", "offer": "US-A" }, "expected": { "outcome": "ok", "cart": { "currency": null, "lines": [], "totalMinor": 0 } }, "rationale": "Removing the last line resets the currency." },
+    { "id": "C21", "start": [{ "offer": "SG-A", "quantity": 2 }], "op": { "kind": "clear" }, "expected": { "outcome": "ok", "cart": { "currency": null, "lines": [], "totalMinor": 0 } } },
+    { "id": "C22", "start": [{ "offer": "US-HUGE", "quantity": 1 }], "op": { "kind": "add", "offer": "US-HUGE" }, "expected": { "outcome": "error", "code": "total-too-large", "cartUnchanged": true }, "rationale": "2 * 60000000 minor units exceeds 99999999." },
+    { "id": "C23", "start": [{ "offer": "US-HUGE", "quantity": 1 }], "op": { "kind": "setQuantity", "offer": "US-HUGE", "quantity": 2 }, "expected": { "outcome": "error", "code": "total-too-large", "cartUnchanged": true } },
+    { "id": "C24", "startGenerated": { "count": 20, "amount": 1, "currency": "USD" }, "op": { "kind": "add", "offer": "US-A" }, "expected": { "outcome": "error", "code": "line-limit", "cartUnchanged": true }, "rationale": "A 21st distinct line." },
+    { "id": "C25", "startGenerated": { "count": 20, "amount": 1, "currency": "USD" }, "op": { "kind": "add", "offerId": "GEN-1" }, "expected": { "outcome": "ok", "lineQuantity": { "offerId": "GEN-1", "quantity": 2 } }, "rationale": "Re-adding an existing line at the limit is allowed. GEN-1 means the id of generated offer n = 1." },
+    { "id": "C26", "start": [{ "offer": "US-A", "quantity": 1 }], "op": { "kind": "add", "offer": "SG-A", "quantity": 11, "replace": true }, "expected": { "outcome": "error", "code": "quantity-out-of-range", "cartUnchanged": true }, "rationale": "Precedence: quantity-out-of-range before currency-mismatch; replace never empties the cart on a failed add." },
+    { "id": "C27", "start": [], "op": { "kind": "add", "offer": "SG-CENTS", "quantity": 3 }, "expected": { "outcome": "ok", "cart": { "currency": "SGD", "lines": [{ "offer": "SG-CENTS", "quantity": 3, "demoUnitAmountMinor": 1990 }], "totalMinor": 5970 } } },
+    { "id": "C28", "start": [{ "offer": "US-A", "quantity": 1 }], "op": { "kind": "add", "offer": "US-OOS", "replace": true }, "expected": { "outcome": "error", "code": "out-of-stock", "cartUnchanged": true }, "rationale": "A failed add with replace: true leaves the cart unchanged." }
+  ],
+  "snapshotCases": [
+    { "id": "N01", "offer": "SG-A", "expectedLine": { "demoUnitAmountMinor": 28900, "observed": { "amount": 289, "currency": "SGD", "retrievedAt": "2026-11-23T03:00:00.000Z", "merchantHost": "harveynorman.com.sg" } }, "rationale": "The demo price is a copy of the observed price, stored next to it and labeled separately (D-045)." },
+    { "id": "N02", "offer": "JP-A", "expectedLine": { "demoUnitAmountMinor": 39980, "observed": { "amount": 39980, "currency": "JPY", "retrievedAt": "2026-11-23T04:00:00.000Z", "merchantHost": "yodobashi.com" } } }
+  ]
+}
