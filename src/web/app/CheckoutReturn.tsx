@@ -44,7 +44,6 @@ function usePanel(params: Params): { view: ReturnView; waitedLong: boolean } {
     const tick = async () => {
       const reply = await fetchOrder(orderId);
       if (stop) return;
-      // A failed read does not replace an order already read.
       setOrder((previous) => (reply.ok || reply.status === 404 || previous === undefined ? reply : previous));
       const long = Date.now() - started >= HINT_AFTER_MS;
       setWaitedLong(long);

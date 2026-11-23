@@ -139,7 +139,6 @@ export class CommerceService {
       for (const prior of this.state.orders.filter((o) => o.state === "open")) {
         const closed = await this.closeSession(prior);
         if (closed === "unconfirmed") return fail("checkout-failed", { orderId: prior.orderId, stage: "supersede" });
-        // A completed session stays open here: its webhook decides.
         if (closed === "closed") this.replaceOrder(transitionOrder(prior, { kind: "supersede" }, this.options.clock().toISOString()).order);
       }
 

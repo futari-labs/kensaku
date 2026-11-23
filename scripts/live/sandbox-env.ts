@@ -91,7 +91,6 @@ export function liveEnv(options: LiveOptions): SmokeEnv {
       }
       const refusal = exaBudgetRefusal(readExaCounter(counterPath));
       if (refusal) throw new SmokeAbort(`no research run started: ${refusal}`);
-      // Until the stream reports its usage, assume the run spent its worst case.
       let spent = RUN_EXA_MAX;
       try {
         const res = await fetch(`${base}/api/chat`, {

@@ -64,7 +64,6 @@ export function App() {
   const { mode, ready, running, turns, ask } = chat;
   const cart = useCartState(mode === "fixture");
   const [checkoutReturn, setCheckoutReturn] = useState(() => readCheckoutReturn(window.location.search));
-  // The return parameters are read once above; clearing them keeps a reload from posting the cancel again.
   useEffect(() => {
     const { search, pathname, hash } = window.location;
     if (readCheckoutReturn(search)) window.history.replaceState(null, "", withoutCheckoutReturn(search, pathname, hash));
