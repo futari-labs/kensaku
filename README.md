@@ -1,12 +1,13 @@
 # Kensaku
 
-Kensaku is a local, single-user shopping research chat. Ask about a product in the US, Singapore or Japan. It shows a short comparison with numbered source citations, then one card per product: a product image, key specifications, why it fits, and only offers from direct merchant pages that Exa returned for that question. Prices stay in their original currency (USD, SGD, JPY) and are never converted or compared across currencies.
+Kensaku is a local, single-user shopping research chat. Ask about a product in the US, Singapore or Japan. It shows a short comparison with numbered source citations, then one card per product: a product image, key specifications, why it fits, and only offers from direct merchant pages that Exa returned for that question. Prices stay in their original currency (USD, SGD, JPY) and are never converted or compared across currencies. You can add an offer to a simulated cart and pay for it in a Stripe sandbox; no merchant order is placed and no real money moves (see "Simulated checkout").
 
 ## What you see
 
 - **Theme.** A toggle switches between dark and light. The choice is stored in the browser (`kensaku.theme.v1`) and applied before the first paint; with no stored choice (or no storage) the page is dark.
 - **Market.** Pick US, Singapore or Japan before asking. The market is stored in the browser and decides the search (see below) and which offers lead a card.
 - **Cards.** Each card shows the product image, the lowest price in the market's currency with the number of offers, up to five key specifications and a cited reason (both from Exa's answer, never edited), then the offers. Offers in the market's currency sit in the main list; offers in other currencies wait under "Other markets (may not ship to ...)". "Research details" lists pages that were kept as evidence, not as offers, and how many results were rejected.
+- **Cart.** "Add to cart" on an offer in the market's currency puts it in the "Simulated cart" sheet, which keeps one currency at a time and shows each line's "Demo checkout price" apart from the "Last observed" merchant price with its host and time. Checkout opens a Stripe-hosted page (see "Simulated checkout"). The order list in the sheet shows each order as "Simulated · Open", "Paid", "Cancelled" and so on.
 - **Images.** An image is a product photo that Exa returned for a page Kensaku already accepted: first a merchant offer in your market, then a manufacturer page, then any other merchant offer, at most four candidates per product. The card shows the first candidate that loads and names its source host in the caption. When none loads, the card says "No verified product image". Images are never generated or searched for separately.
 - **Image proxy.** The browser never contacts a merchant. It asks `GET /api/image/:id` on this server, which fetches only image URLs that a run on this machine registered, over `http`/`https` on ports 80 and 443 to public addresses only, with at most 3 redirects and an 8 s limit. It accepts JPEG, PNG, WebP or AVIF up to 5 MiB, at least 200 px on the shorter side and with a width-to-height ratio from 0.5 to 1.8, judging the bytes, not the reported type. Accepted images are cached on disk in `.cache/images/` (served for 7 days, then refetched); delete the folder at any time. The page's Content-Security-Policy allows only this origin.
 
@@ -39,6 +40,50 @@ pnpm dev        # Vite dev server with the API, for development
 ```
 
 The server listens on `127.0.0.1` only. Set `KENSAKU_PORT` to use another port.
+
+## Simulated checkout (Stripe sandbox)
+
+Checkout is a simulation. Paying creates a Stripe **sandbox** Checkout Session and nothing else: no order is placed with any merchant, nothing ships, and no real money moves. The price you pay is a "demo checkout price" copied from the last-observed price on the merchant page, which can be stale. Every Stripe line item is named "Simulated: ..." and says so in its description. An order becomes paid only when Stripe's signed webhook (`checkout.session.completed` or `checkout.session.async_payment_succeeded`) reaches this server; arriving back on the return page never marks it paid.
+
+Only offers that a research run on this machine registered can be added, and the server prices them from that registration, not from anything the browser sends. The cart and orders live on the server in `.data/commerce/` (ignored by git).
+
+### One-time setup (you, in your own Stripe account)
+
+Checkout stays off, and the cart still works, until both secrets below are set. Live keys are refused: the server will not start with a `STRIPE_SECRET_KEY` that is not a sandbox key.
+
+1. Have a Stripe account with a **sandbox** (Dashboard, sandboxes). Never use live mode.
+2. If the Stripe CLI requires it, enable CLI access for the sandbox (Settings, Team and security, MCP and CLI access).
+3. Install the Stripe CLI (`brew install stripe`, or Stripe's install script) and run `stripe login`, choosing the sandbox, not live access.
+4. Create a sandbox secret key, or a restricted key with Checkout Sessions read and write, and put it in `.env.local` as `STRIPE_SECRET_KEY=` (it must start with `sk_test_`, `rk_test_` or `rkcs_test_`).
+5. Run `stripe listen --print-secret` once and put the `whsec_...` value in `.env.local` as `STRIPE_WEBHOOK_SECRET=`. The server verifies every webhook with it, so it must be the secret of the same sandbox and CLI login you use below.
+
+Keys and secrets are read only by the server process, are never sent to the browser, and are never logged.
+
+### Each time you use checkout
+
+Open two terminals in the repository.
+
+```sh
+# Terminal 1: forwards Stripe's test events to the server
+stripe listen --events checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,payment_intent.payment_failed --forward-to http://127.0.0.1:8787/api/stripe/webhook
+
+# Terminal 2
+pnpm start
+```
+
+Then open **http://127.0.0.1:8787** and use Kensaku there, started with `pnpm start`. Do not use `localhost:8787` or `pnpm dev`: Stripe sends you back to `http://127.0.0.1:8787`, which is a different browser origin from `localhost`, so a page opened elsewhere would not be the one Stripe returns to (the cart and orders still exist on the server, but the browser's own state would not carry over). Without `stripe listen` running, a payment succeeds on Stripe's page but Kensaku never learns of it and the order stays open until it expires.
+
+On the Stripe-hosted page use a test card with any future expiry and any CVC:
+
+- `4242 4242 4242 4242`: payment succeeds (if SGD or JPY refuses it, use `4000 0070 2000 0003` for Singapore or `4000 0039 2000 0003` for Japan).
+- `4000 0000 0000 0002`: the card is declined. Use the page's back link to return to Kensaku, which cancels the checkout and keeps your cart.
+- The back link without paying also cancels the checkout and keeps the cart.
+
+Starting a second checkout expires the first one's session. An unpaid checkout expires after an hour.
+
+### Reset
+
+Stop the server, delete `.data/commerce/`, and start it again to clear the cart, orders and processed webhook ids. Registered offers live in `.cache/offers/` and expire after 30 days.
 
 ## Limits
 
@@ -80,3 +125,20 @@ EXA_ENV_FILE=/path/to/exa.env pnpm live:acceptance:v1-1
 - It exits non-zero when a deterministic threshold fails or the run stopped early. The owner-audit thresholds are filled in from the audit sheet.
 
 The MVP command `pnpm live:acceptance` (EV-008) is history and no longer exists.
+
+## Live sandbox acceptance (EV-023)
+
+`pnpm live:acceptance:v1-2` runs the checkout acceptance in `evals/cases/live-acceptance-v1-2.json` against the real server, your Stripe sandbox and Exa. It spends real Exa credits and needs you at the Stripe-hosted page for scenarios A1 to A5. It builds and starts nothing, so start the pieces yourself first:
+
+```sh
+# Terminal 1: stripe listen as above
+# Terminal 2: an empty .data/commerce/, then the server with its output saved
+rm -rf .data/commerce && mkdir -p .cache/live && pnpm start 2>&1 | tee .cache/live/ev023-server.log
+# Terminal 3
+pnpm live:acceptance:v1-2 --server-log .cache/live/ev023-server.log
+```
+
+- It first checks the preconditions in the case file (sandbox key, webhook secret equal to `stripe listen --print-secret` compared by hash, a live-mode server with checkout configured at `127.0.0.1:8787`, an empty `.data/commerce/`, room in the Exa counter `.cache/live/v1-2-exa-counter.json`) and stops before any request when one fails.
+- It researches the three queries (at most 5 Exa requests each, one re-ask per query, 25 for the run and 30 plan-wide), prints the Stripe page URL and the steps for each owner scenario, waits (20 minutes by default, `--timeout-minutes`) for the order to change state, then checks the outcome and retrieves the session from Stripe as an audit. Scenarios A6 to A8 (a resent event, two checkouts in a row, forged webhook bodies) run on their own.
+- It never clicks anything on the Stripe page. `pnpm live:acceptance:v1-2 --dry-run` runs the whole flow against a fake port and fixture research, with no network.
+- It writes `.futari/evidence/live/ev-023-run-<n>-<time>.json` and `ev-023-run-<n>-audit.md`, an empty sheet for your answers to the five audit questions. After they are recorded, `--finalize-audit <run log>` sets the audit threshold and the verdict in the log. At most 2 runs are allowed.

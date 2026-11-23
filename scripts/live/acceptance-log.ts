@@ -132,7 +132,8 @@ export interface ThresholdInput {
 export function computeThresholds(input: ThresholdInput): Thresholds {
   const paidTransitions = (order: Order) => order.transitions.filter((t) => t.to === "paid").length;
   const paid = input.orders.filter((o) => paidTransitions(o) > 0);
-  const { caps, exa } = { caps: input.exa.caps, exa: input.exa };
+  const { caps } = input.exa;
+  const { exa } = input;
   return {
     scenariosPassing: input.scenarios.filter((s) => s.verdict === "PASS").length,
     scenariosTotal: input.scenarios.length,

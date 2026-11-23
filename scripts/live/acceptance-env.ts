@@ -62,12 +62,7 @@ async function listenPrecondition(secret: string): Promise<Precondition[]> {
     return [{ name, ok: false, detail: "`stripe listen --print-secret` failed: is the Stripe CLI installed and logged in to the sandbox (`stripe login`)?" }];
   }
   const secretOk = printed !== undefined && sha256(printed) === sha256(secret);
-  let command = "";
-  try {
-    command = await new Promise<string>((done) => execFile("pgrep", ["-fl", "stripe listen"], (_error, stdout) => done(stdout)));
-  } catch {
-    command = "";
-  }
+  const command = await new Promise<string>((done) => execFile("pgrep", ["-fl", "stripe listen"], (_error, stdout) => done(stdout)));
   const running = command.trim() !== "";
   const forwards = command.includes(`127.0.0.1:8787${WEBHOOK_PATH}`);
   const live = /--live\b/.test(command);
@@ -128,12 +123,7 @@ export function liveAcceptanceEnv(options: LiveAcceptanceOptions, say: (line: st
       }
       checks.push(server);
       const entries = existsSync(commerceDir) ? readdirSync(commerceDir) : [];
-      let apiEmpty = true;
-      try {
-        apiEmpty = (await allEmptyOnServer(api)) === true;
-      } catch {
-        apiEmpty = false;
-      }
+      const apiEmpty = await allEmptyOnServer(api).catch(() => false);
       checks.push({
         name: ".data/commerce/ is empty at the start of the run",
         ok: entries.length === 0 && apiEmpty,
