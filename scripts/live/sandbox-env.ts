@@ -20,11 +20,11 @@ import { redact, SmokeAbort } from "./sandbox-smoke";
 import type { OwnerStep, SmokeEnv, WebhookLogLine } from "./sandbox-smoke";
 
 const OWNER_POLL_MS = 2_000;
-const REAL_SLEEP = (ms: number) => new Promise<void>((resolveSleep) => setTimeout(resolveSleep, ms));
+export const REAL_SLEEP = (ms: number) => new Promise<void>((resolveSleep) => setTimeout(resolveSleep, ms));
 
-const gitSha = (): string => execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+export const gitSha = (): string => execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 
-function offersOfStream(body: string, market: RegisteredOffer["market"], at: string): { offers: RegisteredOffer[]; exaRequests: number } {
+export function offersOfStream(body: string, market: RegisteredOffer["market"], at: string): { offers: RegisteredOffer[]; exaRequests: number } {
   const chunks = parseSse(body);
   const offers = (ofType(chunks, "data-products")[0]?.data ?? []).flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
   return {
@@ -33,17 +33,37 @@ function offersOfStream(body: string, market: RegisteredOffer["market"], at: str
   };
 }
 
-function parseLogLines(text: string): WebhookLogLine[] {
+export function parseLogLines(text: string): WebhookLogLine[] {
   return text.split("\n").flatMap((line) => {
     try {
       const parsed = JSON.parse(line) as Record<string, unknown>;
       if (parsed.event !== "webhook") return [];
       const field = (name: keyof WebhookLogLine) => (typeof parsed[name] === "string" ? { [name]: parsed[name] } : {});
-      return [{ ...field("eventId"), ...field("type"), ...field("outcome"), ...field("orderId"), ...field("to") }];
+      return [{ ...field("eventId"), ...field("type"), ...field("outcome"), ...field("orderId"), ...field("from"), ...field("to") }];
     } catch {
       return [];
     }
   });
+}
+
+/** `stripe events resend <id>` with the owner's CLI login; the output is scrubbed before it leaves this function. */
+export function resendWithStripeCli(eventId: string, scrub: (text: string) => string): Promise<{ exitCode: number | null; output: string }> {
+  return new Promise((resolveResend) => {
+    execFile("stripe", ["events", "resend", eventId], { timeout: 60_000 }, (error, stdout, stderr) => {
+      const exitCode = error ? ((error as { code?: unknown }).code as number | null) ?? null : 0;
+      resolveResend({ exitCode: typeof exitCode === "number" ? exitCode : null, output: scrub(`${stdout}\n${stderr}`) });
+    });
+  });
+}
+
+/** Polls until `done()` is true (the owner finished a hosted-page step) or the timeout passes. */
+export async function waitForOwner(done: () => Promise<boolean>, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await done()) return true;
+    await REAL_SLEEP(OWNER_POLL_MS);
+  }
+  return false;
 }
 
 export interface LiveOptions {
@@ -54,7 +74,8 @@ export interface LiveOptions {
   exaCounterPath?: string;
 }
 
-export function liveEnv(options: LiveOptions): SmokeEnv {
+/** The server's own configuration read from the same env file: a Stripe sandbox key and signing secret in live Exa mode. */
+export function loadSandboxConfig(who: string): ServerConfig & { stripe: NonNullable<ServerConfig["stripe"]> } {
   loadKeyFile();
   let config: ServerConfig;
   try {
@@ -63,7 +84,12 @@ export function liveEnv(options: LiveOptions): SmokeEnv {
     throw new SmokeAbort(error instanceof Error ? error.message : "invalid configuration");
   }
   if (!config.stripe) throw new SmokeAbort("STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must both be set (and STRIPE_SECRET_KEY must be a sandbox key).");
-  if (config.mode !== "live") throw new SmokeAbort("the live smoke runs in live Exa mode (unset KENSAKU_EXA_MODE).");
+  if (config.mode !== "live") throw new SmokeAbort(`${who} runs in live Exa mode (unset KENSAKU_EXA_MODE).`);
+  return { ...config, stripe: config.stripe };
+}
+
+export function liveEnv(options: LiveOptions): SmokeEnv {
+  const config = loadSandboxConfig("the live smoke");
   if (!existsSync(options.serverLogPath)) throw new SmokeAbort(`--server-log ${options.serverLogPath} does not exist: start the server with its output saved there.`);
 
   const base = `http://127.0.0.1:${config.port}`;
@@ -115,20 +141,9 @@ export function liveEnv(options: LiveOptions): SmokeEnv {
       console.log(`Open this Stripe-hosted page in your browser:\n${step.url}`);
       for (const line of step.instructions) console.log(`- ${line}`);
       console.log(`Waiting for the order to leave "open" (up to ${Math.round(options.ownerTimeoutMs / 60_000)} minutes)...`);
-      const deadline = Date.now() + options.ownerTimeoutMs;
-      while (Date.now() < deadline) {
-        if (await done()) return true;
-        await REAL_SLEEP(OWNER_POLL_MS);
-      }
-      return false;
+      return waitForOwner(done, options.ownerTimeoutMs);
     },
-    resend: (eventId) =>
-      new Promise((resolveResend) => {
-        execFile("stripe", ["events", "resend", eventId], { timeout: 60_000 }, (error, stdout, stderr) => {
-          const exitCode = error ? ((error as { code?: unknown }).code as number | null) ?? null : 0;
-          resolveResend({ exitCode: typeof exitCode === "number" ? exitCode : null, output: scrub(`${stdout}\n${stderr}`) });
-        });
-      }),
+    resend: (eventId) => resendWithStripeCli(eventId, scrub),
     webhookLog: async () => parseLogLines(readFileSync(options.serverLogPath, "utf8")),
     now: () => new Date(),
     sleep: REAL_SLEEP,
@@ -137,7 +152,7 @@ export function liveEnv(options: LiveOptions): SmokeEnv {
 }
 
 /** A fake port that behaves like Stripe about expiry: an expired session reads as expired and cannot be expired again. */
-class DryPort extends FakeCheckoutPort {
+export class DryPort extends FakeCheckoutPort {
   private readonly expired = new Set<string>();
 
   override async expireSession(id: string): Promise<void> {

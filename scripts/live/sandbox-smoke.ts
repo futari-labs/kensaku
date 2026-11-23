@@ -32,6 +32,7 @@ export interface WebhookLogLine {
   type?: string;
   outcome?: string;
   orderId?: string;
+  from?: string;
   to?: string;
 }
 
