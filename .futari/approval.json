@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "planId": "kensaku-v1-2",
   "approvedBy": "d3F0g",
-  "approvedAt": "2026-11-23T07:59:51.823Z",
-  "planCommit": "f1abbc72a3a981f05fc2b1ba11e193fc88d86cf5",
+  "approvedAt": "2026-11-23T09:24:54.119Z",
+  "planCommit": "992d013ba2f1317236ad77b872c42181c0929855",
   "files": {
     ".agents/playbooks/futari-approved-plan.md": "fb60fdf2d84d0a366c3ae7e545858ae848488293b1bde757a12c177c20c37097",
     ".claude/pstack-models.md": "8c721bc471784a162796dc595e7477283ab4d1c4cdd2531b06cacd639ff2f485",
     ".futari/ci-check.mjs": "f7b7fb667c4bc16a87dd5063af209c3007568f434e1ff9b7c0505144182e8ae1",
     ".futari/plan-gate.mjs": "de57bc8841e88870dc5a1cd6cd9c69ba0d5720a229ab42f08c51bf193c1ca157",
-    ".futari/plan.json": "c2f040c278b74ac11bc0b5734679e89ba73db3cf07bfb78001ffd13f71bf7205",
+    ".futari/plan.json": "f33f70e03dfa217ba2dd54c63e69acbb84304fe87be27f6ab52538f29f080e86",
     ".github/workflows/futari-contract.yml": "b26140f951f637f1b36bf24935fef325cd50bd2378cd3e3279653e4637e30de5",
     "CLAUDE.md": "9ef721fffe2bbf9f055583869b0d480e7ac799342b0cf5de73b82e1f1e629791",
-    "docs/futari/ARCHITECTURE.md": "cd476ceb245eed0f61dd247a11e1cbbacfa58a8a091cbede3e8505a1a77ff62d",
-    "docs/futari/DECISIONS.md": "f2f8d712be7f5f14c2790b43c45ee22ebde354b34f9d60a0a61b9b9a526597c6",
+    "docs/futari/ARCHITECTURE.md": "8bc28d99d723e642213fdbe55cdacf4172582e5ba372ef064c0309c80bc0609a",
+    "docs/futari/DECISIONS.md": "dd6aad2308cace471256b7b6bc4b4624bff2632ae4e4db337208bda362e81fff",
     "docs/futari/EVALUATION_PLAN.md": "6452d4c87898e0c671e840a423897c2f645b76654005a13987dfd9b8f9580ef3",
     "docs/futari/EXECUTION_PLAN.md": "1ce729efe042b7094b6117fd7f874216576d8cac7bed5ce079bcf0d47fe9231c",
     "docs/futari/PRODUCT_SPEC.md": "8d2bbe7cad4d020521d4244cbe185fdf3bee2a288faf630b68e75574e308c0e4",
@@ -77,5 +77,5 @@
     "spikes/exa-v1-1/image-probe.mjs": "df49f5bcec6a47cbd0bd592a7f82a83f186b48bc0f00fde09f7995ee953e88bd",
     "spikes/exa-v1-1/spike.mjs": "173e9e1139dc664957951006d90c0102d8936240431afabbf6bedfc059384257"
   },
-  "snapshotSha256": "164b7bf02bd57c3a27d7cc34ed754d85f91e4e73ea69b0275f05e2133fe91fdc"
+  "snapshotSha256": "331cfd4bf2b7f76dda72ee801d7a97a52f713e445a84cf32b07ae89e477eadc8"
 }

@@ -30,6 +30,14 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` (Stripe sandbox commerce) appr
   - EV-021 check 4's `.data/` assertion stays `it.todo` in JM-202, because the plan gives the `.gitignore` change to JM-203 with the store; JM-203 completes it.
   - The coordinator once wrote into a worker's worktree while the resumed worker was still committing there; the changes did not overlap and both were tested together. Rule kept since: never write in a worktree a live agent holds.
 
+### CR-005: EV-009 image-id count and the Add-to-cart accessible name (plan revision of `kensaku-v1-2`)
+
+- Observation (JM-203 worker, branch `jm-203-commerce-slice` at `8664ad3`): `tests/evals/ev-009-key-safety.test.ts:136` collects every `"id":"<64-hex>"` in the research stream and expects 6 image ids; with offer ids in `data-products` (REQ-017, EV-018) it finds 13. The file is outside JM-203's paths, and the worker's edit was refused. Separately, the approved Add-to-cart `aria-label` fails axe `label-content-name-mismatch` in EV-007.
+- Owner decision (AskUserQuestion, 2026-11-23): "Prepare CR-004 (Recommended)", renumbered CR-005 because CR-004 is the proposed post-v1.1 eBay revision recorded below. D-059.
+- Revision: JM-203 gains `tests/evals/ev-009-key-safety.test.ts` with one permitted edit (the regex) and a matching criterion; ARCHITECTURE's label wording. No other change.
+- Independent review of `ede511b` (opus, read-only): READY; one MINOR and two NITs resolved as wording.
+- Status: awaiting the owner's plan-revision approval card; nothing merges until the revised baseline is on `dev`.
+
 ### v1.2 execution ledger
 
 | Task | Issue | Branch | PR | Tested revision | Status | Evidence / next action |
