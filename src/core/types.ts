@@ -8,7 +8,7 @@ interface OfferSummary { isProductListing?: boolean; productName?: string; merch
   price?: number; currency?: string; availability?: string }           // as returned by Exa
 interface SearchHit { url: string; title: string | null; summary: OfferSummary | null;
   exaRequestId: string; retrievedAt: string; image?: string | null }
-interface Offer { kind: "merchant-offer"; merchantHost: string; merchantName: string;
+interface Offer { kind: "merchant-offer"; id?: string; merchantHost: string; merchantName: string;
   canonicalUrl: string; price: { amount: number; currency: Currency }; availability: Availability;
   source: "exa"; retrievedAt: string; exaRequestId: string; productName: string }
 type EvidenceCategory = "aggregator" | "editorial" | "not-a-listing" | "merchant-no-price" | "merchant-mismatch"
