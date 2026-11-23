@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { ChevronDownIcon, ImageOffIcon } from "lucide-react";
 import { segmentMarkers } from "../../core";
 import { MARKET_CURRENCY } from "../../core/currency";
@@ -17,6 +17,7 @@ import { AVAILABILITY_LABEL, EVIDENCE_LABEL, formatPrice, formatTime, productTit
 import { MARKET_NAME } from "./markets";
 import { offerView } from "./offers";
 import type { OfferView } from "./offers";
+import { useCart } from "./useCart";
 
 const IMAGE_RATIO = 4 / 3;
 
@@ -59,6 +60,40 @@ function ProductImage({ label, candidates }: { label: string; candidates: ImageC
   );
 }
 
+const ADDED_FLASH_MS = 2_000;
+
+/** Why an offer cannot be bought, or undefined. An offer without an id predates v1.2 or came from a failed run (D-048). */
+function unbuyableReason({ id, availability }: Offer): string | undefined {
+  if (id === undefined) return "Ask again to buy";
+  if (availability === "out_of_stock") return "Out of stock";
+  return undefined;
+}
+
+function AddToCart({ offer }: { offer: Offer }) {
+  const { add, unavailable } = useCart();
+  const [added, setAdded] = useState(false);
+  useEffect(() => {
+    if (!added) return;
+    const timer = setTimeout(() => setAdded(false), ADDED_FLASH_MS);
+    return () => clearTimeout(timer);
+  }, [added]);
+  const reason = unbuyableReason(offer);
+  const label = reason ?? (added ? "Added" : "Add to cart");
+  // The visible text leads the accessible name (WCAG label in name).
+  const name = `${label}: ${offer.productName} from ${offer.merchantHost}${reason ? "" : " (simulated cart)"}`;
+  return (
+    <Button
+      type="button"
+      size="sm"
+      aria-label={name}
+      disabled={reason !== undefined || unavailable}
+      onClick={() => offer.id !== undefined && void add(offer.id).then((ok) => ok && setAdded(true))}
+    >
+      {label}
+    </Button>
+  );
+}
+
 function OfferItem({ offer }: { offer: Offer }) {
   return (
     <Item variant="outline" size="sm" role="listitem" data-testid="offer-row">
@@ -73,6 +108,7 @@ function OfferItem({ offer }: { offer: Offer }) {
       </ItemContent>
       <ItemActions className="w-full justify-between sm:w-auto sm:justify-start">
         <Badge variant="secondary">{AVAILABILITY_LABEL[offer.availability]}</Badge>
+        <AddToCart offer={offer} />
         <Button asChild variant="outline" size="sm">
           <a href={offer.canonicalUrl} target="_blank" rel="noopener noreferrer" aria-label={`View offer for ${offer.productName} at ${offer.merchantHost}`}>
             View offer

@@ -29,6 +29,12 @@ export interface RuntimeDirs {
   commerce?: string;
 }
 
+/**
+ * What a fixture run stamps as `retrievedAt`. A fixed instant keeps an offer's id (a hash that includes `retrievedAt`)
+ * the same on every replay of a scenario, so two runs of one scenario return identical offers.
+ */
+const FIXTURE_OBSERVED_AT = "2026-11-23T00:00:00.000Z";
+
 export const DEFAULT_FIXTURE_SCENARIO = "xm5-us";
 const FIXTURE_IMAGE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../tests/fixtures/images");
 
@@ -86,7 +92,7 @@ export function createRuntime(config: ServerConfig, dirs?: RuntimeDirs): AppDeps
       images: new ImageProxy({ port: fetcher, clock, log, dir: imageDir }),
       commerce,
       portFor: (scenario) => {
-        const exa = FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock, answerMarketMode: config.answerMarketMode, onWarning });
+        const exa = FixtureExaPort.load(scenario ?? DEFAULT_FIXTURE_SCENARIO, { clock: () => new Date(FIXTURE_OBSERVED_AT), answerMarketMode: config.answerMarketMode, onWarning });
         fetcher.add(exa.scenario.images);
         return exa;
       },
