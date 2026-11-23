@@ -232,5 +232,6 @@ Independent review: a fresh opus reviewer, read-only, reviewed `84fb935`. Verdic
 | 4 | MINOR | `researchChecks[0]` still said the owner decides for any BLOCKED scenario. | It now excepts A3/Q5, which the allowance decides. |
 | 5 | MINOR | Run 1 ran on a "dirty tree" and the summary lacks the dirty flag. | PROGRESS notes both (the dirt was the script's own untracked stub). |
 
-Evidence handling (reviewer item 4): run 1's terminal output is committed only with card numbers and Checkout URLs (whose fragments embed a `pk_test_` key) redacted; the server log has no key, secret, or card number; the `stripe listen` log is never committed (it holds the signing secret).
+Evidence handling (reviewer item 4): run 1's terminal output will be committed only with card numbers and Checkout URLs (whose fragments embed a `pk_test_` key) redacted; the server log has no key, secret, or card number; the `stripe listen` log is never committed (it holds the signing secret).
 
+Re-review of `2828730` (same reviewer): **READY**. Findings 1-5 resolved. Remaining items applied as wording before approval: the case file's `runLog` names the per-query outcome summary; D-060 sentence order and a fresh-run inspection rule for rejected Q5 hits; REVIEW tense. Before JM-205 commits run 1's terminal output, the four Checkout URL fragments (embedding a `pk_test_` key) must be stripped.
