@@ -23,6 +23,8 @@ export interface ServerConfig {
   limits: Limits;
   /** File that receives each Exa request and raw response as JSON lines (live smoke only). */
   exchangeLog: string | undefined;
+  /** Present only when both Stripe values are set and sandbox-shaped (D-050). The key goes to the SDK constructor, the secret to `verifyWebhook`. */
+  stripe?: { secretKey: string; webhookSecret: string };
 }
 
 /** What the app needs to know about its own configuration. Never carries the key. */
@@ -43,7 +45,23 @@ const EnvSchema = z.object({
   KENSAKU_ANSWER_MARKET_MODE: z.preprocess(blank, z.enum(["userLocation", "question-text"]).default("userLocation")),
   EXA_API_KEY: z.preprocess(blank, z.string().optional()),
   KENSAKU_EXCHANGE_LOG: z.preprocess(blank, z.string().optional()),
+  STRIPE_SECRET_KEY: z.preprocess(blank, z.string().optional()),
+  STRIPE_WEBHOOK_SECRET: z.preprocess(blank, z.string().optional()),
 });
+
+const SANDBOX_KEY_PREFIXES = ["sk_test_", "rk_test_", "rkcs_test_"];
+
+/** D-050. Errors name the variable, never its value. */
+function parseStripe(secretKey: string | undefined, webhookSecret: string | undefined): ServerConfig["stripe"] {
+  if (secretKey === undefined && webhookSecret === undefined) return undefined;
+  if (secretKey === undefined) throw new ConfigError("STRIPE_WEBHOOK_SECRET is set but STRIPE_SECRET_KEY is missing.");
+  if (webhookSecret === undefined) throw new ConfigError("STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is missing.");
+  if (secretKey.includes("_live_") || !SANDBOX_KEY_PREFIXES.some((prefix) => secretKey.startsWith(prefix))) {
+    throw new ConfigError("STRIPE_SECRET_KEY must be a sandbox key (sk_test_, rk_test_, or rkcs_test_).");
+  }
+  if (!webhookSecret.startsWith("whsec_")) throw new ConfigError("STRIPE_WEBHOOK_SECRET must start with whsec_.");
+  return { secretKey, webhookSecret };
+}
 
 /** Parses the environment once, at the boundary. Fixture mode is refused outside `NODE_ENV=test`. */
 export function parseConfig(env: Record<string, string | undefined>): ServerConfig {
@@ -55,6 +73,7 @@ export function parseConfig(env: Record<string, string | undefined>): ServerConf
   if (e.KENSAKU_EXA_MODE === "fixture" && e.NODE_ENV !== "test") {
     throw new ConfigError("KENSAKU_EXA_MODE=fixture is accepted only with NODE_ENV=test.");
   }
+  const stripe = parseStripe(e.STRIPE_SECRET_KEY, e.STRIPE_WEBHOOK_SECRET);
   return {
     mode: e.KENSAKU_EXA_MODE,
     dev: e.KENSAKU_DEV === "1",
@@ -63,6 +82,7 @@ export function parseConfig(env: Record<string, string | undefined>): ServerConf
     exaApiKey: e.KENSAKU_EXA_MODE === "live" ? e.EXA_API_KEY : undefined,
     limits: limitsFromEnv(env),
     exchangeLog: e.KENSAKU_EXCHANGE_LOG,
+    ...(stripe && { stripe }),
   };
 }
 
