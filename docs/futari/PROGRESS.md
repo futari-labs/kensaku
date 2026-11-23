@@ -15,7 +15,9 @@ Phase: **v1.2 planning (unapproved)** — plan `kensaku-v1-2` (Stripe sandbox co
 - Open owner prerequisites before JM-203's sandbox smoke: Stripe sandbox, CLI login, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (EXECUTION_PLAN "Owner prerequisites"). The Stripe CLI is not installed on this machine yet.
 - Independent review of `2d268dc` (fable, read-only): CHANGES REQUIRED, 12 findings (1 blocking), every frozen label reproduced. All resolved in `c5967cd` (D-058). Re-review of `c5967cd`: CHANGES REQUIRED, text only (N1-N6), every label reproduced again; N1-N6 resolved in the reviewed commit. Details in REVIEW.md.
 - `node .futari/plan-gate.mjs check`: PASS; `node evals/harness.mjs`: HARNESS OK (34 cart, 11 minor-unit, 4 session-request, 30 webhook, 19 route cases, 8 live scenarios); `--strict --final` fails by design until EV-018 to EV-023 exist; pstack `check-playbooks.mjs`: compatible.
-- Next: the owner's decision on the native approval card.
+- Approval: the owner (d3F0g) selected "Approve plan" on the native card for `kensaku-v1-2` at `f1abbc72a3a981f05fc2b1ba11e193fc88d86cf5`; the card stated that approving replaces the `kensaku-v1-1` baseline. Recorded in `ab45038` (`.futari/approval.json` only); `plan-gate verify`: PASS, snapshot `164b7bf02bd57c3a27d7cc34ed754d85f91e4e73ea69b0275f05e2133fe91fdc`.
+- Publication: with the owner's authorization, `v1-2-plan` was pushed and PR #30 opened into `dev`. `CI` passed. `Futari contract` fails by design at the `Futari-Plan` marker check, as PR #15 did (R-38).
+- Next step: the owner merges PR #30 personally with a merge commit. Then complete the Stripe owner prerequisites (EXECUTION_PLAN) before JM-203, and run `/futari:execute` from `dev`; it starts with JM-201 and JM-202.
 
 ## v1.1 planning session 2026-11-21
 
