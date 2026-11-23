@@ -321,6 +321,7 @@ History (D-016): the client stores `{ version: 1, messages, savedAt }` in `local
 - No deployment, auth, or remote storage (D-010).
 - **(v1.1)** `.cache/images/` (gitignored with `.cache/`) holds image metadata and bytes. Deleting it is always safe: cards fall back until the next run registers images again. The live acceptance script starts each suite run with an empty image cache.
 - **(v1.1)** Outbound traffic: Exa (as in the MVP) plus plain GETs to merchant and manufacturer image hosts named in this run's Exa results. There are no other hosts and no browser-side third-party requests.
+- **(v1.2)** Use checkout at `http://127.0.0.1:8787` under `pnpm start`. Stripe returns to the fixed `127.0.0.1:<port>` URLs, so a session started from `localhost` or the Vite dev port returns to another origin (R-40).
 - **(v1.2)** The server also calls `api.stripe.com` through the SDK (session create, retrieve, expire) when checkout is configured; webhooks arrive from the local Stripe CLI. `.data/commerce/` (new, gitignored) holds the simulated cart and orders; `.cache/offers/` holds offer snapshots. Deleting either resets the simulation. `README.md` documents the Stripe sandbox setup (EXECUTION_PLAN "Owner prerequisites").
 
 ## Simulated commerce (v1.2)
@@ -343,17 +344,17 @@ Browser (127.0.0.1)                    Node process (127.0.0.1:8787)            
 
 | Module | Responsibility | State |
 | --- | --- | --- |
-| `src/core/commerce.ts` | Pure rules: `offerId`, `toMinorUnits`, `applyCartOp` (EV-018 rules), `applyStripeEvent` (EV-020 transitions), simulated-label strings. No I/O. | None |
+| `src/core/commerce.ts` | Pure rules: `offerId`, `toMinorUnits`, `applyCartOp` (EV-018 rules), `applyStripeEvent` (EV-020 transitions), the UI label strings. No I/O. | None |
 | `src/commerce/port.ts` | `CheckoutPort { createSession(params, options): Promise<SessionResult>; expireSession(id): Promise<void>; retrieveSession(id): Promise<SessionResult> }` with `SessionResult { id, url, status, livemode, amountTotal, currency }` and typed errors (`session-not-open`, `stripe-error`). | None |
-| `src/commerce/stripe-port.ts` | `StripeCheckoutPort`: the only importer of `stripe`. Builds the client with the pinned `apiVersion`, maps errors, refuses `livemode` results and non-`https://checkout.stripe.com/` URLs. Also exports `verifyWebhook(rawBody, header, secret)` wrapping `stripe.webhooks.constructEvent` (offline, tolerance 300 s). | None |
+| `src/commerce/stripe-port.ts` | `StripeCheckoutPort`: the only importer of `stripe`. Builds the client with the pinned `apiVersion`, maps errors, refuses `livemode` results and non-`https://checkout.stripe.com/` URLs. Also exports `verifyWebhook(rawBody, header, secret)` wrapping `stripe.webhooks.constructEvent` (offline, tolerance 300 s) and `signTestPayload(payload, secret, timestamp)` wrapping `generateTestHeaderString`, for tests and the fake hosted page. | None |
 | `src/commerce/fake-port.ts` | `FakeCheckoutPort` for tests: records calls, scripted outcomes (ok, error, livemode, session-not-open, custom url), and returns `http://127.0.0.1:<port>/__test/checkout/<id>` URLs. | In memory |
-| `src/commerce/session-request.ts` | `buildCheckoutSessionRequest(order, { port, now })`: pure; output frozen by EV-019. | None |
-| `src/commerce/store.ts` | Load, validate (zod), and atomically save `.data/commerce/state.json`; one serialized writer queue. | `.data/commerce/state.json` |
+| `src/commerce/session-request.ts` | `buildCheckoutSessionRequest(order, { port, now })`: pure; owns the Stripe-facing strings ("Simulated: " prefix, descriptions); output frozen by EV-019. | None |
+| `src/commerce/store.ts` | Load, validate (zod), and atomically save `.data/commerce/state.json`. | `.data/commerce/state.json` |
 | `src/commerce/registry.ts` | `registerOffers(offers)` writes `.cache/offers/<id>.json` snapshots; `getOffer(id)`; prune after 30 days without registration. | `.cache/offers/` |
-| `src/commerce/service.ts` | Cart operations, checkout, cancel, order reads; composes core rules, store, registry, and port. | Through the store |
+| `src/commerce/service.ts` | Cart operations, checkout, cancel, order reads; composes core rules, store, registry, and port. Owns the single serialized queue on which every commerce mutation runs, including its awaited port calls (port timeout 10 s), so a webhook arriving during a cancel or checkout is applied after it (EV-020 `serialization`). | Through the store |
 | `src/commerce/webhook.ts` | The webhook handler: verify, livemode check, dedupe, match, `applyStripeEvent`, cart clearing, logging. | Through the store |
-| `src/commerce/fake-hosted.ts` | Test-only routes `GET /__test/checkout/:id` with buttons "Pay", "Decline", and "Back", which sign and post webhooks with the test secret and redirect to the success or cancel URL. Mounted only when `NODE_ENV=test` and fixture mode. | None |
-| `src/server/` | Mounts the commerce routes behind the existing Host/Origin guard; `/api/health` adds `checkoutConfigured`. | — |
+| `src/commerce/fake-hosted.ts` | Test-only routes, mounted only when `NODE_ENV=test` and fixture mode: `GET /__test/checkout/:id` with buttons "Pay", "Decline", and "Back", which sign (`signTestPayload`) and post webhooks with the test secret and redirect to the success or cancel URL; `POST /__test/commerce/reset` (empty cart and orders between specs), `/__test/commerce/checkout-configured { value }`, and `/__test/commerce/withhold-webhooks { value }` (EV-022 checks 9-10). | None |
+| `src/server/` | Mounts the commerce routes behind the existing Host/Origin guard. `createApp` takes commerce as an optional dependency (existing test helpers keep compiling); `GET /api/health` is unchanged. | — |
 | `src/web/app/` | Add-to-cart buttons, cart sheet, currency-replace dialog, checkout return panel, order list (EV-022). | Reads server state only |
 
 ### Data
@@ -382,7 +383,7 @@ The stream's `Offer` gains an optional `id` (the EV-018 `offerId`). JM-203 compu
 
 | Route | Body | Result |
 | --- | --- | --- |
-| `GET /api/cart` | — | `{ cart, totalMinor, checkoutConfigured }` |
+| `GET /api/cart` | — | `{ cart, totalMinor, checkoutConfigured }` (the only place the UI learns whether checkout is configured) |
 | `POST /api/cart/items` | `{ offerId, quantity?, replace? }` (strict) | 200 `{ cart }`; 400/404/409/422 `{ code, details? }` with the EV-018 codes: `invalid-request` and `quantity-out-of-range` 400; `offer-not-registered` 404; `currency-mismatch` 409; `out-of-stock`, `below-minimum`, `quantity-limit`, `line-limit`, `total-too-large` 422 |
 | `PATCH /api/cart/items/:offerId` | `{ quantity }` | as above; `not-in-cart` 404 |
 | `DELETE /api/cart/items/:offerId` | — | 200 `{ cart }`; `not-in-cart` 404 |
@@ -397,16 +398,17 @@ The webhook route has no `Origin` (server-to-server through the CLI), so the exi
 
 ### Checkout flow
 
-1. "Checkout in Stripe sandbox" posts `/api/checkout`. The service supersedes any open order (expire, D-057), creates the order (state `open`, the cart's lines and version copied), and calls `createSession` with the EV-019 request. A failure stores the order as `failed` and returns 502; the cart is untouched.
+1. "Checkout in Stripe sandbox" posts `/api/checkout`. The service supersedes any open order (expire; on an expire error it retrieves the session and acts on its status, EV-020 `checkout` rule, D-057), creates the order (state `open`, the cart's lines and version copied), and calls `createSession` with the EV-019 request. A failure stores the order as `failed` and returns 502; the cart is untouched.
 2. The client checks that the URL starts with `https://checkout.stripe.com/` (or, only in the fixture build used by tests, the local fake path) and calls `window.location.assign(url)`. The CSP is unchanged because a top-level navigation is not governed by `form-action` or `connect-src` (D-055).
 3. Success: Stripe redirects to `/?checkout=success&order=<id>&session_id=<cs_…>`. The app shows the checkout return panel, verifies `session_id` equals the order's `stripeSessionId` (otherwise "Unknown checkout"), and polls `GET /api/orders/:id` every second. It shows "Confirming simulated payment…" until the order is paid; after 20 s it adds "Still waiting for Stripe's confirmation. Is `stripe listen` running?" and keeps polling at 5 s.
-4. Cancel or decline: Stripe's back link goes to `/?checkout=cancelled&order=<id>`. The app calls `POST /api/orders/:id/cancel` and shows "Simulated checkout cancelled. Your cart is unchanged." plus "The test card was declined." when `declinedAttempts ≥ 1`.
+4. Cancel or decline: Stripe's back link goes to `/?checkout=cancelled&order=<id>`. The app calls `POST /api/orders/:id/cancel` (expire; on an expire error, retrieve: expired → cancelled, complete → 409 and the webhook decides) and shows "Simulated checkout cancelled. Your cart is unchanged." plus, best-effort, "The test card was declined." when `declinedAttempts ≥ 1` (R-30). Because this GET auto-posts cancel, a cross-site link that knew an order id could cancel an unpaid sandbox session; accepted (R-39).
+   An open order whose `expiresAt` has passed stays open in the store and is labeled "Checkout link expired"; the next checkout supersedes it.
 5. Webhook: verified events drive the state per EV-020; paid clears the cart only if its version still matches.
 6. The app removes the `checkout`, `order`, and `session_id` query parameters with `history.replaceState` after reading them.
 
 ### Labels (REQ-022)
 
-Fixed strings in `src/core/commerce.ts`, used by the UI and the session request:
+Fixed UI strings in `src/core/commerce.ts` (the Stripe-facing strings live in `src/commerce/session-request.ts` and are frozen by EV-019):
 
 - Cart title "Simulated cart" and banner "Simulated purchase in a Stripe sandbox. No order is placed with any merchant and no real money moves."
 - Per line: "Demo checkout price <amount> <code>" and, in muted text, "Last observed <amount> <code> on <host>, <local date and time>".
@@ -426,7 +428,7 @@ Fixed strings in `src/core/commerce.ts`, used by the UI and the session request:
 
 ### Configuration and keys
 
-`parseConfig` adds `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` (both optional, read from the same env file as `EXA_API_KEY`: `.env.local`, or the path in `EXA_ENV_FILE`). Rules (D-050): a key containing `_live_` or not starting with `sk_test_`, `rk_test_`, or `rkcs_test_` → `ConfigError` naming the variable, never its value; a webhook secret without `whsec_` → `ConfigError`; checkout is configured only when both are present. `AppConfig` gains only `checkoutConfigured: boolean`. The key reaches only the `Stripe` constructor; the secret only `verifyWebhook`. Fixture mode (`NODE_ENV=test`) uses `FakeCheckoutPort` and a test secret built at runtime; live Stripe is never contacted from tests.
+`parseConfig` adds `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` (both optional, parsed into an optional `ServerConfig.stripe`, read from the same env file as `EXA_API_KEY`: `.env.local`, or the path in `EXA_ENV_FILE`). Rules (D-050): a key containing `_live_` or not starting with `sk_test_`, `rk_test_`, or `rkcs_test_` → `ConfigError` naming the variable, never its value; a webhook secret without `whsec_` → `ConfigError`; checkout is configured only when both are present. `AppConfig` is unchanged; the server passes `checkoutConfigured` to the commerce service, which reports it on `GET /api/cart`. The key reaches only the `Stripe` constructor; the secret only `verifyWebhook`. Fixture mode (`NODE_ENV=test`) uses `FakeCheckoutPort` and a test secret built at runtime; live Stripe is never contacted from tests.
 
 ### Observability
 
@@ -467,7 +469,7 @@ browser "Add to cart" on a live research result → `/api/cart/items` with a reg
 Acceptance:
 
 - In CI: an end-to-end Playwright test in fixture mode runs research → add → checkout → fake hosted page → signed webhook → paid, with zero requests to non-local origins.
-- Locally (JM-203 sandbox smoke, ≤ 5 Exa requests, Q1): agent-run session create in USD, SGD, and JPY and expire (checks R-27, R-28, and the key permissions); one owner-paid USD purchase with 4242 marked paid only after the verified webhook; one `stripe events resend` duplicate answered `duplicate`. Logs are committed under `.futari/evidence/live/`. A failure caused by a Stripe fact (R-27, R-28) stops execution for a plan revision.
+- Locally (JM-203 sandbox smoke, ≤ 5 Exa requests, Q1): agent-run session create in USD, SGD, and JPY and expire (checks R-27, R-28, the 60-minute `expires_at`, the absent top-level `currency`, and the key permissions); a second expire of an expired session, recording the real error shape; one owner-paid USD purchase with 4242 marked paid only after the verified webhook; one owner decline then back, recording whether `payment_intent.payment_failed` arrives; one `stripe events resend` duplicate answered `duplicate`. Logs are committed under `.futari/evidence/live/`. A failure caused by a Stripe fact (R-27, R-28) stops execution for a plan revision.
 
 ## Vertical slice (v1.1, completed)
 

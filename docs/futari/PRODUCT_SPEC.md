@@ -82,7 +82,7 @@ States:
 3. The cart sheet ("Simulated cart") shows the simulation banner, each line with its demo checkout price and, beneath it, the last-observed price with merchant host and time; quantity −/+ (1-10), remove, clear, "Demo total", and "Checkout in Stripe sandbox".
 4. Checkout opens Stripe's hosted page in the same tab. Line items read "Simulated: <product>".
 5. Paying with a test card returns to Kensaku: "Confirming simulated payment…", then "Simulated payment received (Stripe sandbox). No order was placed with <hosts>." once the verified webhook arrives. The cart is emptied.
-6. Going back from Stripe's page (with or without a declined card) returns to "Simulated checkout cancelled. Your cart is unchanged.", plus "The test card was declined." when Stripe reported a decline.
+6. Going back from Stripe's page (with or without a declined card) returns to "Simulated checkout cancelled. Your cart is unchanged.", plus, best-effort, "The test card was declined." when Stripe reported a decline (Stripe may not send that event, R-30).
 7. The cart sheet lists the 10 newest simulated orders with status badges.
 
 States:
@@ -91,6 +91,8 @@ States:
 - Webhook not arriving: after 20 s, "Still waiting for Stripe's confirmation. Is `stripe listen` running?" while polling continues.
 - Checkout start failure: "Couldn't start the Stripe sandbox checkout. Your cart is unchanged." with retry.
 - Unknown or mismatched return link: "Unknown checkout" and no state change.
+- Abandoned checkout past its 60-minute expiry with no webhook: the order shows "Checkout link expired"; the next checkout supersedes it.
+- Checkout is used at `http://127.0.0.1:8787` under `pnpm start`; Stripe returns there.
 - Commerce store unreadable: commerce disabled with a visible error; research still works.
 - Accessibility: keyboard-operable, focus management in the sheet and dialog, polite live announcements, zero serious or critical axe violations in both themes.
 
@@ -126,7 +128,7 @@ New:
 
 - **REQ-017 Registered offers and cart rules.** Only server-registered offers can be added; the API accepts only `offerId`, `quantity`, `replace`; one currency per cart; quantity 1-10, ≤ 20 lines, Stripe minimums, total cap; error codes and precedence exactly as in `evals/cases/commerce-rules.json` (EV-018).
 - **REQ-018 Demo price distinct from observed price.** The demo unit price is the observed price in minor units, copied at add time and never refreshed; every cart line shows "Demo checkout price" and, separately, "Last observed … on <host>, <time>"; Stripe's line description repeats the distinction (EV-018, EV-019, EV-022).
-- **REQ-019 Stripe-hosted Checkout.** `stripe@23.1.0`, `apiVersion 2026-10-28.endive`, the exact session request frozen in EV-019 (no conversion, 30-minute expiry, idempotency key); the browser navigates only to a server-returned `https://checkout.stripe.com/` URL.
+- **REQ-019 Stripe-hosted Checkout.** `stripe@23.1.0`, `apiVersion 2026-10-28.endive`, the exact session request frozen in EV-019 (no conversion, 60-minute expiry, idempotency key); the browser navigates only to a server-returned `https://checkout.stripe.com/` URL.
 - **REQ-020 Verified webhooks and order state.** Raw-body signature verification with 300 s tolerance; live-mode refusal; event-id dedupe; matching by order id, session id, amount, and currency; transitions exactly as in `evals/cases/webhook-events.json`; only a verified paid event sets paid (EV-020).
 - **REQ-021 Scenarios.** Success, declined, cancelled, expired or superseded, and duplicate delivery each end in the defined state, deterministically in CI (EV-020, EV-022) and live in the sandbox (EV-023).
 - **REQ-022 Simulated labeling.** The fixed label strings in ARCHITECTURE "Labels" appear where specified; the forbidden phrases never appear; Stripe line items start with "Simulated:" (EV-019, EV-022, EV-023 owner audit).

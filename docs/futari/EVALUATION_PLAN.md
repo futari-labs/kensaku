@@ -21,9 +21,9 @@ Status: proposed for approval with plan `kensaku-v1-2`. EV-001 to EV-007, EV-009
 | EV-014 Image proxy safety and cache | REQ-014, REQ-007 | Injected resolver and upstream, a local connector test, generated image bytes | `pnpm vitest run tests/evals/ev-014-image-proxy.test.ts` | "Image proxy (EV-014)" below. |
 | EV-015 Image-first product cards | REQ-012, REQ-013, REQ-015, REQ-009, REQ-010, REQ-002 | Playwright, fixture mode, scenarios with fixture images, the frozen MVP history | `pnpm exec playwright test tests/e2e/ev-015-product-cards.spec.ts` | "Product cards (EV-015)" below. |
 | EV-016 Live acceptance v1.1 (historical) | — | `evals/cases/live-acceptance-v1-1.json` (8 queries) | not run in v1.2 | Passed in v1.1 (run 3); kept as history (D-044). |
-| EV-018 Cart and demo price rules (v1.2) | REQ-017, REQ-018 | `evals/cases/commerce-rules.json` (4 id, 11 minor-unit, 28 cart, 2 snapshot cases) | `pnpm vitest run tests/evals/ev-018-commerce-rules.test.ts` | "Commerce rules (EV-018)" below. |
-| EV-019 Checkout session request (v1.2) | REQ-019, REQ-018, REQ-022 | `evals/cases/checkout-session-request.json` (3) | `pnpm vitest run tests/evals/ev-019-checkout-request.test.ts` | Each case's `{ params, options }` deep-equals `buildCheckoutSessionRequest` output; `StripeCheckoutPort` passes exactly that to a stubbed `stripe.checkout.sessions.create`; asserts the count. |
-| EV-020 Webhooks and order state (v1.2) | REQ-020, REQ-021 | `evals/cases/webhook-events.json` (24 webhook, 11 route cases) | `pnpm vitest run tests/evals/ev-020-webhooks.test.ts` | "Webhooks (EV-020)" below. |
+| EV-018 Cart and demo price rules (v1.2) | REQ-017, REQ-018 | `evals/cases/commerce-rules.json` (4 id, 11 minor-unit, 34 cart, 6 version, 2 snapshot cases) | `pnpm vitest run tests/evals/ev-018-commerce-rules.test.ts` | "Commerce rules (EV-018)" below. |
+| EV-019 Checkout session request (v1.2) | REQ-019, REQ-018, REQ-022 | `evals/cases/checkout-session-request.json` (4) | `pnpm vitest run tests/evals/ev-019-checkout-request.test.ts` | Each case's `{ params, options }` deep-equals `buildCheckoutSessionRequest` output; `StripeCheckoutPort` passes exactly that to a stubbed `stripe.checkout.sessions.create`; asserts the count. |
+| EV-020 Webhooks and order state (v1.2) | REQ-020, REQ-021 | `evals/cases/webhook-events.json` (30 webhook, 19 route cases) | `pnpm vitest run tests/evals/ev-020-webhooks.test.ts` | "Webhooks (EV-020)" below. |
 | EV-021 Sandbox-only Stripe keys (v1.2) | REQ-023, REQ-007 | Config tests, captured logs and responses, `.data/`, `dist/`, tracked files | `pnpm build && pnpm vitest run tests/evals/ev-021-stripe-keys.test.ts` | "Stripe keys (EV-021)" below. |
 | EV-022 Simulated commerce UI (v1.2) | REQ-024, REQ-017, REQ-018, REQ-021, REQ-022, REQ-009, REQ-010, REQ-007 | Playwright, fixture mode, `FakeCheckoutPort` and the test-only hosted page | `pnpm exec playwright test tests/e2e/ev-022-commerce.spec.ts && node scripts/check-components.mjs` | "Commerce UI (EV-022)" below. |
 | EV-023 Live sandbox acceptance (v1.2) | REQ-008, REQ-019, REQ-020, REQ-021, REQ-022 | `evals/cases/live-acceptance-v1-2.json` (3 queries, 8 scenarios, audit H1-H5) | `pnpm live:acceptance:v1-2` | "Live sandbox acceptance (EV-023)" below. |
@@ -267,7 +267,7 @@ Test files written during execution are not frozen, but they must load these inp
 
 ## (v1.2) Simulated commerce evaluations
 
-Gold labels in the four v1.2 case files are **assistant-proposed** from the written rules and become gold only through the owner's plan approval. They are synthetic: no Stripe call was made during planning (D-056). `node evals/harness.mjs` recomputes the offer ids, minor units, cart totals, and session request fields from the written rules, and a mutation check (changing M03's expected value, R01's `expires_at`, and W11's final state) made the harness fail each time.
+Gold labels in the four v1.2 case files are **assistant-proposed** from the written rules and become gold only through the owner's plan approval. They are synthetic: no Stripe call was made during planning (D-056). `node evals/harness.mjs` recomputes the offer ids, minor units, cart totals, and session request fields from the written rules, and a mutation check (changing M03's expected value, R01's `expires_at`, and W11's final state) made the harness fail each time. The independent reviewer's own implementation from the rule text reproduced every label of the first draft; the cases added after the review (C29-C34, V01-V06, R04, W25-W30, X12-X19) were computed from the revised rules.
 
 ### Commerce rules (EV-018)
 
@@ -276,6 +276,7 @@ The test loads `commerce-rules.json` unchanged and calls the pure functions in `
 - `offerId` equals each `offerIdCases` offer's precomputed id;
 - `toMinorUnits` equals every `minorUnitCases` value (including the floating-point cases M03 and M11 and the invalid ones);
 - `applyCartOp(cart, op, registry)` reproduces every `cartCases` outcome, error code, details, and resulting cart (lines, quantities, `demoUnitAmountMinor`, `totalMinor`, currency), and leaves the cart deep-equal where `cartUnchanged` is set;
+- `versionCases` give the stated cart version after each operation;
 - `snapshotCases` lines carry the observed snapshot exactly;
 - it asserts each section's count.
 
@@ -283,7 +284,7 @@ The same cases run once more through the HTTP routes (`POST /api/cart/items` and
 
 ### Webhooks (EV-020)
 
-The test builds the app with `FakeCheckoutPort`, a temporary `.data` directory, and a runtime test secret, seeds `baseOrder` (or the case's `startState`), and plays each `webhookCases` delivery with real signatures from `stripe.webhooks.generateTestHeaderString`. For each delivery it asserts status and outcome; at the end, the order's state, `declinedAttempts`, `anomaly`, `awaitingAsyncPayment`, whether the cart was cleared, and the number of transitions into paid. `routeCases` drive `POST /api/orders/:id/cancel` and `POST /api/checkout` with scripted port outcomes. The test asserts both counts. A naive handler that trusts unsigned JSON, skips dedupe, or lets `expired` overwrite `paid` fails.
+The test builds the app with `FakeCheckoutPort`, a temporary `.data` directory, and a runtime test secret, seeds `baseOrder` (or the case's `startState`), and plays each `webhookCases` delivery (a `restart` entry recreates the app on the same store) with real signatures from `stripe.webhooks.generateTestHeaderString`. For each delivery it asserts status and outcome; at the end, the order's state, `declinedAttempts`, `anomaly`, `awaitingAsyncPayment`, whether the cart was cleared, and the number of transitions into paid. `routeCases` drive `POST /api/orders/:id/cancel` and `POST /api/checkout` with scripted port outcomes (expire, retrieve, create), including the concurrency cases X18 (two simultaneous checkouts) and X19 (a webhook arriving during a cancel's delayed expire). The test asserts both counts. A naive handler that trusts unsigned JSON, skips dedupe, or lets `expired` overwrite `paid` fails.
 
 ### Stripe keys (EV-021)
 
@@ -291,22 +292,22 @@ The test builds the app with `FakeCheckoutPort`, a temporary `.data` directory, 
 2. `StripeCheckoutPort` with a stubbed SDK client refuses a `livemode: true` session (error, no url) and a url outside `https://checkout.stripe.com/`.
 3. With a runtime-built fake key and secret, a fixture run through research, cart, checkout, webhook, and cancel leaves neither string (nor any `(sk|rk|rkcs|pk)_(test|live)_[A-Za-z0-9]{8,}` or `whsec_[A-Za-z0-9]{8,}` match) in captured logs, any response body or header, `.data/commerce/`, `.cache/offers/`, or the built `dist/` (the test builds or reads `dist/` after `pnpm build`).
 4. `git ls-files` content contains no match of those patterns, and `.gitignore` ignores `.env.local` and `.data/`.
-5. `GET /api/health` reports `checkoutConfigured` and nothing about the key.
+5. `GET /api/cart` reports `checkoutConfigured`; `GET /api/health` keeps its v1.1 shape and says nothing about Stripe.
 
 ### Commerce UI (EV-022)
 
-Playwright against `pnpm start`-equivalent fixture server (as EV-007), Chromium, both themes where marked:
+Playwright against the `pnpm start`-equivalent fixture server (as EV-007), Chromium, both themes where marked. Each test starts with `POST /__test/commerce/reset` so commerce state is not shared between specs:
 
 1. **Add.** After the `xm5-us` scenario, every offer item has "Add to cart"; clicking it updates the header count to 1 and announces "Added to simulated cart".
 2. **Disabled reasons.** An out-of-stock offer and a pre-v1.2 history offer (the frozen MVP history fixture) show disabled buttons with "Out of stock" and "Ask again to buy".
 3. **Currency replace.** With USD in the cart, adding an SGD offer (`xm5-sg` scenario) opens the dialog; "Keep cart" leaves the cart unchanged; "Replace" leaves only the SGD line.
 4. **Prices distinct.** Each cart line shows "Demo checkout price" and, in a separate element, "Last observed <amount> <code> on <host>"; the demo total equals the sum of lines.
 5. **Success.** Checkout navigates to the fake hosted page; "Pay" returns to the app, which shows "Confirming simulated payment…" and then "Simulated payment received (Stripe sandbox). No order was placed with <host>." after the signed webhook; the cart count returns to 0; the order list shows a Paid badge.
-6. **Decline then back.** "Decline" posts a signed `payment_intent.payment_failed`, then "Back" returns to the cancel URL: "Simulated checkout cancelled. Your cart is unchanged." and "The test card was declined."; the cart still has its lines; the order shows Cancelled.
+6. **Decline then back.** "Decline" posts a signed `payment_intent.payment_failed`, then "Back" returns to the cancel URL: "Simulated checkout cancelled. Your cart is unchanged." and the best-effort "The test card was declined." (shown because the fake sends the event; live Stripe may not, R-30); the cart still has its lines; the order shows Cancelled.
 7. **Cancel.** "Back" without decline gives the cancelled message without the decline note.
 8. **Duplicate.** Re-posting the same signed completed event leaves one Paid order and no second confirmation.
-9. **Not configured.** With checkout unconfigured, the checkout button is disabled with "Stripe sandbox is not configured. See README."
-10. **Waiting hint.** With webhook delivery withheld, the hint about `stripe listen` appears after 20 s (test clock or shortened interval through a test-only setting).
+9. **Not configured.** With checkout unconfigured through `POST /__test/commerce/checkout-configured { value: false }`, the checkout button is disabled with "Stripe sandbox is not configured. See README."
+10. **Waiting hint.** With webhook delivery withheld through `POST /__test/commerce/withhold-webhooks { value: true }`, the hint about `stripe listen` appears after 20 s (test clock or shortened interval through a test-only setting).
 11. **Labels.** "Simulated cart", the banner, and "Simulated" badges are present; none of "Order confirmed", "Order placed", "Thank you for your order", "Purchase complete", "has shipped" appears anywhere in the page text during the whole test (case-insensitive).
 12. **Accessibility.** Keyboard only: open the sheet, change quantity, remove, check out; focus returns to the trigger on close. Axe: zero serious or critical violations with the sheet open and on each return panel, in both themes.
 13. **No third-party requests.** No browser request to a non-local origin during the whole test.
@@ -320,7 +321,8 @@ Defined in `evals/cases/live-acceptance-v1-2.json`: preconditions, the 3 queries
 
 Local, before expansion, ≤ 5 Exa requests (Q1 once):
 
-- agent: create sessions in USD, SGD, and JPY from registered offers through the real port, retrieve each, expire each (R-27, R-28, key permissions);
+- agent: create sessions in USD, SGD, and JPY from registered offers through the real port, retrieve each, expire each (R-27, R-28, the 60-minute expiry, the absent top-level `currency`, key permissions), then expire one again and record the real error shape for a non-open session;
+- owner: one decline with 4000 0000 0000 0002, then the back link; record whether `payment_intent.payment_failed` arrived (R-30);
 - owner: one USD purchase with 4242; the order becomes paid only after the verified webhook;
 - agent: `stripe events resend` of that completed event answers `duplicate`.
 
@@ -333,11 +335,13 @@ Pass: all of the above. A Stripe-fact miss → stop for a plan revision. The log
 ### Harness baseline (v1.2 planning branch, 2026-11-23)
 
 ```
-HARNESS OK: … v1.2: 28 cart, 11 minor-unit, 3 session-request, 24 webhook and 11 route cases, 8 live sandbox scenarios.
+HARNESS OK: … v1.2: 34 cart, 11 minor-unit, 4 session-request, 30 webhook and 19 route cases, 8 live sandbox scenarios.
 EV-001 .. EV-015, EV-017: READY
 EV-016 (historical): READY
 EV-018 .. EV-023: NOT RUNNABLE (product module does not exist)
 ```
+
+`node evals/harness.mjs --final` (new in v1.2) also exits 1 while any listed evaluation is NOT RUNNABLE; the completion condition requires `--strict --final` at the final head, so a missing EV-018 to EV-023 test cannot pass silently. `--strict` keeps its v1.1 meaning, so the carried EV-001 command still works during execution.
 
 ### Frozen inputs (v1.2)
 

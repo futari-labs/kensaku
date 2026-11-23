@@ -9,7 +9,7 @@ Done means all of the following, observed on GitHub and locally:
 1. JM-201 to JM-205 are merged into `dev` through one PR each. The `CI` and `Futari contract` checks are green on each PR head, and CI is green on `dev` after each merge.
 2. On the final `dev` head:
    - CI passes EV-001 to EV-007, EV-009 to EV-015, and EV-017 to EV-022, plus typecheck, lint, build, `node evals/harness.mjs`, and the component check.
-   - `node evals/harness.mjs --strict` exits 0 locally at that head. CI runs the harness without `--strict`, and `ci.yml` stays unchanged.
+   - `node evals/harness.mjs --strict --final` exits 0 locally at that head. CI runs the harness without `--strict`, and `ci.yml` stays unchanged.
 3. The JM-203 sandbox smoke passed, and EV-023 passes locally under `evals/cases/live-acceptance-v1-2.json`. Every run log and the owner's H1-H5 audit are committed in `.futari/evidence/live/` and summarized in `.futari/evidence/JM-205.md`.
 4. The owner records v1.2 product acceptance in `docs/futari/PROGRESS.md`.
 
@@ -24,7 +24,7 @@ Needed before the JM-203 sandbox smoke (JM-201 and JM-202 need none of these). T
 3. Install the Stripe CLI (`brew install stripe`, or Stripe's install script) and run `stripe login`, choosing the sandbox, not live access.
 4. Create a sandbox secret key, or a restricted key with Checkout Sessions read and write (research S51; if inline prices need more permissions, the smoke reports it, R-27), and put it in `/Users/josiahwong/Documents/kensaku/.env.local` as `STRIPE_SECRET_KEY=`.
 5. Run `stripe listen --print-secret` once and put the value in the same file as `STRIPE_WEBHOOK_SECRET=`.
-6. Be available for about 10 minutes in JM-203 (one USD test payment) and about 20 minutes per EV-023 run (scenarios A1-A5) to use the Stripe-hosted page with the listed test cards.
+6. Be available for about 10 minutes in JM-203 (one USD test payment and one declined card) and about 20 minutes per EV-023 run (scenarios A1-A5) to use the Stripe-hosted page with the listed test cards.
 
 Agents may then run `stripe listen`, `stripe events resend`, and SDK calls against that sandbox with the owner's CLI login and key (D-049). They never print, copy, or commit the key or secret.
 
@@ -59,7 +59,7 @@ Full machine-readable contracts are in `.futari/plan.json`: allowed paths, accep
 - `src/core/types.ts`: JM-201 adds only the optional `Offer.id`. Nobody else changes it in this plan.
 - `src/core/commerce.ts`: JM-201 owns it; JM-203 and JM-205 may fix it only if EV-018 and EV-020 stay green on the frozen cases. A change that needs a different label is a plan revision.
 - `src/commerce/`: JM-202 creates the port files; JM-203 adds the rest and may adjust the port files; JM-204 may change only `fake-hosted.ts`; JM-205 may fix any file. Sequential after JM-202.
-- `src/server/config.ts`: JM-202. `src/server/app.ts` and route files: JM-203, then JM-205 fixes.
+- `src/server/config.ts`: JM-202, which adds an optional `ServerConfig.stripe` and leaves `AppConfig` unchanged, so `tests/server/helpers.ts` and `tests/server/images/helpers.ts` still compile. `src/server/app.ts` and route files: JM-203 (commerce as an optional `createApp` dependency; `/api/health` unchanged, so `tests/smoke/server.test.ts` and `tests/e2e/slice.spec.ts` stay green), then JM-205 fixes.
 - `src/research/pipeline.ts` and `events.ts`: JM-203 only (offer ids and registration). EV-005, EV-006, and EV-017 must stay green.
 - `src/web/app/`: JM-203 adds the minimal UI; JM-204 completes it; JM-205 fixes. Sequential.
 - `tests/evals/ev-021-stripe-keys.test.ts`: JM-202 writes checks 1, 2, 4; JM-203 adds 3 and 5. Sequential.
@@ -91,6 +91,7 @@ Unchanged from v1.1 (D-035, D-051):
   These are binding process rules (R-13, R-14). Any violation stops execution and is reported to the owner.
 - Parallelism: at most 2 tasks at once (JM-201 beside JM-202).
 - Repair: at most 3 repair attempts per task; then stop and report.
+- The JM-203 smoke and EV-023 run against `http://127.0.0.1:8787` under `pnpm start` (R-40).
 - Live Exa (D-051): only the JM-203 smoke (Q1 once, ≤ 5 requests) and EV-023 (≤ 25 requests across at most 2 runs). Plan-wide ≤ 30 requests and ≤ $0.40 reported cost, from free credits; additional spend $0. Stop on exhausted credits or a 402. Never run `pnpm live:acceptance:v1-1` or the MVP suite.
 - Live Stripe (D-049, D-050): sandbox only, $0. Only the JM-203 smoke and EV-023. Agents create, retrieve, and expire sessions and resend events; the owner performs every hosted-page step.
 - Credentials: tasks read keys through `EXA_ENV_FILE=/Users/josiahwong/Documents/kensaku/.env.local` or the checkout's own ignored `.env.local`; never copy them into a tracked file, log, or evidence.

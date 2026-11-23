@@ -10,6 +10,7 @@
 // kensaku-v1-2 adds structural checks for the commerce case files (EV-018 to EV-020, EV-023).
 //
 // Usage: node evals/harness.mjs            (exit 1 only if cases/fixtures are invalid)
+//        node evals/harness.mjs --final    (kensaku-v1-2: also exit 1 while any listed evaluation is NOT RUNNABLE)
 //        node evals/harness.mjs --strict   (also exit 1 while EV-004 does not load the CR-001 spaced cases,
 //                                           or EV-001 does not apply the kensaku-v1-1 supersessions)
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -20,6 +21,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => JSON.parse(readFileSync(join(root, p), "utf8"));
 const errors = [];
 const STRICT = process.argv.includes("--strict");
+const FINAL = process.argv.includes("--final");
 const check = (cond, msg) => { if (!cond) errors.push(msg); };
 
 const OUTCOMES = {
@@ -201,7 +203,7 @@ for (const k of cr.registered) check(cr.offers[k], `commerce-rules: registered o
 check(/^0{64}$/.test(cr.unregisteredOfferId), "commerce-rules: unregisteredOfferId must be 64 zeros");
 for (const c of cr.offerIdCases) check(cr.offers[c.offer]?.id, `${c.id}: offer needs a precomputed id`);
 for (const c of cr.minorUnitCases) check(minorOf(c.amount, c.currency) === c.expected, `${c.id}: expected ${c.expected}, rule gives ${minorOf(c.amount, c.currency)}`);
-const CART_CODES = ["invalid-request", "quantity-out-of-range", "offer-not-registered", "out-of-stock", "below-minimum", "currency-mismatch", "quantity-limit", "line-limit", "total-too-large", "not-in-cart"];
+const CART_CODES = ["invalid-request", "quantity-out-of-range", "offer-not-registered", "out-of-stock", "invalid-price", "below-minimum", "currency-mismatch", "quantity-limit", "line-limit", "total-too-large", "not-in-cart"];
 const cartIds = new Set();
 for (const c of cr.cartCases) {
   check(!cartIds.has(c.id), `commerce-rules: duplicate ${c.id}`); cartIds.add(c.id);
@@ -222,6 +224,10 @@ for (const c of cr.cartCases) {
     check(cart.lines.length > 0 || cart.currency === null, `${c.id}: empty cart must have currency null`);
   }
 }
+for (const c of cr.versionCases) {
+  for (const l of c.start) check(cr.offers[l.offer], `${c.id}: unknown start offer ${l.offer}`);
+  check(Number.isInteger(c.startVersion) && (c.expectedVersion === c.startVersion || c.expectedVersion === c.startVersion + 1), `${c.id}: version changes by 0 or 1`);
+}
 for (const c of cr.snapshotCases) {
   const o = cr.offers[c.offer];
   check(o && c.expectedLine.observed.amount === o.price.amount && c.expectedLine.observed.merchantHost === o.merchantHost && c.expectedLine.observed.retrievedAt === o.retrievedAt, `${c.id}: snapshot must copy the registry`);
@@ -232,9 +238,9 @@ for (const c of cr.snapshotCases) {
 const csr = read("evals/cases/checkout-session-request.json");
 for (const c of csr.cases) {
   const { port, now, order } = c.input, p = c.expected.params, cur = order.currency.toLowerCase();
-  check(p.mode === "payment" && p.currency === cur && p.adaptive_pricing?.enabled === false, `${c.id}: fixed fields`);
+  check(p.mode === "payment" && !("currency" in p) && p.adaptive_pricing?.enabled === false, `${c.id}: fixed fields (no top-level currency)`);
   check(!("payment_method_types" in p), `${c.id}: payment_method_types is not allowed (stripe 23)`);
-  check(p.expires_at === Math.floor(Date.parse(now) / 1000) + 1800, `${c.id}: expires_at rule`);
+  check(p.expires_at === Math.floor(Date.parse(now) / 1000) + 3600, `${c.id}: expires_at rule`);
   check(p.client_reference_id === order.orderId && p.metadata?.kensaku_order_id === order.orderId && p.metadata?.kensaku_simulated === "true" && p.payment_intent_data?.metadata?.kensaku_order_id === order.orderId, `${c.id}: order references`);
   check(p.success_url === `http://127.0.0.1:${port}/?checkout=success&order=${order.orderId}&session_id={CHECKOUT_SESSION_ID}` && p.cancel_url === `http://127.0.0.1:${port}/?checkout=cancelled&order=${order.orderId}`, `${c.id}: urls rule`);
   check(c.expected.options?.idempotencyKey === `kensaku-order-${order.orderId}`, `${c.id}: idempotency key rule`);
@@ -243,7 +249,7 @@ for (const c of csr.cases) {
     const li = p.line_items[i], name = [...l.productName.trim()].slice(0, 120).join("").trimEnd();
     check(li.quantity === l.quantity && li.price_data.currency === cur && li.price_data.unit_amount === l.demoUnitAmountMinor, `${c.id}: line ${i} amounts`);
     check(li.price_data.product_data.name === `Simulated: ${name}`, `${c.id}: line ${i} name rule`);
-    check(li.price_data.product_data.description === `Simulated Kensaku purchase in a Stripe sandbox. No order is placed with ${l.merchantHost} and no real payment is taken. Demo price copied from the price last observed on ${l.merchantHost} at ${l.observed.retrievedAt}.`, `${c.id}: line ${i} description rule`);
+    check(li.price_data.product_data.description === `Simulated Kensaku purchase in a Stripe sandbox. No order is placed with ${l.observed.merchantHost} and no real payment is taken. Demo price copied from the price last observed on ${l.observed.merchantHost} at ${l.observed.retrievedAt}.`, `${c.id}: line ${i} description rule`);
   });
 }
 
@@ -253,6 +259,7 @@ const OUTCOMES_W = { 200: ["applied", "duplicate", "ignored-type", "unknown-orde
 const STATES = ["open", "paid", "cancelled", "expired", "payment_failed", "failed"];
 for (const c of we.webhookCases) {
   for (const d of c.deliveries) {
+    if (d.restart === true) continue;
     check(d.rawBody !== undefined || we.templates[d.template], `${c.id}: unknown template ${d.template}`);
     check(["valid", "wrong-secret", "stale", "missing", "tampered"].includes(d.signature), `${c.id}: unknown signature mode`);
     check(OUTCOMES_W[d.expect.status]?.includes(d.expect.outcome), `${c.id}: outcome ${d.expect.outcome} invalid for status ${d.expect.status}`);
@@ -332,6 +339,8 @@ for (const [id, name, test, product, caseFile] of evals) {
       errors.push(`${id}: ${test} must apply the supersessions in evals/cases/offer-classification-v1-1.json (D-031, D-032)`);
     } else state = `READY (kensaku-v1-1 supersessions L29/Y03 pending JM-101: ${test} does not load evals/cases/offer-classification-v1-1.json yet)`;
   } else state = `READY (run the command listed for ${id} in .futari/plan.json)`;
+  // kensaku-v1-2: under --final every listed evaluation must be runnable (independent review finding 7).
+  if (FINAL && state.startsWith("NOT RUNNABLE")) errors.push(`${id}: ${state} (--final requires every evaluation to be runnable)`);
   console.log(`${id} ${name}: ${state}`);
 }
 if (errors.length) console.log(`HARNESS INVALID after test checks (${errors.length} problems)`);

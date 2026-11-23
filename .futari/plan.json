@@ -3,7 +3,7 @@
   "planId": "kensaku-v1-2",
   "projectName": "Kensaku",
   "repository": "futari-labs/kensaku",
-  "completionCondition": "JM-201 to JM-205 are merged into dev through one PR each with the CI and Futari contract checks green on each PR head and CI green on dev after each merge; on the final dev head CI passes EV-001 to EV-007, EV-009 to EV-015 and EV-017 to EV-022 plus typecheck, lint, build, node evals/harness.mjs, scripts/check-components.mjs and the Futari contract check, and node evals/harness.mjs --strict exits 0 locally at that head; the JM-203 sandbox smoke passed; EV-023 passes locally under evals/cases/live-acceptance-v1-2.json with every run log and the owner's H1-H5 audit committed under .futari/evidence/live/; and the owner records v1.2 product acceptance in docs/futari/PROGRESS.md. Promotion to main, deployment, and live Stripe keys are excluded.",
+  "completionCondition": "JM-201 to JM-205 are merged into dev through one PR each with the CI and Futari contract checks green on each PR head and CI green on dev after each merge; on the final dev head CI passes EV-001 to EV-007, EV-009 to EV-015 and EV-017 to EV-022 plus typecheck, lint, build, node evals/harness.mjs, scripts/check-components.mjs and the Futari contract check, and node evals/harness.mjs --strict --final exits 0 locally at that head; the JM-203 sandbox smoke passed; EV-023 passes locally under evals/cases/live-acceptance-v1-2.json with every run log and the owner's H1-H5 audit committed under .futari/evidence/live/; and the owner records v1.2 product acceptance in docs/futari/PROGRESS.md. Promotion to main, deployment, and live Stripe keys are excluded.",
   "maxParallelTasks": 2,
   "maxRepairAttemptsPerTask": 3,
   "liveEvaluationBudget": {
@@ -321,7 +321,7 @@
       "description": "Sandbox-only Stripe keys and secret handling (D-050): live keys and real payments are impossible, and credentials stay server-side and out of Git.",
       "acceptanceCriteria": [
         "The server refuses to start when STRIPE_SECRET_KEY contains _live_ or does not start with sk_test_, rk_test_, or rkcs_test_, or when STRIPE_WEBHOOK_SECRET lacks the whsec_ prefix; the error names the variable but never prints the value.",
-        "Checkout is enabled only when both values are present; /api/health reports only checkoutConfigured.",
+        "Checkout is enabled only when both values are present; GET /api/cart reports checkoutConfigured; GET /api/health is unchanged from v1.1 and says nothing about Stripe.",
         "Any Stripe session with livemode true is refused (502, order failed, no url) and any event or object with livemode true gets 400.",
         "No key or secret pattern ((sk|rk|rkcs|pk)_(test|live)_[A-Za-z0-9]{8,} or whsec_[A-Za-z0-9]{8,}) appears in tracked files, dist/, logs, API responses, .cache/, or .data/ (EV-021); .env.local and .data/ are gitignored."
       ]
@@ -332,7 +332,7 @@
       "acceptanceCriteria": [
         "Offer items in the main list and Other markets have 'Add to cart' with an aria-label naming product and host; disabled states and tooltips for offers without id ('Ask again to buy'), out-of-stock, and below-minimum.",
         "The header cart button shows the line count; the cart sheet shows the banner, lines with quantity controls, remove, clear, demo total, checkout, and the 10 newest orders with status badges.",
-        "The success, waiting, cancelled, declined, unknown-checkout, checkout-failed, and not-configured states show the texts in docs/futari/PRODUCT_SPEC.md '(v1.2) Simulated commerce journey'.",
+        "The success, waiting, cancelled, unknown-checkout, checkout-failed, not-configured, and 'Checkout link expired' states show the texts in docs/futari/PRODUCT_SPEC.md '(v1.2) Simulated commerce journey'; the declined note is best-effort and appears only when Stripe reported a decline (R-30).",
         "EV-022 checks 1-14 pass."
       ]
     }
@@ -514,7 +514,7 @@
       ],
       "description": "Cart and demo price rules: offer ids, minor units, cart operations, and line snapshots against the frozen synthetic cases.",
       "kind": "deterministic",
-      "passRule": "tests/evals/ev-018-commerce-rules.test.ts loads evals/cases/commerce-rules.json unchanged; offerId, toMinorUnits, applyCartOp, and the line snapshot reproduce all 4 id, 11 minor-unit, 28 cart, and 2 snapshot cases exactly (outcome, code, details, resulting cart, unchanged cart); the test asserts each count.",
+      "passRule": "tests/evals/ev-018-commerce-rules.test.ts loads evals/cases/commerce-rules.json unchanged; offerId, toMinorUnits, applyCartOp, and the line snapshot reproduce all 4 id, 11 minor-unit, 34 cart, 6 version, and 2 snapshot cases exactly (outcome, code, details, resulting cart, unchanged cart, cart version); the test asserts each count.",
       "command": "pnpm vitest run tests/evals/ev-018-commerce-rules.test.ts"
     },
     {
@@ -526,7 +526,7 @@
       ],
       "description": "Checkout session request contract for stripe 23.1.0.",
       "kind": "deterministic",
-      "passRule": "tests/evals/ev-019-checkout-request.test.ts loads evals/cases/checkout-session-request.json unchanged; buildCheckoutSessionRequest deep-equals all 3 cases' { params, options }; StripeCheckoutPort, with a stubbed SDK client, passes exactly those to checkout.sessions.create; the test asserts the count.",
+      "passRule": "tests/evals/ev-019-checkout-request.test.ts loads evals/cases/checkout-session-request.json unchanged; buildCheckoutSessionRequest deep-equals all 4 cases' { params, options }; StripeCheckoutPort, with a stubbed SDK client, passes exactly those to checkout.sessions.create; the test asserts the count.",
       "command": "pnpm vitest run tests/evals/ev-019-checkout-request.test.ts"
     },
     {
@@ -537,7 +537,7 @@
       ],
       "description": "Webhook verification, dedupe, matching, order transitions, and the cancel and checkout routes, with real Stripe test signatures.",
       "kind": "deterministic",
-      "passRule": "tests/evals/ev-020-webhooks.test.ts loads evals/cases/webhook-events.json unchanged and, through the Hono app with FakeCheckoutPort and signatures from stripe.webhooks.generateTestHeaderString, reproduces every delivery's status and outcome and every final state of all 24 webhook cases, and every step of all 11 route cases; the test asserts both counts.",
+      "passRule": "tests/evals/ev-020-webhooks.test.ts loads evals/cases/webhook-events.json unchanged and, through the Hono app with FakeCheckoutPort and signatures from stripe.webhooks.generateTestHeaderString, reproduces every delivery's status and outcome and every final state of all 30 webhook cases (including the restart case), and every step of all 19 route cases (including the concurrency cases X18 and X19); the test asserts both counts.",
       "command": "pnpm vitest run tests/evals/ev-020-webhooks.test.ts"
     },
     {
@@ -548,7 +548,7 @@
       ],
       "description": "Sandbox-only Stripe keys and absence of Stripe credentials from every artifact.",
       "kind": "deterministic",
-      "passRule": "Checks 1-5 in docs/futari/EVALUATION_PLAN.md 'Stripe keys (EV-021)' pass: live and malformed keys refused without printing them; live-mode sessions and foreign urls refused; runtime-built fake credentials absent from logs, responses, .data/, .cache/offers/, and dist/ after a fixture purchase; no key pattern in tracked files; health reports only checkoutConfigured.",
+      "passRule": "Checks 1-5 in docs/futari/EVALUATION_PLAN.md 'Stripe keys (EV-021)' pass: live and malformed keys refused without printing them; live-mode sessions and foreign urls refused; runtime-built fake credentials absent from logs, responses, .data/, .cache/offers/, and dist/ after a fixture purchase; no key pattern in tracked files; GET /api/cart reports checkoutConfigured while GET /api/health is unchanged.",
       "command": "pnpm build && pnpm vitest run tests/evals/ev-021-stripe-keys.test.ts"
     },
     {
@@ -651,7 +651,8 @@
         "package.json adds stripe at exactly 23.1.0 (pnpm-lock.yaml updated); no other dependency changes.",
         "src/commerce/port.ts defines CheckoutPort, SessionResult, the typed errors, and its own CheckoutOrderInput (structural; it does not import JM-201 code); src/commerce/session-request.ts implements buildCheckoutSessionRequest; EV-019 passes.",
         "src/commerce/stripe-port.ts is the only stripe importer: StripeCheckoutPort (apiVersion '2026-10-28.endive'; maps 'session not open' expire errors to session-not-open; refuses livemode sessions and urls outside https://checkout.stripe.com/) and verifyWebhook(rawBody, header, secret) using stripe.webhooks.constructEvent with tolerance 300; src/commerce/fake-port.ts implements FakeCheckoutPort with scripted outcomes and recorded calls.",
-        "src/server/config.ts parses STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET per D-050 and exposes checkoutConfigured on AppConfig; .env.example documents both empty; EV-021 checks 1, 2, and 4 pass (checks 3 and 5 are completed by JM-203 in the same test file).",
+        "src/server/config.ts parses STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET per D-050 into an optional ServerConfig.stripe { secretKey, webhookSecret } (present only when both are set); AppConfig is unchanged, so existing test helpers that build AppConfig literals still typecheck; .env.example documents both empty; EV-021 checks 1, 2, and 4 pass (checks 3 and 5 are completed by JM-203 in the same test file).",
+        "src/commerce/stripe-port.ts also exports signTestPayload(payload, secret, timestamp) wrapping stripe.webhooks.generateTestHeaderString, for tests and the test-only fake hosted page, so stripe stays imported in one module; the Stripe-facing label strings ('Simulated: ' prefix, descriptions) live in src/commerce/session-request.ts and are frozen by EV-019.",
         "Never contact live Stripe; tests use FakeCheckoutPort or a stubbed SDK client and secrets built at runtime."
       ],
       "verificationCommands": [
@@ -718,11 +719,11 @@
       ],
       "acceptanceCriteria": [
         "The pipeline's validate stage assigns offerId to every merchant offer, registers snapshots through an injected registerOffers callback into .cache/offers/ (src/commerce/registry.ts), and includes id in data-products; EV-005, EV-006, and EV-017 stay green.",
-        "src/commerce/store.ts, service.ts, and webhook.ts implement .data/commerce/state.json (atomic, one serialized writer, corrupt file disables commerce visibly), the routes in ARCHITECTURE 'HTTP API' (v1.2), the checkout flow, cancel, and supersede; .gitignore adds .data/; EV-020 passes; the cart routes reproduce EV-018's cases with the documented statuses (tests/server/).",
-        "src/commerce/fake-hosted.ts serves the test-only page (Pay, Decline, Back) only when NODE_ENV=test and fixture mode; tests/e2e/commerce-slice.spec.ts runs research → add → checkout → fake page → signed webhook → paid with zero non-local requests.",
+        "src/commerce/store.ts, service.ts, and webhook.ts implement .data/commerce/state.json (atomic, corrupt file disables commerce visibly), one serialized queue for every commerce mutation including its port calls (webhook-events.json rules.serialization), the routes in ARCHITECTURE 'HTTP API' (v1.2), the checkout flow, cancel and supersede with the retrieve fallback, and the processed-id cap (30 days, 10000) with a unit test; createApp takes commerce as an optional dependency and GET /api/health is unchanged; .gitignore adds .data/; EV-020 passes; the cart routes reproduce EV-018's cases with the documented statuses (tests/server/).",
+        "src/commerce/fake-hosted.ts serves the test-only page (Pay, Decline, Back) and the test-only routes POST /__test/commerce/reset, /__test/commerce/checkout-configured { value }, and /__test/commerce/withhold-webhooks { value } only when NODE_ENV=test and fixture mode (EV-022 isolation and checks 9-10); tests/e2e/commerce-slice.spec.ts runs research → add → checkout → fake page → signed webhook → paid with zero non-local requests.",
         "Minimal UI in src/web/app/: Add to cart on offer items, a basic cart sheet (official shadcn sheet installed with the pinned CLI, recorded in components.lock.json) with lines, demo and observed prices, and checkout, and the checkout return panel with the paid and cancelled texts; carried EV-007 and EV-015 assertions unchanged.",
         "EV-021 checks 3 and 5 are added and all of EV-021 passes; EV-009 still passes.",
-        "Sandbox smoke (docs/futari/EVALUATION_PLAN.md 'Slice smoke (JM-203, v1.2)') with the owner's sandbox key and Stripe CLI: USD, SGD, and JPY sessions created, retrieved, and expired; one owner-paid USD purchase marked paid only after the verified webhook; one stripe events resend answered duplicate; ≤ 5 Exa requests; log committed under .futari/evidence/live/. A Stripe-fact miss (R-27, R-28) stops execution for a plan revision."
+        "Sandbox smoke (docs/futari/EVALUATION_PLAN.md 'Slice smoke (JM-203, v1.2)') with the owner's sandbox key and Stripe CLI: USD, SGD, and JPY sessions created, retrieved, and expired; one owner-paid USD purchase marked paid only after the verified webhook; one owner decline with 4000 0000 0000 0002 then back (whether payment_intent.payment_failed arrives is recorded); one expire of an already-expired session with the real error shape recorded; one stripe events resend answered duplicate; ≤ 5 Exa requests; log committed under .futari/evidence/live/. A Stripe-fact miss (R-27, R-28) stops execution for a plan revision."
       ],
       "verificationCommands": [
         "pnpm install --frozen-lockfile",
@@ -827,6 +828,7 @@
         "EV-004",
         "EV-005",
         "EV-006",
+        "EV-007",
         "EV-009",
         "EV-010",
         "EV-011",
@@ -835,7 +837,11 @@
         "EV-014",
         "EV-015",
         "EV-017",
-        "EV-021"
+        "EV-018",
+        "EV-019",
+        "EV-020",
+        "EV-021",
+        "EV-022"
       ],
       "dependsOn": [
         "JM-204"
@@ -847,6 +853,7 @@
         "README.md",
         "src/commerce/",
         "src/server/",
+        "src/research/pipeline.ts",
         "src/web/app/",
         "src/core/commerce.ts",
         "tests/",
@@ -855,8 +862,8 @@
       "acceptanceCriteria": [
         "scripts/live-acceptance-v1-2.ts and the package.json script live:acceptance:v1-2 implement evals/cases/live-acceptance-v1-2.json: preconditions checked, plan-wide Exa counter in .cache/live/, agent scenarios A6-A8 automated, owner scenarios A1-A5 prompted step by step, Stripe session retrieves as audit, run log as specified; the script never automates the Stripe-hosted page.",
         "EV-023 passes in at most 2 runs; every run log and the owner's H1-H5 audit are committed under .futari/evidence/live/ and summarized in .futari/evidence/JM-205.md.",
-        "README.md documents the owner's Stripe sandbox setup (EXECUTION_PLAN 'Owner prerequisites'), the stripe listen command, and that purchases are simulated.",
-        "On the final head, EV-001 to EV-007, EV-009 to EV-015, and EV-017 to EV-022 pass and node evals/harness.mjs --strict exits 0; fixes stay inside the allowed paths and keep frozen cases unchanged."
+        "README.md documents the owner's Stripe sandbox setup (EXECUTION_PLAN 'Owner prerequisites'), the stripe listen command, that checkout must be used at http://127.0.0.1:8787 with pnpm start (not localhost or pnpm dev, R-40), and that purchases are simulated.",
+        "On the final head, EV-001 to EV-007, EV-009 to EV-015, and EV-017 to EV-022 pass and node evals/harness.mjs --strict --final exits 0; fixes stay inside the allowed paths and keep frozen cases unchanged."
       ],
       "verificationCommands": [
         "pnpm install --frozen-lockfile",
@@ -866,7 +873,7 @@
         "pnpm build",
         "pnpm test:e2e",
         "node scripts/check-components.mjs",
-        "node evals/harness.mjs --strict",
+        "node evals/harness.mjs --strict --final",
         "pnpm live:acceptance:v1-2"
       ]
     }
