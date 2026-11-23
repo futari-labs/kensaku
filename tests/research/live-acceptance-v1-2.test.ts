@@ -964,6 +964,7 @@ describe("a research failure is a failure, not BLOCKED", () => {
 describe("blockedAllowances (CR-006)", () => {
   const allowance = { scenario: "A3" as const, query: "Q5", when: "Q5 yields no addable JPY offer after the permitted re-ask" };
   const allowed = { ...caseFile, blockedAllowances: [allowance] };
+  const withoutAllowances = { ...caseFile, blockedAllowances: [] };
   const noJpy = { Q1: "xm5-us", Q3: "xm5-sg", Q5: "no-market-offers" };
   const runCase = (c: typeof caseFile, env: AcceptanceEnv) => runAcceptance(env, c, 0);
 
@@ -989,7 +990,7 @@ describe("blockedAllowances (CR-006)", () => {
   });
 
   it("stays BLOCKED for the same run without the allowance", async () => {
-    const log = await runCase(caseFile, dryAcceptanceEnv(undefined, noJpy));
+    const log = await runCase(withoutAllowances, dryAcceptanceEnv(undefined, noJpy));
     expect(log.thresholds).toMatchObject({ scenariosPassingMet: false, blockedAllowancesUsed: [] });
     expect(log.verdict).toBe("BLOCKED");
   });
