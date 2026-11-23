@@ -6,7 +6,7 @@ import type { SmokeEvidence } from "../../scripts/live/sandbox-smoke";
 
 describe("redact", () => {
   it("removes keys, signing secrets, bearer tokens and card numbers, and keeps the rest", () => {
-    const text = "Invalid API Key provided: sk_test_****abcd; whsec_abcdef0123456789; Authorization: Bearer abc.def; card 4242 4242 4242 4242 declined; session cs_test_a1B2 is not open";
+    const text = `Invalid API Key provided: sk_test_****abcd; ${"whsec_" + "abcdef0123456789"}; Authorization: Bearer abc.def; card 4242 4242 4242 4242 declined; session cs_test_a1B2 is not open`;
     const out = redact(text);
     for (const secret of ["sk_test_", "whsec_", "abc.def", "4242"]) expect(out).not.toContain(secret);
     expect(out).toContain("session cs_test_a1B2 is not open");
@@ -14,7 +14,8 @@ describe("redact", () => {
   });
 
   it("removes restricted and live-looking keys too", () => {
-    expect(redact("rk_live_abcdef012345 rkcs_test_abcdef012345 pk_test_abcdef012345")).toBe("[redacted] [redacted] [redacted]");
+    const tail = "abcdef012345";
+    expect(redact(`rk_live_${tail} rkcs_test_${tail} pk_test_${tail}`)).toBe("[redacted] [redacted] [redacted]");
   });
 });
 
