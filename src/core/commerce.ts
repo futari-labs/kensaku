@@ -25,7 +25,6 @@ export interface CartLine {
   observed: { amount: number; currency: Currency; retrievedAt: string; merchantHost: string };
 }
 
-/** `version` increments on every successful change. */
 export interface Cart {
   version: number;
   currency: Currency | null;
@@ -157,7 +156,6 @@ export function offerId(offer: {
   return sha256Hex(joined);
 }
 
-/** Minor units of a demo charge, or null when the amount cannot be charged exactly. */
 export function toMinorUnits(amount: number, currency: string): number | null {
   if (!Number.isFinite(amount) || amount <= 0) return null;
   if (currency === "JPY") return Number.isSafeInteger(amount) ? amount : null;
@@ -191,7 +189,6 @@ const ALLOWED_KEYS: Record<CartOp["kind"], readonly string[]> = {
 
 const isQuantity = (q: number): boolean => Number.isInteger(q) && q >= 1 && q <= MAX_LINE_QUANTITY;
 
-/** Strict parse of an untrusted operation: unknown fields or wrong types are invalid-request. */
 function parseOp(raw: unknown): ParsedOp {
   const invalid = { ok: false, code: "invalid-request" } as const;
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return invalid;
@@ -270,10 +267,6 @@ function applyRemove(cart: Cart, op: Extract<CartOp, { kind: "remove" }>): CartR
   return { ok: true, cart: { version: cart.version + 1, currency: lines.length === 0 ? null : cart.currency, lines } };
 }
 
-/**
- * Reducer for the simulated cart. `op` is untrusted and parsed strictly here; the cart is never mutated.
- * Errors follow the precedence of evals/cases/commerce-rules.json rules.errorPrecedence.
- */
 export function applyCartOp(cart: Cart, op: unknown, registry: OfferRegistry): CartResult {
   const parsed = parseOp(op);
   if (!parsed.ok) return fail(parsed.code);
@@ -289,7 +282,6 @@ export function applyCartOp(cart: Cart, op: unknown, registry: OfferRegistry): C
   }
 }
 
-/** The part of a Stripe event the order transitions read; independent of the stripe SDK types. */
 export interface StripeEventView {
   type: string;
   payment_status?: string;
@@ -302,11 +294,6 @@ export interface TransitionResult<T extends TransitionableOrder> {
   outcome: "applied" | "no-transition";
 }
 
-/**
- * Pure order transition for a verified, matched event (webhook-events.json rules.transitions).
- * Touches only state, anomaly, awaitingAsyncPayment, and declinedAttempts; the caller records
- * `transitions` and `updatedAt`. An unrecognized type returns no-transition (the handler reports ignored-type).
- */
 export function applyStripeEvent<T extends TransitionableOrder>(order: T, event: StripeEventView): TransitionResult<T> {
   const noChange: TransitionResult<T> = { order, outcome: "no-transition" };
   const leave = (state: OrderState, extra: Partial<TransitionableOrder> = {}): TransitionResult<T> => ({
@@ -351,10 +338,8 @@ export const ORDER_BADGE_LABELS: Record<OrderState, string> = {
   failed: "Simulated · Failed",
 };
 
-/** Phrases the UI must never show (EV-022). */
 export const FORBIDDEN_UI_PHRASES = ["Order confirmed", "Order placed", "Thank you for your order", "Purchase complete", "has shipped"] as const;
 
-/** "19.90" for USD and SGD, "39980" for JPY. */
 export function formatMinor(minor: number, currency: Currency): string {
   return currency === "JPY" ? String(minor) : (minor / 100).toFixed(2);
 }
@@ -362,7 +347,6 @@ export function formatMinor(minor: number, currency: Currency): string {
 export const demoPriceLabel = (unitMinor: number, currency: Currency): string =>
   `Demo checkout price ${formatMinor(unitMinor, currency)} ${currency}`;
 
-/** `localTime` is the viewer's local date and time, formatted by the caller. */
 export const observedPriceLabel = (observed: CartLine["observed"], localTime: string): string =>
   `Last observed ${formatMinor(toMinorUnits(observed.amount, observed.currency) ?? 0, observed.currency)} ${observed.currency} on ${observed.merchantHost}, ${localTime}`;
 

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { applyCartOp, cartTotalMinor, offerId, toMinorUnits, type Cart, type CartLine, type Currency, type RegisteredOffer } from "../../src/core";
 import { readJson } from "../core/fixtures";
 
-// Frozen gold cases: evals/cases/commerce-rules.json (read-only, every case evaluated).
 interface OfferFixture {
   id?: string;
   canonicalUrl: string;
