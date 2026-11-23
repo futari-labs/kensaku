@@ -43,9 +43,15 @@ test("research, add, checkout, pay on the fake page, and the verified webhook ma
   const origins = watchOrigins(page);
   await addFirstOffer(page);
   await checkoutFromSheet(page);
+  let cartReads = 0;
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/cart" && request.method() === "GET") cartReads++;
+  });
   await page.getByRole("button", { name: "Pay" }).click();
 
   await expect(page.getByTestId("checkout-return")).toHaveAttribute("data-state", "paid");
+  await page.waitForTimeout(3_000);
+  expect(cartReads).toBeLessThanOrEqual(3);
   await expect(page.getByTestId("checkout-return")).toContainText("Simulated payment received (Stripe sandbox). No order was placed with");
   await expect(page).toHaveURL(`${ORIGIN}/`);
   await expect(page.getByTestId("cart-count")).toHaveText("0");
@@ -74,6 +80,8 @@ test("Decline then Back cancels the simulated checkout and keeps the cart", asyn
 });
 
 test("the test-only routes are guarded like the rest of the API", async ({ request }) => {
+  const foreign = await request.post("/__test/commerce/reset", { headers: { origin: "https://evil.example" } });
+  expect(foreign.status()).toBe(403);
   expect((await request.post("/__test/commerce/checkout-configured", { data: { value: "no" } })).status()).toBe(400);
   expect((await request.post("/__test/commerce/expire-open-order")).status()).toBe(404);
   expect((await request.post("/__test/commerce/checkout-configured", { data: { value: false } })).status()).toBe(200);

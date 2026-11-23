@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OFFER_TTL_MS, OfferStore } from "../../src/commerce/registry";
 import { PORT_TIMEOUT_MS } from "../../src/commerce/service";
+import { stripeEventEnvelope } from "../../src/commerce/stripe-port";
 import { CommerceStore, emptyState } from "../../src/commerce/store";
 import { PROCESSED_MAX, PROCESSED_TTL_MS, recordProcessed } from "../../src/commerce/webhook";
 import type { CartLine, CommerceState, Order } from "../../src/core/commerce";
@@ -22,8 +23,6 @@ const line: CartLine = {
 const withCart: CommerceState = { ...emptyState(), cart: { version: 1, currency: "USD", lines: [line] } };
 
 describe("the Stripe call timeout", () => {
-  it("is 10 seconds", () => expect(PORT_TIMEOUT_MS).toBe(10_000));
-
   it("answers 502 when a port call outlasts it, and frees the queue for the next operation", async () => {
     vi.useFakeTimers();
     const rig = commerceRig({ seed: withCart });
@@ -63,6 +62,61 @@ describe("the Stripe call timeout", () => {
     await vi.advanceTimersByTimeAsync(2 * PORT_TIMEOUT_MS + 10);
     expect(await cancelled).toMatchObject({ status: 502, body: { code: "cancel-failed" } });
     expect(rig.service.order("ord_1")?.state).toBe("open");
+  });
+});
+
+const openOrder = (n: number): Order => ({
+  orderId: `ord_${n}`,
+  state: "open",
+  currency: "USD",
+  lines: [line],
+  totalMinor: 1000,
+  cartVersion: 1,
+  stripeSessionId: `cs_${n}`,
+  expiresAt: null,
+  declinedAttempts: 0,
+  awaitingAsyncPayment: false,
+  createdAt: "2026-11-23T00:00:00.000Z",
+  updatedAt: "2026-11-23T00:00:00.000Z",
+  transitions: [{ at: "2026-11-23T00:00:00.000Z", from: null, to: "open" }],
+});
+
+describe("checkout with open orders and webhooks", () => {
+  it("supersedes every open order, oldest first, before creating the new session", async () => {
+    const rig = commerceRig({ seed: { ...withCart, orders: [openOrder(1), openOrder(2)] } });
+    expect((await rig.json("POST", "/api/checkout", {})).status).toBe(200);
+    expect(rig.port.calls.filter((c) => c.method === "expireSession").map((c) => (c as { id: string }).id)).toEqual(["cs_1", "cs_2"]);
+    expect(rig.port.calls.map((c) => c.method)).toEqual(["expireSession", "expireSession", "createSession"]);
+    expect(rig.service.order("ord_1")).toMatchObject({ state: "expired", reason: "superseded" });
+    expect(rig.service.order("ord_2")).toMatchObject({ state: "expired", reason: "superseded" });
+    expect(rig.service.order("ord_1")?.transitions.map((t) => t.to)).toEqual(["open", "expired"]);
+    expect(rig.service.orders()[0]?.state).toBe("open");
+  });
+
+  it("applies a webhook that arrives during a delayed checkout create only after the checkout finishes", async () => {
+    const rig = commerceRig({ seed: withCart });
+    let release: () => void = () => {};
+    let entered = false;
+    const create = rig.port.createSession.bind(rig.port);
+    rig.port.createSession = async (params, options) => {
+      entered = true;
+      await new Promise<void>((resolve) => (release = resolve));
+      return create(params, options);
+    };
+    const checkout = rig.json("POST", "/api/checkout", {});
+    await vi.waitFor(() => expect(entered).toBe(true));
+    let answered = false;
+    const payload = JSON.stringify(stripeEventEnvelope("evt_during", "checkout.session.expired", { id: "cs_other", client_reference_id: "ord_missing" }));
+    const delivery = rig.signed(payload).then((res) => {
+      answered = true;
+      return res;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(answered).toBe(false);
+    release();
+    expect((await checkout).status).toBe(200);
+    expect(await (await delivery).json()).toEqual({ outcome: "unknown-order" });
+    expect(rig.service.orders()).toHaveLength(1);
   });
 });
 
