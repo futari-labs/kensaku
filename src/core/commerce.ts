@@ -1,3 +1,4 @@
+import { MINOR_DIGITS, isSupportedCurrency } from "./currency";
 import type { Availability, Currency, Market } from "./types";
 
 export type OrderState = "open" | "paid" | "cancelled" | "expired" | "payment_failed" | "failed";
@@ -75,7 +76,7 @@ export type CartErrorCode =
   | "not-in-cart";
 
 export type CartOp =
-  | { kind: "add"; offerId: string; quantity?: number; replace?: boolean }
+  | { kind: "add"; offerId: string; quantity: number; replace: boolean }
   | { kind: "setQuantity"; offerId: string; quantity: number }
   | { kind: "remove"; offerId: string }
   | { kind: "clear" };
@@ -87,9 +88,10 @@ export interface CurrencyMismatch {
 
 export type CartResult =
   | { ok: true; cart: Cart }
-  | { ok: false; code: CartErrorCode; details?: CurrencyMismatch };
+  | { ok: false; code: "currency-mismatch"; details: CurrencyMismatch }
+  | { ok: false; code: Exclude<CartErrorCode, "currency-mismatch"> };
 
-export type OfferRegistry = ReadonlyMap<string, RegisteredOffer> | ((offerId: string) => RegisteredOffer | undefined);
+export type OfferRegistry = (offerId: string) => RegisteredOffer | undefined;
 
 const SHA256_K = Uint32Array.of(
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -157,28 +159,21 @@ export function offerId(offer: {
 }
 
 export function toMinorUnits(amount: number, currency: string): number | null {
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  if (currency === "JPY") return Number.isSafeInteger(amount) ? amount : null;
-  if (currency !== "USD" && currency !== "SGD") return null;
-  const scaled = amount * 100;
+  if (!Number.isFinite(amount) || amount <= 0 || !isSupportedCurrency(currency)) return null;
+  const digits = MINOR_DIGITS[currency];
+  const scaled = amount * 10 ** digits;
   const minor = Math.round(scaled);
-  if (Math.abs(scaled - minor) > 1e-6 || !Number.isSafeInteger(minor) || minor <= 0) return null;
-  return minor;
+  const tolerance = digits === 0 ? 0 : 1e-6;
+  return Math.abs(scaled - minor) <= tolerance && Number.isSafeInteger(minor) ? minor : null;
 }
 
 export function cartTotalMinor(cart: Pick<Cart, "lines">): number {
   return cart.lines.reduce((sum, line) => sum + line.demoUnitAmountMinor * line.quantity, 0);
 }
 
-const lookup = (registry: OfferRegistry, id: string): RegisteredOffer | undefined =>
-  typeof registry === "function" ? registry(id) : registry.get(id);
-
-const fail = (code: CartErrorCode, details?: CurrencyMismatch): CartResult =>
-  details ? { ok: false, code, details } : { ok: false, code };
-
 const emptyCart = (version: number): Cart => ({ version, currency: null, lines: [] });
 
-type ParsedOp = { ok: true; op: CartOp } | { ok: false; code: "invalid-request" | "quantity-out-of-range" };
+type ParsedCartOp = { ok: true; op: CartOp } | { ok: false; code: "invalid-request" | "quantity-out-of-range" };
 
 const ALLOWED_KEYS: Record<CartOp["kind"], readonly string[]> = {
   add: ["kind", "offerId", "quantity", "replace"],
@@ -189,46 +184,47 @@ const ALLOWED_KEYS: Record<CartOp["kind"], readonly string[]> = {
 
 const isQuantity = (q: number): boolean => Number.isInteger(q) && q >= 1 && q <= MAX_LINE_QUANTITY;
 
-function parseOp(raw: unknown): ParsedOp {
+export function parseCartOp(raw: unknown): ParsedCartOp {
   const invalid = { ok: false, code: "invalid-request" } as const;
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return invalid;
   const body = raw as Record<string, unknown>;
-  const kind = body.kind;
+  const field = (key: string): unknown => (Object.hasOwn(body, key) ? body[key] : undefined);
+  const kind = field("kind");
   if (kind !== "add" && kind !== "setQuantity" && kind !== "remove" && kind !== "clear") return invalid;
   if (Object.keys(body).some((key) => !ALLOWED_KEYS[kind].includes(key))) return invalid;
   if (kind === "clear") return { ok: true, op: { kind } };
-  const id = body.offerId;
+  const id = field("offerId");
   if (typeof id !== "string" || id === "") return invalid;
   if (kind === "remove") return { ok: true, op: { kind, offerId: id } };
-  const quantity = body.quantity;
+  const quantity = field("quantity");
   if (quantity !== undefined && typeof quantity !== "number") return invalid;
   if (kind === "setQuantity") {
     if (quantity === undefined) return invalid;
     if (!isQuantity(quantity)) return { ok: false, code: "quantity-out-of-range" };
     return { ok: true, op: { kind, offerId: id, quantity } };
   }
-  const replace = body.replace;
+  const replace = field("replace");
   if (replace !== undefined && typeof replace !== "boolean") return invalid;
   if (quantity !== undefined && !isQuantity(quantity)) return { ok: false, code: "quantity-out-of-range" };
-  return { ok: true, op: { kind, offerId: id, quantity, replace } };
+  return { ok: true, op: { kind, offerId: id, quantity: quantity ?? 1, replace: replace ?? false } };
 }
 
 function applyAdd(cart: Cart, op: Extract<CartOp, { kind: "add" }>, registry: OfferRegistry): CartResult {
-  const offer = lookup(registry, op.offerId);
-  if (!offer) return fail("offer-not-registered");
-  if (offer.availability === "out_of_stock") return fail("out-of-stock");
+  const offer = registry(op.offerId);
+  if (!offer) return { ok: false, code: "offer-not-registered" };
+  if (offer.availability === "out_of_stock") return { ok: false, code: "out-of-stock" };
   const unit = toMinorUnits(offer.price.amount, offer.price.currency);
-  if (unit === null) return fail("invalid-price");
-  if (unit < MIN_UNIT_MINOR) return fail("below-minimum");
+  if (unit === null) return { ok: false, code: "invalid-price" };
+  if (unit < MIN_UNIT_MINOR) return { ok: false, code: "below-minimum" };
 
-  const base: Cart = op.replace === true ? emptyCart(cart.version) : cart;
+  const base: Cart = op.replace ? emptyCart(cart.version) : cart;
   if (base.currency !== null && base.currency !== offer.price.currency) {
-    return fail("currency-mismatch", { cartCurrency: base.currency, offerCurrency: offer.price.currency });
+    return { ok: false, code: "currency-mismatch", details: { cartCurrency: base.currency, offerCurrency: offer.price.currency } };
   }
-  const quantity = op.quantity ?? 1;
+  const { quantity } = op;
   const existing = base.lines.find((line) => line.offerId === offer.id);
-  if (existing && existing.quantity + quantity > MAX_LINE_QUANTITY) return fail("quantity-limit");
-  if (!existing && base.lines.length >= MAX_LINES) return fail("line-limit");
+  if (existing && existing.quantity + quantity > MAX_LINE_QUANTITY) return { ok: false, code: "quantity-limit" };
+  if (!existing && base.lines.length >= MAX_LINES) return { ok: false, code: "line-limit" };
 
   const lines: CartLine[] = existing
     ? base.lines.map((line) => (line === existing ? { ...line, quantity: line.quantity + quantity } : line))
@@ -248,35 +244,33 @@ function applyAdd(cart: Cart, op: Extract<CartOp, { kind: "add" }>, registry: Of
           },
         },
       ];
-  if (cartTotalMinor({ lines }) > MAX_TOTAL_MINOR) return fail("total-too-large");
+  if (cartTotalMinor({ lines }) > MAX_TOTAL_MINOR) return { ok: false, code: "total-too-large" };
   return { ok: true, cart: { version: cart.version + 1, currency: offer.price.currency, lines } };
 }
 
 function applySetQuantity(cart: Cart, op: Extract<CartOp, { kind: "setQuantity" }>): CartResult {
   const existing = cart.lines.find((line) => line.offerId === op.offerId);
-  if (!existing) return fail("not-in-cart");
+  if (!existing) return { ok: false, code: "not-in-cart" };
   if (existing.quantity === op.quantity) return { ok: true, cart };
   const lines = cart.lines.map((line) => (line === existing ? { ...line, quantity: op.quantity } : line));
-  if (cartTotalMinor({ lines }) > MAX_TOTAL_MINOR) return fail("total-too-large");
+  if (cartTotalMinor({ lines }) > MAX_TOTAL_MINOR) return { ok: false, code: "total-too-large" };
   return { ok: true, cart: { ...cart, version: cart.version + 1, lines } };
 }
 
 function applyRemove(cart: Cart, op: Extract<CartOp, { kind: "remove" }>): CartResult {
-  if (!cart.lines.some((line) => line.offerId === op.offerId)) return fail("not-in-cart");
+  if (!cart.lines.some((line) => line.offerId === op.offerId)) return { ok: false, code: "not-in-cart" };
   const lines = cart.lines.filter((line) => line.offerId !== op.offerId);
   return { ok: true, cart: { version: cart.version + 1, currency: lines.length === 0 ? null : cart.currency, lines } };
 }
 
-export function applyCartOp(cart: Cart, op: unknown, registry: OfferRegistry): CartResult {
-  const parsed = parseOp(op);
-  if (!parsed.ok) return fail(parsed.code);
-  switch (parsed.op.kind) {
+export function applyCartOp(cart: Cart, op: CartOp, registry: OfferRegistry): CartResult {
+  switch (op.kind) {
     case "add":
-      return applyAdd(cart, parsed.op, registry);
+      return applyAdd(cart, op, registry);
     case "setQuantity":
-      return applySetQuantity(cart, parsed.op);
+      return applySetQuantity(cart, op);
     case "remove":
-      return applyRemove(cart, parsed.op);
+      return applyRemove(cart, op);
     case "clear":
       return cart.lines.length === 0 ? { ok: true, cart } : { ok: true, cart: emptyCart(cart.version + 1) };
   }
@@ -341,14 +335,15 @@ export const ORDER_BADGE_LABELS: Record<OrderState, string> = {
 export const FORBIDDEN_UI_PHRASES = ["Order confirmed", "Order placed", "Thank you for your order", "Purchase complete", "has shipped"] as const;
 
 export function formatMinor(minor: number, currency: Currency): string {
-  return currency === "JPY" ? String(minor) : (minor / 100).toFixed(2);
+  const digits = MINOR_DIGITS[currency];
+  return (minor / 10 ** digits).toFixed(digits);
 }
 
 export const demoPriceLabel = (unitMinor: number, currency: Currency): string =>
   `Demo checkout price ${formatMinor(unitMinor, currency)} ${currency}`;
 
 export const observedPriceLabel = (observed: CartLine["observed"], localTime: string): string =>
-  `Last observed ${formatMinor(toMinorUnits(observed.amount, observed.currency) ?? 0, observed.currency)} ${observed.currency} on ${observed.merchantHost}, ${localTime}`;
+  `Last observed ${observed.amount.toFixed(MINOR_DIGITS[observed.currency])} ${observed.currency} on ${observed.merchantHost}, ${localTime}`;
 
 export const demoTotalLabel = (totalMinor: number, currency: Currency): string =>
   `Demo total ${formatMinor(totalMinor, currency)} ${currency}`;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCartOp, cartTotalMinor, offerId, toMinorUnits, type Cart, type CartLine, type Currency, type RegisteredOffer } from "../../src/core";
+import { applyCartOp, cartTotalMinor, offerId, parseCartOp, toMinorUnits, type Cart, type CartLine, type CartResult, type Currency, type RegisteredOffer } from "../../src/core";
 import { readJson } from "../core/fixtures";
 
 interface OfferFixture {
@@ -38,6 +38,11 @@ interface Rules {
   versionCases: { id: string; startVersion: number; start: { offer: string; quantity: number }[]; op: CartCase["op"]; expectedVersion: number }[];
 }
 const rules = readJson<Rules>("evals/cases/commerce-rules.json");
+
+function run(cart: Cart, raw: unknown, reg: ReadonlyMap<string, RegisteredOffer>): CartResult {
+  const parsed = parseCartOp(raw);
+  return parsed.ok ? applyCartOp(cart, parsed.op, (id) => reg.get(id)) : { ok: false, code: parsed.code };
+}
 
 const MARKET = { USD: "US", SGD: "SG", JPY: "JP" } as const;
 const register = (o: OfferFixture, id: string): RegisteredOffer => ({
@@ -140,14 +145,14 @@ describe("EV-018 cart operations", () => {
     );
     const before = structuredClone(start);
 
-    const result = applyCartOp(start, opBody(c.op, gen), reg);
+    const result = run(start, opBody(c.op, gen), reg);
 
     expect(start).toEqual(before);
     if (c.expected.outcome === "error") {
       expect(result.ok).toBe(false);
       if (result.ok) return;
       expect(result.code).toBe(c.expected.code);
-      expect(result.details).toEqual(c.expected.details);
+      expect("details" in result ? result.details : undefined).toEqual(c.expected.details);
       return;
     }
     expect(result.ok).toBe(true);
@@ -173,7 +178,7 @@ describe("EV-018 cart version", () => {
   });
   it.each(rules.versionCases.map((c) => [c.id, c] as const))("%s", (_id, c) => {
     const start = cartOf(c.start.map((l) => lineOf(registry.get(idOf(l.offer))!, l.quantity)), c.startVersion);
-    const result = applyCartOp(start, opBody(c.op, []), registry);
+    const result = run(start, opBody(c.op, []), registry);
     expect(result.ok ? result.cart.version : start.version).toBe(c.expectedVersion);
   });
 });
@@ -183,7 +188,7 @@ describe("EV-018 line snapshot", () => {
     expect(rules.snapshotCases.length).toBe(2);
   });
   it.each(rules.snapshotCases.map((c) => [c.id, c] as const))("%s copies the registered price next to the observed price", (_id, c) => {
-    const result = applyCartOp(cartOf([]), { kind: "add", offerId: idOf(c.offer) }, registry);
+    const result = run(cartOf([]), { kind: "add", offerId: idOf(c.offer) }, registry);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const line = result.cart.lines[0]!;
