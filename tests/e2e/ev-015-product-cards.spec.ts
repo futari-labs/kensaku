@@ -48,6 +48,22 @@ async function run(page: Page, scenario: string, { market = "SG", theme = "dark"
 
 const boxOf = async (locator: ReturnType<Page["locator"]>) => (await locator.boundingBox())!;
 
+/** The first two cards' boxes, read again until two reads in a row agree, so a layout still settling (skeletons giving way to images) is not measured. */
+async function settledCardBoxes(page: Page) {
+  let previous = "";
+  let boxes: Awaited<ReturnType<typeof boxOf>>[] = [];
+  await expect
+    .poll(async () => {
+      boxes = await Promise.all([boxOf(cards(page).nth(0)), boxOf(cards(page).nth(1))]);
+      const reading = JSON.stringify(boxes);
+      const agreed = reading === previous;
+      previous = reading;
+      return agreed;
+    })
+    .toBe(true);
+  return boxes as [(typeof boxes)[number], (typeof boxes)[number]];
+}
+
 /** One server-sent event of the UI message stream (the same helper shape as the EV-007 spec). */
 const sseEvent = (chunk: object) => `data: ${JSON.stringify(chunk)}\n\n`;
 const SSE_HEADERS = { "content-type": "text/event-stream", "x-vercel-ai-ui-message-stream": "v1" };
@@ -80,7 +96,7 @@ test.describe("1. layout", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await run(page, "xm5-sg-cards");
     await expect(cards(page)).toHaveCount(2);
-    const [a, b] = await Promise.all([boxOf(cards(page).nth(0)), boxOf(cards(page).nth(1))]);
+    const [a, b] = await settledCardBoxes(page);
     expect(Math.abs(a.y - b.y)).toBeLessThanOrEqual(2);
     expect(a.width).toBeGreaterThanOrEqual(480);
     expect(b.width).toBeGreaterThanOrEqual(480);
@@ -97,7 +113,7 @@ test.describe("1. layout", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await run(page, "xm5-sg-cards");
     await expect(cards(page)).toHaveCount(2);
-    const [a, b] = await Promise.all([boxOf(cards(page).nth(0)), boxOf(cards(page).nth(1))]);
+    const [a, b] = await settledCardBoxes(page);
     expect(b.y).toBeGreaterThanOrEqual(a.y + a.height);
     for (const [i, card] of [a, b].entries()) {
       const image = await boxOf(cards(page).nth(i).locator('[data-slot="aspect-ratio"]'));

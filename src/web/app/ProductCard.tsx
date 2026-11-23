@@ -1,24 +1,27 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDownIcon, ImageOffIcon } from "lucide-react";
 import { segmentMarkers } from "../../core";
 import { MARKET_CURRENCY } from "../../core/currency";
+import type { CurrencyMismatch } from "../../core/commerce";
 import type { Evidence, ImageCandidate, Market, Offer } from "../../core/types";
 import type { ProductResult } from "../../research/events";
 import { AspectRatio } from "@/web/components/ui/aspect-ratio";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/web/components/ui/alert-dialog";
 import { Badge } from "@/web/components/ui/badge";
 import { Button } from "@/web/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/web/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/web/components/ui/collapsible";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemHeader, ItemTitle } from "@/web/components/ui/item";
 import { Skeleton } from "@/web/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/web/components/ui/tooltip";
 import { cn } from "@/web/lib/utils";
 import { CitedSegments, MalformedNote } from "./Citation";
 import { AVAILABILITY_LABEL, EVIDENCE_LABEL, formatPrice, formatTime, productTitle } from "./format";
 import { MARKET_NAME } from "./markets";
-import { offerView } from "./offers";
+import { buyBlock, offerView } from "./offers";
 import type { OfferView } from "./offers";
 import { noticeText, useCart } from "./useCart";
-import type { CartNotice, CartUnavailable } from "./useCart";
+import type { CartNotice } from "./useCart";
 
 const IMAGE_RATIO = 4 / 3;
 
@@ -63,40 +66,65 @@ function ProductImage({ label, candidates }: { label: string; candidates: ImageC
 
 const ADDED_FLASH_MS = 2_000;
 
-function unbuyableReason({ id, availability }: Offer, unavailable: CartUnavailable | undefined): string | undefined {
-  if (unavailable === "corrupt") return "Cart disabled: its data file could not be read";
-  if (id === undefined) return "Ask again to buy";
-  if (availability === "out_of_stock") return "Out of stock";
-  return undefined;
-}
-
 function AddToCart({ offer }: { offer: Offer }) {
   const { add, unavailable } = useCart();
   const [added, setAdded] = useState(false);
   const [failure, setFailure] = useState<CartNotice | undefined>();
+  const [mismatch, setMismatch] = useState<CurrencyMismatch | undefined>();
+  const addRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!added) return;
     const timer = setTimeout(() => setAdded(false), ADDED_FLASH_MS);
     return () => clearTimeout(timer);
   }, [added]);
-  const reason = unbuyableReason(offer, unavailable);
-  const label = reason ?? (added ? "Added" : "Add to cart");
+  const block = buyBlock(offer, unavailable);
+  const label = block?.label ?? (added ? "Added" : "Add to cart");
   // The visible text leads the accessible name (WCAG label in name).
-  const name = `${label}: ${offer.productName} from ${offer.merchantHost}${reason ? "" : " (simulated cart)"}`;
-  const onClick = async () => {
+  const name = `${label}: ${offer.productName} from ${offer.merchantHost}${block ? "" : " (simulated cart)"}`;
+  const submit = async (replace: boolean) => {
     if (offer.id === undefined) return;
-    const result = await add(offer.id);
-    setFailure(result);
+    const result = await add(offer.id, { replace });
+    setFailure(result?.code === "currency-mismatch" && result.details ? undefined : result);
+    setMismatch(result?.code === "currency-mismatch" ? result.details : undefined);
     setAdded(result === undefined);
   };
+  const button = (
+    <Button ref={addRef} type="button" size="sm" aria-label={name} disabled={block !== undefined} onClick={() => void submit(false)}>
+      {label}
+    </Button>
+  );
   return (
     <span className="flex flex-col items-end gap-1">
-      <Button type="button" size="sm" aria-label={name} disabled={reason !== undefined || unavailable !== undefined} onClick={() => void onClick()}>
-        {label}
-      </Button>
+      {block ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span tabIndex={0}>{button}</span>
+          </TooltipTrigger>
+          <TooltipContent>{block.detail}</TooltipContent>
+        </Tooltip>
+      ) : (
+        button
+      )}
       <span role="status" aria-live="polite" className={failure ? "max-w-48 text-right text-xs text-destructive" : "sr-only"} data-testid="add-error">
         {failure && noticeText(failure)}
       </span>
+      <AlertDialog open={mismatch !== undefined} onOpenChange={(open) => !open && setMismatch(undefined)}>
+        {/* Radix returns focus to the dialog's trigger, and this dialog opens from a reply, so it has none. */}
+        <AlertDialogContent onCloseAutoFocus={() => addRef.current?.focus()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {mismatch && `Your simulated cart has ${mismatch.cartCurrency} items. Replace them with this ${mismatch.offerCurrency} item?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {offer.productName} from {offer.merchantHost}. A simulated cart holds one currency.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep cart</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void submit(true)}>Replace</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </span>
   );
 }

@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import type { Market } from "../../core/types";
 import { Alert, AlertDescription, AlertTitle } from "@/web/components/ui/alert";
 import { Button } from "@/web/components/ui/button";
+import { TooltipProvider } from "@/web/components/ui/tooltip";
 import { Conversation, ConversationContent, ConversationEmptyState } from "@/web/components/ai-elements/conversation";
 import { Message, MessageContent } from "@/web/components/ai-elements/message";
 import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/web/components/ai-elements/prompt-input";
 import { Suggestion } from "@/web/components/ai-elements/suggestion";
-import { CartSheet } from "./CartSheet";
+import { CartSheet } from "./Cart";
 import { CheckoutReturn } from "./CheckoutReturn";
 import { ClearHistory, MarketSelect } from "./Controls";
 import { Comparison } from "./Comparison";
@@ -71,105 +72,107 @@ export function App() {
 
   return (
     <CartContext.Provider value={cart}>
-      <main className="mx-auto flex h-dvh max-w-6xl flex-col gap-3 p-3 sm:p-4">
-        <header className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">Kensaku</h1>
-            <p className="text-sm text-muted-foreground">Local shopping research: a cited comparison and merchant offers, with prices as last observed.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <CartSheet />
-            <ThemeToggle />
-            <ClearHistory disabled={running || !chat.hasMessages} onConfirm={chat.clear} />
-          </div>
-        </header>
-        {mode === "fixture" && (
-          <Alert data-testid="fixture-banner">
-            <AlertTitle>Fixture data</AlertTitle>
-            <AlertDescription>Answers are replayed from recorded scenarios, not fetched from Exa.</AlertDescription>
-          </Alert>
-        )}
-        {cart.unavailable === "corrupt" && (
-          <Alert data-testid="commerce-disabled">
-            <AlertTitle>Simulated commerce is disabled</AlertTitle>
-            <AlertDescription>Kensaku could not read its commerce data file, so the cart and checkout are off. Research still works. See the server log.</AlertDescription>
-          </Alert>
-        )}
-        {checkoutReturn && <CheckoutReturn params={checkoutReturn} onDismiss={() => setCheckoutReturn(undefined)} />}
-        <div role="status" aria-live="polite" aria-atomic="true" className="sr-only" data-testid="cart-announcer">
-          {cart.announcement}
-        </div>
-        {chat.historyNotice && (
-          <Alert data-testid="history-notice">
-            <AlertTitle>History reset</AlertTitle>
-            <AlertDescription className="flex items-center justify-between gap-3">
-              {HISTORY_NOTICE[chat.historyNotice]}
-              <Button type="button" variant="outline" size="sm" onClick={chat.dismissHistoryNotice}>
-                Dismiss
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-        <div role="status" aria-live="polite" aria-atomic="true" className="sr-only" data-testid="announcer">
-          {announcementOf(turns.at(-1))}
-        </div>
-        <Conversation className="min-h-0 flex-1">
-          <ConversationContent className="px-2 sm:px-4">
-            {turns.length === 0 ? (
-              <ConversationEmptyState title="Ask a shopping question" description="Kensaku compares a few products and finds direct merchant offers.">
-                <div className="space-y-3 text-center">
-                  <h3 className="text-sm font-medium">Ask a shopping question</h3>
-                  <p className="text-sm text-muted-foreground">Pick a market below, then type a question or try an example.</p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {SUGGESTIONS.map((s) => (
-                      <Suggestion key={s} suggestion={s} onClick={ask} disabled={!ready} className="h-auto max-w-full whitespace-normal rounded-xl py-1.5 text-left" />
-                    ))}
-                  </div>
-                </div>
-              </ConversationEmptyState>
-            ) : (
-              turns.map(({ question, market, view, state }) => (
-                <div key={question.id} className="flex min-w-0 flex-col gap-8" data-testid="turn" data-state={state}>
-                  <Message from="user">
-                    <MessageContent>
-                      <p>{textOf(question)}</p>
-                    </MessageContent>
-                  </Message>
-                  <Message from="assistant" className="max-w-full">
-                    <MessageContent className="w-full">
-                      <AssistantRun view={view} state={state} fixture={mode === "fixture"} market={market} />
-                    </MessageContent>
-                  </Message>
-                </div>
-              ))
-            )}
-          </ConversationContent>
-        </Conversation>
-        {/* Outside the prompt's form: Radix Select resets itself to its first value when the form it sits in is reset on submit. */}
-        <div className="flex items-center justify-between gap-2 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground" aria-hidden="true">
-              Market
-            </span>
-            <MarketSelect value={chat.market} onChange={chat.chooseMarket} disabled={running} />
-          </div>
-          {running && (
-            <Button type="button" variant="outline" size="sm" onClick={() => void chat.stop()}>
-              Cancel
-            </Button>
+      <TooltipProvider>
+        <main className="mx-auto flex h-dvh max-w-6xl flex-col gap-3 p-3 sm:p-4">
+          <header className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold">Kensaku</h1>
+              <p className="text-sm text-muted-foreground">Local shopping research: a cited comparison and merchant offers, with prices as last observed.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <CartSheet />
+              <ThemeToggle />
+              <ClearHistory disabled={running || !chat.hasMessages} onConfirm={chat.clear} />
+            </div>
+          </header>
+          {mode === "fixture" && (
+            <Alert data-testid="fixture-banner">
+              <AlertTitle>Fixture data</AlertTitle>
+              <AlertDescription>Answers are replayed from recorded scenarios, not fetched from Exa.</AlertDescription>
+            </Alert>
           )}
-        </div>
-        <PromptInput onSubmit={({ text }) => ask(text)}>
-          <PromptInputBody>
-            <PromptInputTextarea placeholder="Ask about a product…" disabled={running || !ready} aria-label="Question" />
-          </PromptInputBody>
-          <PromptInputFooter>
-            {/* The group dims everything inside it while the textarea is disabled, so nothing but the Send button lives here during a run. */}
-            <span className="text-xs text-muted-foreground">{running ? "" : "Enter to send, Shift+Enter for a new line"}</span>
-            <PromptInputSubmit status={chat.status} aria-label="Send" disabled={running || !ready} />
-          </PromptInputFooter>
-        </PromptInput>
-      </main>
+          {cart.unavailable === "corrupt" && (
+            <Alert data-testid="commerce-disabled">
+              <AlertTitle>Simulated commerce is disabled</AlertTitle>
+              <AlertDescription>Kensaku could not read its commerce data file, so the cart and checkout are off. Research still works. See the server log.</AlertDescription>
+            </Alert>
+          )}
+          {checkoutReturn && <CheckoutReturn params={checkoutReturn} onDismiss={() => setCheckoutReturn(undefined)} />}
+          <div role="status" aria-live="polite" aria-atomic="true" className="sr-only" data-testid="cart-announcer">
+            {cart.announcement}
+          </div>
+          {chat.historyNotice && (
+            <Alert data-testid="history-notice">
+              <AlertTitle>History reset</AlertTitle>
+              <AlertDescription className="flex items-center justify-between gap-3">
+                {HISTORY_NOTICE[chat.historyNotice]}
+                <Button type="button" variant="outline" size="sm" onClick={chat.dismissHistoryNotice}>
+                  Dismiss
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+          <div role="status" aria-live="polite" aria-atomic="true" className="sr-only" data-testid="announcer">
+            {announcementOf(turns.at(-1))}
+          </div>
+          <Conversation className="min-h-0 flex-1">
+            <ConversationContent className="px-2 sm:px-4">
+              {turns.length === 0 ? (
+                <ConversationEmptyState title="Ask a shopping question" description="Kensaku compares a few products and finds direct merchant offers.">
+                  <div className="space-y-3 text-center">
+                    <h3 className="text-sm font-medium">Ask a shopping question</h3>
+                    <p className="text-sm text-muted-foreground">Pick a market below, then type a question or try an example.</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {SUGGESTIONS.map((s) => (
+                        <Suggestion key={s} suggestion={s} onClick={ask} disabled={!ready} className="h-auto max-w-full whitespace-normal rounded-xl py-1.5 text-left" />
+                      ))}
+                    </div>
+                  </div>
+                </ConversationEmptyState>
+              ) : (
+                turns.map(({ question, market, view, state }) => (
+                  <div key={question.id} className="flex min-w-0 flex-col gap-8" data-testid="turn" data-state={state}>
+                    <Message from="user">
+                      <MessageContent>
+                        <p>{textOf(question)}</p>
+                      </MessageContent>
+                    </Message>
+                    <Message from="assistant" className="max-w-full">
+                      <MessageContent className="w-full">
+                        <AssistantRun view={view} state={state} fixture={mode === "fixture"} market={market} />
+                      </MessageContent>
+                    </Message>
+                  </div>
+                ))
+              )}
+            </ConversationContent>
+          </Conversation>
+          {/* Outside the prompt's form: Radix Select resets itself to its first value when the form it sits in is reset on submit. */}
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground" aria-hidden="true">
+                Market
+              </span>
+              <MarketSelect value={chat.market} onChange={chat.chooseMarket} disabled={running} />
+            </div>
+            {running && (
+              <Button type="button" variant="outline" size="sm" onClick={() => void chat.stop()}>
+                Cancel
+              </Button>
+            )}
+          </div>
+          <PromptInput onSubmit={({ text }) => ask(text)}>
+            <PromptInputBody>
+              <PromptInputTextarea placeholder="Ask about a product…" disabled={running || !ready} aria-label="Question" />
+            </PromptInputBody>
+            <PromptInputFooter>
+              {/* The group dims everything inside it while the textarea is disabled, so nothing but the Send button lives here during a run. */}
+              <span className="text-xs text-muted-foreground">{running ? "" : "Enter to send, Shift+Enter for a new line"}</span>
+              <PromptInputSubmit status={chat.status} aria-label="Send" disabled={running || !ready} />
+            </PromptInputFooter>
+          </PromptInput>
+        </main>
+      </TooltipProvider>
     </CartContext.Provider>
   );
 }

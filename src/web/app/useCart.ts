@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { MAX_LINES, MAX_LINE_QUANTITY, cartTotalMinor } from "../../core/commerce";
 import type { CartErrorCode, CheckoutErrorCode, CurrencyMismatch } from "../../core/commerce";
-import { addToCart, fetchCart, isCheckoutUrl, removeLine, setQuantity, startCheckout } from "./commerce";
-import type { CartView, Reply } from "./commerce";
+import { addToCart, clearCart, fetchCart, fetchOrders, isCheckoutUrl, removeLine, setQuantity, startCheckout } from "./commerce";
+import type { CartView, OrderView, Reply } from "./commerce";
 
 export const ADDED_MESSAGE = "Added to simulated cart";
 
@@ -25,7 +25,7 @@ const NOTICE_TEXT: Record<Exclude<CartNotice["code"], "currency-mismatch">, stri
   "not-in-cart": "That offer is not in the cart.",
   "cart-empty": "The simulated cart is empty.",
   "commerce-unavailable": "The simulated cart is unavailable. See the server log.",
-  "checkout-failed": "Could not start the Stripe sandbox checkout. Try again.",
+  "checkout-failed": "Couldn't start the Stripe sandbox checkout. Your cart is unchanged.",
   "checkout-not-configured": "Stripe sandbox is not configured. See README.",
   unknown: "Something went wrong with the simulated cart.",
 };
@@ -47,17 +47,20 @@ export type CartUnavailable = "corrupt" | "unreachable";
 
 export function useCartState(fixture: boolean) {
   const [view, setView] = useState<CartView | undefined>();
+  const [orders, setOrders] = useState<OrderView[]>([]);
   const [unavailable, setUnavailable] = useState<CartUnavailable | undefined>();
   const [notice, setNotice] = useState<CartNotice | undefined>();
   const [announcement, setAnnouncement] = useState("");
   const [busy, setBusy] = useState(false);
 
+  /** Reads the cart and the order list; the sheet calls it on open so a webhook that landed while it was closed shows. */
   const refresh = useCallback(async () => {
-    const reply = await fetchCart();
-    if (reply.ok) {
-      setView(reply.value);
+    const [cart, list] = await Promise.all([fetchCart(), fetchOrders()]);
+    if (cart.ok) {
+      setView(cart.value);
       setUnavailable(undefined);
-    } else setUnavailable(reply.code === "commerce-unavailable" ? "corrupt" : "unreachable");
+    } else setUnavailable(cart.code === "commerce-unavailable" ? "corrupt" : "unreachable");
+    if (list.ok) setOrders(list.value.orders);
   }, []);
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export function useCartState(fixture: boolean) {
 
   /** The caller shows a failed add beside its own button; the sheet's notice is for the sheet's own controls. */
   const add = useCallback(
-    async (offerId: string, replace = false): Promise<CartNotice | undefined> => {
+    async (offerId: string, { replace = false }: { replace?: boolean } = {}): Promise<CartNotice | undefined> => {
       const failure = await apply(addToCart(offerId, replace));
       if (!failure) {
         setNotice(undefined);
@@ -94,6 +97,7 @@ export function useCartState(fixture: boolean) {
   );
   const setLineQuantity = useCallback((offerId: string, quantity: number) => inSheet(setQuantity(offerId, quantity)), [inSheet]);
   const remove = useCallback((offerId: string) => inSheet(removeLine(offerId)), [inSheet]);
+  const clear = useCallback(() => inSheet(clearCart()), [inSheet]);
 
   const checkout = useCallback(async () => {
     setBusy(true);
@@ -107,7 +111,7 @@ export function useCartState(fixture: boolean) {
     setBusy(false);
   }, [fixture]);
 
-  return { view, unavailable, notice, announcement, busy, refresh, add, setLineQuantity, remove, checkout };
+  return { view, orders, unavailable, notice, announcement, busy, refresh, add, setLineQuantity, remove, clear, checkout };
 }
 
 export type CartState = ReturnType<typeof useCartState>;
