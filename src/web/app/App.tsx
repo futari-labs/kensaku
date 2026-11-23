@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Market } from "../../core/types";
 import { Alert, AlertDescription, AlertTitle } from "@/web/components/ui/alert";
 import { Button } from "@/web/components/ui/button";
@@ -15,7 +15,7 @@ import { ErrorNotice, Progress, UsageFooter } from "./RunStatus";
 import { announcementOf, textOf } from "./messages";
 import type { ClientRunState, RunView } from "./messages";
 import { ThemeToggle } from "./ThemeToggle";
-import { readCheckoutReturn } from "./commerce";
+import { readCheckoutReturn, withoutCheckoutReturn } from "./commerce";
 import { CartContext, useCartState } from "./useCart";
 import { useResearchChat } from "./useResearchChat";
 
@@ -59,18 +59,16 @@ const HISTORY_NOTICE = {
   newer: "The saved history was written by a newer version of Kensaku, so it was reset.",
 } as const;
 
-const INITIAL_CHECKOUT_RETURN = readCheckoutReturn(window.location.search);
-if (INITIAL_CHECKOUT_RETURN) {
-  const rest = new URLSearchParams(window.location.search);
-  for (const name of ["checkout", "order", "session_id"]) rest.delete(name);
-  window.history.replaceState(null, "", window.location.pathname + (rest.size > 0 ? `?${rest}` : "") + window.location.hash);
-}
-
 export function App() {
   const chat = useResearchChat();
   const { mode, ready, running, turns, ask } = chat;
   const cart = useCartState(mode === "fixture");
-  const [checkoutReturn, setCheckoutReturn] = useState(INITIAL_CHECKOUT_RETURN);
+  const [checkoutReturn, setCheckoutReturn] = useState(() => readCheckoutReturn(window.location.search));
+  // The return parameters are read once above; clearing them keeps a reload from posting the cancel again.
+  useEffect(() => {
+    const { search, pathname, hash } = window.location;
+    if (readCheckoutReturn(search)) window.history.replaceState(null, "", withoutCheckoutReturn(search, pathname, hash));
+  }, []);
 
   return (
     <CartContext.Provider value={cart}>
@@ -92,7 +90,13 @@ export function App() {
             <AlertDescription>Answers are replayed from recorded scenarios, not fetched from Exa.</AlertDescription>
           </Alert>
         )}
-        {checkoutReturn && <CheckoutReturn params={checkoutReturn} onSettled={() => void cart.refresh()} onDismiss={() => setCheckoutReturn(undefined)} />}
+        {cart.unavailable === "corrupt" && (
+          <Alert data-testid="commerce-disabled">
+            <AlertTitle>Simulated commerce is disabled</AlertTitle>
+            <AlertDescription>Kensaku could not read its commerce data file, so the cart and checkout are off. Research still works. See the server log.</AlertDescription>
+          </Alert>
+        )}
+        {checkoutReturn && <CheckoutReturn params={checkoutReturn} onDismiss={() => setCheckoutReturn(undefined)} />}
         <div role="status" aria-live="polite" aria-atomic="true" className="sr-only" data-testid="cart-announcer">
           {cart.announcement}
         </div>

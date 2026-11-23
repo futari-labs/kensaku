@@ -1,26 +1,12 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { z } from "zod";
+import { OFFER_ID_PATTERN, RegisteredOfferSchema, toRegisteredOffer } from "../core/commerce";
 import type { RegisteredOffer } from "../core/commerce";
 import type { Market, Offer } from "../core/types";
 import type { Clock } from "../exa/clock";
+import { writeJsonAtomic } from "../exa/files";
 
 export const OFFER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const ID_PATTERN = /^[0-9a-f]{64}$/;
-
-const RegisteredOfferSchema = z.object({
-  id: z.string().regex(ID_PATTERN),
-  canonicalUrl: z.string(),
-  merchantHost: z.string(),
-  merchantName: z.string(),
-  productName: z.string(),
-  price: z.object({ amount: z.number(), currency: z.enum(["USD", "SGD", "JPY"]) }),
-  availability: z.enum(["in_stock", "out_of_stock", "preorder", "unknown"]),
-  exaRequestId: z.string(),
-  retrievedAt: z.string(),
-  market: z.enum(["US", "SG", "JP"]),
-  registeredAt: z.string(),
-}) satisfies z.ZodType<RegisteredOffer>;
 
 const readSnapshot = (file: string): RegisteredOffer | undefined => {
   try {
@@ -36,31 +22,14 @@ export class OfferStore {
 
   register(offers: readonly Offer[], market: Market): void {
     const registeredAt = this.options.clock().toISOString();
-    mkdirSync(this.options.dir, { recursive: true });
     for (const offer of offers) {
-      if (offer.id === undefined || !ID_PATTERN.test(offer.id)) continue;
-      const snapshot: RegisteredOffer = {
-        id: offer.id,
-        canonicalUrl: offer.canonicalUrl,
-        merchantHost: offer.merchantHost,
-        merchantName: offer.merchantName,
-        productName: offer.productName,
-        price: offer.price,
-        availability: offer.availability,
-        exaRequestId: offer.exaRequestId,
-        retrievedAt: offer.retrievedAt,
-        market,
-        registeredAt,
-      };
-      const file = this.path(offer.id);
-      const temp = `${file}.${process.pid}.tmp`;
-      writeFileSync(temp, JSON.stringify(snapshot));
-      renameSync(temp, file);
+      const snapshot = toRegisteredOffer(offer, market, registeredAt);
+      if (snapshot && OFFER_ID_PATTERN.test(snapshot.id)) writeJsonAtomic(this.path(snapshot.id), snapshot);
     }
     this.prune();
   }
 
-  get = (id: string): RegisteredOffer | undefined => (ID_PATTERN.test(id) ? readSnapshot(this.path(id)) : undefined);
+  get = (id: string): RegisteredOffer | undefined => (OFFER_ID_PATTERN.test(id) ? readSnapshot(this.path(id)) : undefined);
 
   prune(): void {
     const cutoff = this.options.clock().getTime() - OFFER_TTL_MS;

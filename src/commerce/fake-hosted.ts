@@ -4,11 +4,43 @@ import { z } from "zod";
 import type { Order } from "../core/commerce";
 import { formatMinor } from "../core/commerce";
 import type { Clock } from "../exa/clock";
-import type { CommerceService } from "./service";
-import { signTestPayload } from "./stripe-port";
+import { emptyState } from "./store";
+import { CommerceService } from "./service";
+import type { CommerceOptions } from "./service";
+import { signTestPayload, stripeEventEnvelope } from "./stripe-port";
+
+/** The service the fixture server runs: the production class plus the switches the test-only routes below turn. */
+export class FixtureCommerceService extends CommerceService {
+  constructor(
+    options: Omit<CommerceOptions, "checkoutConfigured">,
+    private readonly switches = { checkout: true },
+  ) {
+    super({ ...options, checkoutConfigured: () => switches.checkout });
+  }
+
+  setCheckoutConfigured(value: boolean): void {
+    this.switches.checkout = value;
+  }
+
+  reset(): Promise<void> {
+    return this.enqueue(() => {
+      this.commit(emptyState());
+      this.switches.checkout = true;
+    });
+  }
+
+  expireOpenOrder(now: Date): Promise<boolean> {
+    return this.enqueue(() => {
+      const open = this.state.orders.findLast((o) => o.state === "open");
+      if (!open) return false;
+      this.commit({ ...this.state, orders: this.state.orders.map((o) => (o === open ? { ...o, expiresAt: new Date(now.getTime() - 60_000).toISOString() } : o)) });
+      return true;
+    });
+  }
+}
 
 export interface FakeHostedOptions {
-  service: CommerceService;
+  service: FixtureCommerceService;
   secret: string;
   clock: Clock;
 }
@@ -18,10 +50,6 @@ const FlagSchema = z.object({ value: z.boolean() }).strict();
 const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 
 const encoder = new TextEncoder();
-
-function eventBody(id: string, type: string, object: Record<string, unknown>, now: Date): string {
-  return JSON.stringify({ id, object: "event", api_version: "2026-10-28.endive", created: Math.floor(now.getTime() / 1000), livemode: false, type, data: { object } });
-}
 
 function page(order: Order, declined: boolean): string {
   const lines = order.lines
@@ -51,7 +79,7 @@ export function fakeHostedRoutes({ service, secret, clock }: FakeHostedOptions):
   const deliver = async (type: string, eventId: string, object: Record<string, unknown>): Promise<void> => {
     if (withhold) return;
     const now = clock();
-    const payload = eventBody(eventId, type, object, now);
+    const payload = JSON.stringify(stripeEventEnvelope(eventId, type, object, now));
     await service.deliver({ rawBody: encoder.encode(payload), signature: signTestPayload(payload, secret, Math.floor(now.getTime() / 1000)), secret });
   };
 
@@ -110,7 +138,7 @@ export function fakeHostedRoutes({ service, secret, clock }: FakeHostedOptions):
     const value = await flag(c);
     if (value === undefined) return c.json({ code: "invalid-request" }, 400);
     service.setCheckoutConfigured(value);
-    return c.json({ checkoutConfigured: service.checkoutConfigured });
+    return c.json({ checkoutConfigured: service.cart().checkoutConfigured });
   });
 
   app.post("/__test/commerce/withhold-webhooks", async (c) => {
@@ -120,7 +148,7 @@ export function fakeHostedRoutes({ service, secret, clock }: FakeHostedOptions):
     return c.json({ withhold });
   });
 
-  app.post("/__test/commerce/expire-open-order", async (c) => ((await service.expireOpenOrder()) ? c.json({ ok: true }) : c.json({ code: "no-open-order" }, 404)));
+  app.post("/__test/commerce/expire-open-order", async (c) => ((await service.expireOpenOrder(clock())) ? c.json({ ok: true }) : c.json({ code: "no-open-order" }, 404)));
 
   return app;
 }

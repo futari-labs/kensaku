@@ -1,5 +1,5 @@
 import { MinusIcon, PlusIcon, ShoppingCartIcon, Trash2Icon } from "lucide-react";
-import { CART_TITLE, CHECKOUT_BUTTON_LABEL, SIMULATION_BANNER, demoPriceLabel, demoTotalLabel, observedPriceLabel } from "../../core/commerce";
+import { CART_TITLE, CHECKOUT_BUTTON_LABEL, SIMULATION_BANNER, demoPriceLabel, demoTotalLabel, MAX_LINE_QUANTITY, observedPriceLabel } from "../../core/commerce";
 import type { CartLine } from "../../core/commerce";
 import { Alert, AlertDescription } from "@/web/components/ui/alert";
 import { Button } from "@/web/components/ui/button";
@@ -7,7 +7,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle }
 import { Separator } from "@/web/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/web/components/ui/sheet";
 import { formatTime } from "./format";
-import { useCart } from "./useCart";
+import { noticeText, useCart } from "./useCart";
 
 function Line({ line }: { line: CartLine }) {
   const { setLineQuantity, remove } = useCart();
@@ -32,7 +32,7 @@ function Line({ line }: { line: CartLine }) {
           <span className="min-w-6 text-center tabular-nums" aria-label={`Quantity ${line.quantity}`}>
             {line.quantity}
           </span>
-          <Button type="button" variant="outline" size="icon-sm" aria-label={`Increase quantity of ${line.productName}`} disabled={line.quantity >= 10} onClick={() => void setLineQuantity(line.offerId, line.quantity + 1)}>
+          <Button type="button" variant="outline" size="icon-sm" aria-label={`Increase quantity of ${line.productName}`} disabled={line.quantity >= MAX_LINE_QUANTITY} onClick={() => void setLineQuantity(line.offerId, line.quantity + 1)}>
             <PlusIcon aria-hidden="true" />
           </Button>
         </div>
@@ -52,7 +52,7 @@ export function CartSheet() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button type="button" variant="outline" size="sm" aria-label={`Open simulated cart, ${lines.length} items`} data-testid="cart-button" disabled={unavailable}>
+        <Button type="button" variant="outline" size="sm" aria-label={`Open simulated cart, ${lines.length} items`} data-testid="cart-button" disabled={unavailable !== undefined}>
           <ShoppingCartIcon aria-hidden="true" />
           <span data-testid="cart-count">{lines.length}</span>
         </Button>
@@ -65,7 +65,7 @@ export function CartSheet() {
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4">
           {notice && (
             <Alert data-testid="cart-notice">
-              <AlertDescription>{notice}</AlertDescription>
+              <AlertDescription>{noticeText(notice)}</AlertDescription>
             </Alert>
           )}
           {lines.length === 0 ? (

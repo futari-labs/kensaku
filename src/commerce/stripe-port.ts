@@ -10,7 +10,7 @@ import type {
   WebhookEvent,
 } from "./port";
 
-const STRIPE_API_VERSION = "2026-10-28.endive";
+export const STRIPE_API_VERSION = "2026-10-28.endive";
 const CHECKOUT_URL_PREFIX = "https://checkout.stripe.com/";
 const WEBHOOK_TOLERANCE_SECONDS = 300;
 const STATUSES: readonly SessionStatus[] = ["open", "complete", "expired"];
@@ -121,6 +121,11 @@ export function verifyWebhook(rawBody: string | Uint8Array, header: string | und
   if (!parsed.success) throw new CheckoutPortError("invalid-payload");
   const { id, type, livemode, data } = parsed.data;
   return { id, type, livemode, object: data.object };
+}
+
+/** A sandbox event as Stripe sends it. The fake hosted page and the tests build their deliveries from this, so none of them can drift from the shape `verifyWebhook` reads. */
+export function stripeEventEnvelope(id: string, type: string, object: Record<string, unknown>, now: Date = new Date()): Record<string, unknown> {
+  return { id, object: "event", api_version: STRIPE_API_VERSION, created: Math.floor(now.getTime() / 1000), livemode: false, type, data: { object } };
 }
 
 export function signTestPayload(payload: string, secret: string, timestamp: number): string {

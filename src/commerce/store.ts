@@ -1,54 +1,17 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { z } from "zod";
+import { CommerceStateSchema, emptyCart } from "../core/commerce";
 import type { CommerceState } from "../core/commerce";
+import { writeJsonAtomic } from "../exa/files";
 
-const CurrencySchema = z.enum(["USD", "SGD", "JPY"]);
-const OrderStateSchema = z.enum(["open", "paid", "cancelled", "expired", "payment_failed", "failed"]);
-const Count = z.number().int().nonnegative();
-
-const CartLineSchema = z.object({
-  offerId: z.string(),
-  productName: z.string(),
-  merchantHost: z.string(),
-  quantity: Count,
-  demoUnitAmountMinor: Count,
-  observed: z.object({ amount: z.number(), currency: CurrencySchema, retrievedAt: z.string(), merchantHost: z.string() }),
-});
-
-const OrderSchema = z.object({
-  orderId: z.string(),
-  state: OrderStateSchema,
-  reason: z.literal("superseded").optional(),
-  anomaly: z.string().optional(),
-  currency: CurrencySchema,
-  lines: z.array(CartLineSchema),
-  totalMinor: Count,
-  cartVersion: Count,
-  stripeSessionId: z.string().nullable(),
-  expiresAt: z.string().nullable(),
-  declinedAttempts: Count,
-  awaitingAsyncPayment: z.boolean(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  transitions: z.array(z.object({ at: z.string(), from: OrderStateSchema.nullable(), to: OrderStateSchema, eventId: z.string().optional() })),
-});
-
-const CommerceStateSchema = z.object({
-  version: z.literal(1),
-  cart: z.object({ version: Count, currency: CurrencySchema.nullable(), lines: z.array(CartLineSchema) }),
-  orders: z.array(OrderSchema),
-  processedEvents: z.array(z.object({ id: z.string(), at: z.string() })),
-}) satisfies z.ZodType<CommerceState>;
-
-export const emptyState = (): CommerceState => ({ version: 1, cart: { version: 0, currency: null, lines: [] }, orders: [], processedEvents: [] });
+export const emptyState = (): CommerceState => ({ version: 1, cart: emptyCart(0), orders: [], processedEvents: [] });
 
 export type LoadedState = { ok: true; state: CommerceState } | { ok: false; reason: string };
 
 export class CommerceStore {
   private readonly file: string;
 
-  constructor(private readonly dir: string) {
+  constructor(dir: string) {
     this.file = join(dir, "state.json");
   }
 
@@ -71,9 +34,6 @@ export class CommerceStore {
   }
 
   save(state: CommerceState): void {
-    mkdirSync(this.dir, { recursive: true });
-    const temp = `${this.file}.${process.pid}.tmp`;
-    writeFileSync(temp, `${JSON.stringify(state, null, 2)}\n`);
-    renameSync(temp, this.file);
+    writeJsonAtomic(this.file, state);
   }
 }

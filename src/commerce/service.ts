@@ -1,10 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { applyCartOp, cartTotalMinor } from "../core/commerce";
-import type { Cart, CartOp, CartResult, CommerceState, Order, OrderState } from "../core/commerce";
-import type { Market, Offer } from "../core/types";
+import { applyCartOp, cartTotalMinor, createOrder, transitionOrder } from "../core/commerce";
+import type { Cart, CartOp, CartResult, CheckoutErrorCode, CommerceState, Order } from "../core/commerce";
 import type { Clock } from "../exa/clock";
 import { CheckoutPortError } from "./port";
-import type { CheckoutPort, WebhookEvent } from "./port";
+import type { CheckoutPort, SessionResult, WebhookEvent } from "./port";
 import type { OfferStore } from "./registry";
 import { buildCheckoutSessionRequest } from "./session-request";
 import { emptyState } from "./store";
@@ -17,33 +16,27 @@ const MAX_LISTED_ORDERS = 10;
 
 export type CheckoutResult =
   | { ok: true; orderId: string; url: string }
-  | { ok: false; code: "cart-empty" | "checkout-not-configured" | "checkout-failed" };
+  | { ok: false; code: CheckoutErrorCode };
 
 export type CancelResult =
   | { ok: true; order: Order }
   | { ok: false; code: "order-not-found" | "already-paid" | "already-completed" | "cancel-failed" };
 
-type SessionFate = "expired" | "complete" | "unknown";
+/** `unconfirmed`: Stripe was not reached, or the session is still open after expiring it failed. */
+type SessionClose = "closed" | "completed" | "unconfirmed";
 
 export interface CommerceOptions {
   store: CommerceStore;
   offers: OfferStore;
   /** Absent: checkout is not configured, and the cart still works. */
   port: CheckoutPort | undefined;
+  /** Whether the runtime offers checkout right now; with no port it is never true. */
+  checkoutConfigured: () => boolean;
   clock: Clock;
   log: (line: Record<string, unknown>) => void;
   serverPort: number;
   portTimeoutMs?: number;
 }
-
-const moved = (order: Order, to: OrderState, at: string, extra: Partial<Order> = {}): Order => ({
-  ...order,
-  ...extra,
-  state: to,
-  awaitingAsyncPayment: false,
-  updatedAt: at,
-  transitions: [...order.transitions, { at, from: order.state, to }],
-});
 
 /**
  * The server's one cart and its orders. Every mutation runs on a single promise chain, awaited Stripe calls
@@ -52,35 +45,21 @@ const moved = (order: Order, to: OrderState, at: string, extra: Partial<Order> =
  */
 export class CommerceService {
   readonly unavailableReason: string | undefined;
-  private state: CommerceState;
+  protected state: CommerceState;
   private tail: Promise<unknown> = Promise.resolve();
-  private checkoutEnabled: boolean;
   private readonly portTimeoutMs: number;
 
   constructor(private readonly options: CommerceOptions) {
     const loaded = options.store.load();
     this.unavailableReason = loaded.ok ? undefined : loaded.reason;
     this.state = loaded.ok ? loaded.state : emptyState();
-    this.checkoutEnabled = options.port !== undefined;
     this.portTimeoutMs = options.portTimeoutMs ?? PORT_TIMEOUT_MS;
     if (!loaded.ok) options.log({ event: "commerce_disabled", reason: loaded.reason });
   }
 
-  get checkoutConfigured(): boolean {
-    return this.checkoutEnabled;
-  }
-
-  setCheckoutConfigured(value: boolean): void {
-    this.checkoutEnabled = value && this.options.port !== undefined;
-  }
-
-  registerOffers(offers: readonly Offer[], market: Market): void {
-    this.options.offers.register(offers, market);
-  }
-
   cart(): { cart: Cart; totalMinor: number; checkoutConfigured: boolean } {
     const { cart } = this.state;
-    return { cart, totalMinor: cartTotalMinor(cart), checkoutConfigured: this.checkoutEnabled };
+    return { cart, totalMinor: cartTotalMinor(cart), checkoutConfigured: this.options.port !== undefined && this.options.checkoutConfigured() };
   }
 
   orders(): Order[] {
@@ -95,13 +74,13 @@ export class CommerceService {
     return this.state.orders.find((o) => o.stripeSessionId === sessionId);
   }
 
-  private enqueue<T>(job: () => Promise<T> | T): Promise<T> {
+  protected enqueue<T>(job: () => Promise<T> | T): Promise<T> {
     const result = this.tail.then(job);
     this.tail = result.catch(() => undefined);
     return result;
   }
 
-  private commit(next: CommerceState): void {
+  protected commit(next: CommerceState): void {
     this.options.store.save(next);
     this.state = next;
   }
@@ -127,73 +106,57 @@ export class CommerceService {
     });
   }
 
-  private async fateOfSession(order: Order): Promise<SessionFate> {
+  private async closeSession(order: Order): Promise<SessionClose> {
     const { port } = this.options;
-    if (order.stripeSessionId === null || port === undefined) return "expired";
     const id = order.stripeSessionId;
+    if (port === undefined || id === null) return "unconfirmed";
     try {
       await this.withTimeout(() => port.expireSession(id));
-      return "expired";
+      return "closed";
     } catch {
-      try {
-        const session = await this.withTimeout(() => port.retrieveSession(id));
-        return session.status === "open" ? "unknown" : session.status;
-      } catch {
-        return "unknown";
-      }
+      // Expiring failed: ask Stripe what the session is now.
     }
+    let session: SessionResult;
+    try {
+      session = await this.withTimeout(() => port.retrieveSession(id));
+    } catch {
+      return "unconfirmed";
+    }
+    return session.status === "open" ? "unconfirmed" : session.status === "complete" ? "completed" : "closed";
   }
 
   checkout(): Promise<CheckoutResult> {
     return this.enqueue(async () => {
       const { port } = this.options;
-      const fail = (code: Extract<CheckoutResult, { ok: false }>["code"], extra: Record<string, unknown> = {}): CheckoutResult => {
+      const fail = (code: CheckoutErrorCode, extra: Record<string, unknown> = {}): CheckoutResult => {
         this.options.log({ event: "checkout", result: code, ...extra });
         return { ok: false, code };
       };
-      if (port === undefined || !this.checkoutEnabled) return fail("checkout-not-configured");
-      if (this.state.cart.lines.length === 0) return fail("cart-empty");
+      const { cart } = this.state;
+      if (port === undefined || !this.options.checkoutConfigured()) return fail("checkout-not-configured");
+      if (cart.currency === null) return fail("cart-empty");
 
       for (const prior of this.state.orders.filter((o) => o.state === "open")) {
-        const fate = await this.fateOfSession(prior);
-        if (fate === "unknown") return fail("checkout-failed", { orderId: prior.orderId, stage: "supersede" });
-        if (fate === "expired") this.replaceOrder(moved(prior, "expired", this.options.clock().toISOString(), { reason: "superseded" }));
+        const closed = await this.closeSession(prior);
+        if (closed === "unconfirmed") return fail("checkout-failed", { orderId: prior.orderId, stage: "supersede" });
+        // A completed session stays open here: its webhook decides.
+        if (closed === "closed") this.replaceOrder(transitionOrder(prior, { kind: "supersede" }, this.options.clock().toISOString()).order);
       }
 
-      const { cart } = this.state;
-      if (cart.currency === null) return fail("cart-empty");
       const now = this.options.clock();
       const at = now.toISOString();
       const orderId = `ord_${randomUUID()}`;
-      const base = {
-        orderId,
-        currency: cart.currency,
-        lines: cart.lines,
-        totalMinor: cartTotalMinor(cart),
-        cartVersion: cart.version,
-        declinedAttempts: 0,
-        awaitingAsyncPayment: false,
-        createdAt: at,
-        updatedAt: at,
-      };
+      const fields = { orderId, currency: cart.currency, lines: cart.lines, totalMinor: cartTotalMinor(cart), cartVersion: cart.version, createdAt: at };
       const { params, options } = buildCheckoutSessionRequest({ orderId, currency: cart.currency, lines: cart.lines }, { port: this.options.serverPort, now });
       try {
         const session = await this.withTimeout(() => port.createSession(params, options));
         if (session.status !== "open") throw new CheckoutPortError("stripe-error");
-        this.commit({
-          ...this.state,
-          orders: [
-            ...this.state.orders,
-            { ...base, state: "open", stripeSessionId: session.id, expiresAt: new Date(params.expires_at * 1000).toISOString(), transitions: [{ at, from: null, to: "open" }] },
-          ],
-        });
+        const expiresAt = new Date(params.expires_at * 1000).toISOString();
+        this.commit({ ...this.state, orders: [...this.state.orders, createOrder({ ...fields, stripeSessionId: session.id, expiresAt }, "open", at)] });
         this.options.log({ event: "checkout", orderId, sessionId: session.id, result: "ok" });
         return { ok: true, orderId, url: session.url };
       } catch {
-        this.commit({
-          ...this.state,
-          orders: [...this.state.orders, { ...base, state: "failed", stripeSessionId: null, expiresAt: null, transitions: [{ at, from: null, to: "failed" }] }],
-        });
+        this.commit({ ...this.state, orders: [...this.state.orders, createOrder({ ...fields, stripeSessionId: null, expiresAt: null }, "failed", at)] });
         return fail("checkout-failed", { orderId });
       }
     });
@@ -209,10 +172,10 @@ export class CommerceService {
       if (!order) return done({ ok: false, code: "order-not-found" }, "order-not-found");
       if (order.state === "paid") return done({ ok: false, code: "already-paid" }, "already-paid");
       if (order.state !== "open") return done({ ok: true, order }, "unchanged");
-      const fate = await this.fateOfSession(order);
-      if (fate === "complete") return done({ ok: false, code: "already-completed" }, "already-completed");
-      if (fate === "unknown") return done({ ok: false, code: "cancel-failed" }, "cancel-failed");
-      const cancelled = moved(order, "cancelled", this.options.clock().toISOString());
+      const closed = await this.closeSession(order);
+      if (closed === "completed") return done({ ok: false, code: "already-completed" }, "already-completed");
+      if (closed === "unconfirmed") return done({ ok: false, code: "cancel-failed" }, "cancel-failed");
+      const cancelled = transitionOrder(order, { kind: "cancel" }, this.options.clock().toISOString()).order;
       this.replaceOrder(cancelled);
       return done({ ok: true, order: cancelled }, "cancelled");
     });
@@ -227,22 +190,6 @@ export class CommerceService {
       const result = applyWebhookEvent(this.state, event, this.options.clock());
       if (result.state !== this.state) this.commit(result.state);
       return result;
-    });
-  }
-
-  reset(): Promise<void> {
-    return this.enqueue(() => {
-      this.commit(emptyState());
-      this.setCheckoutConfigured(true);
-    });
-  }
-
-  expireOpenOrder(): Promise<boolean> {
-    return this.enqueue(() => {
-      const open = this.state.orders.findLast((o) => o.state === "open");
-      if (!open) return false;
-      this.replaceOrder({ ...open, expiresAt: new Date(this.options.clock().getTime() - 60_000).toISOString() });
-      return true;
     });
   }
 }

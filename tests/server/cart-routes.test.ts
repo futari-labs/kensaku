@@ -179,7 +179,7 @@ describe("cart route boundaries", () => {
     const { rig } = seeded();
     expect((await rig.json("GET", "/api/cart")).body).toEqual({ cart: { version: 0, currency: null, lines: [] }, totalMinor: 0, checkoutConfigured: true });
     expect((await rig.json("GET", "/api/health")).body).toEqual({ ok: true, exaConfigured: false, mode: "fixture" });
-    const off = commerceRig({ port: undefined });
+    const off = commerceRig({ checkout: "none" });
     expect((await off.json("GET", "/api/cart")).body.checkoutConfigured).toBe(false);
   });
 });

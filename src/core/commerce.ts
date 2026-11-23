@@ -1,60 +1,89 @@
-import { MINOR_DIGITS, isSupportedCurrency } from "./currency";
-import type { Availability, Currency, Market } from "./types";
+import { z } from "zod";
+import { MARKET_CURRENCY, MINOR_DIGITS, isAvailability, isSupportedCurrency } from "./currency";
+import type { Currency, Market, Offer } from "./types";
 
-export type OrderState = "open" | "paid" | "cancelled" | "expired" | "payment_failed" | "failed";
+const guarded = <T extends string>(is: (value: string) => value is T) => z.custom<T>((value): value is T => typeof value === "string" && is(value));
+export const CurrencySchema = guarded(isSupportedCurrency);
+const AvailabilitySchema = guarded(isAvailability);
+const MarketSchema = guarded((value): value is Market => Object.hasOwn(MARKET_CURRENCY, value));
+const Count = z.number().int().nonnegative();
 
-export interface RegisteredOffer {
-  id: string;
-  canonicalUrl: string;
-  merchantHost: string;
-  merchantName: string;
-  productName: string;
-  price: { amount: number; currency: Currency };
-  availability: Availability;
-  exaRequestId: string;
-  retrievedAt: string;
-  market: Market;
-  registeredAt: string;
-}
+export const ORDER_STATES = ["open", "paid", "cancelled", "expired", "payment_failed", "failed"] as const;
+export const OrderStateSchema = z.enum(ORDER_STATES);
+export type OrderState = z.infer<typeof OrderStateSchema>;
 
-export interface CartLine {
-  offerId: string;
-  productName: string;
-  merchantHost: string;
-  quantity: number;
-  demoUnitAmountMinor: number;
-  observed: { amount: number; currency: Currency; retrievedAt: string; merchantHost: string };
-}
+export const OFFER_ID_PATTERN = /^[0-9a-f]{64}$/;
 
-export interface Cart {
-  version: number;
-  currency: Currency | null;
-  lines: CartLine[];
-}
+export const RegisteredOfferSchema = z.object({
+  id: z.string().regex(OFFER_ID_PATTERN),
+  canonicalUrl: z.string(),
+  merchantHost: z.string(),
+  merchantName: z.string(),
+  productName: z.string(),
+  price: z.object({ amount: z.number(), currency: CurrencySchema }),
+  availability: AvailabilitySchema,
+  exaRequestId: z.string(),
+  retrievedAt: z.string(),
+  market: MarketSchema,
+  registeredAt: z.string(),
+});
+export type RegisteredOffer = z.infer<typeof RegisteredOfferSchema>;
 
-export interface Order {
-  orderId: string;
-  state: OrderState;
-  reason?: "superseded";
-  anomaly?: string;
-  currency: Currency;
-  lines: CartLine[];
-  totalMinor: number;
-  cartVersion: number;
-  stripeSessionId: string | null;
-  expiresAt: string | null;
-  declinedAttempts: number;
-  awaitingAsyncPayment: boolean;
-  createdAt: string;
-  updatedAt: string;
-  transitions: { at: string; from: OrderState | null; to: OrderState; eventId?: string }[];
-}
+export const CartLineSchema = z.object({
+  offerId: z.string(),
+  productName: z.string(),
+  merchantHost: z.string(),
+  quantity: Count,
+  demoUnitAmountMinor: Count,
+  observed: z.object({ amount: z.number(), currency: CurrencySchema, retrievedAt: z.string(), merchantHost: z.string() }),
+});
+export type CartLine = z.infer<typeof CartLineSchema>;
 
-export interface CommerceState {
-  version: 1;
-  cart: Cart;
-  orders: Order[];
-  processedEvents: { id: string; at: string }[];
+export const CartSchema = z.object({ version: Count, currency: CurrencySchema.nullable(), lines: z.array(CartLineSchema) });
+export type Cart = z.infer<typeof CartSchema>;
+
+export const OrderSchema = z.object({
+  orderId: z.string(),
+  state: OrderStateSchema,
+  reason: z.literal("superseded").optional(),
+  anomaly: z.string().optional(),
+  currency: CurrencySchema,
+  lines: z.array(CartLineSchema),
+  totalMinor: Count,
+  cartVersion: Count,
+  stripeSessionId: z.string().nullable(),
+  expiresAt: z.string().nullable(),
+  declinedAttempts: Count,
+  awaitingAsyncPayment: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  transitions: z.array(z.object({ at: z.string(), from: OrderStateSchema.nullable(), to: OrderStateSchema, eventId: z.string().optional() })),
+});
+export type Order = z.infer<typeof OrderSchema>;
+
+export const CommerceStateSchema = z.object({
+  version: z.literal(1),
+  cart: CartSchema,
+  orders: z.array(OrderSchema),
+  processedEvents: z.array(z.object({ id: z.string(), at: z.string() })),
+});
+export type CommerceState = z.infer<typeof CommerceStateSchema>;
+
+export function toRegisteredOffer(offer: Offer, market: Market, at: string): RegisteredOffer | undefined {
+  if (offer.id === undefined) return undefined;
+  return {
+    id: offer.id,
+    canonicalUrl: offer.canonicalUrl,
+    merchantHost: offer.merchantHost,
+    merchantName: offer.merchantName,
+    productName: offer.productName,
+    price: offer.price,
+    availability: offer.availability,
+    exaRequestId: offer.exaRequestId,
+    retrievedAt: offer.retrievedAt,
+    market,
+    registeredAt: at,
+  };
 }
 
 export const MAX_LINE_QUANTITY = 10;
@@ -74,6 +103,8 @@ export type CartErrorCode =
   | "line-limit"
   | "total-too-large"
   | "not-in-cart";
+
+export type CheckoutErrorCode = "cart-empty" | "checkout-not-configured" | "checkout-failed";
 
 export type CartOp =
   | { kind: "add"; offerId: string; quantity: number; replace: boolean }
@@ -171,7 +202,7 @@ export function cartTotalMinor(cart: Pick<Cart, "lines">): number {
   return cart.lines.reduce((sum, line) => sum + line.demoUnitAmountMinor * line.quantity, 0);
 }
 
-const emptyCart = (version: number): Cart => ({ version, currency: null, lines: [] });
+export const emptyCart = (version: number): Cart => ({ version, currency: null, lines: [] });
 
 type ParsedCartOp = { ok: true; op: CartOp } | { ok: false; code: "invalid-request" | "quantity-out-of-range" };
 
@@ -184,10 +215,15 @@ const ALLOWED_KEYS: Record<CartOp["kind"], readonly string[]> = {
 
 const isQuantity = (q: number): boolean => Number.isInteger(q) && q >= 1 && q <= MAX_LINE_QUANTITY;
 
-export function parseCartOp(raw: unknown): ParsedCartOp {
+/**
+ * `fixed` holds the fields a route decides itself (the op kind, the offer id in the path). A body that also
+ * names one of them is ambiguous and is refused rather than overridden.
+ */
+export function parseCartOp(raw: unknown, fixed: Readonly<Record<string, unknown>> = {}): ParsedCartOp {
   const invalid = { ok: false, code: "invalid-request" } as const;
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return invalid;
-  const body = raw as Record<string, unknown>;
+  if (Object.keys(fixed).some((key) => Object.hasOwn(raw, key))) return invalid;
+  const body: Record<string, unknown> = { ...raw, ...fixed };
   const field = (key: string): unknown => (Object.hasOwn(body, key) ? body[key] : undefined);
   const kind = field("kind");
   if (kind !== "add" && kind !== "setQuantity" && kind !== "remove" && kind !== "clear") return invalid;
@@ -283,6 +319,9 @@ export interface StripeEventView {
 
 export type TransitionableOrder = Pick<Order, "state" | "declinedAttempts" | "awaitingAsyncPayment" | "anomaly">;
 
+export type UserEvent = { kind: "cancel" } | { kind: "supersede" };
+export type OrderEvent = UserEvent | ({ kind: "stripe" } & StripeEventView);
+
 export interface TransitionResult<T extends TransitionableOrder> {
   order: T;
   outcome: "applied" | "no-transition";
@@ -317,6 +356,47 @@ export function applyStripeEvent<T extends TransitionableOrder>(order: T, event:
     default:
       return noChange;
   }
+}
+
+function applyUserEvent<T extends TransitionableOrder>(order: T, event: UserEvent): TransitionResult<T> {
+  if (order.state !== "open") return { order, outcome: "no-transition" };
+  const to = event.kind === "cancel" ? "cancelled" : "expired";
+  return { order: { ...order, state: to, awaitingAsyncPayment: false }, outcome: "applied" };
+}
+
+type Transitioning = Omit<Order, "state"> & { state: OrderState | null };
+
+/** The only place an order's state, updatedAt and transition log change together. `order.state` null is a new order. */
+export function recordTransition(order: Transitioning, to: OrderState, at: string, meta: { eventId?: string; reason?: Order["reason"] } = {}): Order {
+  return {
+    ...order,
+    state: to,
+    awaitingAsyncPayment: false,
+    updatedAt: at,
+    ...(meta.reason !== undefined && { reason: meta.reason }),
+    transitions: [...order.transitions, { at, from: order.state, to, ...(meta.eventId !== undefined && { eventId: meta.eventId }) }],
+  };
+}
+
+export type NewOrder = Omit<Order, "state" | "reason" | "anomaly" | "updatedAt" | "transitions" | "awaitingAsyncPayment" | "declinedAttempts">;
+
+export function createOrder(fields: NewOrder, state: Extract<OrderState, "open" | "failed">, at: string): Order {
+  return recordTransition({ ...fields, state: null, declinedAttempts: 0, awaitingAsyncPayment: false, updatedAt: at, transitions: [] }, state, at);
+}
+
+/** Applies one event to an order. A change of state is logged with its event id; a change of counters or flags only moves updatedAt. */
+export function transitionOrder(order: Order, event: OrderEvent, at: string, eventId?: string): TransitionResult<Order> {
+  const result = event.kind === "stripe" ? applyStripeEvent(order, event) : applyUserEvent(order, event);
+  if (result.outcome === "no-transition") return result;
+  const after = result.order;
+  if (after.state === order.state) return { order: { ...after, updatedAt: at }, outcome: "applied" };
+  const reason = event.kind === "supersede" ? "superseded" : undefined;
+  return { order: recordTransition({ ...after, state: order.state }, after.state, at, { ...(eventId !== undefined && { eventId }), ...(reason && { reason }) }), outcome: "applied" };
+}
+
+/** An order as the API shows it: Stripe's event ids stay in the store and the server log. */
+export function publicOrder(order: Order): Order {
+  return { ...order, transitions: order.transitions.map((t) => ({ at: t.at, from: t.from, to: t.to })) };
 }
 
 export const CART_TITLE = "Simulated cart";

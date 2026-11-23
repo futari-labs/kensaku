@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { CheckoutPortError } from "../../src/commerce/port";
-import { StripeCheckoutPort, signTestPayload } from "../../src/commerce/stripe-port";
+import { StripeCheckoutPort, signTestPayload, stripeEventEnvelope } from "../../src/commerce/stripe-port";
 import { createApp } from "../../src/server/app";
 import { ConfigError, parseConfig } from "../../src/server/config";
 import { createRuntime } from "../../src/server/runtime";
@@ -155,7 +155,7 @@ describe("EV-021 check 3: a fixture purchase leaves no key or secret anywhere", 
     const seen: string[] = [];
     try {
       const config = parseConfig({ NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", KENSAKU_PORT: "8787", STRIPE_SECRET_KEY: KEY, STRIPE_WEBHOOK_SECRET: SECRET });
-      const dirs = { cache: join(tmp, "cache"), commerce: join(tmp, "data", "commerce") };
+      const dirs = { cacheDir: join(tmp, "cache"), commerceDir: join(tmp, "data", "commerce") };
       const app = createApp(createRuntime(config, dirs));
       const call = async (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) => {
         const raw = typeof body === "string" ? body : body === undefined ? undefined : JSON.stringify(body);
@@ -164,8 +164,8 @@ describe("EV-021 check 3: a fixture purchase leaves no key or secret anywhere", 
         seen.push(`${method} ${path} ${res.status}\n${[...res.headers].map(([k, v]) => `${k}: ${v}`).join("\n")}\n${text}`);
         return { status: res.status, text };
       };
-      const send = async (event: Record<string, unknown>) => {
-        const payload = JSON.stringify({ object: "event", api_version: "2026-10-28.endive", created: Math.floor(Date.now() / 1000), livemode: false, ...event });
+      const send = async (id: string, type: string, object: Record<string, unknown>) => {
+        const payload = JSON.stringify(stripeEventEnvelope(id, type, object));
         return call("POST", "/api/stripe/webhook", payload, { "stripe-signature": signTestPayload(payload, SECRET, Math.floor(Date.now() / 1000)) });
       };
 
@@ -176,7 +176,7 @@ describe("EV-021 check 3: a fixture purchase leaves no key or secret anywhere", 
 
       const first = JSON.parse((await call("POST", "/api/checkout", {})).text) as { orderId: string };
       const { stripeSessionId, totalMinor, currency } = (JSON.parse((await call("GET", `/api/orders/${first.orderId}`)).text) as { order: { stripeSessionId: string; totalMinor: number; currency: string } }).order;
-      const completed = await send({ id: "evt_ev021_paid", type: "checkout.session.completed", data: { object: { id: stripeSessionId, object: "checkout.session", client_reference_id: first.orderId, status: "complete", payment_status: "paid", amount_total: totalMinor, currency: currency.toLowerCase(), livemode: false } } });
+      const completed = await send("evt_ev021_paid", "checkout.session.completed", { id: stripeSessionId, object: "checkout.session", client_reference_id: first.orderId, status: "complete", payment_status: "paid", amount_total: totalMinor, currency: currency.toLowerCase(), livemode: false });
       expect(JSON.parse(completed.text)).toEqual({ outcome: "applied" });
       await call("POST", "/api/stripe/webhook", "{}", { "stripe-signature": "t=1,v1=00" });
       await call("POST", "/api/cart/items", { offerId: offer!.id });
@@ -205,7 +205,7 @@ describe("EV-021 check 3: a fixture purchase leaves no key or secret anywhere", 
 describe("EV-021 check 5: the cart route reports checkoutConfigured, and /api/health says nothing about Stripe", () => {
   const dirs = () => {
     const root = mkdtempSync(join(tmpdir(), "kensaku-ev021-cfg-"));
-    return { cache: join(root, "cache"), commerce: join(root, "data") };
+    return { cacheDir: join(root, "cache"), commerceDir: join(root, "data") };
   };
   const get = async (env: Record<string, string>, path: string) => {
     const app = createApp(createRuntime(parseConfig(env), dirs()));

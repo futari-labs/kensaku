@@ -7,6 +7,7 @@ import type { SessionResult } from "../../src/commerce/port";
 import { OfferStore } from "../../src/commerce/registry";
 import { StripeCheckoutPort } from "../../src/commerce/stripe-port";
 import type { StripeErrorShape } from "../../src/commerce/stripe-port";
+import { toRegisteredOffer } from "../../src/core/commerce";
 import type { RegisteredOffer } from "../../src/core/commerce";
 import { createApp } from "../../src/server/app";
 import { loadKeyFile, parseConfig } from "../../src/server/config";
@@ -14,6 +15,7 @@ import type { ServerConfig } from "../../src/server/config";
 import { createRuntime } from "../../src/server/runtime";
 import { Q1 } from "../../tests/fixtures/questions";
 import { ofType, parseSse } from "../../tests/server/sse";
+import { addSmokeExaRequests, EXA_COUNTER_PATH, exaBudgetRefusal, readExaCounter, RUN_EXA_MAX } from "./exa-counter";
 import { redact, SmokeAbort } from "./sandbox-smoke";
 import type { OwnerStep, SmokeEnv, WebhookLogLine } from "./sandbox-smoke";
 
@@ -27,7 +29,7 @@ function offersOfStream(body: string, market: RegisteredOffer["market"], at: str
   const offers = (ofType(chunks, "data-products")[0]?.data ?? []).flatMap((p) => p.offerGroups.flatMap((g) => g.offers));
   return {
     exaRequests: ofType(chunks, "data-usage")[0]?.data.exaRequests ?? 0,
-    offers: offers.flatMap((o) => (o.id === undefined ? [] : [{ id: o.id, canonicalUrl: o.canonicalUrl, merchantHost: o.merchantHost, merchantName: o.merchantName, productName: o.productName, price: o.price, availability: o.availability, exaRequestId: o.exaRequestId, retrievedAt: o.retrievedAt, market, registeredAt: at }])),
+    offers: offers.flatMap((o) => toRegisteredOffer(o, market, at) ?? []),
   };
 }
 
@@ -35,7 +37,9 @@ function parseLogLines(text: string): WebhookLogLine[] {
   return text.split("\n").flatMap((line) => {
     try {
       const parsed = JSON.parse(line) as Record<string, unknown>;
-      return parsed.event === "webhook" ? [{ ...(typeof parsed.eventId === "string" && { eventId: parsed.eventId }), ...(typeof parsed.type === "string" && { type: parsed.type }), ...(typeof parsed.outcome === "string" && { outcome: parsed.outcome }) }] : [];
+      if (parsed.event !== "webhook") return [];
+      const field = (name: keyof WebhookLogLine) => (typeof parsed[name] === "string" ? { [name]: parsed[name] } : {});
+      return [{ ...field("eventId"), ...field("type"), ...field("outcome"), ...field("orderId"), ...field("to") }];
     } catch {
       return [];
     }
@@ -44,8 +48,10 @@ function parseLogLines(text: string): WebhookLogLine[] {
 
 export interface LiveOptions {
   offerIds: string[];
-  serverLog: string;
+  serverLogPath: string;
   ownerTimeoutMs: number;
+  /** Where the plan-wide Exa request counter lives; tests point it elsewhere. */
+  exaCounterPath?: string;
 }
 
 export function liveEnv(options: LiveOptions): SmokeEnv {
@@ -58,9 +64,10 @@ export function liveEnv(options: LiveOptions): SmokeEnv {
   }
   if (!config.stripe) throw new SmokeAbort("STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must both be set (and STRIPE_SECRET_KEY must be a sandbox key).");
   if (config.mode !== "live") throw new SmokeAbort("the live smoke runs in live Exa mode (unset KENSAKU_EXA_MODE).");
-  if (!existsSync(options.serverLog)) throw new SmokeAbort(`--server-log ${options.serverLog} does not exist: start the server with its output saved there.`);
+  if (!existsSync(options.serverLogPath)) throw new SmokeAbort(`--server-log ${options.serverLogPath} does not exist: start the server with its output saved there.`);
 
   const base = `http://127.0.0.1:${config.port}`;
+  const counterPath = options.exaCounterPath ?? EXA_COUNTER_PATH;
   let rawError: StripeErrorShape | undefined;
   const port = StripeCheckoutPort.fromSecretKey(config.stripe.secretKey, (raw) => (rawError = raw));
   const registry = new OfferStore({ dir: resolve(".cache/offers"), clock: () => new Date() });
@@ -82,14 +89,27 @@ export function liveEnv(options: LiveOptions): SmokeEnv {
         if (offers.length !== options.offerIds.length) throw new SmokeAbort("an --offer-id is not registered in .cache/offers/ (or is older than 30 days).");
         return { offers, exaRequests: 0, source: "registered" as const };
       }
-      const res = await fetch(`${base}/api/chat`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: Q1 }] }], market: "US" }),
-        signal: AbortSignal.timeout(150_000),
-      });
-      if (res.status !== 200) throw new SmokeAbort(`POST /api/chat answered ${res.status}; no Exa request is retried by this script.`);
-      return { ...offersOfStream(await res.text(), "US", new Date().toISOString()), source: "research" as const };
+      const refusal = exaBudgetRefusal(readExaCounter(counterPath));
+      if (refusal) throw new SmokeAbort(`no research run started: ${refusal}`);
+      // Until the stream reports its usage, assume the run spent its worst case.
+      let spent = RUN_EXA_MAX;
+      try {
+        const res = await fetch(`${base}/api/chat`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: Q1 }] }], market: "US" }),
+          signal: AbortSignal.timeout(150_000),
+        });
+        if (res.status !== 200) {
+          spent = 0;
+          throw new SmokeAbort(`POST /api/chat answered ${res.status}; no Exa request is retried by this script.`);
+        }
+        const found = offersOfStream(await res.text(), "US", new Date().toISOString());
+        spent = found.exaRequests;
+        return { ...found, source: "research" as const };
+      } finally {
+        if (spent > 0) addSmokeExaRequests(counterPath, spent);
+      }
     },
     ownerStep: async (step: OwnerStep, done) => {
       console.log(`\n== Owner step: ${step.id} (order ${step.orderId}) ==`);
@@ -110,7 +130,7 @@ export function liveEnv(options: LiveOptions): SmokeEnv {
           resolveResend({ exitCode: typeof exitCode === "number" ? exitCode : null, output: scrub(`${stdout}\n${stderr}`) });
         });
       }),
-    webhookLog: async () => parseLogLines(readFileSync(options.serverLog, "utf8")),
+    webhookLog: async () => parseLogLines(readFileSync(options.serverLogPath, "utf8")),
     now: () => new Date(),
     sleep: REAL_SLEEP,
     gitSha,
@@ -136,17 +156,15 @@ class DryPort extends FakeCheckoutPort {
 export function dryEnv(): SmokeEnv {
   const config = parseConfig({ NODE_ENV: "test", KENSAKU_EXA_MODE: "fixture", STRIPE_SECRET_KEY: `sk_test_${"0".repeat(20)}`, STRIPE_WEBHOOK_SECRET: `whsec_${"0".repeat(20)}` });
   const logged: string[] = [];
-  const realLog = console.log;
-  console.log = (...args: unknown[]) => void logged.push(args.map(String).join(" "));
   const port = new DryPort(config.port);
-  const app = createApp(createRuntime(config, { fakeCheckoutPort: port }));
+  const app = createApp(createRuntime(config, { fakeCheckoutPort: port, log: (line) => logged.push(line) }));
   const request = (method: string, path: string, body?: unknown) =>
     app.request(path, { method, headers: { host: `127.0.0.1:${config.port}`, "content-type": "application/json" }, ...(body !== undefined && { body: JSON.stringify(body) }) });
   const sessionOf = async (orderId: string) => ((await (await request("GET", `/api/orders/${orderId}`)).json()) as { order: { stripeSessionId: string } }).order.stripeSessionId;
+  let paidSessionId: string | undefined;
 
   return {
     mode: "dry-run",
-    dispose: () => void (console.log = realLog),
     port,
     lastRawError: () => undefined,
     api: async (method, path, body) => {
@@ -154,26 +172,23 @@ export function dryEnv(): SmokeEnv {
       return { status: res.status, body: await res.json() };
     },
     offers: async () => {
-      const res = await app.request("/api/chat", {
-        method: "POST",
-        headers: { host: `127.0.0.1:${config.port}`, "content-type": "application/json" },
-        body: JSON.stringify({ messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: Q1 }] }], market: "US", fixtureScenario: "xm5-us" }),
-      });
+      const res = await request("POST", "/api/chat", { messages: [{ id: "m1", role: "user", parts: [{ type: "text", text: Q1 }] }], market: "US", fixtureScenario: "xm5-us" });
       return { ...offersOfStream(await res.text(), "US", new Date().toISOString()), source: "research" as const };
     },
     ownerStep: async (step, done) => {
       const sessionId = await sessionOf(step.orderId);
       await done();
-      if (step.id === "purchase") await request("POST", `/__test/checkout/${sessionId}/pay`);
-      else {
+      if (step.id === "purchase") {
+        paidSessionId = sessionId;
+        await request("POST", `/__test/checkout/${sessionId}/pay`);
+      } else {
         await request("POST", `/__test/checkout/${sessionId}/decline`);
         await request("POST", `/api/orders/${step.orderId}/cancel`, {});
       }
       return done();
     },
-    resend: async (eventId) => {
-      const sessionId = eventId.replace("evt_fake_completed_", "");
-      await request("POST", `/__test/checkout/${sessionId}/pay`);
+    resend: async () => {
+      await request("POST", `/__test/checkout/${paidSessionId}/pay`);
       return { exitCode: 0, output: "dry-run: the same event was delivered again in process" };
     },
     webhookLog: async () => parseLogLines(logged.join("\n")),

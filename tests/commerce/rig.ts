@@ -25,7 +25,8 @@ afterEach(() => {
 export interface RigOptions {
   dir?: string;
   seed?: CommerceState;
-  port?: CheckoutPort | undefined;
+  /** `fake` (the default): the rig's FakeCheckoutPort; `none`: checkout is not configured; or any port. */
+  checkout?: "fake" | "none" | CheckoutPort;
   portTimeoutMs?: number;
   secret?: string;
 }
@@ -53,16 +54,19 @@ export function commerceRig(options: RigOptions = {}): Rig {
   const fake = new FakeCheckoutPort(PORT);
   const logs: Record<string, unknown>[] = [];
   const secret = options.secret ?? testSecret();
+  const choice = options.checkout ?? "fake";
+  const port = choice === "fake" ? fake : choice === "none" ? undefined : choice;
   const service = new CommerceService({
     store,
     offers,
-    port: "port" in options ? options.port : fake,
+    port,
+    checkoutConfigured: () => port !== undefined,
     clock: () => new Date(),
     log: (line) => logs.push(line),
     serverPort: PORT,
     ...(options.portTimeoutMs !== undefined && { portTimeoutMs: options.portTimeoutMs }),
   });
-  const h = harness({ commerce: { service, webhookSecret: secret } });
+  const h = harness({ commerce: { service, offers, webhookSecret: secret } });
   const request: Rig["request"] = async (path, init = {}) =>
     h.app.request(path, { method: init.method ?? "GET", headers: { ...HEADERS, ...init.headers }, ...(init.body !== undefined && { body: init.body }) });
   return {

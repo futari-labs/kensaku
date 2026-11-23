@@ -82,7 +82,7 @@ export function createApp(deps: AppDeps): Hono {
     const runId = randomUUID();
     const month = () => ({ monthRequests: ledger.read(clock()).requests, monthLimit: ledger.limits.requestLimit });
     const registerImages = images?.registerImageCandidates.bind(images);
-    const registerOffers = commerce?.service.registerOffers.bind(commerce.service);
+    const registerOffers = commerce?.offers.register.bind(commerce.offers);
     const stream = createUIMessageStream<KensakuMessage>({
       execute: async ({ writer }) => {
         try {

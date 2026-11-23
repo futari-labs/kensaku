@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { StripeCheckoutPort, signTestPayload } from "../../src/commerce/stripe-port";
+import { StripeCheckoutPort, signTestPayload, stripeEventEnvelope } from "../../src/commerce/stripe-port";
 import type { FakeScript } from "../../src/commerce/fake-port";
 import type { CartLine, CommerceState, Order, OrderState } from "../../src/core/commerce";
 import { readJson } from "../core/fixtures";
@@ -97,15 +97,7 @@ function setPath(target: Record<string, unknown>, path: string, value: unknown):
 function bodyOf(d: Delivery): string {
   if (d.rawBody !== undefined) return d.rawBody;
   const template = cases.templates[d.template!]!;
-  const event: Record<string, unknown> = {
-    id: d.event,
-    object: "event",
-    api_version: "2026-10-28.endive",
-    created: Math.floor(Date.now() / 1000),
-    livemode: false,
-    type: template.type,
-    data: { object: structuredClone(template.object) },
-  };
+  const event = stripeEventEnvelope(d.event!, template.type, structuredClone(template.object));
   for (const [path, value] of Object.entries(d.override ?? {})) setPath(event, path.startsWith("object.") ? `data.${path}` : path, value);
   return JSON.stringify(event);
 }
@@ -173,8 +165,8 @@ describe("EV-020 route cases", () => {
       : undefined;
     const rig = commerceRig({
       seed: seed({ ...(c.startState && { state: c.startState }), noOrder, cartVersion: cases.baseCartVersion, cartEmpty: c.cart === "empty" }),
-      ...(c.checkoutConfigured === false && { port: undefined }),
-      ...(livePort && { port: livePort }),
+      ...(c.checkoutConfigured === false && { checkout: "none" as const }),
+      ...(livePort && { checkout: livePort }),
     });
     const base = cases.baseOrder.orderId;
     const cartBefore = JSON.stringify((await rig.json("GET", "/api/cart")).body.cart);

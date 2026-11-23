@@ -3,18 +3,21 @@ import type { CheckoutOrderLine, CheckoutPort, SessionResult } from "../../src/c
 import type { StripeErrorShape } from "../../src/commerce/stripe-port";
 import { MIN_UNIT_MINOR, toMinorUnits } from "../../src/core/commerce";
 import type { CartLine, Order, RegisteredOffer } from "../../src/core/commerce";
+import { CURRENCIES } from "../../src/core/currency";
 import type { Currency } from "../../src/core/types";
+import { SMOKE_EXA_CAP } from "./exa-counter";
 
-export const EXA_REQUEST_CAP = 5;
-export const CURRENCIES: readonly Currency[] = ["USD", "SGD", "JPY"];
+export const EXA_REQUEST_CAP = SMOKE_EXA_CAP;
 const EXPECTED_EXPIRY_SECONDS = 3600;
 const EXPIRY_TOLERANCE_SECONDS = 120;
 
-const KEY_LIKE = /(?:sk|rk|rkcs|pk)_(?:test|live)_\S*|whsec_\S*/g;
+/** The one shape of a Stripe key or signing secret. The redactor and the log writer both use it. */
+const KEY_SHAPED = /(?:sk|rk|rkcs|pk)_(?:test|live)_\S+|whsec_\S+/;
+export const holdsKey = (text: string): boolean => KEY_SHAPED.test(text);
 const CARD_LIKE = /\b(?:\d[ -]?){13,19}\b/g;
 const BEARER = /Bearer\s+\S+/gi;
 
-export const redact = (text: string): string => text.replace(KEY_LIKE, "[redacted]").replace(BEARER, "[redacted]").replace(CARD_LIKE, "[redacted]");
+export const redact = (text: string): string => text.replace(new RegExp(KEY_SHAPED, "g"), "[redacted]").replace(BEARER, "[redacted]").replace(CARD_LIKE, "[redacted]");
 
 export interface OwnerStep {
   id: "purchase" | "decline";
@@ -23,10 +26,13 @@ export interface OwnerStep {
   url: string;
 }
 
+/** One `webhook` line of the server log. Stripe event ids are read from here, never from the order API. */
 export interface WebhookLogLine {
   eventId?: string;
   type?: string;
   outcome?: string;
+  orderId?: string;
+  to?: string;
 }
 
 export interface SmokeEnv {
@@ -42,12 +48,13 @@ export interface SmokeEnv {
   now(): Date;
   sleep(ms: number): Promise<void>;
   gitSha(): string;
-  dispose?(): void;
 }
 
 export interface AgentSession {
   currency: Currency;
-  synthetic: boolean;
+  /** True: a fixed test item stood in for a registered offer. The session is created, retrieved and expired, never paid. */
+  syntheticSessionOnly: boolean;
+  syntheticReason?: string;
   sessionId: string;
   livemode: boolean;
   urlHost: string;
@@ -79,6 +86,8 @@ export interface SmokeEvidence {
 }
 
 export class SmokeAbort extends Error {}
+
+const SYNTHETIC_REASON = `Q1 yields no ${CURRENCIES.filter((c) => c !== "USD").join("/")} registered offers within the ${SMOKE_EXA_CAP}-request smoke budget`;
 
 const ownerTimeoutNote = (what: string) => `${what}: the owner step timed out`;
 
@@ -118,7 +127,7 @@ const hostOf = (url: string | null): string => {
   }
 };
 
-async function agentSession(env: SmokeEnv, currency: Currency, offer: RegisteredOffer, synthetic: boolean): Promise<AgentSession> {
+async function agentSession(env: SmokeEnv, currency: Currency, offer: RegisteredOffer, syntheticSessionOnly: boolean): Promise<AgentSession> {
   const now = env.now();
   const orderId = `ord_smoke_${currency.toLowerCase()}_${now.getTime().toString(36)}`;
   const { params, options } = buildCheckoutSessionRequest({ orderId, currency, lines: [lineOf(offer)] }, { port: 8787, now });
@@ -128,7 +137,8 @@ async function agentSession(env: SmokeEnv, currency: Currency, offer: Registered
   const after = await env.port.retrieveSession(created.id);
   return {
     currency,
-    synthetic,
+    syntheticSessionOnly,
+    ...(syntheticSessionOnly && { syntheticReason: SYNTHETIC_REASON }),
     sessionId: created.id,
     livemode: created.livemode,
     urlHost: hostOf(created.url),
@@ -200,7 +210,7 @@ export async function runSmoke(env: SmokeEnv): Promise<SmokeEvidence> {
   const agentSessions: AgentSession[] = [];
   for (const currency of CURRENCIES) {
     const registered = byCurrency.get(currency);
-    if (!registered) notes.push(`no registered ${currency} offer: a fixed test item was charged`);
+    if (!registered) notes.push(`${currency}: syntheticSessionOnly, a fixed test item was created, retrieved and expired but never paid`);
     agentSessions.push(await agentSession(env, currency, registered ?? syntheticOffer(currency, env.now().toISOString()), registered === undefined));
   }
   const again = await expireAgain(env, agentSessions[0]!.sessionId);
@@ -218,7 +228,7 @@ export async function runSmoke(env: SmokeEnv): Promise<SmokeEvidence> {
     completed: purchased.completed,
     statesSeen: purchased.statesSeen,
     finalState: paid?.state ?? "unknown",
-    paidEventId: paid?.transitions.find((t) => t.to === "paid")?.eventId ?? null,
+    paidEventId: (await env.webhookLog()).find((l) => l.orderId === purchased.orderId && l.outcome === "applied" && l.to === "paid")?.eventId ?? null,
     amountMatchesSession: retrievedPurchase !== undefined && retrievedPurchase.amountTotal === paid?.totalMinor && retrievedPurchase.currency === paid?.currency.toLowerCase(),
     cartClearedAfter: (await cartLines(env)).length === 0,
   };

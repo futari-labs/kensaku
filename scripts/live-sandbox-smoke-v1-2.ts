@@ -19,7 +19,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { dryEnv, liveEnv } from "./live/sandbox-env";
-import { redact, runSmoke, SmokeAbort } from "./live/sandbox-smoke";
+import { holdsKey, redact, runSmoke, SmokeAbort } from "./live/sandbox-smoke";
 import type { SmokeEnv } from "./live/sandbox-smoke";
 
 const ROOT = join(import.meta.dirname, "..");
@@ -36,21 +36,18 @@ const { values } = parseArgs({
 });
 
 const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
-let env: SmokeEnv | undefined;
 try {
   const dry = values["dry-run"];
   if (!dry && !values["server-log"]) throw new SmokeAbort("--server-log <file> is required: the server's output, saved to a file (see the header of this script).");
-  env = dry
+  const env: SmokeEnv = dry
     ? dryEnv()
-    : liveEnv({ offerIds: values["offer-id"] ?? [], serverLog: values["server-log"]!, ownerTimeoutMs: Number(values["timeout-minutes"]) * 60_000 });
+    : liveEnv({ offerIds: values["offer-id"] ?? [], serverLogPath: values["server-log"]!, ownerTimeoutMs: Number(values["timeout-minutes"]) * 60_000 });
   const evidence = await runSmoke(env);
   const text = `${JSON.stringify(evidence, null, 2)}\n`;
-  if (/(?:sk|rk|rkcs|pk)_(?:test|live)_\w{8,}|whsec_\w{8,}/.test(text)) throw new Error("the log holds a key-shaped value; refusing to write it");
+  if (holdsKey(text)) throw new Error("the log holds a key-shaped value; refusing to write it");
 
   const failed = Object.entries(evidence.checks).filter(([, ok]) => !ok);
   if (evidence.mode === "dry-run") {
-    env.dispose?.();
-    env = undefined;
     console.log(`dry-run: ${Object.keys(evidence.checks).length} checks, ${failed.length} failed`);
     for (const [name] of failed) console.log(`  FAILED: ${name}`);
     process.exit(failed.length === 0 ? 0 : 1);
@@ -62,7 +59,6 @@ try {
   for (const [name, ok] of Object.entries(evidence.checks)) console.log(`${ok ? "PASS" : "FAIL"}  ${name}`);
   process.exit(evidence.pass ? 0 : 1);
 } catch (error) {
-  env?.dispose?.();
   console.error(error instanceof SmokeAbort ? `smoke stopped: ${error.message}` : `smoke failed: ${redact(error instanceof Error ? error.message : String(error))}`);
   process.exit(2);
 }

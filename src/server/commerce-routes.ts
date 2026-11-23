@@ -1,14 +1,18 @@
 import { Hono } from "hono";
-import type { Context } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-import type { CartErrorCode, CartOp } from "../core/commerce";
-import { parseCartOp } from "../core/commerce";
+import type { CartErrorCode } from "../core/commerce";
+import { parseCartOp, publicOrder } from "../core/commerce";
+import type { OfferStore } from "../commerce/registry";
 import type { CommerceService } from "../commerce/service";
 
 export interface CommerceDeps {
   service: CommerceService;
+  /** Where research registers the offers a cart may later hold. */
+  offers: OfferStore;
   /** Verifies webhook deliveries. Absent: the webhook route answers 503. */
   webhookSecret: string | undefined;
+  /** Fixture mode only: the fake Stripe page and the test-only switches. */
   fakeHosted?: Hono;
 }
 
@@ -29,52 +33,31 @@ const CART_STATUS = {
 const CHECKOUT_STATUS = { "cart-empty": 400, "checkout-not-configured": 503, "checkout-failed": 502 } as const;
 const CANCEL_STATUS = { "order-not-found": 404, "already-paid": 409, "already-completed": 409, "cancel-failed": 502 } as const;
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-
-async function bodyOf(c: Context): Promise<Record<string, unknown> | undefined> {
-  const body: unknown = await c.req.json().catch(() => undefined);
-  return isRecord(body) ? body : undefined;
-}
-
 export function commerceRoutes({ service, webhookSecret }: CommerceDeps): Hono {
   const app = new Hono();
 
-  for (const path of ["/api/cart", "/api/cart/*", "/api/checkout", "/api/orders", "/api/orders/*", "/api/stripe/*"]) {
-    app.use(path, async (c, next) => {
-      if (service.unavailableReason !== undefined) return c.json({ code: "commerce-unavailable" }, 503);
-      await next();
-    });
-  }
-
-  const cartOp = async (c: Context, raw: unknown) => {
-    const parsed = parseCartOp(raw);
-    if (!parsed.ok) return c.json({ code: parsed.code }, CART_STATUS[parsed.code]);
-    return respondToCartOp(c, parsed.op);
+  /** Every commerce route lists this before its handler: with an unreadable data file none of them may run. */
+  const available: MiddlewareHandler = async (c, next) => {
+    if (service.unavailableReason !== undefined) return c.json({ code: "commerce-unavailable" }, 503);
+    await next();
   };
-  const respondToCartOp = async (c: Context, op: CartOp) => {
-    const result = await service.applyCartOp(op);
+
+  const cartOp = async (c: Context, fixed: Record<string, unknown>, body: unknown = {}) => {
+    const parsed = parseCartOp(body, fixed);
+    if (!parsed.ok) return c.json({ code: parsed.code }, CART_STATUS[parsed.code]);
+    const result = await service.applyCartOp(parsed.op);
     if (result.ok) return c.json({ cart: result.cart });
     return c.json({ code: result.code, ...("details" in result && { details: result.details }) }, CART_STATUS[result.code]);
   };
+  const jsonBody = (c: Context): Promise<unknown> => c.req.json().catch(() => undefined);
 
-  app.get("/api/cart", (c) => c.json(service.cart()));
+  app.get("/api/cart", available, (c) => c.json(service.cart()));
+  app.post("/api/cart/items", available, async (c) => cartOp(c, { kind: "add" }, await jsonBody(c)));
+  app.patch("/api/cart/items/:offerId", available, async (c) => cartOp(c, { kind: "setQuantity", offerId: c.req.param("offerId") }, await jsonBody(c)));
+  app.delete("/api/cart/items/:offerId", available, (c) => cartOp(c, { kind: "remove", offerId: c.req.param("offerId") }));
+  app.delete("/api/cart", available, (c) => cartOp(c, { kind: "clear" }));
 
-  app.post("/api/cart/items", async (c) => {
-    const body = await bodyOf(c);
-    if (body === undefined || Object.hasOwn(body, "kind")) return c.json({ code: "invalid-request" }, 400);
-    return cartOp(c, { ...body, kind: "add" });
-  });
-
-  app.patch("/api/cart/items/:offerId", async (c) => {
-    const body = await bodyOf(c);
-    if (body === undefined || Object.hasOwn(body, "kind") || Object.hasOwn(body, "offerId")) return c.json({ code: "invalid-request" }, 400);
-    return cartOp(c, { ...body, kind: "setQuantity", offerId: c.req.param("offerId") });
-  });
-
-  app.delete("/api/cart/items/:offerId", (c) => cartOp(c, { kind: "remove", offerId: c.req.param("offerId") }));
-  app.delete("/api/cart", (c) => cartOp(c, { kind: "clear" }));
-
-  app.post("/api/checkout", async (c) => {
+  app.post("/api/checkout", available, async (c) => {
     const body = await c.req.text();
     if (body.trim() !== "" && body.trim() !== "{}") return c.json({ code: "invalid-request" }, 400);
     const result = await service.checkout();
@@ -82,19 +65,18 @@ export function commerceRoutes({ service, webhookSecret }: CommerceDeps): Hono {
     return c.json({ code: result.code }, CHECKOUT_STATUS[result.code]);
   });
 
-  app.get("/api/orders", (c) => c.json({ orders: service.orders() }));
-  app.get("/api/orders/:id", (c) => {
+  app.get("/api/orders", available, (c) => c.json({ orders: service.orders().map(publicOrder) }));
+  app.get("/api/orders/:id", available, (c) => {
     const order = service.order(c.req.param("id"));
-    return order ? c.json({ order }) : c.json({ code: "order-not-found" }, 404);
+    return order ? c.json({ order: publicOrder(order) }) : c.json({ code: "order-not-found" }, 404);
   });
-
-  app.post("/api/orders/:id/cancel", async (c) => {
+  app.post("/api/orders/:id/cancel", available, async (c) => {
     const result = await service.cancel(c.req.param("id"));
-    if (result.ok) return c.json({ order: result.order });
+    if (result.ok) return c.json({ order: publicOrder(result.order) });
     return c.json({ code: result.code }, CANCEL_STATUS[result.code]);
   });
 
-  app.post("/api/stripe/webhook", async (c) => {
+  app.post("/api/stripe/webhook", available, async (c) => {
     if (webhookSecret === undefined) return c.json({ code: "checkout-not-configured" }, 503);
     // The raw bytes, before any JSON parsing: the signature covers exactly these.
     const rawBody = new Uint8Array(await c.req.arrayBuffer());

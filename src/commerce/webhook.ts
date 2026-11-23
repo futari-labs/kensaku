@@ -1,4 +1,4 @@
-import { applyCartOp, applyStripeEvent } from "../core/commerce";
+import { emptyCart, transitionOrder } from "../core/commerce";
 import type { CommerceState, Order, OrderState } from "../core/commerce";
 import { CheckoutPortError } from "./port";
 import type { WebhookEvent } from "./port";
@@ -7,13 +7,13 @@ import { verifyWebhook } from "./stripe-port";
 export const PROCESSED_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const PROCESSED_MAX = 10_000;
 
-export type AppliedOutcome = "applied" | "duplicate" | "ignored-type" | "unknown-order" | "mismatch" | "no-transition";
+export type ProcessedOutcome = "applied" | "duplicate" | "ignored-type" | "unknown-order" | "mismatch" | "no-transition";
 export type RejectedOutcome = "rejected-signature" | "invalid-payload" | "rejected-livemode";
-export type WebhookOutcome = AppliedOutcome | RejectedOutcome;
+export type WebhookOutcome = ProcessedOutcome | RejectedOutcome;
 
 export interface WebhookResult {
   state: CommerceState;
-  outcome: AppliedOutcome;
+  outcome: ProcessedOutcome;
   orderId?: string;
   from?: OrderState;
   to?: OrderState;
@@ -48,7 +48,7 @@ function sessionMatches(order: Order, event: WebhookEvent): boolean {
 
 export function applyWebhookEvent(state: CommerceState, event: WebhookEvent, now: Date): WebhookResult {
   if (state.processedEvents.some((e) => e.id === event.id)) return { state, outcome: "duplicate" };
-  const recorded = (outcome: Exclude<AppliedOutcome, "duplicate">, next: CommerceState, extra: Partial<WebhookResult> = {}): WebhookResult => ({
+  const recorded = (outcome: Exclude<ProcessedOutcome, "duplicate">, next: CommerceState, extra: Partial<WebhookResult> = {}): WebhookResult => ({
     state: { ...next, processedEvents: recordProcessed(next.processedEvents, event.id, now) },
     outcome,
     ...extra,
@@ -62,24 +62,18 @@ export function applyWebhookEvent(state: CommerceState, event: WebhookEvent, now
   if (!order) return recorded("unknown-order", state);
   if (isSession && !sessionMatches(order, event)) return recorded("mismatch", state, { orderId: order.orderId });
 
-  const { order: changed, outcome } = applyStripeEvent(order, {
-    type: event.type,
-    ...(event.object.payment_status != null && { payment_status: event.object.payment_status }),
-  });
+  const { order: updated, outcome } = transitionOrder(
+    order,
+    { kind: "stripe", type: event.type, ...(event.object.payment_status != null && { payment_status: event.object.payment_status }) },
+    now.toISOString(),
+    event.id,
+  );
   if (outcome === "no-transition") return recorded("no-transition", state, { orderId: order.orderId });
 
-  const at = now.toISOString();
-  const moved = changed.state !== order.state;
-  const updated: Order = {
-    ...changed,
-    updatedAt: at,
-    transitions: moved ? [...order.transitions, { at, from: order.state, to: changed.state, eventId: event.id }] : order.transitions,
-  };
-  const clearsCart = moved && changed.state === "paid" && state.cart.version === order.cartVersion;
-  const cleared = clearsCart ? applyCartOp(state.cart, { kind: "clear" }, () => undefined) : undefined;
+  const clearsCart = updated.state === "paid" && order.state !== "paid" && state.cart.version === order.cartVersion && state.cart.lines.length > 0;
   const next: CommerceState = {
     ...state,
-    cart: cleared?.ok ? cleared.cart : state.cart,
+    cart: clearsCart ? emptyCart(state.cart.version + 1) : state.cart,
     orders: state.orders.map((o) => (o === order ? updated : o)),
   };
   return recorded("applied", next, { orderId: order.orderId, from: order.state, to: updated.state });
