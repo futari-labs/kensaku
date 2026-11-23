@@ -1,6 +1,6 @@
 # FutariLabs progress
 
-Phase: **v1.2 execution** — plan `kensaku-v1-2` revision CR-005 on `dev`; vertical slice merged (JM-201..JM-203); JM-204 merge-ready; JM-205 next. v1.1 (plan `kensaku-v1-1`) is complete and accepted (2026-11-22) and archived in `docs/futari/archive/kensaku-v1-1/`; the MVP is archived in `docs/futari/archive/kensaku-mvp-v1/`.
+Phase: **v1.2 complete and accepted by the owner** (plan `kensaku-v1-2`, revision CR-006; final `dev` head `311593f`, owner acceptance 2026-11-23). v1.1 (`kensaku-v1-1`) and the MVP are complete and archived in `docs/futari/archive/`.
 
 (Previous phase line, kept for history: **v1.1 complete and accepted by the owner** (plan `kensaku-v1-1`, revision CR-003; final `dev` head `878c7cf`). The MVP plan `kensaku-mvp-v1` is complete: PR #13 was merged into `dev` (`a3a2894`) and the owner accepted the MVP. Its contract is archived in `docs/futari/archive/kensaku-mvp-v1/` (approval at plan commit `2866477`, snapshot `c4bce63625eab7d095e1a70737497c524de12cace00bfde4ffd978fbe96cdb36`).)
 
@@ -57,7 +57,41 @@ Phase: **v1.2 execution** — plan `kensaku-v1-2` revision CR-005 on `dev`; vert
 | JM-202 | #32 | `jm-202-stripe-adapter` | #37 | `9fcb8fb` | merged (`0b56670`) | `.futari/evidence/JM-202.md` |
 | JM-203 | #33 | `jm-203-commerce-slice` | #39 | `5506864` | merged (`5f4d922`) | `.futari/evidence/JM-203.md`; live smoke 9/9 |
 | JM-204 | #34 | `jm-204-commerce-ui` | #40 | `29b5597` | merged (`5906471`) | `.futari/evidence/JM-204.md`; owner accepted the UI |
-| JM-205 | #35 | `jm-205-live-acceptance` | (this PR) | `04cd952` | merge-ready after CI | `.futari/evidence/JM-205.md`; EV-023 run 2 PASS |
+| JM-205 | #35 | `jm-205-live-acceptance` | #42 | `04cd952` | merged (`311593f`) | `.futari/evidence/JM-205.md`; EV-023 run 2 PASS |
+
+### v1.2 final acceptance
+
+Completion condition (`.futari/plan.json`, revision CR-006), observed 2026-11-23:
+
+1. JM-201 to JM-205 merged into `dev` through one PR each: #36 (`57370f8`), #37 (`0b56670`), #39 (`5f4d922`), #40 (`5906471`), #42 (`311593f`). `CI` and `Futari contract` were green on each PR head; `dev` CI was green after each merge (one carried-layout flake failed once at `0b56670` and passed on rerun of the same commit). Plan revisions CR-005 (PR #38) and CR-006 (PR #41) were approved on the native card and merged by the owner.
+2. Final `dev` head `311593f`: CI success (EV-001 to EV-007, EV-009 to EV-015, EV-017 to EV-022, typecheck, lint, build, harness, component check); `node evals/harness.mjs --strict --final` exit 0 locally; `plan-gate verify` PASS (snapshot `1a52fb3e…` at `f190051`).
+3. JM-203 live sandbox smoke 9/9 PASS (`jm-203-sandbox-smoke-20261123T100119Z.json`). EV-023 run 2 PASS (`ev-023-run-2-20261123T135615Z.json`, audit `ev-023-run-2-audit.md`, owner H1-H5 all yes); run 1 evidence committed beside it (CR-006). Exa plan-wide: 12 of 30 requests, $0.165 of $0.40 (smoke counted at its $0.06 bound); Stripe sandbox only.
+4. Owner product acceptance: below.
+
+| Requirement | Tasks | Evaluations | Evidence | Result |
+| --- | --- | --- | --- | --- |
+| REQ-001 to REQ-006, REQ-011 to REQ-016 (carried) | JM-203, JM-204, JM-205 | EV-001 to EV-007, EV-009 to EV-015, EV-017 | CI on `311593f`; `JM-205.md` regression | pass |
+| REQ-007 Local and key safety (Stripe navigation exception) | JM-203, JM-204, JM-205 | EV-009, EV-021, EV-022 | `JM-203.md`, `JM-204.md` | pass |
+| REQ-008 Live acceptance (v1.2) | JM-205 | EV-023 | `JM-205.md`, run 2 log and audit | pass (A3 BLOCKED under CR-006) |
+| REQ-009 History | JM-204 | EV-007, EV-015, EV-022 | `JM-204.md` | pass |
+| REQ-010 Frontend quality | JM-204 | EV-007, EV-010, EV-015, EV-022, owner UI review | `JM-204.md` | pass |
+| REQ-017 Registered offers and cart rules | JM-201, JM-203, JM-204 | EV-018, EV-022 | `JM-201.md`, `JM-203.md` | pass |
+| REQ-018 Demo price distinct from observed price | JM-201, JM-202, JM-204 | EV-018, EV-019, EV-022, audit H3 | `JM-201.md`, `JM-202.md`, run 2 audit | pass |
+| REQ-019 Stripe-hosted Checkout | JM-202, JM-203, JM-205 | EV-019, EV-023 | `JM-202.md`, smoke, run 2 | pass |
+| REQ-020 Verified webhooks and order state | JM-203, JM-205 | EV-020, EV-023 | `JM-203.md`, run 2 | pass |
+| REQ-021 Scenarios | JM-203, JM-204, JM-205 | EV-020, EV-022, EV-023 | run 2 A1-A8 | pass |
+| REQ-022 Simulated labeling | JM-202, JM-204, JM-205 | EV-019, EV-022, audits H1 and H4 | run 2 audit | pass |
+| REQ-023 Sandbox-only keys | JM-202, JM-203 | EV-021 | `JM-202.md`, `JM-203.md` | pass |
+| REQ-024 Commerce UI | JM-204 | EV-022, owner UI review | `JM-204.md` | pass |
+
+**Owner product acceptance:** accepted by the owner (d3F0g) on 2026-11-23 through the native AskUserQuestion card. Question: "Do you accept Kensaku v1.2 (Stripe sandbox simulated commerce) as delivered on dev at 311593f, with the limits listed above (no live paid JPY order under CR-006; follow-ups noted)?" Selection: "Accept v1.2". Promotion to `main` and deployment remain the owner's and are outside this plan.
+
+Known limits and follow-ups (not blocking):
+- No live webhook-paid JPY order observed (CR-006, D-060); JPY covered by EV-018, EV-019 R02, and the JM-203 sandbox JPY session.
+- `tests/research/sandbox-smoke.test.ts` "refuses to run without a sandbox Stripe key" fails in a checkout that has a real `.env.local` (the test sets `EXA_ENV_FILE=""`, so the loader falls back to `.env.local` and restores the keys). CI and clean worktrees pass. Fix: point `EXA_ENV_FILE` at an empty temporary file in the test. Not filed as an issue (the coordinator's attempt to create one outside the approved tasks was refused); left for the owner.
+- UI label strings and the client-side buy-check order should move into `src/core/commerce.ts` beside the server rule; a failing cart write during a refresh delays that refresh; `apply` has no ordering guard.
+- A live EV-023 run always reports `gitDirty` because of its own stub log; the summary fallback marks a completed run "aborted" (run 1).
+- The carried ev-015 layout measurement was stabilized in JM-204; no further flake seen.
 
 ## v1.1 planning session 2026-11-21
 
