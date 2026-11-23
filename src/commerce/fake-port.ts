@@ -63,13 +63,7 @@ export class FakeCheckoutPort implements CheckoutPort {
     if (this.script.retrieve === "error") throw new CheckoutPortError("stripe-error");
     const status: SessionStatus = this.script.retrieve;
     const known = this.sessions.get(id);
-    return {
-      id,
-      url: status === "open" ? this.hostedUrl(id) : null,
-      status,
-      livemode: false,
-      amountTotal: known?.amountTotal ?? null,
-      currency: known?.currency ?? null,
-    };
+    const fields = { id, livemode: false, amountTotal: known?.amountTotal ?? null, currency: known?.currency ?? null };
+    return status === "open" ? { ...fields, status, url: this.hostedUrl(id) } : { ...fields, status, url: null };
   }
 }

@@ -26,15 +26,11 @@ function toResult(session: Stripe.Checkout.Session): SessionResult {
   if (session.livemode) throw new CheckoutPortError("livemode-refused");
   const status = STATUSES.find((known) => known === session.status);
   if (status === undefined) throw new CheckoutPortError("stripe-error");
-  if (session.url !== null && !session.url.startsWith(CHECKOUT_URL_PREFIX)) throw new CheckoutPortError("unsafe-url");
-  return {
-    id: session.id,
-    url: session.url,
-    status,
-    livemode: false,
-    amountTotal: session.amount_total,
-    currency: session.currency,
-  };
+  const fields = { id: session.id, livemode: false, amountTotal: session.amount_total, currency: session.currency };
+  if (status !== "open") return { ...fields, status, url: null };
+  if (session.url === null) throw new CheckoutPortError("stripe-error");
+  if (!session.url.startsWith(CHECKOUT_URL_PREFIX)) throw new CheckoutPortError("unsafe-url");
+  return { ...fields, status, url: session.url };
 }
 
 async function call<T>(run: () => Promise<T>): Promise<T> {
@@ -54,7 +50,7 @@ export class StripeCheckoutPort implements CheckoutPort {
 
   async createSession(params: CheckoutSessionParams, options: CheckoutSessionOptions): Promise<SessionResult> {
     const result = await call(async () => toResult(await this.client.checkout.sessions.create(params, options)));
-    if (result.url === null) throw new CheckoutPortError("stripe-error");
+    if (result.status !== "open") throw new CheckoutPortError("stripe-error");
     return result;
   }
 

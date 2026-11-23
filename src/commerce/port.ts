@@ -33,14 +33,16 @@ export interface CheckoutSessionOptions {
 
 export type SessionStatus = "open" | "complete" | "expired";
 
-export interface SessionResult {
+interface SessionFields {
   id: string;
-  url: string | null;
-  status: SessionStatus;
   livemode: boolean;
   amountTotal: number | null;
   currency: string | null;
 }
+
+export type SessionResult =
+  | (SessionFields & { status: "open"; url: string })
+  | (SessionFields & { status: "complete" | "expired"; url: null });
 
 export type CheckoutPortErrorCode = "stripe-error" | "livemode-refused" | "unsafe-url" | "invalid-signature";
 
