@@ -10,7 +10,6 @@ export type FakeCall =
   | { method: "expireSession"; id: string }
   | { method: "retrieveSession"; id: string };
 
-/** In-memory port for tests: records calls and plays scripted outcomes (defaults: create ok, expire ok, retrieve open). */
 export class FakeCheckoutPort implements CheckoutPort {
   readonly calls: FakeCall[] = [];
   private script = { create: "ok" as CreateScript, expire: "ok" as ExpireScript, retrieve: "open" as RetrieveScript };
@@ -30,7 +29,6 @@ export class FakeCheckoutPort implements CheckoutPort {
     return this.calls.filter((c) => c.method === method).length;
   }
 
-  /** Lets a pending `ok-delayed` expire resolve. */
   releaseDelayed(): void {
     this.releaseDelayedExpire?.();
   }

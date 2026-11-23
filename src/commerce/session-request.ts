@@ -9,7 +9,6 @@ const productName = (raw: string) => Array.from(raw.trim()).slice(0, NAME_MAX_CO
 const description = (host: string, retrievedAt: string) =>
   `Simulated Kensaku purchase in a Stripe sandbox. No order is placed with ${host} and no real payment is taken. Demo price copied from the price last observed on ${host} at ${retrievedAt}.`;
 
-/** The exact Stripe Checkout Session request for an order, frozen by EV-019. Pure. */
 export function buildCheckoutSessionRequest(
   order: CheckoutOrderInput,
   context: { port: number; now: Date },

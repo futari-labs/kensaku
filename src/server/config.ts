@@ -23,7 +23,6 @@ export interface ServerConfig {
   limits: Limits;
   /** File that receives each Exa request and raw response as JSON lines (live smoke only). */
   exchangeLog: string | undefined;
-  /** Present only when both Stripe values are set and sandbox-shaped (D-050). The key goes to the SDK constructor, the secret to `verifyWebhook`. */
   stripe?: { secretKey: string; webhookSecret: string };
 }
 
@@ -51,7 +50,6 @@ const EnvSchema = z.object({
 
 const SANDBOX_KEY_PREFIXES = ["sk_test_", "rk_test_", "rkcs_test_"];
 
-/** D-050. Errors name the variable, never its value. */
 function parseStripe(secretKey: string | undefined, webhookSecret: string | undefined): ServerConfig["stripe"] {
   if (secretKey === undefined && webhookSecret === undefined) return undefined;
   if (secretKey === undefined) throw new ConfigError("STRIPE_WEBHOOK_SECRET is set but STRIPE_SECRET_KEY is missing.");

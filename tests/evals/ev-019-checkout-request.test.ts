@@ -1,4 +1,3 @@
-// EV-019 Checkout request: the frozen Session create request, built and passed through the port unchanged.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";

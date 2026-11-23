@@ -1,4 +1,3 @@
-/** Structural input for the session request. Kept local so this module does not depend on the core commerce types. */
 export interface CheckoutOrderLine {
   productName: string;
   merchantHost: string;
@@ -36,7 +35,6 @@ export type SessionStatus = "open" | "complete" | "expired";
 
 export interface SessionResult {
   id: string;
-  /** Null once a session is no longer payable. */
   url: string | null;
   status: SessionStatus;
   livemode: boolean;

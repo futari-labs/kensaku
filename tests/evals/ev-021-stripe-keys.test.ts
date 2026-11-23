@@ -1,4 +1,3 @@
-// EV-021 Sandbox-only Stripe keys. Checks 1, 2 and 4 live here; JM-203 appends checks 3 and 5.
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -114,6 +113,5 @@ describe("EV-021 check 4: no key-shaped value in tracked files", () => {
     expect(() => execFileSync("git", ["check-ignore", "-q", ".env.local"], { cwd: ROOT })).not.toThrow();
   });
 
-  // Needs a `.data/` line in .gitignore, which is outside JM-202's allowedPaths; enable when the store task adds it (D-053).
   it.todo("ignores .data/");
 });

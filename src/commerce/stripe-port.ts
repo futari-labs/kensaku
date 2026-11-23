@@ -7,7 +7,6 @@ const CHECKOUT_URL_PREFIX = "https://checkout.stripe.com/";
 const WEBHOOK_TOLERANCE_SECONDS = 300;
 const STATUSES: readonly SessionStatus[] = ["open", "complete", "expired"];
 
-/** The slice of the SDK client this port uses; tests stub it. */
 export interface StripeClientLike {
   checkout: {
     sessions: {
@@ -38,7 +37,6 @@ function toResult(session: Stripe.Checkout.Session): SessionResult {
   };
 }
 
-/** Runs one SDK call, collapsing every failure but our own refusals into one typed error. */
 async function call<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
@@ -60,7 +58,6 @@ export class StripeCheckoutPort implements CheckoutPort {
     return result;
   }
 
-  /** Any failure is one `stripe-error`: the shape for a non-open session is unknown until the JM-203 smoke. */
   async expireSession(id: string): Promise<void> {
     await call(() => this.client.checkout.sessions.expire(id));
   }
@@ -70,7 +67,6 @@ export class StripeCheckoutPort implements CheckoutPort {
   }
 }
 
-/** Verifies the signature and age of a raw webhook body offline and returns the parsed event. */
 export function verifyWebhook(rawBody: string | Uint8Array, header: string, secret: string): Stripe.Event {
   try {
     return Stripe.webhooks.constructEvent(rawBody, header, secret, WEBHOOK_TOLERANCE_SECONDS);
@@ -79,7 +75,6 @@ export function verifyWebhook(rawBody: string | Uint8Array, header: string, secr
   }
 }
 
-/** For tests and the test-only fake hosted page: a valid `Stripe-Signature` header for `payload`. */
 export function signTestPayload(payload: string, secret: string, timestamp: number): string {
   return Stripe.webhooks.generateTestHeaderString({ payload, secret, timestamp });
 }
